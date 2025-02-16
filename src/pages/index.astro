@@ -4,7 +4,10 @@ import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import { SITE_TITLE, SITE_DESCRIPTION } from "../config";
 import { getCollection } from "astro:content";
-import projects from "../data/projects.json";
+import { SOCIALS } from "../data/socials";
+import Logo from "../components/Logo.astro";
+import DateOfBirth from "../components/date-of-birth.svelte";
+// import projects from "../data/projects.json";
 
 const posts = await getCollection("blog").then((posts) =>
   posts.sort((a, b) => {
@@ -21,13 +24,29 @@ const posts = await getCollection("blog").then((posts) =>
   <body>
     <Header title={SITE_TITLE} />
     <main>
-      <h2>Hey! I'm Kraktoos 👋</h2>
+      <h2>Hey! I'm Rodrigo Dias 👋</h2>
 
-      <p>I'm a Portuguese dude that likes programming, Linux, FOSS, self-hosting, minimalism and privacy.</p>
+      <p>Self-taught programmer since the age of 14. Currently, I am <b><DateOfBirth client:load /></b> years old and a Computer Engineering student at the Faculty of Engineering of the University of Porto.</p>
+      <p>
+        I love <b><i>teaching</i></b> and <b>learning</b>. I have a special interest in <Logo src="firefox" /> <b>web dev</b>, <Logo src="linux" /> <b>Linux</b>, <b>FOSS</b>, <b>self-hosting</b>, and <i>minimalism</i>.
+      </p>
+      <p>
+        Outside tech, I enjoy 🚴‍♂️ <b>biking</b>, 📷 <b>photography</b>, and playing 🏓 <b>table tennis</b>.
+      </p>
 
-      <a href="/about">Learn more about me</a>, <a href="/now">see what I'm up to</a>, <a href="/uses">check what I use</a>, <a href="mailto:hello@kraktoos.com">email me</a> or <a href="/donate">support me</a>.
+      <a href="/now">See what I'm up to</a>, <a href="/uses">check what I use</a>, <a href="mailto:hey@rgo.pt">email me</a> or <a href="/donate">support me</a>.
 
-      <h3>Projects</h3>
+      <ul class="socials">
+        {SOCIALS.map((social) => (
+          <li>
+            <a href={social.url} target="_blank">
+              <Logo src={social.icon_name} size={36} />
+            </a>
+          </li>
+        ))}
+      </ul>
+
+      <!-- <h3>Projects</h3>
       <ul>
         {projects.map((project) => (
           <li>
@@ -64,10 +83,10 @@ const posts = await getCollection("blog").then((posts) =>
             </div>
           </li>
         ))}
-      </ul>
+      </ul> -->
 
       <h3>Writings</h3>
-      <ul>
+      <ul class="writings">
         {
           posts.map((post) => (
             <li>
@@ -89,31 +108,60 @@ const posts = await getCollection("blog").then((posts) =>
 </html>
 
 <style>
-  ul {
+  .socials {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 0;
+    list-style-type: none;
+    padding: unset;
+    margin: 1rem 0 0 0;
+  }
+
+  .socials li {
+    list-style-type: none;
+  }
+
+  .socials li a {
+    display: inline-block;
+  }
+
+  .socials li > a:hover::before {
+    width: 0;
+  }
+  
+  .socials li > a:hover {
+    transform: scale(1.15);
+    transition: transform 0.3s;
+  }
+
+
+  .writings {
     list-style-type: none;
     padding: unset;
     margin: 0;
   }
-  ul li {
+  .writings li {
     display: flex;
   }
-  ul li time {
+  .writings li time {
     flex: 0 0 9.3rem;
     font-family: var(--font-family-mono);
-    color: #595959;
+    color: #656565;
   }
 
-  ul li a:visited {
+  .writings li a:visited {
     color: var(--visited-color);
   }
 
-  li > a:hover::before {
+  .writings li > a:hover::before {
     content: "→";
     width: 0;
     bottom: 1.8rem;
     left: -1.5rem;
   }
-  li > a:hover::after {
+  .writings li > a:hover::after {
     content: "←";
     margin-left: 0.5rem;
   }

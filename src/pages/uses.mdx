@@ -1,128 +1,84 @@
 ---
-layout: "../layouts/Default.astro"
+layout: "../layouts/TwoCols.astro"
 title: Uses Page
 ---
 
 import Logo from "../components/Logo.astro";
 
-## Basics
+## Services
 
-### OS/Distro
+### Free
 
-I daily drive <Logo src="endeavouros" alt="EndeavourOS logo"/> [EndeavourOS](https://endeavouros.com/). It's fast, and it's basically <Logo src="archlinux" alt="Arch Linux logo"/> [Arch](https://archlinux.org/) on easy mode.
+- <Logo src="raindrop" /> [Raindrop](https://raindrop.io/) - Bookmark manager
+- <Logo src="komoot" /> [Komoot](https://www.komoot.com/) - Route planner &
+  navigation
+- <Logo src="trakt" /> [Trakt.tv](https://trakt.tv/) - Movie & TV show tracking
+- <Logo src="lastfm" /> [Last.fm](https://www.last.fm/) - Music tracking
+- <Logo src="todoist" /> [Todoist](https://todoist.com/) - Task manager
+- <Logo src="tailscale" /> [Tailscale](https://tailscale.com/) - Mesh VPN
+- <Logo src="bitwarden" /> [Bitwarden](https://bitwarden.com/) - Password
+  manager
+- <Logo src="github" /> [GitHub](https://github.com/) - Git repository
+- <Logo src="controld" /> [ControlD](https://controld.com/free-dns) - DNS
+- <Logo src="cloudflare" /> Cloudflare
+  - [Pages](https://pages.cloudflare.com/) - Hosting
+  - [Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps) - Tunneling
 
-### Window Manager
+### Paid
 
-<Logo src="i3wm" alt="i3wm logo" /> [i3wm](https://i3wm.org/). I've used forever
-now and absolutely love it.
+- <Logo src="purelymail" /> [PurelyMail](https://purelymail.com/) - Email
+- <Logo src="hetzner" /> [Hetzner](https://hetzner.cloud/?ref=aTZxb3c7Zc1y) - Cloud hosting
+- <Logo src="surfshark" /> [Surfshark](https://surfshark.club/friend/Q4pppam6) - VPN
+- <Logo src="namecheap" /> [Namecheap](https://www.namecheap.com/) & <Logo src="ovh" /> [OVH](https://www.ovh.com/) - Domains
 
-### Web Browser
+### Selfhosted
 
-<Logo src="firefox" alt="Firefox logo" /> [Firefox](https://www.mozilla.org/en-US/firefox/new/)
-with the [Betterfox](https://github.com/yokoffing/Betterfox) user.js (a mixture
-of improvements to Firefox's privacy, security and speed (and some other QoL
-things)). As per extensions, I use a **ton** of them, but the most notable ones
-are:
+- <Logo src="synology" /> [Synology NAS](https://www.synology.com/en-global) with:
 
-- <Logo src="ublockorigin" alt="uBlockOrigin logo" /> [uBlock
-  Origin](https://addons.mozilla.org/en-US/firefox/addon/ublock-origin/) to
-  block ads, trackers and other annoyances (like cookie notices)
-- <Logo src="darkreader" alt="DarkReader logo" /> [Dark
-  Reader](https://addons.mozilla.org/en-US/firefox/addon/darkreader/) to get
-  dark mode everywhere
-- <Logo src="bitwarden" alt="Bitwarden logo" /> [Bitwarden](https://addons.mozilla.org/en-US/firefox/addon/bitwarden-password-manager/)
-  as my [password manager](#password-manager)
+  - <Logo src="synologydrive" /> [Synology Drive](https://www.synology.com/en-global/dsm/feature/drive) - File drive
+  - <Logo src="synologyphotos" /> [Synology Photos](https://www.synology.com/en-global/dsm/feature/photos) - Photo management
+  - <Logo src="jellyfin" /> [Jellyfin](https://jellyfin.org/) - Media streaming
+  - <Logo src="homeassistant" /> [Home Assistant](https://www.home-assistant.io/) - Home automation
+  - <Logo src="shlink" /> [Shlink](https://shlink.io/) - URL shortener
 
-### Text Editor
+## Apps/Programs
 
-<Logo src="neovim" alt="Neovim logo" /> [Neovim](https://neovim.io/) or <Logo
-  src="vscode"
-  alt="Visual Studio Code logo"
-/> [Visual Studio Code](https://code.visualstudio.com/), depending on the
-project.
+### Free
 
-### Terminal
+- Operating Systems
+  - <Logo src="zorinos" /> [ZorinOS](https://zorinos.com/) - Laptop daily driver
+  - <Logo src="archlinux" /> [Arch Linux](https://archlinux.org/) - Desktop daily driver
+    - <Logo src="i3wm" /> [i3wm](https://i3wm.org/) - Window manager
+  - <Logo src="ubuntu" /> [Ubuntu](https://ubuntu.com/) - Servers
+- <Logo src="firefox" /> [Firefox](https://www.mozilla.org/en-US/firefox/new/) - Browser
+  - <Logo src="ublockorigin" /> [uBlock Origin](https://addons.mozilla.org/en-US/firefox/addon/ublock-origin/)
+  - <Logo src="darkreader" /> [Dark Reader](https://addons.mozilla.org/en-US/firefox/addon/darkreader/)
+  - <Logo src="bitwarden" /> [Bitwarden](https://addons.mozilla.org/en-US/firefox/addon/bitwarden-password-manager/)
+  - [Betterfox](https://github.com/yokoffing/Betterfox) user.js
+- Dev
+  - <Logo src="vscode" /> [Visual Studio Code](https://code.visualstudio.com/) - Code editor
+  - <Logo src="neovim" /> [Neovim](https://neovim.io/) - Config editor
+  - <Logo src="alacritty" /> [Alacritty](https://alacritty.org/) - Terminal
+  - <Logo src="fishshell" /> [fish shell](https://fishshell.com/) - Shell
+  - <Logo src="starship" /> [Starship](https://starship.rs/) - Shell prompt
+- Others
+  - <Logo src="syncthing" /> [Syncthing](https://syncthing.net/) - File synchronization
+  - <Logo src="obsidian" /> [Obsidian](https://obsidian.md/) - Note-taking
+  - <Logo src="excalidraw" /> [Excalidraw](https://excalidraw.com) - Diagrams & notes
+  - <Logo src="davinciresolve" /> [DaVinci Resolve](https://www.blackmagicdesign.com/products/davinciresolve) - Video editing
+  - <Logo src="tenacity" /> [Tenacity](https://tenacityaudio.org/) - Audio editing
+  - <Logo src="gimp" /> [GIMP](https://www.gimp.org/) - Image editing
+  - <Logo src="libreoffice" /> [LibreOffice](https://www.libreoffice.org/) - Office suite
+  - <Logo src="mpv" /> [mpv](https://mpv.io/) & <Logo src="vlc" /> [VLC](https://www.videolan.org/vlc/) - Media players
+  - <Logo src="thunar" /> [Thunar](https://docs.xfce.org/xfce/thunar/start) & <Logo src="amaze" /> [Amaze](https://github.com/TeamAmaze/AmazeFileManager) - File managers
+  - <Logo src="kdeconnect" /> [KDE Connect](https://kdeconnect.kde.org/) - Phone integration
+  - <Logo src="thunderbird" /> [Thunderbird](https://www.thunderbird.net/) - Email client
+  - <Logo src="antennapod" /> [AntennaPod](https://antennapod.org/) - Podcast player
+  - <Logo src="organicmaps" /> [Organic Maps](https://organicmaps.app/) - Maps & Navigation
+  - <Logo src="harmonic" /> [Harmonic](https://github.com/SimonHalvdansson/Harmonic-HN) - Hacker News client
 
-<Logo src="alacritty" alt="Alacritty logo" /> [Alacritty](https://alacritty.org/)
-with <Logo src="bash" alt="Bash logo" /> [bash](https://www.gnu.org/software/bash/).
-At some point I might try <Logo src="zsh" alt="Zsh logo" /> [zsh](https://www.zsh.org/),
-but as of now, I don't need it. I also use <Logo src="tmux" alt="Tmux logo" /> [tmux](https://github.com/tmux/tmux/wiki)
-to keep terminal sessions and
-[powerline-shell](https://github.com/b-ryan/powerline-shell) to make my terminal
-look fancy.
+#### Paid
 
----
-
-## Utilities
-
-### File Manager
-
-<Logo src="thunar" alt="Thunar logo" /> [Thunar](https://docs.xfce.org/xfce/thunar/start)
-or [lf](https://github.com/gokcehan/lf) (if I want to look fancy). I don't
-really need anything too complex, I just have to be able to browse my files
-effectively.
-
-### Video Player
-
-<Logo src="mpv" alt="mpv logo" /> [mpv](https://mpv.io/). You guessed it! It's
-free, open-source, fast, and I mean, it's mpv.
-
----
-
-## Productivity
-
-### Image Manipulation
-
-<Logo src="gimp" alt="GIMP logo" /> [GIMP](https://www.gimp.org/). Once again:
-It's free, open-source and has all the features I need.
-
-### Video Editing
-
-I haven't really been editing many videos but when I did, I used <Logo src="vegaspro" alt="VEGAS Pro logo"/> [VEGAS Pro](https://www.vegascreativesoftware.com/en/vegas-pro/) (on Windows) and more recently <Logo src="davinciresolve" alt="Davinci Resolve logo"/> [DaVinci Resolve](https://www.blackmagicdesign.com/products/davinciresolve/), which works on Linux.
-
-### Audio Editing
-
-<Logo src="tenacity" alt="Tenacity logo" /> [Tenacity](https://tenacityaudio.org/)
-because Audacity started to ship with telemetry. It's free, open-source and has
-all the features I need.
-
-### Office Suite
-
-<Logo src="libreoffice" alt="Libreoffice logo" /> [LibreOffice](https://www.libreoffice.org/)
-or <Logo src="microsoftoffice" alt="Microsoft Office logo" /> [Microsoft
-Office](https://www.office.com/) (on Windows).
-
----
-
-## Online Services
-
-### Password Manager
-
-<Logo src="bitwarden" alt="Bitwarden logo" /> [Bitwarden](https://bitwarden.com/).
-It's free, open-source and, as of now (02/2023), trustworthy enough for me. I
-**have** used KeePass and other apps that support KeePass formats, and they're
-fine, but I need to access my passwords outside my main devices.
-
-### Email
-
-<Logo src="tutanota" alt="Tutanota logo" /> [Tutanota](https://tutanota.com/).
-Not very feature rich, but it's really cheap, end-to-end encrypted, green and
-has its clients open-source.
-
-### VPS
-
-<Logo src="hetzner" alt="Hetzner logo" /> [Hetzner](https://www.hetzner.com/).
-It's where I'm hosting this website, a Minecraft server, and others. They're
-cheap, reliable and have a great support team.
-
-### Domains
-
-<Logo src="namecheap" alt="Namecheap logo" /> [Namecheap](https://www.namecheap.com/).
-I've been using them for a while now and I've never had any issues with them.
-They're cheap, reliable and have a great support team.
-
-### DNS Management
-
-<Logo src="cloudflare" alt="Cloudflare logo" /> [Cloudflare](https://www.cloudflare.com/).
-I've been using them for a while now and I've never had any issues with them.
-They're cheap, reliable and have a great support team.
+- <Logo src="sleepasandroid" /> [Sleep as Android](https://sleep.urbandroid.org/) - Sleep tracker
+- <Logo src="symphonium" /> [Symfonium](https://symfonium.app/) - Music player
+- <Logo src="macrodroid" /> [MacroDroid](https://www.macrodroid.com/) - Automation

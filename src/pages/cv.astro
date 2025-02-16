@@ -1,0 +1,153 @@
+---
+import BaseHead from "../components/BaseHead.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+import { SITE_TITLE, SITE_DESCRIPTION } from "../config";
+import { getCollection } from "astro:content";
+
+import experience from "../data/experience.json";
+import education from "../data/education.json";
+import projects from "../data/projects.json";
+import awards from "../data/awards.json";
+import skills from "../data/skills.json";
+
+function t(key: string) {
+  return key;
+}
+---
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+  </head>
+  <body>
+    <Header title={SITE_TITLE} />
+    <main>
+      <h2>This is my CV</h2>
+      
+      <div class="cs-tabs">
+        <input class="radiotab" name="sections" type="radio" id="experience" />
+        <label class="label" for="experience">{t("nav.experience")}</label>
+        <div class="panel">
+          {experience.map((exp) => (
+            <div class="cs-fieldset">
+              <div class="cs-fieldset__header">
+                <span class="cs-fieldset__date">{exp.dates}</span>
+                {exp.logo && <img src={exp.logo} alt={`${exp.company} logo`} class="cs-fieldset__logo" loading="lazy" />}
+              </div>
+              <div class="cs-fieldset__content">
+                <a href={exp.companyUrl} target="_blank" rel="noreferrer" class="cs-link">
+                  <h3 class="cs-fieldset__title">{exp.title}</h3>
+                  <span class="cs-fieldset__subtitle">{exp.company}</span>
+                </a>
+                <p class="cs-fieldset__description">{exp.description}</p>
+                <div class="cs-tags">
+                  {exp.technologies.map((tech) => (
+                    <span class="cs-tag">{tech}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+          <a href={"aaa"} target="_blank" class="cs-btn">{t("nav.view-resume")}</a>
+        </div>
+    
+        <input class="radiotab" name="sections" type="radio" id="education" />
+        <label class="label" for="education">{t("nav.education")}</label>
+        <div class="panel">
+          {education.map((edu) => (
+            <div class="cs-fieldset">
+              <div class="cs-fieldset__header">
+                <span class="cs-fieldset__date">{edu.dates}</span>
+                {edu.logo && <img src={edu.logo} alt={`${edu.company} logo`} class="cs-fieldset__logo" loading="lazy" />}
+              </div>
+              <div class="cs-fieldset__content">
+                <a href={edu.companyUrl} target="_blank" rel="noreferrer" class="cs-link">
+                  <h3 class="cs-fieldset__title">{edu.title}</h3>
+                  <span class="cs-fieldset__subtitle">{edu.company}</span>
+                  {edu.gpa && <span class="cs-fieldset__gpa">{t("extra.gpa")}: {edu.gpa}</span>}
+                </a>
+                <p class="cs-fieldset__description">{edu.description}</p>
+                <div class="cs-tags">
+                  {edu.technologies.map((tech) => (
+                    <span class="cs-tag">{tech}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+    
+        <input class="radiotab" name="sections" type="radio" id="projects" />
+        <label class="label" for="projects">{t("nav.projects")}</label>
+        <div class="panel">
+          {projects.map((project) => (
+            <div class="cs-fieldset">
+              <div class="cs-fieldset__header">
+                <span class="cs-fieldset__date">{project.date}</span>
+                {project.is_maintained && <span class="cs-status-maintained">{t("extra.maintained")}</span>}
+                {project.is_huge && <span class="cs-status-huge">{t("extra.huge")}</span>}
+              </div>
+              <div class="cs-fieldset__content">
+                <a href={project.link} target="_blank" rel="noreferrer" class="cs-link">
+                  {project.logo && <img src={project.logo} alt={`${project.name} logo`} class="cs-fieldset__logo" loading="lazy" />}
+                  <h3 class="cs-fieldset__title">{project.name}</h3>
+                </a>
+                <p class="cs-fieldset__description">{project.description}</p>
+                <div class="cs-tags">
+                  {project.technologies.map((tech) => (
+                    <span class="cs-tag">{tech}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+    
+        <input class="radiotab" name="sections" type="radio" id="awards" />
+        <label class="label" for="awards">{t("nav.awards")}</label>
+        <div class="panel">
+          {awards.map((award) => (
+            <div class="cs-fieldset">
+              <div class="cs-fieldset__header">
+                <span class="cs-fieldset__date">{award.date}</span>
+              </div>
+              <div class="cs-fieldset__content">
+                {award.link ? (
+                  <a href={award.link} target="_blank" rel="noreferrer" class="cs-link">
+                    <h3 class="cs-fieldset__title">{award.name}</h3>
+                  </a>
+                ) : (
+                  <h3 class="cs-fieldset__title">{award.name}</h3>
+                )}
+                <p class="cs-fieldset__subtitle">{award.organizer}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+    
+        <input class="radiotab" name="sections" type="radio" id="skills" />
+        <label class="label" for="skills">{t("nav.skills")}</label>
+        <div class="panel">
+          {Object.entries(skills).map(([category, skillList]) => (
+            <div class="cs-fieldset">
+              <div class="cs-fieldset__header">
+                <h3 class="cs-fieldset__title">{category}</h3>
+              </div>
+              <div class="cs-grid">
+                {skillList.map((skill) => (
+                  <a href={skill.url} target="_blank" rel="noreferrer" class="cs-btn cs-btn-skill">
+                    {skill.logo && <img src={`/logos/skills/${skill.logo}`} alt={`${skill.name} logo`} class="cs-skill-logo" loading="lazy" />}
+                    <span>{skill.name}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </main>
+    <Footer />
+  </body>
+</html>

@@ -17,15 +17,9 @@ const { title, description, image = "" } = Astro.props;
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <link
   rel="icon"
-  type="image/png"
+  type="image/webp"
   sizes="32x32"
-  href="/icons/favicon-32x32.png"
-/>
-<link
-  rel="icon"
-  type="image/png"
-  sizes="16x16"
-  href="/icons/favicon-16x16.png"
+  href="/favicon.webp"
 />
 <link rel="alternate" type="application/rss+xml" href="/rss.xml" />
 <link rel="sitemap" href="/sitemap-index.xml" />
@@ -51,7 +45,7 @@ const { title, description, image = "" } = Astro.props;
 <meta property="twitter:image" content={new URL(image, Astro.url)} /> -->
 
 <!-- Umami Analytics -->
-<script async src="https://analytics.kraktoos.com/script.js" data-website-id="5bc0b977-eb1b-4e21-ac12-4cf7137060e6" />
+<!-- <script async src="https://analytics.kraktoos.com/script.js" data-website-id="5bc0b977-eb1b-4e21-ac12-4cf7137060e6" /> -->
 
 <!-- View Transitions -->
 <ViewTransitions />

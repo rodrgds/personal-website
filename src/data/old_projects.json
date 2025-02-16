@@ -1,0 +1,20 @@
+[
+  {
+    "title": "Train your Computing",
+    "img": "/projects/train-your-computing.webp",
+    "stack": ["HTML", "CSS", "JavaScript"],
+    "description": "A website to... Train your Computing. Practice you aim, clicking speed, typing speed and more.",
+    "link": "https://tyc.kraktoos.com",
+    "src": "https://github.com/Kraktoos/train-your-computing",
+    "date": "Aug 27 2022"
+  },
+  {
+    "title": "Python Elo System",
+    "img": "/projects/python-elo-system.webp",
+    "stack": ["Python"],
+    "description": "Yet another Python Implementation of the Elo rating system.",
+    "link": "https://pypi.org/project/python-elo-system/",
+    "src": "https://github.com/Kraktoos/Python-Elo-System",
+    "date": "Oct 20 2021"
+  }
+]

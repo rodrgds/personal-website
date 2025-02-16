@@ -1,20 +1,72 @@
 [
   {
-    "title": "Train your Computing",
-    "img": "/projects/train-your-computing.webp",
-    "stack": ["HTML", "CSS", "JavaScript"],
-    "description": "A website to... Train your Computing. Practice you aim, clicking speed, typing speed and more.",
-    "link": "https://tyc.kraktoos.com",
-    "src": "https://github.com/Kraktoos/train-your-computing",
-    "date": "Aug 27 2022"
+    "logo": "/logos/damesadaaomilhao.webp",
+    "name": "From Allowance to Million",
+    "description": "The Complete Guide to Your Personal Finances - a Portuguese book for young beginners in personal finance, investments, savings, and taxes.",
+    "technologies": ["Markdown", "Git", "Gumroad"],
+    "link": "https://damesadaaomilhao.pt/",
+    "date": "December 2024 - Present",
+    "is_maintained": true
   },
   {
-    "title": "Python Elo System",
-    "img": "/projects/python-elo-system.webp",
-    "stack": ["Python"],
-    "description": "Yet another Python Implementation of the Elo rating system.",
-    "link": "https://pypi.org/project/python-elo-system/",
-    "src": "https://github.com/Kraktoos/Python-Elo-System",
-    "date": "Oct 20 2021"
+    "name": "RISC-V Simulator",
+    "description": "An incomplete RISC-V pre-assembler, assembler, disassembler, and executor for RV32I",
+    "technologies": ["Python"],
+    "link": "https://github.com/rodrgds/risc-v-emulator",
+    "date": "December 2024 - Present",
+    "is_maintained": true
+  },
+  {
+    "logo": "/logos/youtube.webp",
+    "name": "Educational YouTube Channel",
+    "description": "A Portuguese YouTube channel with educational videos about computer science, mathematics, and programming, among other topics.",
+    "technologies": ["YouTube", "OBS Studio", "DaVinci Resolve"],
+    "link": "https://url.rgo.pt/youtube",
+    "date": "December 2024 - Present",
+    "is_maintained": true
+  },
+  {
+    "name": "Personal Infrastructure",
+    "description": "Configuration of personal infrastructure with various self-hosted services and network solutions.",
+    "technologies": [
+      "Tailscale",
+      "Synology NAS",
+      "Ubuntu Server",
+      "Docker",
+      "Cloudflare",
+      "DNS"
+    ],
+    "date": "August 2022 - Present",
+    "is_maintained": true
+  },
+  {
+    "logo": "/logos/taw.webp",
+    "name": "The Actual World",
+    "description": "A complete social network platform focused on privacy and authentic connections.",
+    "technologies": [
+      "Expo (React Native)",
+      "Typescript",
+      "TailwindCSS",
+      "Supabase",
+      "PostgreSQL",
+      "Zod"
+    ],
+    "link": "https://github.com/the-actual-world",
+    "date": "December 2023 - July 2024",
+    "is_huge": true
+  },
+  {
+    "name": "Train Your Computing",
+    "description": "A website to train various computing skills such as aim, click speed, and typing speed.",
+    "technologies": ["HTML", "CSS", "JavaScript"],
+    "link": "https://tyc.kraktoos.com/",
+    "date": "August 2022 - September 2022"
+  },
+  {
+    "name": "Elo System",
+    "description": "A Python library to calculate the Elo rating system for 1v1 games.",
+    "technologies": ["Python"],
+    "link": "https://github.com/rodrgds/python-elo-system",
+    "date": "October 2021"
   }
 ]

@@ -6,7 +6,7 @@ import purgecss from "astro-purgecss";
 import compress from "astro-compress";
 
 export default defineConfig({
-  site: "https://kraktoos.com",
+  site: "https://rgo.pt",
   integrations: [mdx(), sitemap(), svelte(), purgecss(), compress()],
   markdown: {
     syntaxHighlight: "prism",

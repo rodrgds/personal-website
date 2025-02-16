@@ -1,0 +1,46 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+export interface Props {
+	content: {
+		title: string;
+		description: string;
+		pubDate?: string;
+		updatedDate?: string;
+		heroImage?: string;
+		katex?: boolean;
+	};
+}
+
+const {
+	content: { title, description, pubDate, updatedDate, heroImage, katex },
+} = Astro.props;
+---
+
+<html lang="en">
+	<head>
+		<BaseHead title={title} description={description} />
+		<link rel="stylesheet" href="/prism.css">
+	</head>
+
+	<body>
+		<Header />
+		<main>
+			<article class="two-col">
+				<slot />
+			</article>
+		</main>
+		<Footer />
+	</body>
+</html>
+
+<style>
+	@media (min-width: 768px) {
+		.two-col {
+			column-count: 2;
+			column-gap: 1rem;
+		}
+	}
+</style>

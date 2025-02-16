@@ -3,7 +3,7 @@ import { Image, getImage } from "astro:assets";
 
 export interface Props {
   src: string;
-  alt: string;
+  alt?: string;
   size?: number;
 }
 
@@ -15,7 +15,7 @@ const doubleSize = size * 2;
 
 <Image
   src={import(`../logos/${src}.png`)}
-  {alt}
+  alt={alt || src + " logo"}
   format="webp"
   width={doubleSize}
   height={doubleSize}

@@ -1,0 +1,19 @@
+[
+  {
+    "dates": "August 2023 — Present",
+    "title": "Full-Stack Developer",
+    "company": "NECHO TECHLAW (Remote)",
+    "companyUrl": "https://necho.pt/",
+    "description": "Worked primarily with Next.js (+React), TailwindCSS, DrizzleORM (with MariaDB database), Express.js, and Socket.io to develop an all-in-one cybersecurity platform.",
+    "technologies": [
+      "Next.js",
+      "React",
+      "TailwindCSS",
+      "DrizzleORM",
+      "MariaDB",
+      "Express.js",
+      "Socket.io"
+    ],
+    "logo": "/logos/necho_techlaw.jpg"
+  }
+]

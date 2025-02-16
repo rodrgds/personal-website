@@ -1,0 +1,258 @@
+{
+  "Programming Languages": [
+    {
+      "name": "JavaScript",
+      "logo": "javascript.webp",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript"
+    },
+    {
+      "name": "TypeScript",
+      "logo": "typescript.webp",
+      "url": "https://www.typescriptlang.org/"
+    },
+    {
+      "name": "Python",
+      "logo": "python.webp",
+      "url": "https://www.python.org/"
+    },
+    {
+      "name": "PHP",
+      "logo": "php.webp",
+      "url": "https://www.php.net/"
+    },
+    {
+      "name": "SQL",
+      "logo": "sql.webp",
+      "url": "https://www.w3schools.com/sql/"
+    },
+    {
+      "name": "C#",
+      "logo": "csharp.webp",
+      "url": "https://learn.microsoft.com/en-us/dotnet/csharp/"
+    },
+    {
+      "name": "Bash",
+      "logo": "bash.webp",
+      "url": "https://www.gnu.org/software/bash/"
+    },
+    {
+      "name": "RISC-V",
+      "logo": "riscv.webp",
+      "url": "https://riscv.org/"
+    }
+  ],
+  "Frontent Dev": [
+    {
+      "name": "HTML",
+      "logo": "html.webp",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/HTML"
+    },
+    {
+      "name": "CSS",
+      "logo": "css.webp",
+      "url": "https://developer.mozilla.org/en-US/docs/Web/CSS"
+    },
+    {
+      "name": "Svelte",
+      "logo": "svelte.webp",
+      "url": "https://svelte.dev/"
+    },
+    {
+      "name": "Next.js",
+      "logo": "nextjs.webp",
+      "url": "https://nextjs.org/"
+    },
+    {
+      "name": "React",
+      "logo": "react.webp",
+      "url": "https://reactjs.org/"
+    },
+    {
+      "name": "Astro",
+      "logo": "astro.webp",
+      "url": "https://astro.build/"
+    },
+    {
+      "name": "Tailwind",
+      "logo": "tailwindcss.webp",
+      "url": "https://tailwindcss.com/"
+    },
+    {
+      "name": "Bootstrap",
+      "logo": "bootstrap.webp",
+      "url": "https://getbootstrap.com/"
+    },
+    {
+      "name": "Mantine",
+      "logo": "mantine.webp",
+      "url": "https://mantine.dev/"
+    }
+  ],
+  "Backend Dev": [
+    {
+      "name": "Node.js",
+      "logo": "nodejs.webp",
+      "url": "https://nodejs.org/"
+    },
+    {
+      "name": "Express",
+      "logo": "expressjs.webp",
+      "url": "https://expressjs.com/"
+    },
+    {
+      "name": "Zod",
+      "logo": "zod.webp",
+      "url": "https://zod.dev/"
+    },
+    {
+      "name": "Socket.io",
+      "logo": "socketio.webp",
+      "url": "https://socket.io/"
+    },
+    {
+      "name": "Drizzle",
+      "logo": "drizzle.webp",
+      "url": "https://www.drizzle.dev/"
+    },
+    {
+      "name": "Prisma",
+      "logo": "prisma.webp",
+      "url": "https://www.prisma.io/"
+    },
+    {
+      "name": "Laravel",
+      "logo": "laravel.webp",
+      "url": "https://laravel.com/"
+    },
+    {
+      "name": "Supabase",
+      "logo": "supabase.webp",
+      "url": "https://supabase.com/"
+    }
+  ],
+  "App Dev": [
+    {
+      "name": "RN",
+      "logo": "react.webp",
+      "url": "https://reactnative.dev/"
+    },
+    {
+      "name": "Expo",
+      "logo": "expo.webp",
+      "url": "https://expo.dev/"
+    },
+    {
+      "name": "Capacitor",
+      "logo": "capacitor.webp",
+      "url": "https://capacitorjs.com/"
+    }
+  ],
+  "Databases": [
+    {
+      "name": "MySQL",
+      "logo": "mysql.webp",
+      "url": "https://www.mysql.com/"
+    },
+    {
+      "name": "MariaDB",
+      "logo": "mariadb.webp",
+      "url": "https://mariadb.org/"
+    },
+    {
+      "name": "Postgres",
+      "logo": "postgresql.webp",
+      "url": "https://www.postgresql.org/"
+    },
+    {
+      "name": "SQLite",
+      "logo": "sqlite.webp",
+      "url": "https://www.sqlite.org/"
+    }
+  ],
+  "Infrastructure & DevOps": [
+    {
+      "name": "Linux",
+      "logo": "linux.webp",
+      "url": "https://www.linux.org/"
+    },
+    {
+      "name": "Ubuntu",
+      "logo": "ubuntu.webp",
+      "url": "https://ubuntu.com/"
+    },
+    {
+      "name": "Fedora",
+      "logo": "fedora.webp",
+      "url": "https://getfedora.org/"
+    },
+    {
+      "name": "Docker",
+      "logo": "docker.webp",
+      "url": "https://www.docker.com/"
+    },
+    {
+      "name": "Git",
+      "logo": "git.webp",
+      "url": "https://git-scm.com/"
+    },
+    {
+      "name": "Cloudflare",
+      "logo": "cloudflare.webp",
+      "url": "https://www.cloudflare.com/"
+    },
+    {
+      "name": "Vercel",
+      "logo": "vercel.webp",
+      "url": "https://vercel.com/"
+    },
+    {
+      "name": "Hetzner",
+      "logo": "hetzner.webp",
+      "url": "https://www.hetzner.com/"
+    }
+  ],
+  "Dev Tools": [
+    {
+      "name": "VSCode",
+      "logo": "vscode.webp",
+      "url": "https://code.visualstudio.com/"
+    },
+    {
+      "name": "Vim",
+      "logo": "vim.webp",
+      "url": "https://www.vim.org/"
+    },
+    {
+      "name": "Neovim",
+      "logo": "neovim.webp",
+      "url": "https://neovim.io/"
+    },
+    {
+      "name": "JetBrains",
+      "logo": "jetbrains.webp",
+      "url": "https://www.jetbrains.com/"
+    },
+    {
+      "name": "GitHub",
+      "logo": "github.webp",
+      "url": "https://github.com/"
+    }
+  ],
+  "Other Tools": [
+    {
+      "name": "Markdown",
+      "logo": "markdown.webp",
+      "url": "https://www.markdownguide.org/"
+    },
+    {
+      "name": "LaTeX",
+      "logo": "latex.webp",
+      "url": "https://www.latex-project.org/"
+    },
+    {
+      "name": "Obsidian",
+      "logo": "obsidian.webp",
+      "url": "https://obsidian.md/"
+    }
+  ]
+}

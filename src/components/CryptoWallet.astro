@@ -26,36 +26,36 @@ if (!qr) {
   <code class="good-text">{address}</code>
 </div>
 <div class="flex-container">
-  <button data-crypto-button class="button" id={crypto + "-copy-button"}
-    >Copy {symbol} address</button
-  >
-  {
-    qr && (
-      <>
-        <a
-          href={`/qr/${crypto.toLowerCase()}.png`}
-          target="_blank"
+  <button data-crypto-button
+    class="button"
+    id={crypto + "-copy-button"}
+    onclick="navigator.clipboard.writeText(this.parentElement.previousElementSibling.textContent.trim()); var content = this.textContent; this.textContent = 'Copied!'; this.classList.add('green'); setTimeout(() => { this.textContent = content; this.classList.remove('green'); }, 900);">
+    Copy {symbol} address
+  </button>
+  {qr && (
+    <>
+      <a
+        href={`/qr/${crypto.toLowerCase()}.png`}
+        target="_blank"
+        style="width: 43.68px; height: 43.68px;">
+        <Image
+          src={`/qr/${crypto.toLowerCase()}.png`}
+          alt={`${crypto} Wallet QR Code`}
+          format="webp"
+          width={70}
+          height={70}
           style="width: 43.68px; height: 43.68px;"
-        >
-          <Image
-            src={`/qr/${crypto.toLowerCase()}.png`}
-            alt={`${crypto} Wallet QR Code`}
-            format="webp"
-            width={70}
-            height={70}
-            style="width: 43.68px; height: 43.68px;"
-            quality={0.0000001}
-          />
-        </a>
-      </>
-    )
-  }
+          quality={0.0000001}
+        />
+      </a>
+    </>
+  )}
 </div>
 <hr />
 
 <style>
   .button {
-    background-color: #0070ba;
+    background-color: var(--link-color);
     border: none;
     color: white;
     padding: 0.7rem 1rem;
@@ -75,7 +75,7 @@ if (!qr) {
     }
   }
   .button:hover {
-    background-color: #005ea1;
+    background-color: var(--visited-color);
   }
   .flex-container {
     display: flex;
@@ -95,27 +95,3 @@ if (!qr) {
     transform: scale(1.06);
   }
 </style>
-
-<script>
-  const buttons = document.querySelectorAll("[data-crypto-button]");
-
-  buttons.forEach((button) => {
-    button.addEventListener("click", () => {
-      copyAddress(button);
-    });
-  });
-
-  const copyAddress = (button: Element) => {
-    navigator.clipboard.writeText(
-      button.parentElement!.previousElementSibling!.textContent!.trim()
-    );
-    const content = button.textContent;
-    button.textContent = "Copied!";
-    button.classList.add("green");
-
-    setTimeout(() => {
-      button.textContent = content;
-      button.classList.remove("green");
-    }, 900);
-  };
-</script>
