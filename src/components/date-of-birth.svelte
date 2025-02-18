@@ -1,5 +1,5 @@
-<script lang="ts">
-  let age = 0;
+<script>
+  let age = $state(0);
   const dateOfBirth = new Date("2006-12-02");
 
   function calculateInitialAge() {
@@ -8,14 +8,18 @@
     age = diff / 31556952000;
   }
 
-  const timerValue = 10;
+  const timerValue = 50;
   const decreaseBy = timerValue / 31556952000;
 
   calculateInitialAge();
 
-  const interval = setInterval(() => {
-    age += decreaseBy;
-  }, timerValue);
+  let interval = null;
+
+  $effect(() => {
+    interval = setInterval(() => {
+      age += decreaseBy;
+    }, timerValue);
+  });
 
   import { onDestroy } from "svelte";
   onDestroy(() => clearInterval(interval));

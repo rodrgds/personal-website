@@ -11,4 +11,5 @@ export default defineConfig({
   markdown: {
     syntaxHighlight: "prism",
   },
+  // output: "hybrid",
 });

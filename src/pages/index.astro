@@ -7,6 +7,7 @@ import { getCollection } from "astro:content";
 import { SOCIALS } from "../data/socials";
 import Logo from "../components/Logo.astro";
 import DateOfBirth from "../components/date-of-birth.svelte";
+// import WorldMap from "../components/world-map.svelte";
 // import projects from "../data/projects.json";
 
 const posts = await getCollection("blog").then((posts) =>
@@ -14,6 +15,9 @@ const posts = await getCollection("blog").then((posts) =>
     return new Date(b.data.pubDate).valueOf() - new Date(a.data.pubDate).valueOf();
   })
 );
+
+// const res = await fetch("http://localhost:4321/api/location");
+// const { lat, lng } = await res.json();
 ---
 
 <!DOCTYPE html>
@@ -26,7 +30,7 @@ const posts = await getCollection("blog").then((posts) =>
     <main>
       <h2>Hey! I'm Rodrigo Dias 👋</h2>
 
-      <p>Self-taught programmer since the age of 14. Currently, I am <b><DateOfBirth client:load /></b><span>{" "}</span>years old and a Computer Engineering student at the Faculty of Engineering of the University of Porto.</p>
+      <p>Self-taught programmer since the age of 14. Currently, I am <b><DateOfBirth client:load /></b><span style="margin-left: 0.4rem" />years old and a Computer Engineering student at the Faculty of Engineering of the University of Porto.</p>
       <p>
         I love <b><i>teaching</i></b> and <b>learning</b>. I have a special interest in <Logo src="firefox" /> <b>web dev</b>, <Logo src="linux" /> <b>Linux</b>, <b>FOSS</b>, <b>self-hosting</b>, and <i>minimalism</i>.
       </p>
@@ -85,6 +89,8 @@ const posts = await getCollection("blog").then((posts) =>
         ))}
       </ul> -->
 
+      <!-- <WorldMap {lat} {lng} client:only /> -->
+
       <h3>Writings</h3>
       <ul class="writings">
         {
@@ -133,9 +139,8 @@ const posts = await getCollection("blog").then((posts) =>
   
   .socials li > a:hover {
     transform: scale(1.15);
-    transition: transform 0.3s;
+    transition: transform 0.1s;
   }
-
 
   .writings {
     list-style-type: none;
