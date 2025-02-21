@@ -1,35 +1,46 @@
 ---
-export interface Props extends astroHTML.JSX.AnchorHTMLAttributes {}
+export interface Props extends astroHTML.JSX.AnchorHTMLAttributes {
+  href: string;
+  title: string;
+  external?: boolean;
+}
 
-const { href, class: className, title, ...props } = Astro.props;
-
+const { href, class: className, title, external, ...props } = Astro.props;
 const { pathname } = Astro.url;
 const isActive = href === pathname || href === pathname.replace(/\/$/, "");
+
+// Set the rel attribute accordingly.
+const anchorRel = external ? "me noopener noreferrer" : "me";
+const target = external ? "_blank" : undefined;
 ---
 
 {isActive ?
 <div style="display: flex; flex-direction: column;">
   <a
-  rel="me"
-  href={href}
-  title={title}
-  class:list={[className, { active: isActive }]}
-  {...props}
->
-  <slot />
-  <div
-  style="width: 100%; height: 2px; background: var(--link-color);"
-  transition:name="active-nav" />
-</a>
+    rel={anchorRel}
+    href={href}
+    title={title}
+    target={target}
+    class:list={[className, { active: isActive }]}
+    {...props}
+  >
+    <slot />
+    {external && <span style="margin-left: 0.25em;">↗</span>}
+    <div
+      style="width: 100%; height: 2px; background: var(--link-color);"
+      transition:name="active-nav" />
+  </a>
 </div> :
 <a
-  rel="me"
+  rel={anchorRel}
   href={href}
   title={title}
+  target={target}
   class:list={[className, { active: isActive }]}
   {...props}
 >
   <slot />
+  {external && <span style="margin-left: 0.25em;">↗</span>}
 </a>
 }
 <style>
@@ -44,7 +55,5 @@ const isActive = href === pathname || href === pathname.replace(/\/$/, "");
   }
   a.active {
     font-weight: 600;
-    /* text-decoration: underline; */
-    /* text-shadow: 0 0 12px rgba(255, 0, 0, 0.3); */
   }
 </style>
