@@ -1,11 +1,10 @@
 ---
 export interface Props extends astroHTML.JSX.AnchorHTMLAttributes {
   href: string;
-  title: string;
   external?: boolean;
 }
 
-const { href, class: className, title, external, ...props } = Astro.props;
+const { href, class: className, external, ...props } = Astro.props;
 const { pathname } = Astro.url;
 const isActive = href === pathname || href === pathname.replace(/\/$/, "");
 
@@ -19,7 +18,6 @@ const target = external ? "_blank" : undefined;
   <a
     rel={anchorRel}
     href={href}
-    title={title}
     target={target}
     class:list={[className, { active: isActive }]}
     {...props}
@@ -34,7 +32,6 @@ const target = external ? "_blank" : undefined;
 <a
   rel={anchorRel}
   href={href}
-  title={title}
   target={target}
   class:list={[className, { active: isActive }]}
   {...props}
