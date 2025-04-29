@@ -6,18 +6,19 @@ export interface Props {
   crypto: string;
   symbol: string;
   address: string;
-  // make qr a boolean optional and true by default
-  qr?: boolean;
+  qr?: boolean; // Default is handled below
 }
 
-let { crypto, symbol, address, qr } = Astro.props as Props;
+// Set default value for qr
+const { crypto, symbol, address, qr = true } = Astro.props as Props;
 
-if (qr === undefined) {
-  qr = true;
-}
-
-const canvasId = `qr-canvas-${crypto.toLowerCase().replace(/[^a-z0-9]/gi, '-')}`; // Basic sanitization for ID
-const componentId = `crypto-component-${crypto.toLowerCase().replace(/[^a-z0-9]/gi, '-')}`;
+// Generate unique IDs based on crypto name (or potentially address if guaranteed unique and safe)
+// Using crypto name is generally safer for DOM IDs
+const safeCryptoId = crypto.toLowerCase().replace(/[^a-z0-9]+/gi, '-');
+const canvasId = `qr-canvas-${safeCryptoId}`;
+const componentId = `crypto-component-${safeCryptoId}`;
+const modalId = `qr-modal-${componentId}`; // Unique modal ID per component instance
+const modalTitleId = `qr-modal-title-${componentId}`;
 ---
 
 <div class="crypto-component-wrapper" id={componentId}>
@@ -32,7 +33,7 @@ const componentId = `crypto-component-${crypto.toLowerCase().replace(/[^a-z0-9]/
   <div class="flex-container">
     <button data-crypto-button
       class="button"
-      id={crypto + "-copy-button"}
+      id={`${safeCryptoId}-copy-button`}
       onclick="/* ... copy logic ... */ var button = this; var originalText = button.textContent; navigator.clipboard.writeText(button.parentElement.previousElementSibling.textContent.trim()).then(() => { button.textContent = 'Copied!'; button.classList.add('green'); setTimeout(() => { button.textContent = originalText; button.classList.remove('green'); }, 900); }).catch(err => { console.error('Failed to copy: ', err); button.textContent = 'Copy Failed'; setTimeout(() => { button.textContent = originalText; }, 1500); });">
       Copy {symbol} address
     </button>
@@ -43,106 +44,132 @@ const componentId = `crypto-component-${crypto.toLowerCase().replace(/[^a-z0-9]/
         class="qr-code-canvas"
         style="image-rendering: pixelated;"
         title={`Click to enlarge QR code for ${address}`}
+        aria-label={`QR Code for ${crypto}. Click to enlarge.`}
+        role="button"
+        tabindex="0"
       ></canvas>
     )}
   </div>
   <hr />
 
-  <div id="qr-modal" class="qr-modal" aria-hidden="true" role="dialog" aria-labelledby="qr-modal-title">
-    <div class="modal-content">
-      <button class="modal-close-button" aria-label="Close QR Code Modal">&times;</button>
-      <h4 id="qr-modal-title" style="margin-top: 0; text-align: center; color: var(--link-color);">
-        My {crypto} Address
-      <img id="modal-qr-image" alt="Enlarged QR Code" src="" style="display: block; margin: 0 auto; image-rendering: pixelated;" />
-       <p id="modal-qr-address" style="text-align: center; font-size: 0.9em; word-break: break-all; margin-top: 10px;"></p>
+  {qr && (
+    <div id={modalId} class="qr-modal" aria-hidden="true" role="dialog" aria-labelledby={modalTitleId} aria-modal="true">
+      <div class="modal-content">
+        <button class="modal-close-button" aria-label="Close QR Code Modal">&times;</button>
+        <h4 id={modalTitleId} style="margin-top: 0; text-align: center; color: var(--link-color);">
+          My {crypto} Address
+        </h4>
+        <img class="modal-qr-image" alt="Enlarged QR Code" src="" style="display: block; margin: 0 auto; image-rendering: pixelated;" />
+        <p class="modal-qr-address" style="text-align: center; font-size: 0.9em; word-break: break-all; margin-top: 10px; color: var(--visited-color)"></p>
+      </div>
     </div>
-  </div>
+  )}
 
 </div>
 
 <script>
-  // Import the QR code library
   import QRCode from 'qrcode';
 
-  // --- Modal Elements (get them once) ---
-  // It's generally better practice to have ONE modal on the page (e.g., in your layout)
-  // and select it here. If you keep the modal HTML inside each component instance,
-  // this script will run for each instance, repeatedly selecting the same modal elements.
-  // For simplicity in this example, we'll select it here, assuming it works okay,
-  // but be mindful of this if you see performance issues or unexpected behavior with many components.
-  const qrModal = document.getElementById('qr-modal');
-  const modalCloseButton = qrModal?.querySelector('.modal-close-button');
-  const modalQrImage = qrModal?.querySelector('#modal-qr-image') as HTMLImageElement | null;
-  const modalQrAddress = qrModal?.querySelector('#modal-qr-address') as HTMLParagraphElement | null;
-
-
-  // --- Modal Functions ---
-  function showQrModal(canvasElement) {
-    if (!qrModal || !modalQrImage || !modalQrAddress) {
-      console.error("Modal elements not found!");
+  // --- Modal Functions (Now operate on specific modal instance) ---
+  function showQrModal(canvasElement, modalElement) {
+    if (!modalElement || !canvasElement) {
+      console.error("Modal or Canvas element not found for showing!");
       return;
     }
+    // Find elements *within this specific modal*
+    const modalQrImage = modalElement.querySelector('.modal-qr-image');
+    const modalQrAddress = modalElement.querySelector('.modal-qr-address');
+    const modalCloseButton = modalElement.querySelector('.modal-close-button');
+
+    if (!modalQrImage || !modalQrAddress) {
+      console.error("Modal image or address element not found inside modal:", modalElement.id);
+      return;
+    }
+
     try {
       // Generate a higher-resolution data URL for the modal image
-      // Use toDataURL for simplicity here, but could also redraw on a larger hidden canvas if needed.
       const dataUrl = canvasElement.toDataURL('image/png'); // Get canvas content as PNG
       modalQrImage.src = dataUrl;
       modalQrImage.alt = `Enlarged QR Code for ${canvasElement.dataset.address}`;
       modalQrAddress.textContent = canvasElement.dataset.address || ''; // Display address below
-      qrModal.style.display = 'flex'; // Show the modal
-      qrModal.setAttribute('aria-hidden', 'false');
+      modalElement.style.display = 'flex'; // Show the modal
+      modalElement.setAttribute('aria-hidden', 'false');
       modalCloseButton?.focus(); // Focus the close button for accessibility
+
+      // Store the element that triggered the modal to return focus later
+      modalElement.dataset.triggeredBy = canvasElement.id;
+
     } catch (err) {
       console.error("Error generating QR code data URL for modal:", err);
-      // Handle error, maybe show a message in the modal
-      modalQrImage.src = ''; // Clear previous image
+      modalQrImage.src = '';
       modalQrImage.alt = 'Error loading QR Code';
       modalQrAddress.textContent = 'Could not load QR Code.';
-       qrModal.style.display = 'flex'; // Still show the modal to indicate an error
-       qrModal.setAttribute('aria-hidden', 'false');
+      modalElement.style.display = 'flex';
+      modalElement.setAttribute('aria-hidden', 'false');
     }
   }
 
-  function hideQrModal() {
-    if (!qrModal) return;
-    qrModal.style.display = 'none'; // Hide the modal
-    qrModal.setAttribute('aria-hidden', 'true');
-     if (modalQrImage) modalQrImage.src = ''; // Clear image src
-     if (modalQrAddress) modalQrAddress.textContent = ''; // Clear address
-    // Optional: return focus to the element that opened the modal
+  function hideQrModal(modalElement) {
+    if (!modalElement) return;
+    modalElement.style.display = 'none'; // Hide the modal
+    modalElement.setAttribute('aria-hidden', 'true');
+
+    // Clear content
+    const modalQrImage = modalElement.querySelector('.modal-qr-image');
+    const modalQrAddress = modalElement.querySelector('.modal-qr-address');
+    if (modalQrImage) modalQrImage.src = '';
+    if (modalQrAddress) modalQrAddress.textContent = '';
+
+    // Return focus to the element that opened the modal (optional but good practice)
+    const triggerId = modalElement.dataset.triggeredBy;
+    if (triggerId) {
+        const triggerElement = document.getElementById(triggerId);
+        triggerElement?.focus();
+        delete modalElement.dataset.triggeredBy; // Clean up
+    }
   }
 
-  // --- QR Code Generation ---
-  async function generateQrCode(canvasElement) {
+  // --- QR Code Generation (Takes modal as argument now) ---
+  async function generateQrCode(canvasElement, modalElement) {
     const address = canvasElement.dataset.address;
 
     if (!address) {
       console.error(`QR Code Error: Address data attribute missing on canvas #${canvasElement.id}`);
       return;
     }
+    if (!modalElement) {
+        console.error(`QR Code Error: Corresponding modal element missing for canvas #${canvasElement.id}`);
+        return;
+    }
 
     try {
       await QRCode.toCanvas(canvasElement, address, {
-        width: 60, // Keep the small canvas relatively small for display
+        width: 60,
         margin: 1,
         errorCorrectionLevel: 'M'
       });
-      canvasElement.title = `QR Code for ${address}. Click to enlarge.`; // Update title
       // console.log(`QR Code generated successfully for canvas #${canvasElement.id}`);
 
       // --- Attach click listener AFTER QR is generated ---
-       canvasElement.addEventListener('click', () => {
-          showQrModal(canvasElement);
-       });
-       // Make it keyboard accessible
-       canvasElement.setAttribute('role', 'button');
-       canvasElement.setAttribute('tabindex', '0'); // Make it focusable
-       canvasElement.addEventListener('keydown', (event) => {
-         if (event.key === 'Enter' || event.key === ' ') {
-           event.preventDefault(); // Prevent spacebar scrolling
-           showQrModal(canvasElement);
-         }
-       });
+      // Only add listener if it hasn't been added before
+      if (!canvasElement.dataset.clickListenerAttached) {
+          canvasElement.addEventListener('click', () => {
+            showQrModal(canvasElement, modalElement); // Pass the specific modal
+          });
+          canvasElement.dataset.clickListenerAttached = 'true';
+      }
+
+       // --- Attach keydown listener AFTER QR is generated ---
+       // Only add listener if it hasn't been added before
+       if (!canvasElement.dataset.keydownListenerAttached) {
+           canvasElement.addEventListener('keydown', (event) => {
+             if (event.key === 'Enter' || event.key === ' ') {
+               event.preventDefault(); // Prevent spacebar scrolling
+               showQrModal(canvasElement, modalElement); // Pass the specific modal
+             }
+           });
+           canvasElement.dataset.keydownListenerAttached = 'true';
+       }
 
 
     } catch (err) {
@@ -150,66 +177,82 @@ const componentId = `crypto-component-${crypto.toLowerCase().replace(/[^a-z0-9]/
       const ctx = canvasElement.getContext('2d');
       if (ctx) {
         ctx.clearRect(0, 0, canvasElement.width, canvasElement.height);
-        // Indicate error on the small canvas too
         ctx.font = '10px sans-serif';
         ctx.fillStyle = 'red';
         ctx.textAlign = 'center';
         ctx.fillText('Error', canvasElement.width / 2, canvasElement.height / 2);
       }
+       // Disable clicking/keyboard interaction on error
+      canvasElement.style.cursor = 'not-allowed';
+      canvasElement.removeAttribute('role');
+      canvasElement.removeAttribute('tabindex');
+      canvasElement.title = 'Error generating QR Code';
     }
   }
 
   // --- Initialization Logic ---
-  function initializeComponent(contextElement) {
-      const canvasElements = contextElement.querySelectorAll('canvas.qr-code-canvas');
-      canvasElements.forEach(canvas => {
-          // Check if already initialized to prevent duplicates if events fire unexpectedly
-          if (!canvas.dataset.qrInitialized) {
-              generateQrCode(canvas); // This now also attaches the click listener
-              canvas.dataset.qrInitialized = 'true'; // Mark as initialized
-          }
-      });
+  function initializeComponent(componentWrapper) {
+    const canvasElement = componentWrapper.querySelector('canvas.qr-code-canvas');
+    const modalElement = componentWrapper.querySelector('.qr-modal'); // Find modal *within this wrapper*
+    const closeButton = modalElement?.querySelector('.modal-close-button');
+
+    if (canvasElement && modalElement) {
+        // Generate QR and attach canvas listeners
+        if (!canvasElement.dataset.qrInitialized) {
+            generateQrCode(canvasElement, modalElement);
+            canvasElement.dataset.qrInitialized = 'true';
+        }
+
+        // Attach modal close listeners *once* per modal instance
+        if (closeButton && !closeButton.dataset.listenerAttached) {
+           closeButton.addEventListener('click', () => hideQrModal(modalElement));
+           closeButton.dataset.listenerAttached = 'true';
+        }
+        // Background click close
+        if (!modalElement.dataset.clickListenerAttached) {
+            modalElement.addEventListener('click', (event) => {
+               // Close only if clicked on the background overlay itself
+               if (event.target === modalElement) {
+                  hideQrModal(modalElement);
+               }
+            });
+            modalElement.dataset.clickListenerAttached = 'true';
+        }
+         // Escape key close
+         if (!modalElement.dataset.keydownListenerAttached) {
+             // Need to listen on the modal when it's open, or globally?
+             // Attaching to modal means it only works when modal *or its content* has focus
+             // Attaching to document is more robust but needs careful management.
+             // Let's attach to modal for simplicity, requires modal or button to have focus.
+             modalElement.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') {
+                   hideQrModal(modalElement);
+                }
+             });
+             modalElement.dataset.keydownListenerAttached = 'true';
+         }
+    } else if (componentWrapper.querySelector('.qr-code-canvas')) {
+        // Only log error if a canvas exists but modal doesn't (means qr=true but modal failed)
+        console.error("Could not find canvas or modal element within wrapper:", componentWrapper.id);
+    }
+  }
+
+  // Run initializer for all components on the page initially
+  function runInitialization() {
+    // console.log("Running initialization...");
+    document.querySelectorAll('.crypto-component-wrapper').forEach(wrapper => {
+      initializeComponent(wrapper);
+    });
   }
 
   // Run on initial load
-  document.addEventListener('DOMContentLoaded', () => {
-      // If modal is inside component, need to target specific instance
-      const componentWrappers = document.querySelectorAll('.crypto-component-wrapper');
-      componentWrappers.forEach(wrapper => initializeComponent(wrapper));
+  // Use 'astro:page-load' which runs once after all content is on the page
+  document.addEventListener('astro:page-load', runInitialization);
 
-      // Add modal close listeners only once
-      if (modalCloseButton && !modalCloseButton.dataset.listenerAttached) {
-          modalCloseButton.addEventListener('click', hideQrModal);
-          modalCloseButton.dataset.listenerAttached = 'true'; // Prevent adding multiple listeners
-      }
-      if (qrModal && !qrModal.dataset.listenerAttached) {
-          qrModal.addEventListener('click', (event) => {
-              // Close if clicked on the background overlay, not the content
-              if (event.target === qrModal) {
-                  hideQrModal();
-              }
-          });
-           // Close modal on Escape key press
-          qrModal.addEventListener('keydown', (event) => {
-                if (event.key === 'Escape') {
-                    hideQrModal();
-                }
-          });
-          qrModal.dataset.listenerAttached = 'true'; // Prevent adding multiple listeners
-      }
-  });
+  // Handle Astro view transitions (if you use them)
+  // 'astro:after-swap' runs after new content replaces old content
+  document.addEventListener('astro:after-swap', runInitialization);
 
-  // Handle Astro view transitions
-  document.addEventListener('astro:after-swap', () => {
-      // Re-run initialization targeting the whole document body after swap
-      initializeComponent(document.body);
-
-       // Re-attach modal listeners if necessary (might be needed if modal itself is part of swapped content)
-       // This part depends heavily on whether the modal is inside the swapped content or persists outside.
-       // If the modal is outside (recommended), the DOMContentLoaded listeners might suffice.
-       // If inside, you might need to re-select and re-attach listeners here similar to DOMContentLoaded.
-       // For this example, let's assume the modal persists or is re-added correctly by Astro.
-  });
 </script>
 
 <style>
@@ -237,9 +280,9 @@ const componentId = `crypto-component-${crypto.toLowerCase().replace(/[^a-z0-9]/
   .button:hover {
     background-color: var(--visited-color);
   }
-   .button:active {
-       transform: scale(0.98);
-   }
+    .button:active {
+        transform: scale(0.98);
+    }
   .flex-container {
     display: flex;
     align-items: center;
@@ -271,11 +314,11 @@ const componentId = `crypto-component-${crypto.toLowerCase().replace(/[^a-z0-9]/
   .qr-code-canvas:focus { /* Add focus style */
     transform: scale(1.06);
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-     outline: 2px solid var(--link-color); /* Accessibility focus indicator */
-     outline-offset: 1px;
+      outline: 2px solid var(--link-color); /* Accessibility focus indicator */
+      outline-offset: 1px;
   }
 
-   /* --- Modal Styles --- */
+    /* --- Modal Styles --- */
   .qr-modal {
     display: none; /* Hidden by default */
     position: fixed; /* Stay in place */
@@ -305,7 +348,7 @@ const componentId = `crypto-component-${crypto.toLowerCase().replace(/[^a-z0-9]/
     animation-duration: 0.3s
   }
 
-   /* Add Animation */
+    /* Add Animation */
   @keyframes animatetop {
     from {top: -300px; opacity: 0}
     to {top: 0; opacity: 1}
@@ -334,10 +377,15 @@ const componentId = `crypto-component-${crypto.toLowerCase().replace(/[^a-z0-9]/
     outline: none;
   }
 
-   /* Style for the image inside the modal */
-   #modal-qr-image {
-       max-width: 100%; /* Ensure it fits */
-       height: auto; /* Maintain aspect ratio */
-   }
+    /* Style for the image inside the modal */
+    /* Use class selector instead of ID */
+    .modal-qr-image {
+        max-width: 100%; /* Ensure it fits */
+        height: auto; /* Maintain aspect ratio */
+    }
+    /* Use class selector */
+    .modal-qr-address {
+      /* Styles already defined inline, but could be moved here */
+    }
 
 </style>
