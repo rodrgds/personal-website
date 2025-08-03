@@ -37,5 +37,6 @@
     "@divriots/jampack": "^0.33.0",
     "prettier": "^3.5.1",
     "prettier-plugin-astro": "^0.14.1"
-  }
+  },
+  "engines": { "node": "22" }
 }
