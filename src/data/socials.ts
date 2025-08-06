@@ -11,10 +11,6 @@ export const SOCIALS = [
     url: "https://url.rgo.pt/youtube",
   },
   {
-    icon_name: "twitch",
-    url: "https://url.rgo.pt/twitch",
-  },
-  {
     icon_name: "x",
     url: "https://url.rgo.pt/x",
   },
@@ -31,16 +27,31 @@ export const SOCIALS = [
     url: "https://url.rgo.pt/instagram",
   },
   {
-    icon_name: "github",
-    url: "https://url.rgo.pt/github",
-  },
-  {
     icon_name: "linkedin",
     url: "https://url.rgo.pt/linkedin",
   },
   {
-    icon_name: "ko-fi",
-    url: "https://url.rgo.pt/donate",
+    icon_name: "github",
+    url: "https://url.rgo.pt/github",
+  },
+];
+
+export const EXTRA_SOCIALS = [
+  {
+    icon_name: "nostr",
+    url: "https://url.rgo.pt/nostr",
+  },
+  {
+    icon_name: "devto",
+    url: "https://url.rgo.pt/devto",
+  },
+  {
+    icon_name: "twitch",
+    url: "https://url.rgo.pt/twitch",
+  },
+  {
+    icon_name: "kick",
+    url: "https://url.rgo.pt/kick",
   },
   {
     icon_name: "trakt",
@@ -49,5 +60,17 @@ export const SOCIALS = [
   {
     icon_name: "lastfm",
     url: "https://url.rgo.pt/music",
+  },
+  {
+    icon_name: "hevy",
+    url: "https://url.rgo.pt/hevy",
+  },
+  {
+    icon_name: "komoot",
+    url: "https://url.rgo.pt/komoot",
+  },
+  {
+    icon_name: "ko-fi",
+    url: "https://url.rgo.pt/donate",
   },
 ];

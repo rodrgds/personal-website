@@ -4,7 +4,7 @@ import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import { SITE_TITLE, SITE_DESCRIPTION } from "../config";
 import { getCollection } from "astro:content";
-import { SOCIALS } from "../data/socials";
+import { SOCIALS, EXTRA_SOCIALS } from "../data/socials";
 import Logo from "../components/Logo.astro";
 import DateOfBirth from "../components/date-of-birth.svelte";
 // import WorldMap from "../components/world-map.svelte";
@@ -48,6 +48,20 @@ const posts = await getCollection("blog").then((posts) =>
             </a>
           </li>
         ))}
+        <li>
+          <button id="expand-socials" class="expand-button" aria-label="Show more social links">
+            <span>•••</span>
+          </button>
+        </li>
+        <div id="extra-socials" class="extra-socials hidden">
+          {EXTRA_SOCIALS.map((social) => (
+            <li>
+              <a href={social.url} target="_blank">
+                <Logo src={social.icon_name} size={36} />
+              </a>
+            </li>
+          ))}
+        </div>
       </ul>
 
       <!-- <h3>Projects</h3>
@@ -110,6 +124,30 @@ const posts = await getCollection("blog").then((posts) =>
       </ul>
     </main>
     <Footer />
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const expandButton = document.getElementById('expand-socials');
+        const extraSocials = document.getElementById('extra-socials');
+        
+        if (expandButton && extraSocials) {
+          expandButton.addEventListener('click', function() {
+            const isHidden = extraSocials.classList.contains('hidden');
+            const buttonSpan = expandButton.querySelector('span');
+            
+            if (isHidden) {
+              extraSocials.classList.remove('hidden');
+              if (buttonSpan) buttonSpan.textContent = '×';
+              expandButton.setAttribute('aria-label', 'Hide additional social links');
+            } else {
+              extraSocials.classList.add('hidden');
+              if (buttonSpan) buttonSpan.textContent = '•••';
+              expandButton.setAttribute('aria-label', 'Show more social links');
+            }
+          });
+        }
+      });
+    </script>
   </body>
 </html>
 
@@ -138,6 +176,61 @@ const posts = await getCollection("blog").then((posts) =>
   }
   
   .socials li > a:hover {
+    transform: scale(1.15);
+    transition: transform 0.1s;
+  }
+
+  .expand-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: var(--text-color);
+    padding: 0.5rem;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.1s, background-color 0.2s;
+  }
+
+  .expand-button:hover {
+    transform: scale(1.15);
+    background-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .expand-button:focus {
+    outline: 2px solid var(--text-color);
+    outline-offset: 2px;
+  }
+
+  .extra-socials {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .extra-socials.hidden {
+    display: none;
+  }
+
+  .extra-socials li {
+    list-style-type: none;
+  }
+
+  .extra-socials li a {
+    display: inline-block;
+  }
+
+  .extra-socials li > a:hover::before {
+    width: 0;
+  }
+  
+  .extra-socials li > a:hover {
     transform: scale(1.15);
     transition: transform 0.1s;
   }
