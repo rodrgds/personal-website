@@ -27,6 +27,10 @@ export const SOCIALS = [
     url: "https://url.rgo.pt/instagram",
   },
   {
+    icon_name: "threads",
+    url: "https://url.rgo.pt/threads",
+  },
+  {
     icon_name: "linkedin",
     url: "https://url.rgo.pt/linkedin",
   },
