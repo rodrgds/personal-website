@@ -45,10 +45,10 @@ export const EXTRA_SOCIALS = [
     icon_name: "nostr",
     url: "https://url.rgo.pt/nostr",
   },
-  {
-    icon_name: "devto",
-    url: "https://url.rgo.pt/devto",
-  },
+  // {
+  //   icon_name: "devto",
+  //   url: "https://url.rgo.pt/devto",
+  // },
   {
     icon_name: "twitch",
     url: "https://url.rgo.pt/twitch",
@@ -72,6 +72,10 @@ export const EXTRA_SOCIALS = [
   {
     icon_name: "komoot",
     url: "https://url.rgo.pt/komoot",
+  },
+  {
+    icon_name: "leetcode",
+    url: "https://url.rgo.pt/leetcode",
   },
   {
     icon_name: "ko-fi",
