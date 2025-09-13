@@ -1,0 +1,565 @@
+{
+  "movies": [
+    {
+      "title": "The Social Network",
+      "year": "2010",
+      "image": "/images/favorites/the-social-network.webp",
+      "rating": 5,
+      "comment": "Not THE movie that got me into programming, but definitely one that kept me in it.",
+      "categories": ["tech", "business", "entertainment", "programming"]
+    },
+    {
+      "title": "Now You See Me",
+      "year": "2013",
+      "image": "/images/favorites/now-you-see-me.webp",
+      "rating": 5,
+      "categories": ["entertainment", "thriller", "psychology"]
+    },
+    {
+      "title": "Rocky",
+      "year": "1976",
+      "image": "/images/favorites/rocky-i.webp",
+      "rating": 5,
+      "comment": "* as well as the rest of the Rocky & Creed movies. The underdog story that never gets old.",
+      "categories": ["entertainment", "lifestyle", "philosophy"]
+    },
+    {
+      "title": "The Wolf of Wall Street",
+      "year": "2013",
+      "image": "/images/favorites/the-wolf-of-wall-street.webp",
+      "rating": 5,
+      "categories": ["business", "entertainment", "finance", "psychology"]
+    },
+    {
+      "title": "Inception",
+      "year": "2010",
+      "image": "/images/favorites/inception.webp",
+      "rating": 5,
+      "categories": ["entertainment", "philosophy", "psychology", "science"]
+    },
+    {
+      "title": "Heretic",
+      "year": "2024",
+      "image": "/images/favorites/heretic.webp",
+      "rating": 5,
+      "categories": ["entertainment", "philosophy", "psychology", "thriller"]
+    },
+    {
+      "title": "F1",
+      "year": "2025",
+      "image": "/images/favorites/f1.webp",
+      "icon": "🏎️",
+      "rating": 5,
+      "categories": ["entertainment", "tech"]
+    },
+    {
+      "title": "The Menu",
+      "year": "2022",
+      "image": "/images/favorites/the-menu.webp",
+      "rating": 4,
+      "categories": ["entertainment", "thriller", "psychology"]
+    },
+    {
+      "title": "WALL-E",
+      "year": "2008",
+      "image": "/images/favorites/wall-e.webp",
+      "rating": 5,
+      "comment": "Pixar's environmental masterpiece.",
+      "categories": ["entertainment", "tech", "philosophy", "science"]
+    },
+    {
+      "title": "Top Gun: Maverick",
+      "year": "2022",
+      "image": "/images/favorites/top-gun-maverick.webp",
+      "icon": "✈️",
+      "rating": 5,
+      "comment": "Really shows what modern filmmaking is capable of when done right.",
+      "categories": ["entertainment", "tech"]
+    },
+    {
+      "title": "Gran Turismo",
+      "year": "2023",
+      "image": "/images/favorites/gran-turismo.webp",
+      "icon": "🎮",
+      "rating": 4,
+      "categories": ["entertainment", "tech", "lifestyle"]
+    }
+  ],
+  "shows": [
+    {
+      "title": "The Queen's Gambit",
+      "year": "2020",
+      "image": "/images/favorites/the-queens-gambit.webp",
+      "icon": "♟️",
+      "rating": 5,
+      "comment": "Chess as character study. Anya Taylor-Joy is phenomenal.",
+      "categories": ["entertainment", "education", "psychology", "lifestyle"]
+    },
+    {
+      "title": "Prison Break",
+      "year": "2005-2017",
+      "image": "/images/favorites/prison-break.webp",
+      "icon": "🔓",
+      "rating": 5,
+      "comment": "The first two seasons are exceptional. Like actually the best seasons of any TV show ever made.",
+      "categories": ["entertainment", "thriller", "psychology"]
+    },
+    {
+      "title": "Ozark",
+      "year": "2017-2022",
+      "image": "/images/favorites/ozark.webp",
+      "icon": "💰",
+      "rating": 4,
+      "comment": "Money laundering meets family drama. Jason Bateman's dark turn works perfectly.",
+      "categories": ["entertainment", "business", "thriller", "finance"]
+    },
+    {
+      "title": "Maid",
+      "year": "2021",
+      "image": "/images/favorites/maid.webp",
+      "icon": "🏠",
+      "rating": 4,
+      "comment": "Heartbreaking look at poverty and resilience. Margaret Qualley's performance is raw and real.",
+      "categories": ["entertainment", "lifestyle", "psychology"]
+    },
+    {
+      "title": "Mindhunter",
+      "year": "2017-2019",
+      "image": "/images/favorites/mindhunter.webp",
+      "icon": "🧠",
+      "rating": 4,
+      "categories": ["entertainment", "psychology", "education", "thriller"]
+    },
+    {
+      "title": "Peaky Blinders",
+      "year": "2013-2022",
+      "image": "/images/favorites/peaky-blinders.webp",
+      "icon": "🎩",
+      "rating": 4,
+      "categories": ["entertainment", "business", "thriller"]
+    },
+    {
+      "title": "How I Met Your Mother",
+      "year": "2005-2014",
+      "image": "/images/favorites/how-i-met-your-mother.webp",
+      "icon": "☂️",
+      "rating": 4,
+      "comment": "Actually a pretty fun sitcom, even if it has its ups and downs.",
+      "categories": ["entertainment", "lifestyle"]
+    }
+  ],
+  "podcasts": [
+    {
+      "title": "Not Related! A Big-Braned Podcast by Luke Smith",
+      "image": "/images/favorites/not-related.webp",
+      "icon": "🧠",
+      "rating": 5,
+      "comment": "Luke's takes on modern society, religion and tech culture. Don't go into it thinking you're going to agree with everything (but you might). Good reflection material.",
+      "categories": ["tech", "philosophy", "education", "linux", "minimalism"],
+      "favoriteEpisodes": [
+        {
+          "title": "The Economy is Fake, the Jobs Are Fake, the Money Is Fake"
+        },
+        {
+          "title": "When You're Too Rational to Be Rational!"
+        }
+      ]
+    },
+    {
+      "title": "The Game with Alex Hormozi",
+      "image": "/images/favorites/the-game.jpeg",
+      "icon": "💼",
+      "rating": 5,
+      "comment": "Alex is like the best guru that ACTUALLY has a clue what he's talking about. Plus he can explain them in a way that makes sense.",
+      "categories": [
+        "business",
+        "education",
+        "entrepreneurship",
+        "marketing",
+        "finance"
+      ],
+      "favoriteEpisodes": [
+        {
+          "number": "#841",
+          "title": "Throwback: How To Get Ahead of 99% of Entrepreneurs"
+        },
+        {
+          "number": "#836",
+          "title": "Throwback: $100K Per Month, With No Employees"
+        },
+        {
+          "number": "#847",
+          "title": "Stand Out By Telling The Truth"
+        },
+        {
+          "number": "#855",
+          "title": "15 Brutally Honest Truths You Have To Understand To Succeed"
+        },
+        {
+          "number": "#849",
+          "title": "Why Do Smart People Stay Poor"
+        },
+        {
+          "number": "#874",
+          "title": "Brutally Effective Negotiation Tactics"
+        },
+        {
+          "number": "#927",
+          "title": "12 Persuasion Hacks I Use to Sell Anything"
+        }
+      ]
+    },
+    {
+      "title": "My First Million",
+      "image": "/images/favorites/my-first-million.avif",
+      "icon": "💰",
+      "rating": 4,
+      "categories": [
+        "business",
+        "tech",
+        "education",
+        "entrepreneurship",
+        "marketing"
+      ]
+    },
+    {
+      "title": "Syntax - Tasty Web Development Treats",
+      "image": "/images/favorites/syntax.jpeg",
+      "icon": "🌐",
+      "rating": 4,
+      "comment": "Wes Bos and Scott Tolinski keep me updated on the latest web dev trends. This is more of a picky podcast - I don't listen to everything they put out, but when I do it's usually worth it.",
+      "categories": ["programming", "web-dev", "tech", "education"]
+    },
+    {
+      "title": "LINUX Unplugged",
+      "image": "/images/favorites/linux-unplugged.jpg",
+      "icon": "🐧",
+      "rating": 4,
+      "comment": "Jupiter Broadcasting at their best.",
+      "categories": ["tech", "programming", "linux", "education"]
+    },
+    {
+      "title": "Self-Hosted",
+      "image": "/images/favorites/self-hosted.jpg",
+      "icon": "🏠",
+      "rating": 4,
+      "comment": "It's been discontinued. I also really loved Linux Action News when it was around. Also from Jupiter Broadcasting.",
+      "categories": ["tech", "programming", "privacy", "tools"]
+    },
+    {
+      "title": "Programming Throwdown",
+      "image": "/images/favorites/programming-throwdown.jpeg",
+      "icon": "🥊",
+      "rating": 5,
+      "comment": "1-2 hour deep dives into programming topics. Great for learning new concepts. Seriously great.",
+      "categories": ["programming", "education", "tech"]
+    },
+    {
+      "title": "Darknet Diaries",
+      "image": "/images/favorites/darknet-diaries.jpeg",
+      "icon": "🕵️",
+      "rating": 4,
+      "comment": "True cybercrime stories told like Netflix documentaries. Jack Rhysider is a master storyteller.",
+      "categories": [
+        "tech",
+        "education",
+        "entertainment",
+        "security",
+        "privacy"
+      ]
+    }
+  ],
+  "books": [
+    {
+      "title": "How To Live",
+      "author": "Derek Sivers",
+      "image": "/images/favorites/how-to-live.jpg",
+      "icon": "🤔",
+      "rating": 5,
+      "comment": "27 conflicting answers to an impossible question. Sivers' contrarian wisdom at its best.",
+      "categories": ["philosophy", "lifestyle", "education", "minimalism"]
+    },
+    {
+      "title": "The Almanack of Naval Ravikant",
+      "author": "Eric Jorgenson",
+      "image": "/images/favorites/the-almanack-of-naval-ravikant.png",
+      "icon": "⚓",
+      "rating": 5,
+      "comment": "Wealth and happiness principles from one of the sharpest minds in tech. Timeless wisdom combined with his (Naval's) podcast and tweets.",
+      "categories": ["business", "philosophy", "lifestyle", "tech", "finance"]
+    },
+    {
+      "title": "Cosmos",
+      "author": "Carl Sagan",
+      "image": "/images/favorites/cosmos.jpg",
+      "icon": "🌌",
+      "rating": 5,
+      "categories": ["science", "philosophy", "education"]
+    }
+  ],
+  "blogs": [
+    {
+      "title": "Steph Ango",
+      "url": "https://stephango.com/",
+      "icon": "✏️",
+      "rating": 5,
+      "categories": ["design", "productivity", "tech", "minimalism", "tools"]
+    },
+    {
+      "title": "Simon Willison",
+      "url": "https://simonwillison.net/",
+      "icon": "🤖",
+      "rating": 5,
+      "comment": "I seriously have no idea how this guy has the time to put up this amount of content out. And quality!",
+      "categories": ["programming", "ai", "tech", "education", "web-dev"]
+    },
+    {
+      "title": "Paul Graham",
+      "url": "https://paulgraham.com",
+      "icon": "🚀",
+      "rating": 5,
+      "comment": "Y Combinator founder's essays on startups and life. Each one is a masterclass.",
+      "categories": [
+        "business",
+        "tech",
+        "philosophy",
+        "entrepreneurship",
+        "education"
+      ]
+    },
+    {
+      "title": "Luke Smith",
+      "url": "https://lukesmith.xyz/",
+      "icon": "🐧",
+      "rating": 4,
+      "comment": "Always makes you think differently.",
+      "categories": ["tech", "philosophy", "linux", "minimalism", "education"]
+    }
+  ],
+  "articles": [
+    {
+      "title": "The Pudding",
+      "url": "https://pudding.cool/",
+      "icon": "📊",
+      "rating": 5,
+      "comment": "Really cool articles, mostly to do with data analysis, also it's built on SvelteKit and the articles are interactive and really animated!",
+      "categories": ["data", "design", "education", "visualization", "web-dev"]
+    },
+    {
+      "title": "How to Give a Good Talk",
+      "url": "https://blog.sigplan.org/2025/03/31/how-to-give-a-good-talk/",
+      "icon": "🎤",
+      "rating": 4,
+      "categories": ["education", "communication", "career"]
+    },
+    {
+      "title": "What I look for in a resume",
+      "url": "https://www.reddit.com/r/cybersecurity/comments/1mo5pmc/what_i_look_for_in_a_resume/",
+      "icon": "📄",
+      "rating": 4,
+      "categories": ["career", "security", "education"]
+    },
+    {
+      "title": "How to (and how not to) design REST APIs",
+      "url": "https://github.com/stickfigure/blog/wiki/How-to-(and-how-not-to)-design-REST-APIs",
+      "icon": "🔌",
+      "rating": 4,
+      "categories": ["programming", "api", "design", "web-dev", "education"]
+    },
+    {
+      "title": "How to get your first ten customers",
+      "url": "https://onlineornot.com/how-to-get-your-first-ten-customers",
+      "icon": "🎯",
+      "rating": 4,
+      "categories": ["business", "marketing", "entrepreneurship", "education"]
+    },
+    {
+      "title": "Developer philosophy",
+      "url": "https://qntm.org/devphilo",
+      "icon": "💭",
+      "rating": 4,
+      "categories": ["programming", "philosophy", "education", "career"]
+    },
+    {
+      "title": "50 Years of Travel Tips",
+      "url": "https://kk.org/thetechnium/50-years-of-travel-tips/",
+      "icon": "✈️",
+      "rating": 4,
+      "categories": ["lifestyle", "travel", "education"]
+    },
+    {
+      "title": "AI Blindspots",
+      "url": "https://ezyang.github.io/ai-blindspots/",
+      "icon": "🤖",
+      "rating": 4,
+      "comment": "The current AI limitations and assumptions.",
+      "categories": ["ai", "tech", "philosophy", "education"]
+    }
+  ],
+  "videos": [
+    {
+      "title": "CS50x",
+      "url": "https://cs50.harvard.edu/x/",
+      "icon": "🎓",
+      "rating": 5,
+      "comment": "Harvard's intro to computer science. David Malan makes complex concepts accessible.",
+      "categories": ["programming", "education", "tech"]
+    },
+    {
+      "title": "CS50AI",
+      "url": "https://cs50.harvard.edu/ai/",
+      "icon": "🤖",
+      "rating": 5,
+      "comment": "Perfect follow-up to CS50x. Solid foundation in AI and machine learning concepts.",
+      "categories": ["ai", "programming", "education", "tech"]
+    },
+    {
+      "title": "The Missing Semester of Your CS Education",
+      "url": "https://missing.csail.mit.edu/",
+      "icon": "🛠️",
+      "rating": 5,
+      "comment": "Mannn I hope to revisit this in the future. So much good stuff.",
+      "categories": ["programming", "education", "tools", "tech"]
+    },
+    {
+      "title": "3Blue1Brown",
+      "url": "https://www.youtube.com/c/3blue1brown",
+      "icon": "📐",
+      "rating": 5,
+      "comment": "Grant Sanderson makes mathematics beautiful and intuitive through amazing visualizations. Plus he made Manim!",
+      "categories": ["math", "education", "science", "visualization"]
+    },
+    {
+      "title": "ALL OF PHYSICS explained in 14 Minutes",
+      "url": "https://www.youtube.com/watch?v=ZAqIoDhornk",
+      "icon": "⚛️",
+      "rating": 4,
+      "categories": ["science", "education", "physics"]
+    },
+    {
+      "title": "Types of Getting Rich",
+      "url": "https://www.youtube.com/watch?v=t3gxKgAkcLk",
+      "icon": "💰",
+      "rating": 4,
+      "categories": ["business", "finance", "education", "entrepreneurship"]
+    },
+    {
+      "title": "How to Start a Speech",
+      "url": "https://www.youtube.com/watch?v=w82a1FT5o88",
+      "icon": "🎤",
+      "rating": 4,
+      "categories": ["communication", "education", "career"]
+    },
+    {
+      "title": "How to Speak",
+      "url": "https://www.youtube.com/watch?v=Unzc731iCUY",
+      "icon": "🗣️",
+      "rating": 5,
+      "comment": "Public speaking fundamentals that actually work.",
+      "categories": ["communication", "education", "career"]
+    },
+    {
+      "title": "Hugo Actually Explained",
+      "url": "https://www.youtube.com/watch?v=ZFL09qhKi5I",
+      "icon": "🌐",
+      "rating": 4,
+      "categories": ["web-dev", "programming", "education", "tools"]
+    }
+  ],
+  "cool": [
+    {
+      "title": "LLM Visualization",
+      "url": "https://bbycroft.net/llm",
+      "icon": "🧠",
+      "rating": 5,
+      "categories": ["ai", "education", "visualization"]
+    },
+    {
+      "title": "37signals",
+      "url": "https://37signals.com/",
+      "icon": "🏢",
+      "rating": 5,
+      "comment": "Company that actually practices what they preach about remote work and simple software.",
+      "categories": ["business", "productivity", "philosophy"]
+    },
+    {
+      "title": "Build Your Own <X>",
+      "url": "https://github.com/codecrafters-io/build-your-own-x",
+      "icon": "🔨",
+      "rating": 5,
+      "categories": ["programming", "education", "tools"]
+    },
+    {
+      "title": "Putting the \"You\" in CPU",
+      "url": "https://cpu.land/",
+      "icon": "🔧",
+      "rating": 5,
+      "categories": ["programming", "education", "hardware", "science"]
+    },
+    {
+      "title": "Minimalist Life",
+      "url": "https://minimalism.com/",
+      "icon": "🪴",
+      "rating": 4,
+      "categories": ["lifestyle", "philosophy", "minimalism"]
+    },
+    {
+      "title": "VPN Comparison",
+      "url": "https://docs.google.com/spreadsheets/d/1CRtEQzSVE59jj5ROKZlttkRtUpJfcc4mgMT7Wn1aBcA/edit?gid=1801357598#gid=1801357598",
+      "icon": "🔒",
+      "rating": 4,
+      "categories": ["privacy", "security", "tools", "data"]
+    },
+    {
+      "title": "Music-Map",
+      "url": "https://www.music-map.com/",
+      "icon": "🎵",
+      "rating": 4,
+      "categories": ["music", "discovery", "tools"]
+    },
+    {
+      "title": "Printable Productivity Tools",
+      "url": "https://davidseah.com/productivity-tools/",
+      "icon": "📄",
+      "rating": 4,
+      "categories": ["productivity", "tools", "design"]
+    },
+    {
+      "title": "A system to organise your life",
+      "url": "https://johnnydecimal.com/",
+      "icon": "🗂️",
+      "rating": 4,
+      "categories": ["productivity", "organization", "minimalism"]
+    },
+    {
+      "title": "The Startup CTO's Handbook",
+      "url": "https://github.com/ZachGoldberg/Startup-CTO-Handbook/blob/main/StartupCTOHandbook.md",
+      "icon": "👔",
+      "rating": 5,
+      "comment": "Comprehensive guide to technical leadership in startups. Open-source wisdom.",
+      "categories": ["business", "tech", "leadership", "programming", "career"]
+    },
+    {
+      "title": "High Agency",
+      "url": "https://www.highagency.com/",
+      "icon": "⚡",
+      "rating": 5,
+      "comment": "No matter who you are or what you do, please read this. It takes 30 minutes and will change your life.",
+      "categories": ["productivity", "philosophy", "lifestyle", "education"]
+    },
+    {
+      "title": "Learn Music",
+      "url": "https://learningmusic.ableton.com/",
+      "icon": "🎹",
+      "rating": 4,
+      "categories": ["music", "education", "tools"]
+    },
+    {
+      "title": "News Minimalist",
+      "url": "https://www.newsminimalist.com/",
+      "icon": "📰",
+      "rating": 4,
+      "categories": ["news", "minimalism", "tools"]
+    }
+  ]
+}

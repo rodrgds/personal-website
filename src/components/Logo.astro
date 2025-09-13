@@ -11,19 +11,38 @@ let { src, alt, size } = Astro.props as Props;
 
 size = size || 22;
 const doubleSize = size * 2;
+
+// Check if src is an emoji or special character
+function isEmoji(str: string) {
+  return /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(str) || str.length === 1;
+}
 ---
 
-<Image
-  src={import(`../logos/${src}.png`)}
-  alt={alt || src + " logo"}
-  format="webp"
-  width={doubleSize}
-  height={doubleSize}
-  style={{
-    width: size + "px",
-    margin: "0",
-    verticalAlign: "middle",
-    display: "inline-block",
-    objectFit: "cover",
-  }}
-/>
+{isEmoji(src) ? (
+  <span 
+    style={{
+      fontSize: size + "px",
+      margin: "0",
+      verticalAlign: "middle",
+      display: "inline-block",
+      lineHeight: "1",
+    }}
+  >
+    {src}
+  </span>
+) : (
+  <Image
+    src={import(`../logos/${src}.png`)}
+    alt={alt || src + " logo"}
+    format="webp"
+    width={doubleSize}
+    height={doubleSize}
+    style={{
+      width: size + "px",
+      margin: "0",
+      verticalAlign: "middle",
+      display: "inline-block",
+      objectFit: "cover",
+    }}
+  />
+)}

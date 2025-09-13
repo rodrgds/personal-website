@@ -1,0 +1,151 @@
+---
+import Logo from "./Logo.astro";
+
+interface Props {
+  title: string;
+  url: string;
+  icon?: string;
+  rating: number;
+  comment: string;
+  categories: string[];
+  type?: string; // Add type to determine default icon
+}
+
+const { title, url, icon, rating, comment, categories, type } = Astro.props;
+
+// Get default icon based on content type
+function getDefaultIcon(type?: string): string {
+  switch (type) {
+    case 'blog': return '📝';
+    case 'article': return '📄';
+    case 'video': return '🎥';
+    case 'cool': return '😎';
+    default: return '🔗';
+  }
+}
+
+const finalIcon = icon || getDefaultIcon(type);
+
+function renderStars(rating: number) {
+  const fullStars = "★".repeat(rating);
+  const emptyStars = "☆".repeat(5 - rating);
+  return fullStars + emptyStars;
+}
+
+// Check if icon is an emoji or special character
+function isEmoji(str: string) {
+  return /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(str) || str.length === 1;
+}
+
+// Function to properly format category names
+function formatCategoryName(category: string): string {
+  return category
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+---
+
+<div class="link-item" data-categories={categories.join(",")}>
+  <div class="link-icon">
+    {isEmoji(finalIcon) ? (
+      <span>{finalIcon}</span>
+    ) : (
+      <Logo src={finalIcon} size={32} />
+    )}
+  </div>
+  <div class="link-info">
+    <h3><a href={url} target="_blank">{title}</a></h3>
+    <p class="comment">{comment}</p>
+    <div class="rating">{renderStars(rating)}</div>
+    <div class="tags">
+      {categories.map((category) => (
+        <span class="tag">{formatCategoryName(category)}</span>
+      ))}
+    </div>
+  </div>
+</div>
+
+<style>
+  .link-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: var(--background-color);
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .link-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  }
+
+  .link-icon {
+    flex-shrink: 0;
+    font-size: 2rem;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .link-info h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.2rem;
+  }
+
+  .link-info h3 a {
+    text-decoration: none;
+    color: var(--link-color);
+    transition: color 0.2s ease;
+  }
+
+  .link-info h3 a:hover {
+    color: var(--visited-color);
+  }
+
+  .link-info .comment {
+    margin: 0 0 0.75rem 0;
+    color: var(--text-color);
+    line-height: 1.5;
+  }
+
+  .rating {
+    color: #ffd700;
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .tag {
+    padding: 0.25rem 0.75rem;
+    background: var(--link-color);
+    color: white;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  /* Hidden state for filtered items */
+  .link-item.hidden {
+    display: none;
+  }
+
+  /* Dark mode adjustments */
+  @media (prefers-color-scheme: dark) {
+    .link-item {
+      border-color: #333;
+      background: var(--background-color);
+    }
+  }
+</style>

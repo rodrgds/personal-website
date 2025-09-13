@@ -1,0 +1,100 @@
+---
+interface Props {
+  categories: string[];
+}
+
+const { categories } = Astro.props;
+
+const allCategories = [...new Set(categories)].sort();
+
+// Function to properly format category names
+function formatCategoryName(category: string): string {
+  return category
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+---
+
+<section class="filter-section">
+  <h3>Filter by Category:</h3>
+  <div class="tag-buttons">
+    <button class="tag-btn active" data-category="all">All</button>
+    {allCategories.map((category) => (
+      <button class="tag-btn" data-category={category}>
+        {formatCategoryName(category)}
+      </button>
+    ))}
+  </div>
+</section>
+
+<style>
+  .filter-section {
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: var(--background-color);
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .filter-section h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.2rem;
+    color: var(--text-color);
+  }
+
+  .tag-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .tag-btn {
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--link-color);
+    background: transparent;
+    color: var(--link-color);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .tag-btn:hover,
+  .tag-btn.active {
+    background: var(--link-color);
+    color: white;
+  }
+
+  @media (max-width: 768px) {
+    .tag-buttons {
+      justify-content: center;
+    }
+
+    .filter-section {
+      padding: 1rem;
+      text-align: center;
+    }
+  }
+
+  /* Dark mode adjustments */
+  @media (prefers-color-scheme: dark) {
+    .filter-section {
+      border-color: #333;
+      background: var(--background-color);
+    }
+
+    .tag-btn {
+      border-color: var(--link-color);
+      color: var(--link-color);
+    }
+
+    .tag-btn:hover,
+    .tag-btn.active {
+      background: var(--link-color);
+      color: white;
+    }
+  }
+</style>
