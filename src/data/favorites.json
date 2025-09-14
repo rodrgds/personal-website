@@ -83,6 +83,30 @@
       "icon": "🎮",
       "rating": 4,
       "categories": ["entertainment", "tech", "lifestyle"]
+    },
+    {
+      "title": "The Matrix",
+      "year": "1999",
+      "image": "/images/favorites/the-matrix.webp",
+      "icon": "🕶️",
+      "rating": 5,
+      "categories": ["entertainment", "tech", "philosophy", "programming"]
+    },
+    {
+      "title": "The Founder",
+      "year": "2016",
+      "image": "/images/favorites/the-founder.webp",
+      "icon": "🍔",
+      "rating": 4,
+      "categories": ["business", "entertainment", "entrepreneurship"]
+    },
+    {
+      "title": "The Big Short",
+      "year": "2015",
+      "image": "/images/favorites/the-big-short.webp",
+      "icon": "💸",
+      "rating": 4,
+      "categories": ["business", "entertainment", "finance", "psychology"]
     }
   ],
   "shows": [
@@ -146,6 +170,15 @@
       "rating": 4,
       "comment": "Actually a pretty fun sitcom, even if it has its ups and downs.",
       "categories": ["entertainment", "lifestyle"]
+    },
+    {
+      "title": "Black Mirror",
+      "year": "2011-2019",
+      "image": "/images/favorites/black-mirror.webp",
+      "icon": "🪞",
+      "rating": 4,
+      "comment": "The distopian future we'll probably end up in. Some episodes suck though...",
+      "categories": ["entertainment", "technology", "psychology", "thriller"]
     }
   ],
   "podcasts": [
@@ -435,6 +468,13 @@
       "icon": "⚛️",
       "rating": 4,
       "categories": ["science", "education", "physics"]
+    },
+    {
+      "title": "Would You Take $1M or Gamble for $1B?",
+      "url": "https://www.youtube.com/watch?v=o-ovbHxSmuk",
+      "icon": "🎲",
+      "rating": 4,
+      "categories": ["science", "education", "psychology", "economics"]
     },
     {
       "title": "Types of Getting Rich",

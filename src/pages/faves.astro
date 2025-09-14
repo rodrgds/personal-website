@@ -3,6 +3,7 @@ import BaseHead from "../components/BaseHead.astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
 import { SITE_TITLE } from "../config";
+import { Image } from "astro:assets";
 import favoritesData from "../data/favorites.json";
 
 const title = "Favorites";
@@ -11,12 +12,12 @@ const description = "My favorite movies, shows, podcasts, books, blogs, articles
 // Default icons for sections when no specific icon is provided
 const getDefaultIcon = (section: string) => {
   switch (section) {
-    case 'movies': return '�';
-    case 'shows': return '�';
+    case 'movies': return '🎬';
+    case 'shows': return '📺';
     case 'podcasts': return '🎧';
-    case 'books': return '�';
+    case 'books': return '📚';
     case 'blogs': return '✍️';
-    case 'articles': return '�';
+    case 'articles': return '📄';
     case 'videos': return '▶️';
     case 'cool': return '⭐';
     default: return '⭐';
@@ -41,9 +42,9 @@ const getDefaultIcon = (section: string) => {
         </div>
 
         <!-- Clear filters button (shown only when filters active) -->
-        <!-- <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;">
+        <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;">
           <button id="clear-filters" class="clear-btn" style="display:none;">Clear Filters</button>
-        </div> -->
+        </div>
 
         {Object.entries(favoritesData).map(([section, items]) => (
           <section class="content-section" data-section={section}>
@@ -60,14 +61,18 @@ const getDefaultIcon = (section: string) => {
                   {/* Image/Icon */}
                   <div class="item-image">
                     {item.image ? (
-                      <img 
-                        src={item.image} 
+                      <Image 
+                        src={item.image}
                         alt={item.title}
+                        width={48}
+                        height={section === 'books' ? 64 : section === 'movies' || section === 'shows' ? 64 : 48}
                         class={`item-img ${
                           section === 'books' ? 'aspect-book' :
                           section === 'movies' || section === 'shows' ? 'aspect-poster' :
                           'aspect-square'
                         }`}
+                        loading="lazy"
+                        format="webp"
                       />
                     ) : (
                       <div class="item-icon">
@@ -165,12 +170,12 @@ const getDefaultIcon = (section: string) => {
         window.history.replaceState({}, '', url.toString());
       }
 
-  /**
-   * Highlight tag pills within a hovered item matching active filters.
-   * @param {*} item
-   */
-  // @ts-ignore implicit any acceptable here
-  function applyHoverHighlightsTo(item) {
+      /**
+       * Highlight tag pills within a hovered item matching active filters.
+       * @param {*} item
+       */
+      // @ts-ignore implicit any acceptable here
+      function applyHoverHighlightsTo(item) {
         // @ts-ignore
         const pills = item.querySelectorAll('.tag-pill');
         // @ts-ignore
@@ -205,9 +210,9 @@ const getDefaultIcon = (section: string) => {
         refreshHoveredHighlights();
       }
 
-  /** @param {*} category */
-  // @ts-ignore
-  function toggleFilter(category) {
+      /** @param {*} category */
+      // @ts-ignore
+      function toggleFilter(category) {
         if (!category) return;
         if (activeFilters.has(category)) activeFilters.delete(category); else activeFilters.add(category);
         updateDisplay();
