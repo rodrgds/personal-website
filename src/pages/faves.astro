@@ -17,7 +17,7 @@ const description = "My favorite movies, shows, podcasts, books, blogs, articles
   <body>
     <Header title={SITE_TITLE} />
     <main>
-      <FavoritesPage client:load />
+      <FavoritesPage client:only="svelte" />
     </main>
     <Footer />
   </body>
