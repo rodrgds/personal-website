@@ -315,34 +315,45 @@
               <div class="item-content">
                 <div class="item-header">
                   <div class="title-with-indicators">
-                    <h3 class="item-title">
-                      {#if item.url}
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
+                    <div class="title-and-meta">
+                      <h3 class="item-title">
+                        {#if item.url}
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {item.title}
+                          </a>
+                        {:else}
                           {item.title}
-                        </a>
-                      {:else}
-                        {item.title}
-                      {/if}
-                    </h3>
-                    <div class="indicators">
-                      {#if item.comment}
-                        <span class="indicator" title="Has comment">💬</span>
-                      {/if}
-                      {#if section === "podcasts" && item.favoriteEpisodes}
-                        <span class="indicator" title="Has favorite episodes"
-                          >⭐</span
-                        >
-                      {/if}
+                        {/if}
+                      </h3>
+                      <div class="item-meta">
+                        {#if item.author}<span class="author"
+                            >by {item.author}</span
+                          >{/if}
+                        {#if item.year}<span class="year">({item.year})</span
+                          >{/if}
+                      </div>
                     </div>
-                  </div>
-                  <div class="item-meta">
-                    {#if item.author}<span class="author">by {item.author}</span
-                      >{/if}
-                    {#if item.year}<span class="year">({item.year})</span>{/if}
+                    <div class="rating-container">
+                      {#if item.rating}
+                        <div class="rating-top">
+                          {renderStars(item.rating)}
+                        </div>
+                      {/if}
+                      <div class="indicators">
+                        {#if item.comment}
+                          <span class="indicator" title="Has comment">💬</span>
+                        {/if}
+                        {#if section === "podcasts" && item.favoriteEpisodes}
+                          <span class="indicator" title="Has favorite episodes"
+                            >⭐</span
+                          >
+                        {/if}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -374,13 +385,6 @@
                         </li>
                       {/each}
                     </ul>
-                  </div>
-                {/if}
-
-                <!-- Rating moved to bottom -->
-                {#if item.rating}
-                  <div class="rating-bottom">
-                    {renderStars(item.rating)}
                   </div>
                 {/if}
 
@@ -626,6 +630,9 @@
 
   .item-image {
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .item-img {
@@ -662,6 +669,8 @@
   .item-content {
     flex: 1;
     min-width: 0;
+    margin: 0;
+    padding: 0;
   }
 
   .item-header {
@@ -676,8 +685,22 @@
     margin-bottom: 0.25rem;
   }
 
+  .title-and-meta {
+    flex: 1;
+    min-width: 0;
+  }
+
   .indicators {
     display: flex;
+    gap: 0.25rem;
+    flex-shrink: 0;
+    justify-content: flex-end;
+  }
+
+  .rating-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
     gap: 0.25rem;
     flex-shrink: 0;
   }
@@ -690,9 +713,8 @@
   .item-title {
     font-size: 1rem;
     font-weight: 600;
-    margin: 0;
+    margin: 0 0 0.25rem 0;
     color: var(--text-color);
-    flex: 1;
   }
 
   .item-title a {
@@ -712,35 +734,15 @@
     font-size: 0.875rem;
     color: var(--text-color);
     opacity: 0.7;
+    margin: 0;
   }
 
-  .rating-bottom {
+  .rating-top {
     color: var(--link-color);
-    font-size: 0.875rem;
-    margin-top: 0.5rem;
-    opacity: 0;
-    visibility: hidden;
-    max-height: 0;
-    overflow: hidden;
-    transition: all 0.2s ease;
-  }
-
-  /* Desktop hover behavior */
-  @media (hover: hover) and (pointer: fine) {
-    .favorite-item:hover .rating-bottom {
-      opacity: 1;
-      visibility: visible;
-      max-height: 2rem;
-    }
-  }
-
-  /* Mobile click behavior */
-  @media (hover: none) and (pointer: coarse) {
-    .favorite-item.expanded .rating-bottom {
-      opacity: 1;
-      visibility: visible;
-      max-height: 2rem;
-    }
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
   }
 
   .item-comment {
@@ -780,14 +782,14 @@
   }
 
   .favorite-episodes {
-    margin: 0.75rem 0;
-    padding-top: 0.75rem;
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
     opacity: 0;
     visibility: hidden;
     max-height: 0;
     overflow: hidden;
     transition: all 0.2s ease;
+    margin: 0;
+    padding: 0;
+    border-top: none;
   }
 
   /* Desktop hover behavior */
@@ -796,6 +798,9 @@
       opacity: 1;
       visibility: visible;
       max-height: 20rem;
+      margin: 0.75rem 0;
+      padding-top: 0.75rem;
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
     }
   }
 
@@ -805,6 +810,9 @@
       opacity: 1;
       visibility: visible;
       max-height: 20rem;
+      margin: 0.75rem 0;
+      padding-top: 0.75rem;
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
     }
   }
 
@@ -902,7 +910,9 @@
       border-color: var(--link-color);
     }
 
-    .favorite-episodes {
+    /* Dark mode favorite episodes border */
+    .favorite-item:hover .favorite-episodes,
+    .favorite-item.expanded .favorite-episodes {
       border-top-color: rgba(255, 255, 255, 0.1);
     }
 

@@ -6,7 +6,15 @@
       "image": "/images/favorites/the-social-network.webp",
       "rating": 5,
       "comment": "Not THE movie that got me into programming, but definitely one that kept me in it.",
-      "categories": ["tech", "business", "entertainment", "programming"]
+      "categories": [
+        "tech",
+        "business",
+        "entertainment",
+        "programming",
+        "documentary",
+        "startup",
+        "biography"
+      ]
     },
     {
       "title": "Now You See Me",
@@ -21,14 +29,20 @@
       "image": "/images/favorites/rocky-i.webp",
       "rating": 5,
       "comment": "* as well as the rest of the Rocky & Creed movies. The underdog story that never gets old.",
-      "categories": ["entertainment", "lifestyle", "philosophy"]
+      "categories": ["entertainment", "lifestyle", "philosophy", "sports"]
     },
     {
       "title": "The Wolf of Wall Street",
       "year": "2013",
       "image": "/images/favorites/the-wolf-of-wall-street.webp",
       "rating": 5,
-      "categories": ["business", "entertainment", "finance", "psychology"]
+      "categories": [
+        "business",
+        "productivity",
+        "philosophy",
+        "tech",
+        "remote-work"
+      ]
     },
     {
       "title": "Inception",
@@ -50,7 +64,7 @@
       "image": "/images/favorites/f1.webp",
       "icon": "🏎️",
       "rating": 5,
-      "categories": ["entertainment", "tech"]
+      "categories": ["entertainment", "tech", "sports"]
     },
     {
       "title": "The Menu",
@@ -74,7 +88,7 @@
       "icon": "✈️",
       "rating": 5,
       "comment": "Really shows what modern filmmaking is capable of when done right.",
-      "categories": ["entertainment", "tech"]
+      "categories": ["entertainment", "tech", "sports"]
     },
     {
       "title": "Gran Turismo",
@@ -82,7 +96,7 @@
       "image": "/images/favorites/gran-turismo.webp",
       "icon": "🎮",
       "rating": 4,
-      "categories": ["entertainment", "tech", "lifestyle"]
+      "categories": ["entertainment", "tech", "lifestyle", "sports"]
     },
     {
       "title": "The Matrix",
@@ -98,7 +112,13 @@
       "image": "/images/favorites/the-founder.webp",
       "icon": "🍔",
       "rating": 4,
-      "categories": ["business", "entertainment", "entrepreneurship"]
+      "categories": [
+        "business",
+        "entertainment",
+        "entrepreneurship",
+        "documentary",
+        "biography"
+      ]
     },
     {
       "title": "The Big Short",
@@ -106,7 +126,13 @@
       "image": "/images/favorites/the-big-short.webp",
       "icon": "💸",
       "rating": 4,
-      "categories": ["business", "entertainment", "finance", "psychology"]
+      "categories": [
+        "business",
+        "entertainment",
+        "finance",
+        "psychology",
+        "documentary"
+      ]
     }
   ],
   "shows": [
@@ -126,7 +152,7 @@
       "icon": "🔓",
       "rating": 5,
       "comment": "The first two seasons are exceptional. Like actually the best seasons of any TV show ever made.",
-      "categories": ["entertainment", "thriller", "psychology"]
+      "categories": ["entertainment", "thriller", "psychology", "storytelling"]
     },
     {
       "title": "Ozark",
@@ -178,7 +204,7 @@
       "icon": "🪞",
       "rating": 4,
       "comment": "The distopian future we'll probably end up in. Some episodes suck though...",
-      "categories": ["entertainment", "technology", "psychology", "thriller"]
+      "categories": ["entertainment", "tech", "psychology", "thriller"]
     }
   ],
   "podcasts": [
@@ -188,7 +214,14 @@
       "icon": "🧠",
       "rating": 5,
       "comment": "Luke's takes on modern society, religion and tech culture. Don't go into it thinking you're going to agree with everything (but you might). Good reflection material.",
-      "categories": ["tech", "philosophy", "education", "linux", "minimalism"],
+      "categories": [
+        "tech",
+        "philosophy",
+        "education",
+        "linux",
+        "minimalism",
+        "open-source"
+      ],
       "favoriteEpisodes": [
         {
           "title": "The Economy is Fake, the Jobs Are Fake, the Money Is Fake"
@@ -209,7 +242,8 @@
         "education",
         "entrepreneurship",
         "marketing",
-        "finance"
+        "finance",
+        "startup"
       ],
       "favoriteEpisodes": [
         {
@@ -252,7 +286,8 @@
         "tech",
         "education",
         "entrepreneurship",
-        "marketing"
+        "marketing",
+        "startup"
       ]
     },
     {
@@ -277,7 +312,7 @@
       "icon": "🏠",
       "rating": 4,
       "comment": "It's been discontinued. I also really loved Linux Action News when it was around. Also from Jupiter Broadcasting.",
-      "categories": ["tech", "programming", "privacy", "tools"]
+      "categories": ["tech", "programming", "privacy", "tools", "open-source"]
     },
     {
       "title": "Programming Throwdown",
@@ -298,7 +333,9 @@
         "education",
         "entertainment",
         "security",
-        "privacy"
+        "privacy",
+        "cybersecurity",
+        "storytelling"
       ]
     }
   ],
@@ -310,7 +347,13 @@
       "icon": "🤔",
       "rating": 5,
       "comment": "27 conflicting answers to an impossible question. Sivers' contrarian wisdom at its best.",
-      "categories": ["philosophy", "lifestyle", "education", "minimalism"]
+      "categories": [
+        "philosophy",
+        "lifestyle",
+        "education",
+        "minimalism",
+        "self-improvement"
+      ]
     },
     {
       "title": "The Almanack of Naval Ravikant",
@@ -319,7 +362,14 @@
       "icon": "⚓",
       "rating": 5,
       "comment": "Wealth and happiness principles from one of the sharpest minds in tech. Timeless wisdom combined with his (Naval's) podcast and tweets.",
-      "categories": ["business", "philosophy", "lifestyle", "tech", "finance"]
+      "categories": [
+        "business",
+        "philosophy",
+        "lifestyle",
+        "tech",
+        "finance",
+        "self-improvement"
+      ]
     },
     {
       "title": "Cosmos",
@@ -357,7 +407,8 @@
         "tech",
         "philosophy",
         "entrepreneurship",
-        "education"
+        "education",
+        "startup"
       ]
     },
     {
@@ -366,7 +417,14 @@
       "icon": "🐧",
       "rating": 4,
       "comment": "Always makes you think differently.",
-      "categories": ["tech", "philosophy", "linux", "minimalism", "education"]
+      "categories": [
+        "tech",
+        "philosophy",
+        "linux",
+        "minimalism",
+        "education",
+        "open-source"
+      ]
     }
   ],
   "articles": [
@@ -383,14 +441,14 @@
       "url": "https://blog.sigplan.org/2025/03/31/how-to-give-a-good-talk/",
       "icon": "🎤",
       "rating": 4,
-      "categories": ["education", "communication", "career"]
+      "categories": ["education", "communication", "career", "storytelling"]
     },
     {
       "title": "What I look for in a resume",
       "url": "https://www.reddit.com/r/cybersecurity/comments/1mo5pmc/what_i_look_for_in_a_resume/",
       "icon": "📄",
       "rating": 4,
-      "categories": ["career", "security", "education"]
+      "categories": ["career", "security", "education", "cybersecurity"]
     },
     {
       "title": "How to (and how not to) design REST APIs",
@@ -404,7 +462,13 @@
       "url": "https://onlineornot.com/how-to-get-your-first-ten-customers",
       "icon": "🎯",
       "rating": 4,
-      "categories": ["business", "marketing", "entrepreneurship", "education"]
+      "categories": [
+        "business",
+        "marketing",
+        "entrepreneurship",
+        "education",
+        "startup"
+      ]
     },
     {
       "title": "Developer philosophy",
@@ -452,7 +516,7 @@
       "icon": "🛠️",
       "rating": 5,
       "comment": "Mannn I hope to revisit this in the future. So much good stuff.",
-      "categories": ["programming", "education", "tools", "tech"]
+      "categories": ["programming", "education", "tools", "tech", "open-source"]
     },
     {
       "title": "3Blue1Brown",
@@ -460,7 +524,13 @@
       "icon": "📐",
       "rating": 5,
       "comment": "Grant Sanderson makes mathematics beautiful and intuitive through amazing visualizations. Plus he made Manim!",
-      "categories": ["math", "education", "science", "visualization"]
+      "categories": [
+        "math",
+        "education",
+        "science",
+        "visualization",
+        "creativity"
+      ]
     },
     {
       "title": "ALL OF PHYSICS explained in 14 Minutes",
@@ -474,21 +544,27 @@
       "url": "https://www.youtube.com/watch?v=o-ovbHxSmuk",
       "icon": "🎲",
       "rating": 4,
-      "categories": ["science", "education", "psychology", "economics"]
+      "categories": ["science", "education", "psychology", "economics", "math"]
     },
     {
       "title": "Types of Getting Rich",
       "url": "https://www.youtube.com/watch?v=t3gxKgAkcLk",
       "icon": "💰",
       "rating": 4,
-      "categories": ["business", "finance", "education", "entrepreneurship"]
+      "categories": [
+        "business",
+        "finance",
+        "education",
+        "entrepreneurship",
+        "economics"
+      ]
     },
     {
       "title": "How to Start a Speech",
       "url": "https://www.youtube.com/watch?v=w82a1FT5o88",
       "icon": "🎤",
       "rating": 4,
-      "categories": ["communication", "education", "career"]
+      "categories": ["communication", "education", "career", "storytelling"]
     },
     {
       "title": "How to Speak",
@@ -496,7 +572,7 @@
       "icon": "🗣️",
       "rating": 5,
       "comment": "Public speaking fundamentals that actually work.",
-      "categories": ["communication", "education", "career"]
+      "categories": ["communication", "education", "career", "storytelling"]
     },
     {
       "title": "Hugo Actually Explained",
@@ -520,14 +596,14 @@
       "icon": "🏢",
       "rating": 5,
       "comment": "Company that actually practices what they preach about remote work and simple software.",
-      "categories": ["business", "productivity", "philosophy"]
+      "categories": ["business", "productivity", "philosophy", "tech"]
     },
     {
       "title": "Build Your Own <X>",
       "url": "https://github.com/codecrafters-io/build-your-own-x",
       "icon": "🔨",
       "rating": 5,
-      "categories": ["programming", "education", "tools"]
+      "categories": ["programming", "education", "tools", "open-source"]
     },
     {
       "title": "Putting the \"You\" in CPU",
@@ -548,7 +624,7 @@
       "url": "https://docs.google.com/spreadsheets/d/1CRtEQzSVE59jj5ROKZlttkRtUpJfcc4mgMT7Wn1aBcA/edit?gid=1801357598#gid=1801357598",
       "icon": "🔒",
       "rating": 4,
-      "categories": ["privacy", "security", "tools", "data"]
+      "categories": ["privacy", "security", "tools", "data", "cybersecurity"]
     },
     {
       "title": "Music-Map",
@@ -577,7 +653,14 @@
       "icon": "👔",
       "rating": 5,
       "comment": "Comprehensive guide to technical leadership in startups. Open-source wisdom.",
-      "categories": ["business", "tech", "leadership", "programming", "career"]
+      "categories": [
+        "business",
+        "tech",
+        "leadership",
+        "programming",
+        "career",
+        "entrepreneurship"
+      ]
     },
     {
       "title": "High Agency",
@@ -585,14 +668,20 @@
       "icon": "⚡",
       "rating": 5,
       "comment": "No matter who you are or what you do, please read this. It takes 30 minutes and will change your life.",
-      "categories": ["productivity", "philosophy", "lifestyle", "education"]
+      "categories": [
+        "productivity",
+        "philosophy",
+        "lifestyle",
+        "education",
+        "self-improvement"
+      ]
     },
     {
       "title": "Learn Music",
       "url": "https://learningmusic.ableton.com/",
       "icon": "🎹",
       "rating": 4,
-      "categories": ["music", "education", "tools"]
+      "categories": ["music", "education", "tools", "creativity"]
     },
     {
       "title": "News Minimalist",
