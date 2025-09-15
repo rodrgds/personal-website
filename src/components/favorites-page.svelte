@@ -8,6 +8,7 @@
   let filterLogic = "AND"; // "AND" or "OR"
   let isMobile = false;
   let sortBy = "alpha"; // "alpha", "alpha-desc", "rating", "rating-desc"
+  let mounted = false;
 
   // Default icons for sections
   const getDefaultIcon = (section) => {
@@ -189,6 +190,7 @@
 
   // Lifecycle
   onMount(() => {
+    mounted = true;
     initFromURL();
     detectMobile();
     document.addEventListener("click", handleOutsideClick);
@@ -201,7 +203,7 @@
   });
 
   // Watch for changes to update URL
-  $: if (typeof window !== "undefined") {
+  $: if (mounted && typeof window !== "undefined") {
     updateURL();
   }
 </script>
