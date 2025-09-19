@@ -580,6 +580,14 @@
       "icon": "🌐",
       "rating": 4,
       "categories": ["web-dev", "programming", "education", "tools"]
+    },
+    {
+      "title": "white girl music (but it's for the boys)",
+      "url": "https://www.youtube.com/watch?v=ZS5DeEqTgjM",
+      "icon": "🎵",
+      "rating": 5,
+      "comment": "1h of white girl music everyone knows, but remixed by a CS caster! BANGER!",
+      "categories": ["music", "entertainment", "creativity"]
     }
   ],
   "cool": [
