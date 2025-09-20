@@ -142,7 +142,7 @@
       "image": "/images/favorites/the-queens-gambit.webp",
       "icon": "♟️",
       "rating": 5,
-      "comment": "Chess as character study. Anya Taylor-Joy is phenomenal.",
+      "comment": "Chess as character study. Anya Taylor-Joy is phenomenal (here and in other TV Shows and Movies).",
       "categories": ["entertainment", "education", "psychology", "lifestyle"]
     },
     {
@@ -151,7 +151,7 @@
       "image": "/images/favorites/prison-break.webp",
       "icon": "🔓",
       "rating": 5,
-      "comment": "The first two seasons are exceptional. Like actually the best seasons of any TV show ever made.",
+      "comment": "The first two seasons are exceptional. Like actually the best seasons of any TV show I've ever watched.",
       "categories": ["entertainment", "thriller", "psychology", "storytelling"]
     },
     {
@@ -160,7 +160,7 @@
       "image": "/images/favorites/ozark.webp",
       "icon": "💰",
       "rating": 4,
-      "comment": "Money laundering meets family drama. Jason Bateman's dark turn works perfectly.",
+      "comment": "Money laundering meets family drama.",
       "categories": ["entertainment", "business", "thriller", "finance"]
     },
     {
@@ -194,7 +194,7 @@
       "image": "/images/favorites/how-i-met-your-mother.webp",
       "icon": "☂️",
       "rating": 4,
-      "comment": "Actually a pretty fun sitcom, even if it has its ups and downs.",
+      "comment": "Actually a pretty fun and entertaining sitcom, even if it has its ups and downs.",
       "categories": ["entertainment", "lifestyle"]
     },
     {
@@ -213,7 +213,7 @@
       "image": "/images/favorites/not-related.webp",
       "icon": "🧠",
       "rating": 5,
-      "comment": "Luke's takes on modern society, religion and tech culture. Don't go into it thinking you're going to agree with everything (but you might). Good reflection material.",
+      "comment": "Luke's takes on modern society, religion and tech culture. Don't go into it thinking you're going to agree with everything (even though you might). Good reflection material.",
       "categories": [
         "tech",
         "philosophy",
@@ -236,7 +236,7 @@
       "image": "/images/favorites/the-game.jpeg",
       "icon": "💼",
       "rating": 5,
-      "comment": "Alex is like the best guru that ACTUALLY has a clue what he's talking about. Plus he can explain them in a way that makes sense.",
+      "comment": "Alex is like the best guru that ACTUALLY has a clue what he's talking about. Plus he can explain stuff in a way that makes sense.",
       "categories": [
         "business",
         "education",
@@ -295,7 +295,7 @@
       "image": "/images/favorites/syntax.jpeg",
       "icon": "🌐",
       "rating": 4,
-      "comment": "Wes Bos and Scott Tolinski keep me updated on the latest web dev trends. This is more of a picky podcast - I don't listen to everything they put out, but when I do it's usually worth it.",
+      "comment": "Wes Bos and Scott Tolinski keep me updated on the latest web dev trends. This is more of a picky podcast - I don't listen to everything they put out, but when I do it's usually worth it and I want to learn about it.",
       "categories": ["programming", "web-dev", "tech", "education"]
     },
     {
@@ -319,7 +319,7 @@
       "image": "/images/favorites/programming-throwdown.jpeg",
       "icon": "🥊",
       "rating": 5,
-      "comment": "1-2 hour deep dives into programming topics. Great for learning new concepts. Seriously great.",
+      "comment": "1-2 hour deep dives into programming topics. Great for learning new concepts. Seriously, it's awesome!",
       "categories": ["programming", "education", "tech"]
     },
     {
@@ -327,7 +327,7 @@
       "image": "/images/favorites/darknet-diaries.jpeg",
       "icon": "🕵️",
       "rating": 4,
-      "comment": "True cybercrime stories told like Netflix documentaries. Jack Rhysider is a master storyteller.",
+      "comment": "True cybercrime stories told like Netflix documentaries by Jack Rhysider (a master storyteller).",
       "categories": [
         "tech",
         "education",
@@ -346,7 +346,7 @@
       "image": "/images/favorites/how-to-live.jpg",
       "icon": "🤔",
       "rating": 5,
-      "comment": "27 conflicting answers to an impossible question. Sivers' contrarian wisdom at its best.",
+      "comment": "27 conflicting answers to an impossible question. Short, sweet, and thought-provoking (and mostly stuff you've already thought about but just never articulated).",
       "categories": [
         "philosophy",
         "lifestyle",
@@ -361,7 +361,7 @@
       "image": "/images/favorites/the-almanack-of-naval-ravikant.png",
       "icon": "⚓",
       "rating": 5,
-      "comment": "Wealth and happiness principles from one of the sharpest minds in tech. Timeless wisdom combined with his (Naval's) podcast and tweets.",
+      "comment": "Wealth and happiness principles. Timeless wisdom combined with his (Naval's) podcast and tweets.",
       "categories": [
         "business",
         "philosophy",
@@ -393,7 +393,7 @@
       "url": "https://simonwillison.net/",
       "icon": "🤖",
       "rating": 5,
-      "comment": "I seriously have no idea how this guy has the time to put up this amount of content out. And quality!",
+      "comment": "I seriously have no idea how this guy has the time to put up this amount of content out. And with this quality!",
       "categories": ["programming", "ai", "tech", "education", "web-dev"]
     },
     {
@@ -416,7 +416,7 @@
       "url": "https://lukesmith.xyz/",
       "icon": "🐧",
       "rating": 4,
-      "comment": "Always makes you think differently.",
+      "comment": "I just like Luke Smith man, can you blame me?",
       "categories": [
         "tech",
         "philosophy",
@@ -433,7 +433,7 @@
       "url": "https://pudding.cool/",
       "icon": "📊",
       "rating": 5,
-      "comment": "Really cool articles, mostly to do with data analysis, also it's built on SvelteKit and the articles are interactive and really animated!",
+      "comment": "Really cool articles, mostly to do with data analysis (as in the result of it, not the actual process of gathering the data and analysing it), also it's built on SvelteKit and the articles are interactive and really animated!",
       "categories": ["data", "design", "education", "visualization", "web-dev"]
     },
     {
@@ -523,7 +523,7 @@
       "url": "https://www.youtube.com/c/3blue1brown",
       "icon": "📐",
       "rating": 5,
-      "comment": "Grant Sanderson makes mathematics beautiful and intuitive through amazing visualizations. Plus he made Manim!",
+      "comment": "Grant Sanderson makes mathematics beautiful and intuitive through amazing visualizations. Plus he built Manim!",
       "categories": [
         "math",
         "education",
@@ -602,8 +602,8 @@
       "title": "37signals",
       "url": "https://37signals.com/",
       "icon": "🏢",
-      "rating": 5,
-      "comment": "Company that actually practices what they preach about remote work and simple software.",
+      "rating": 4,
+      "comment": "Company that actually practices what they preach about remote work and simple software. Cool principles as well.",
       "categories": ["business", "productivity", "philosophy", "tech"]
     },
     {
@@ -675,7 +675,7 @@
       "url": "https://www.highagency.com/",
       "icon": "⚡",
       "rating": 5,
-      "comment": "No matter who you are or what you do, please read this. It takes 30 minutes and will change your life.",
+      "comment": "No matter who you are or what you do, please read this. It takes 30 minutes and will change your view on life.",
       "categories": [
         "productivity",
         "philosophy",
