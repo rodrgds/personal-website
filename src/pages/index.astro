@@ -35,10 +35,10 @@ const posts = await getCollection("blog").then((posts) =>
         I love <b><i>teaching</i></b> and <b>learning</b>. I have a special interest in <Logo src="firefox" /> <b>web dev</b>, <Logo src="linux" /> <b>Linux</b>, <b>FOSS</b>, <b>self-hosting</b>, and <i>minimalism</i>.
       </p>
       <p>
-        Outside tech, I enjoy 🚴‍♂️ <b>biking</b>, 📷 <b>photography</b>, and playing 🏓 <b>table tennis</b>.
+        Outside tech, I enjoy 🚴‍♂️ <b>biking</b>, 📷 <b>photography</b>, 🏋️‍♂️ <b>weight lifting</b>, and playing 🏓 <b>table tennis</b>.
       </p>
 
-      <a href="/now">See what I'm up to</a>, <a href="/uses">check what I use</a>, <a href="/favorites">browse my favorites</a>, <a href="mailto:hey@rgo.pt">email me</a> or <a href="/donate">support me</a>.
+      See <a href="/now">what I'm up to</a>, check <a href="/uses">what I use</a>, browse <a href="/faves">my favorite media</a>, <a href="mailto:hey@rgo.pt">email me</a> or <a href="/donate">support me</a>.
 
       <ul class="socials">
         {SOCIALS.map((social) => (
@@ -126,25 +126,29 @@ const posts = await getCollection("blog").then((posts) =>
     <Footer />
 
     <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const expandButton = document.getElementById('expand-socials');
+      // Use event delegation so the handler works even after client-side navigation
+      document.addEventListener('click', function (event) {
+        const target = event.target;
+        if (!target || !(target instanceof Element)) return;
+
+        // Find the closest expand button (support clicks on the span inside)
+        const expandButton = target.closest('#expand-socials');
+        if (!expandButton) return;
+
         const extraSocials = document.getElementById('extra-socials');
-        
-        if (expandButton && extraSocials) {
-          expandButton.addEventListener('click', function() {
-            const isHidden = extraSocials.classList.contains('hidden');
-            const buttonSpan = expandButton.querySelector('span');
-            
-            if (isHidden) {
-              extraSocials.classList.remove('hidden');
-              if (buttonSpan) buttonSpan.textContent = '×';
-              expandButton.setAttribute('aria-label', 'Hide additional social links');
-            } else {
-              extraSocials.classList.add('hidden');
-              if (buttonSpan) buttonSpan.textContent = '•••';
-              expandButton.setAttribute('aria-label', 'Show more social links');
-            }
-          });
+        if (!extraSocials) return;
+
+        const isHidden = extraSocials.classList.contains('hidden');
+        const buttonSpan = expandButton.querySelector('span');
+
+        if (isHidden) {
+          extraSocials.classList.remove('hidden');
+          if (buttonSpan) buttonSpan.textContent = '×';
+          expandButton.setAttribute('aria-label', 'Hide additional social links');
+        } else {
+          extraSocials.classList.add('hidden');
+          if (buttonSpan) buttonSpan.textContent = '•••';
+          expandButton.setAttribute('aria-label', 'Show more social links');
         }
       });
     </script>

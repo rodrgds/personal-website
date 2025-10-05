@@ -213,9 +213,8 @@
     <h1>My Favorites</h1>
     <p>
       A curated collection of my favorite movies, shows, podcasts, books, blogs,
-      articles, videos, and cool stuff that have shaped my thinking. These are
-      the best of the best content I've ever consumed - saved here to revisit as
-      I get older.
+      articles, videos, and cool stuff that have shaped my thinking. Saved here
+      to revisit as I get older.
     </p>
   </div>
 
