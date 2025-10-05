@@ -14,7 +14,7 @@ const doubleSize = size * 2;
 
 // Check if src is an emoji or special character
 function isEmoji(str: string) {
-  return /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(str) || str.length === 1;
+  return /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(str);
 }
 ---
 
