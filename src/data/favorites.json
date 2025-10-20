@@ -491,6 +491,14 @@
       "rating": 4,
       "comment": "The current AI limitations and assumptions.",
       "categories": ["ai", "tech", "philosophy", "education"]
+    },
+    {
+      "title": "Doing well in your courses",
+      "url": "https://cs.stanford.edu/people/karpathy/advice.html",
+      "icon": "🎓",
+      "rating": 5,
+      "comment": "Andrej Karpathy's guide on how to actually study and do well in uni.",
+      "categories": ["education", "career", "productivity", "self-improvement"]
     }
   ],
   "videos": [
