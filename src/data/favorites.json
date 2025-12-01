@@ -499,6 +499,14 @@
       "rating": 5,
       "comment": "Andrej Karpathy's guide on how to actually study and do well in uni.",
       "categories": ["education", "career", "productivity", "self-improvement"]
+    },
+    {
+      "title": "Game design is simple, actually",
+      "url": "https://www.raphkoster.com/2025/11/03/game-design-is-simple-actually/",
+      "icon": "🎮",
+      "rating": 5,
+      "comment": "Raph Koster condenses decades of game design theory into 12 super-dense, practical points. One of those essays you can revisit every few years and keep pulling new insight from.",
+      "categories": ["game-design", "design", "education", "creativity"]
     }
   ],
   "videos": [
@@ -604,6 +612,14 @@
       "rating": 4,
       "comment": "3 minute video from a random dude I just got recommended. Really genuine, which is not usual these days!",
       "categories": ["lifestyle", "philosophy"]
+    },
+    {
+      "title": "Is it worth it to ask 'is it worth it to learn vim?'?",
+      "url": "https://www.youtube.com/watch?v=hEU7R-nu9wM",
+      "icon": "⌨️",
+      "rating": 4,
+      "comment": "Short reflection on why overthinking learning stuff can be more limiting than just diving in and seeing where they take you.",
+      "categories": ["programming", "tools", "education"]
     }
   ],
   "cool": [
@@ -713,6 +729,14 @@
       "icon": "📰",
       "rating": 4,
       "categories": ["news", "minimalism", "tools"]
+    },
+    {
+      "title": "Linux Kernel Explorer",
+      "url": "https://reverser.dev/linux-kernel-explorer",
+      "icon": "🐧",
+      "rating": 5,
+      "comment": "Interactive Linux kernel map that makes the architecture feel way more approachable. Great for just poking around and seeing how the pieces fit together.",
+      "categories": ["linux", "programming", "education", "tools"]
     }
   ]
 }

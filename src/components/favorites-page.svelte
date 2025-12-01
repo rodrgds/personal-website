@@ -52,6 +52,7 @@
 
   $: visibleSections = Object.entries(favoritesData).map(([section, items]) => {
     const visibleItems = items.filter((item) => {
+      // Check category filters
       if (activeFilters.size === 0) return true;
 
       if (filterLogic === "AND") {
@@ -188,6 +189,19 @@
     );
   }
 
+  function goToRandomFavorite() {
+    const itemsWithUrl = Object.values(favoritesData)
+      .flatMap((items) => items)
+      .filter((item) => !!item.url);
+
+    if (itemsWithUrl.length === 0) return;
+
+    const randomItem =
+      itemsWithUrl[Math.floor(Math.random() * itemsWithUrl.length)];
+
+    window.open(randomItem.url, "_blank", "noopener,noreferrer");
+  }
+
   // Lifecycle
   onMount(() => {
     mounted = true;
@@ -221,22 +235,33 @@
   <!-- Filter Controls -->
   <div class="filter-controls">
     <div class="filter-header">
-      <h3>Filters & Sort</h3>
+      <div class="filter-title-row">
+        <h3>Filters & Sort</h3>
+        <button
+          class="surprise-btn"
+          on:click={goToRandomFavorite}
+          title="Visit a random favorite"
+        >
+          🎲 Surprise me
+        </button>
+      </div>
       <div class="filter-options">
         <div class="filter-logic">
           <button
             class="logic-btn"
             class:active={filterLogic === "AND"}
             on:click={() => (filterLogic = "AND")}
+            title="Show items that have ALL selected tags"
           >
-            All
+            Match all
           </button>
           <button
             class="logic-btn"
             class:active={filterLogic === "OR"}
             on:click={() => (filterLogic = "OR")}
+            title="Show items that have ANY of the selected tags"
           >
-            Any
+            Match any
           </button>
         </div>
         <div class="sort-options">
@@ -443,6 +468,35 @@
     margin: 0;
     font-weight: 400;
     line-height: 1.5;
+  }
+
+  .filter-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .surprise-btn {
+    font-family: var(--font-family);
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.375rem;
+    border: 1px solid var(--link-color);
+    background: transparent;
+    color: var(--link-color);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
+    font-weight: 500;
+  }
+
+  .surprise-btn:hover {
+    background: var(--link-color);
+    color: white;
   }
 
   .clear-btn {
@@ -965,17 +1019,49 @@
       gap: 0.75rem;
     }
 
-    .filter-options {
-      align-self: stretch;
+    .filter-title-row {
+      width: 100%;
       justify-content: space-between;
+    }
+
+    .surprise-btn {
+      font-size: 0.8rem;
+      padding: 0.3rem 0.6rem;
+    }
+
+    .filter-options {
+      width: 100%;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .filter-logic {
+      flex: 1;
     }
 
     .logic-btn {
       flex: 1;
+      font-size: 0.8rem;
+      padding: 0.35rem 0.5rem;
+      text-align: center;
+    }
+
+    .sort-options {
+      flex-shrink: 0;
+    }
+
+    .sort-options select {
+      font-size: 0.8rem;
+      padding: 0.4rem 0.5rem;
     }
 
     .filter-tags {
       max-height: 6rem; /* Slightly less on mobile */
+    }
+
+    .filter-chip {
+      font-size: 0.8rem;
+      padding: 0.3rem 0.6rem;
     }
   }
 </style>
