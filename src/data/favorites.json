@@ -703,21 +703,6 @@
       "categories": ["productivity", "organization", "minimalism"]
     },
     {
-      "title": "The Startup CTO's Handbook",
-      "url": "https://github.com/ZachGoldberg/Startup-CTO-Handbook/blob/main/StartupCTOHandbook.md",
-      "icon": "👔",
-      "rating": 5,
-      "comment": "Comprehensive guide to technical leadership in startups. Open-source wisdom.",
-      "categories": [
-        "business",
-        "tech",
-        "leadership",
-        "programming",
-        "career",
-        "entrepreneurship"
-      ]
-    },
-    {
       "title": "High Agency",
       "url": "https://www.highagency.com/",
       "icon": "⚡",
