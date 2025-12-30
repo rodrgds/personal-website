@@ -1,0 +1,121 @@
+---
+import ToolLayout from "../../layouts/ToolLayout.astro";
+import Card from "../../components/ui/Card.astro";
+import Button from "../../components/ui/Button.astro";
+import Link from "../../components/ui/Link.astro";
+
+const tools = [
+  {
+    title: "Example Tool 1",
+    description: "A placeholder for a future static tool.",
+    link: "/tools/example-1",
+  },
+  {
+    title: "Example Tool 2",
+    description: "Another placeholder tool.",
+    link: "/tools/example-2",
+  },
+];
+---
+
+<ToolLayout
+  title="Personal Tools"
+  description="A collection of small utilities and tools I've built."
+>
+  <div class="tools-grid">
+    {
+      tools.map((tool) => (
+        <Card class="tool-card">
+          <h2>{tool.title}</h2>
+          <p>{tool.description}</p>
+          <Link href={tool.link} variant="primary" size="sm">
+            Open Tool
+          </Link>
+        </Card>
+      ))
+    }
+  </div>
+
+  <div class="coming-soon">
+    <h3>More tools coming soon!</h3>
+    <p>I am currently migrating my tools to this new platform.</p>
+    <Button variant="outline" size="sm" onclick="alert('Stay tuned!')">
+      Notify Me
+    </Button>
+  </div>
+</ToolLayout>
+
+<style>
+  .tools-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  @media (min-width: 768px) {
+    .tools-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .tool-card {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    height: 100%;
+    transition: transform 0.2s ease-in-out;
+  }
+
+  .tool-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .tool-card h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--heading-color);
+  }
+
+  .tool-card p {
+    margin-bottom: 1.5rem;
+    flex-grow: 1;
+    color: var(--text-color);
+    line-height: 1.6;
+    opacity: 0.9;
+  }
+
+  .coming-soon {
+    margin-top: 4rem;
+    padding: 3rem 2rem;
+    background-color: var(--background-color);
+    border: 2px dashed var(--link-color);
+    border-radius: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1rem;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+  }
+
+  .coming-soon:hover {
+    opacity: 1;
+  }
+
+  .coming-soon h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--heading-color);
+  }
+
+  .coming-soon p {
+    margin: 0;
+    font-size: 1.1rem;
+    max-width: 40ch;
+    color: var(--text-color);
+  }
+</style>

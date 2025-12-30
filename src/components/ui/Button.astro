@@ -1,0 +1,110 @@
+---
+interface Props {
+  href?: string;
+  type?: "button" | "submit" | "reset";
+  variant?: "primary" | "secondary" | "outline" | "ghost";
+  size?: "sm" | "md" | "lg";
+  class?: string;
+  [key: string]: any;
+}
+
+const {
+  href,
+  type = "button",
+  variant = "primary",
+  size = "md",
+  class: className,
+  ...props
+} = Astro.props;
+
+const Tag = href ? "a" : "button";
+---
+
+<Tag
+  href={href}
+  type={href ? undefined : type}
+  class:list={["button-base", `variant-${variant}`, `size-${size}`, className]}
+  {...props}
+>
+  <slot />
+</Tag>
+
+<style>
+  .button-base {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition:
+      background-color 0.2s,
+      color 0.2s,
+      opacity 0.2s;
+    cursor: pointer;
+    font-family: inherit;
+    border: none;
+    text-decoration: none;
+    line-height: normal;
+  }
+
+  .button-base:disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .button-base:focus-visible {
+    outline: 2px solid var(--link-color);
+    outline-offset: 2px;
+  }
+
+  /* Variants */
+  .variant-primary {
+    background-color: var(--link-color);
+    color: white;
+  }
+  .variant-primary:hover {
+    opacity: 0.9;
+  }
+
+  .variant-secondary {
+    background-color: var(--border-color);
+    color: var(--heading-color);
+  }
+  .variant-secondary:hover {
+    opacity: 0.8;
+  }
+
+  .variant-outline {
+    background-color: transparent;
+    border: 2px solid var(--link-color);
+    color: var(--link-color);
+  }
+  .variant-outline:hover {
+    background-color: var(--link-color);
+    color: white;
+  }
+
+  .variant-ghost {
+    background-color: transparent;
+    color: var(--link-color);
+  }
+  .variant-ghost:hover {
+    background-color: rgba(125, 125, 125, 0.1);
+  }
+
+  /* Sizes */
+  .size-sm {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  .size-md {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+  }
+
+  .size-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.125rem;
+  }
+</style>

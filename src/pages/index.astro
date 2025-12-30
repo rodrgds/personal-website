@@ -1,13 +1,13 @@
 ---
-import BaseHead from "../components/BaseHead.astro";
-import Header from "../components/Header.astro";
-import Footer from "../components/Footer.astro";
+import BaseHead from "../components/common/BaseHead.astro";
+import Header from "../components/common/Header.astro";
+import Footer from "../components/common/Footer.astro";
 import { SITE_TITLE, SITE_DESCRIPTION } from "../config";
 import { getCollection } from "astro:content";
 import { SOCIALS, EXTRA_SOCIALS } from "../data/socials";
-import Logo from "../components/Logo.astro";
-import DateOfBirth from "../components/date-of-birth.svelte";
-// import WorldMap from "../components/world-map.svelte";
+import Logo from "../components/common/Logo.astro";
+import DateOfBirth from "../components/features/home/date-of-birth.svelte";
+// import WorldMap from "../components/features/home/world-map.svelte";
 // import projects from "../data/projects.json";
 
 const posts = await getCollection("blog").then((posts) =>

@@ -1,0 +1,63 @@
+---
+import Button from "./Button.astro";
+
+interface Props {
+  href: string;
+  variant?: "primary" | "secondary" | "outline" | "ghost" | "link";
+  size?: "sm" | "md" | "lg";
+  class?: string;
+  external?: boolean;
+  [key: string]: any;
+}
+
+const {
+  href,
+  variant = "link",
+  size = "md",
+  class: className,
+  external,
+  ...props
+} = Astro.props;
+
+const isButtonVariant = variant !== "link";
+const target = external ? "_blank" : undefined;
+const rel = external ? "noopener noreferrer" : undefined;
+---
+
+{
+  isButtonVariant ? (
+    <Button
+      href={href}
+      variant={variant}
+      size={size}
+      class={className}
+      target={target}
+      rel={rel}
+      {...props}
+    >
+      <slot />
+    </Button>
+  ) : (
+    <a
+      href={href}
+      class:list={["link-base", className]}
+      target={target}
+      rel={rel}
+      {...props}
+    >
+      <slot />
+    </a>
+  )
+}
+
+<style>
+  .link-base {
+    color: var(--link-color);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .link-base:hover {
+    color: var(--visited-color);
+    text-decoration: underline;
+  }
+</style>
