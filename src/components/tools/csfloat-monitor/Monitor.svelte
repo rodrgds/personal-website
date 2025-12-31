@@ -604,6 +604,38 @@
                 <span class="help-text"
                   >Rotation & automatic retry on failure.</span
                 >
+                <div class="tip-box">
+                  <strong>Option 1: Local Proxy (Best Performance)</strong>
+                  <ol>
+                    <li>
+                      Install Node.js then run: <code
+                        >npm i -g local-cors-proxy</code
+                      >
+                    </li>
+                    <li>
+                      Start: <code>lcp --proxyUrl https://csfloat.com</code>
+                    </li>
+                    <li>
+                      Use <code>http://localhost:8010/proxy</code> (Check "Direct").
+                    </li>
+                  </ol>
+
+                  <hr class="tip-divider" />
+
+                  <strong>Option 2: Cloud Proxy (Easiest)</strong>
+                  <p class="tip-text">
+                    Use <code>https://corsproxy.io/?</code> (Uncheck "Direct"). No
+                    setup required, but may encounter rate limits.
+                  </p>
+
+                  <p
+                    class="tip-text"
+                    style="margin-top: 0.5rem; opacity: 0.8; font-style: italic;"
+                  >
+                    <strong>Pro Tip:</strong> Keep both in the list for maximum resilience
+                    (default setup).
+                  </p>
+                </div>
               </div>
             </div>
           {/if}
@@ -1498,6 +1530,37 @@
     padding-left: 0.5rem !important;
     padding-right: 0.5rem !important;
     min-width: 0 !important;
+  }
+
+  .tip-box {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background: rgba(37, 99, 235, 0.05); /* Blue tint */
+    border: 1px solid rgba(37, 99, 235, 0.1);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: var(--text-color);
+  }
+  :global(.dark) .tip-box {
+    background: rgba(37, 99, 235, 0.1);
+    border-color: rgba(37, 99, 235, 0.2);
+  }
+  .tip-box ol {
+    margin: 0.5rem 0 0 1.2rem;
+    padding: 0;
+  }
+  .tip-box li {
+    margin-bottom: 0.25rem;
+  }
+  .tip-divider {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 0.75rem 0;
+    opacity: 0.5;
+  }
+  .tip-text {
+    margin: 0.25rem 0 0 0;
+    line-height: 1.4;
   }
   .progress {
     width: 100%;

@@ -44,14 +44,26 @@ export async function fetchListings(
   if (settings.marketHashName) params.append("market_hash_name", settings.marketHashName);
 
   const targetUrl = `https://csfloat.com/api/v1/listings?${params.toString()}`;
-  const proxies =
-    settings.proxies && settings.proxies.length > 0
-      ? [...settings.proxies].sort(() => Math.random() - 0.5)
-      : [null];
+
+  
+  let proxiesToUse: (import("./types").ProxyConfig | null)[] = [null];
+  
+  if (settings.proxies && settings.proxies.length > 0) {
+     const localProxies = settings.proxies.filter(p => p.isDirect && (p.url.includes("localhost") || p.url.includes("127.0.0.1")));
+     const otherProxies = settings.proxies.filter(p => !p.isDirect || (!p.url.includes("localhost") && !p.url.includes("127.0.0.1")));
+     
+     // Shuffle local proxies
+     localProxies.sort(() => Math.random() - 0.5);
+     // Shuffle other proxies
+     otherProxies.sort(() => Math.random() - 0.5);
+     
+     // Prioritize local
+     proxiesToUse = [...localProxies, ...otherProxies];
+  }
 
   let lastError = "";
 
-  for (const proxy of proxies) {
+  for (const proxy of proxiesToUse) {
     try {
       let url: string;
       const proxyUrl = proxy ? proxy.url : null;
