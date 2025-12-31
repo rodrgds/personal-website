@@ -53,7 +53,9 @@ export async function fetchListings(
 
   for (const proxy of proxies) {
     try {
-      const url = proxy ? proxy + encodeURIComponent(targetUrl) : targetUrl;
+      // Fix for local proxies (like lcp) usually expecting unencoded URLs
+      // corsproxy.io also works with unencoded.
+      const url = proxy ? proxy + targetUrl : targetUrl;
 
       // Prepare headers
       const headers: Record<string, string> = {
