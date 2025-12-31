@@ -28,10 +28,15 @@ export interface Listing {
   };
 }
 
+export interface ProxyConfig {
+  url: string;
+  isDirect: boolean; // true = replaces target domain, false = cors proxy append
+}
+
 export interface MonitorSettings {
   apiKey: string;
-  // network
-  proxyUrls: string[];
+// network
+  proxies: ProxyConfig[];
 
   // filters
   minPrice: number;
@@ -77,7 +82,10 @@ export interface MonitorSettings {
 
 export const DEFAULT_SETTINGS: MonitorSettings = {
   apiKey: "",
-  proxyUrls: ["https://corsproxy.io/?"],
+  proxies: [
+    { url: "http://localhost:8010/proxy", isDirect: true },
+    { url: "https://corsproxy.io/?", isDirect: false },
+  ],
 
   minPrice: 500,
   maxPrice: 100000,

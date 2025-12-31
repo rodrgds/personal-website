@@ -45,17 +45,29 @@ export async function fetchListings(
 
   const targetUrl = `https://csfloat.com/api/v1/listings?${params.toString()}`;
   const proxies =
-    settings.proxyUrls && settings.proxyUrls.length > 0
-      ? [...settings.proxyUrls].sort(() => Math.random() - 0.5)
+    settings.proxies && settings.proxies.length > 0
+      ? [...settings.proxies].sort(() => Math.random() - 0.5)
       : [null];
 
   let lastError = "";
 
   for (const proxy of proxies) {
     try {
-      // Fix for local proxies (like lcp) usually expecting unencoded URLs
-      // corsproxy.io also works with unencoded.
-      const url = proxy ? proxy + targetUrl : targetUrl;
+      let url: string;
+      const proxyUrl = proxy ? proxy.url : null;
+      
+      if (proxy && proxy.isDirect) {
+        // Direct proxy mode (e.g. lcp --proxyUrl ...)
+        // Replaces target domain with proxy URL
+        const targetPath = targetUrl.replace("https://csfloat.com", "");
+        // Remove trailing slash from proxy if present
+        const cleanProxy = proxyUrl ? proxyUrl.replace(/\/$/, "") : "";
+        url = cleanProxy + targetPath;
+      } else {
+         // Standard CORS proxy (append target URL)
+         // Fix for local proxies usually expecting unencoded URLs
+         url = proxyUrl ? proxyUrl + targetUrl : targetUrl;
+      }
 
       // Prepare headers
       const headers: Record<string, string> = {
@@ -63,8 +75,6 @@ export async function fetchListings(
       };
 
       // CSFloat REQUIRES Authorization.
-      // We must send it, but we need to handle the fact that some proxies
-      // will block it unless we use specific strategies.
       if (settings.apiKey) {
         headers["Authorization"] = settings.apiKey;
       }
@@ -76,7 +86,7 @@ export async function fetchListings(
       });
 
       if (response.status === 403 || response.status === 401) {
-        lastError = `Proxy ${proxy || "Direct"} auth failed: ${response.status} ${response.statusText}. Check your API Key or if the proxy allows the Auth header.`;
+        lastError = `Proxy ${proxyUrl || "Direct"} auth failed: ${response.status} ${response.statusText}. Check your API Key or if the proxy allows the Auth header.`;
         continue;
       }
 
@@ -88,22 +98,23 @@ export async function fetchListings(
           listings: [],
           status: 429,
           resetTime,
-          proxyUsed: proxy || "Direct",
+          proxyUsed: proxyUrl || "Direct",
         };
       }
 
       if (!response.ok) {
-        lastError = `Proxy ${proxy || "Direct"} error: ${response.status} ${response.statusText}`;
+        lastError = `Proxy ${proxyUrl || "Direct"} error: ${response.status} ${response.statusText}`;
         continue; // Try next proxy
       }
 
       const data = await response.json();
       const listings: Listing[] = data.data || data.listings || [];
 
-      return { listings, status: 200, proxyUsed: proxy || "Direct" };
+      return { listings, status: 200, proxyUsed: proxyUrl || "Direct" };
     } catch (e: any) {
+      const pUrl = proxy ? proxy.url : "Direct";
       // Catch specific fetch errors (like CORS or Network failures)
-      lastError = `Proxy ${proxy || "Direct"} failed: ${e.name === "TypeError" ? "CORS/Network Block" : e.message || "Unknown error"}`;
+      lastError = `Proxy ${pUrl} failed: ${e.name === "TypeError" ? "CORS/Network Block" : e.message || "Unknown error"}`;
       continue; // Try next proxy
     }
   }

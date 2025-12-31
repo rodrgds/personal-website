@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
+  import { get } from "svelte/store";
   import { settings } from "./storage";
   import { fetchListings } from "./api";
   import { calculateDynamicRequiredPercent, formatCurrency } from "./utils";
@@ -58,6 +59,25 @@
       $settings.dynDiscountMaxPercent *= 100;
       $settings.dynDiscountMinPercent *= 100;
       $settings.minDiscountPercent *= 100;
+    }
+
+    // Migration for proxy settings (string[] -> ProxyConfig[])
+    // Use 'any' cast to access old removed properties if they exist in local storage
+    const current = get(settings) as any;
+    if (!current.proxies && current.proxyUrls) {
+      // Convert old string array to new object array
+      const direct = current.useDirectProxy || false;
+      current.proxies = current.proxyUrls.map((url: string) => ({
+        url,
+        isDirect: direct,
+      }));
+      settings.set(current);
+    } else if (!current.proxies) {
+      // Init default if completely missing
+      current.proxies = [
+        { url: "http://localhost:8010/proxy", isDirect: true },
+      ];
+      settings.set(current);
     }
 
     audio = new Audio("/sounds/notification.mp3");
@@ -526,19 +546,61 @@
                 />
               </div>
               <div>
-                <Label>CORS Proxies (One per line)</Label>
-                <textarea
-                  class="proxy-list"
-                  placeholder="https://corsproxy.io/?"
-                  value={$settings.proxyUrls.join("\n")}
-                  on:input={(e) => {
-                    const target = e.target as HTMLTextAreaElement;
-                    $settings.proxyUrls = target.value
-                      .split("\n")
-                      .map((s) => s.trim())
-                      .filter((s) => s !== "");
-                  }}
-                ></textarea>
+                <div class="proxy-header-row">
+                  <Label>CORS Proxies</Label>
+                  <span class="help-text-header"
+                    >Check "Direct" for local proxies (e.g. lcp)</span
+                  >
+                </div>
+                <div class="proxies-list">
+                  {#each $settings.proxies as proxy, i}
+                    <div class="proxy-row">
+                      <div class="proxy-url-input">
+                        <Input
+                          id={`proxy-${i}`}
+                          placeholder={proxy.isDirect
+                            ? "http://localhost:8010/proxy"
+                            : "https://corsproxy.io/?"}
+                          bind:value={proxy.url}
+                        />
+                      </div>
+                      <div class="proxy-config">
+                        <div
+                          class="checkbox-wrapper"
+                          title="Direct Proxy Mode?"
+                        >
+                          <Checkbox
+                            id={`direct-${i}`}
+                            bind:checked={proxy.isDirect}
+                          />
+                        </div>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          class="narrow-btn"
+                          on:click={() => {
+                            $settings.proxies = $settings.proxies.filter(
+                              (_, idx) => idx !== i
+                            );
+                          }}>✕</Button
+                        >
+                      </div>
+                    </div>
+                  {/each}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    fullWidth
+                    on:click={() => {
+                      $settings.proxies = [
+                        ...$settings.proxies,
+                        { url: "", isDirect: false },
+                      ];
+                    }}
+                  >
+                    + Add Proxy
+                  </Button>
+                </div>
                 <span class="help-text"
                   >Rotation & automatic retry on failure.</span
                 >
@@ -1414,7 +1476,29 @@
     color: #60a5fa;
     animation: pulse 1.2s infinite;
   }
+  .proxy-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.5rem;
+  }
 
+  .help-text-header {
+    font-size: 0.75rem;
+    color: var(--gray-color);
+  }
+
+  .checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  :global(.narrow-btn) {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    min-width: 0 !important;
+  }
   .progress {
     width: 100%;
     height: 4px;
@@ -1435,12 +1519,46 @@
   :global(.dark) .progress-fill {
     background: #60a5fa;
   }
+  .proxies-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .proxy-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .proxy-url-input {
+    flex: 1;
+  }
+
+  .proxy-config {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
   .settings-panel {
     display: flex;
     flex-direction: column;
     flex: 1;
     min-height: 0;
   }
+  .code-bg {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 0 4px;
+    border-radius: 4px;
+    font-family: var(--font-family-mono);
+  }
+
+  :global(.dark) .code-bg {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
   .settings-header {
     margin-bottom: 0.75rem;
   }
