@@ -1,0 +1,23 @@
+---
+interface Props {
+  for?: string;
+  class?: string;
+  [key: string]: any;
+}
+
+const { for: htmlFor, class: className, ...props } = Astro.props;
+---
+
+<label for={htmlFor} class:list={["label-base", className]} {...props}>
+  <slot />
+</label>
+
+<style>
+  .label-base {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--heading-color);
+    margin-bottom: 0.5rem;
+  }
+</style>

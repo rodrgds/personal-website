@@ -1,0 +1,63 @@
+---
+interface Props {
+  type?: "text" | "number" | "email" | "password" | "search" | "url";
+  placeholder?: string;
+  value?: string | number;
+  name?: string;
+  id?: string;
+  class?: string;
+  disabled?: boolean;
+  required?: boolean;
+  [key: string]: any;
+}
+
+const { type = "text", class: className, ...props } = Astro.props;
+---
+
+<input type={type} class:list={["input-base", className]} {...props} />
+
+<style>
+  .input-base {
+    display: block;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--text-color);
+    background-color: var(--background-color);
+    background-clip: padding-box;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    transition:
+      border-color 0.15s ease-in-out,
+      box-shadow 0.15s ease-in-out;
+    font-family: inherit;
+  }
+
+  .input-base:focus {
+    color: var(--text-color);
+    background-color: var(--background-color);
+    border-color: var(--link-color);
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(58, 110, 170, 0.25);
+  }
+
+  :global(.dark) .input-base:focus {
+    box-shadow: 0 0 0 0.2rem rgba(255, 136, 0, 0.25);
+  }
+
+  .input-base:disabled {
+    background-color: #e9ecef;
+    opacity: 1;
+  }
+
+  :global(.dark) .input-base:disabled {
+    background-color: #2b3035;
+    border-color: #373b3e;
+  }
+
+  .input-base::placeholder {
+    color: #9ca3af;
+    opacity: 1;
+  }
+</style>
