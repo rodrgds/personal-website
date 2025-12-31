@@ -3,8 +3,8 @@
   export let type = "text";
   export let placeholder = "";
   export let id = "";
-  export let min: number | undefined = undefined;
-  export let step: number | undefined = undefined;
+  export let min: number | string | undefined = undefined;
+  export let step: number | string | undefined = undefined;
 
   // Allow extra props
   let clazz = "";

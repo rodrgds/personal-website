@@ -6,9 +6,10 @@ import Footer from "../components/common/Footer.astro";
 export interface Props {
   title: string;
   description: string;
+  fullWidth?: boolean;
 }
 
-const { title, description } = Astro.props;
+const { title, description, fullWidth = false } = Astro.props;
 ---
 
 <html lang="en">
@@ -16,9 +17,9 @@ const { title, description } = Astro.props;
     <BaseHead title={title} description={description} />
   </head>
 
-  <body>
+  <body class={fullWidth ? "full-width-body" : ""}>
     <Header />
-    <main class="tool-container">
+    <main class={`tool-container ${fullWidth ? "full-width" : ""}`}>
       <div class="header-section">
         <h1>{title}</h1>
         <p class="description">{description}</p>
@@ -30,15 +31,26 @@ const { title, description } = Astro.props;
 </html>
 
 <style>
+  :global(body.full-width-body) {
+    max-width: 1400px !important;
+    margin: 0 auto !important;
+    padding: 0 2.5rem !important;
+  }
+
   .tool-container {
     max-width: 56rem;
     margin-left: auto;
     margin-right: auto;
-    padding: 2rem 1rem;
+    padding: 2rem 0;
+  }
+
+  .tool-container.full-width {
+    max-width: 100%;
+    padding: 0 0 2rem 0;
   }
 
   .header-section {
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
   }
 
   h1 {

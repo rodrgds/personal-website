@@ -31,11 +31,26 @@ export interface Listing {
 export interface MonitorSettings {
   apiKey: string;
   // network
-  proxyUrl: string;
+  proxyUrls: string[];
 
   // filters
   minPrice: number;
   maxPrice: number;
+  category: number;
+  rarity: number;
+  defIndex: number;
+  paintIndex: number;
+  paintSeed: number;
+  minFloat: number;
+  maxFloat: number;
+  minBlue: number;
+  maxBlue: number;
+  minFade: number;
+  maxFade: number;
+  minRefQty: number;
+  userId: string;
+  marketHashName: string;
+  type: "buy_now" | "auction" | "any";
 
   // notifications
   enableBrowserNotifications: boolean;
@@ -48,6 +63,9 @@ export interface MonitorSettings {
   baseInterval: number;
 
   // discount logic
+  enableDiscountChecking: boolean;
+  useSingleDiscount: boolean;
+  singleDiscountPercent: number;
   minDiscountPercent: number; // For simpler logic if needed, or base param
   minDiscountAbs: number;
   dynDiscountMinPercent: number;
@@ -59,10 +77,27 @@ export interface MonitorSettings {
 
 export const DEFAULT_SETTINGS: MonitorSettings = {
   apiKey: "",
-  proxyUrl: "https://corsproxy.io/?",
+  proxyUrls: ["https://corsproxy.io/?"],
 
   minPrice: 500,
   maxPrice: 100000,
+
+  // New Filters
+  category: 0,
+  rarity: -1,
+  defIndex: -1,
+  paintIndex: -1,
+  paintSeed: -1,
+  minFloat: 0,
+  maxFloat: 1,
+  minBlue: 0,
+  maxBlue: 100,
+  minFade: 80,
+  maxFade: 100,
+  minRefQty: 0,
+  userId: "",
+  marketHashName: "",
+  type: "buy_now",
 
   enableBrowserNotifications: true,
   enableNtfyNotifications: false,
@@ -72,10 +107,13 @@ export const DEFAULT_SETTINGS: MonitorSettings = {
   limit: 30,
   baseInterval: 20,
 
-  minDiscountPercent: 0.1,
+  enableDiscountChecking: true,
+  useSingleDiscount: false,
+  singleDiscountPercent: 5.0,
+  minDiscountPercent: 10.0,
   minDiscountAbs: 20.0,
-  dynDiscountMinPercent: 0.03,
-  dynDiscountMaxPercent: 0.1,
+  dynDiscountMinPercent: 5.0,
+  dynDiscountMaxPercent: 10.0,
   dynDiscountBasePrice: 10.0,
 
   sortBy: "most_recent",
@@ -89,4 +127,5 @@ export interface LogEntry {
   link?: string;
   isCheck?: boolean;
   overlaps?: number;
+  limit?: number;
 }
