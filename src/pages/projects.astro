@@ -62,7 +62,7 @@ import projects from "../data/projects.json";
     <main>
       <section>
         <div class="projects-grid">
-          <!-- {projects.map((project: { title: string; img: string; stack: string[]; description: string; link: string }) => <Card title={project.title} img={project.img} stack={project.stack} description={project.description} link={project.link} />)} -->
+          {projects.map((project: { logo?: string; name: string; technologies: string[]; description: string; link?: string }) => <Card title={project.name} img={project.logo || ''} stack={project.technologies} description={project.description} link={project.link || ''} />)}
         </div>
       </section>
     </main>

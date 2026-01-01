@@ -133,6 +133,15 @@
         "psychology",
         "documentary"
       ]
+    },
+    {
+      "title": "Saw",
+      "year": "2004",
+      "image": "/images/favorites/saw.png",
+      "icon": "🪚",
+      "rating": 5,
+      "comment": "I like all the other movies as well.",
+      "categories": ["entertainment", "thriller", "psychology"]
     }
   ],
   "shows": [
@@ -205,6 +214,15 @@
       "rating": 4,
       "comment": "The distopian future we'll probably end up in. Some episodes suck though...",
       "categories": ["entertainment", "tech", "psychology", "thriller"]
+    },
+    {
+      "title": "Suits",
+      "year": "2011-2019",
+      "image": "/images/favorites/suits.png",
+      "icon": "👔",
+      "rating": 4,
+      "comment": "Pretty good actors, but does get repetitive/formulaic (as sort of expected on a show like this) at the end (last 3-4 seasons). Great views of Manhattan though!",
+      "categories": ["entertainment", "business", "lifestyle"]
     }
   ],
   "podcasts": [
@@ -620,6 +638,20 @@
       "rating": 4,
       "comment": "Short reflection on why overthinking learning stuff can be more limiting than just diving in and seeing where they take you.",
       "categories": ["programming", "tools", "education"]
+    },
+    {
+      "title": "Coding a Physics Engine from scratch!",
+      "url": "https://www.youtube.com/watch?v=nXrEX6j-Mws",
+      "icon": "⚙️",
+      "rating": 5,
+      "categories": ["programming", "education", "science", "game-design"]
+    },
+    {
+      "title": "42 Things Everyone Should Learn How To Do",
+      "url": "https://www.youtube.com/watch?v=PxDzmnLov10",
+      "icon": "🛠️",
+      "rating": 4,
+      "categories": ["lifestyle", "education", "self-improvement"]
     }
   ],
   "cool": [
@@ -732,7 +764,7 @@
     },
     {
       "title": "Linux Kernel Explorer",
-      "url": "https://reverser.dev/linux-kernel-explorer",
+      "url": "https://explorar.dev/torvalds/linux",
       "icon": "🐧",
       "rating": 5,
       "comment": "Interactive Linux kernel map that makes the architecture feel way more approachable. Great for just poking around and seeing how the pieces fit together.",
