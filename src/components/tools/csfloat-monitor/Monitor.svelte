@@ -249,7 +249,10 @@
 
       if (status !== 200) {
         addLog(`API Error via ${proxyUsed}: ${status}`, "error");
-        timeoutId = setTimeout(loop, 10000); // Wait 10s on error
+        // Continue monitoring even on error - don't give up!
+        if (isRunning) {
+          timeoutId = setTimeout(loop, 10000); // Wait 10s on error, then retry
+        }
         return;
       }
 
@@ -419,7 +422,10 @@
         `Crash detected in loop: ${e.message || "Unknown error"}`,
         "error"
       );
-      timeoutId = setTimeout(loop, 10000);
+      // Continue monitoring even on crash - retry with next proxy
+      if (isRunning) {
+        timeoutId = setTimeout(loop, 10000);
+      }
     }
   }
 
@@ -619,6 +625,13 @@
                       Use <code>http://localhost:8010/proxy</code> (Check "Direct").
                     </li>
                   </ol>
+                  <p class="tip-text" style="margin-top: 0.5rem; opacity: 0.9;">
+                    <strong>Windows Users:</strong> Download
+                    <a href="/tools/csfloat-monitor.cmd" download
+                      >csfloat-monitor.cmd</a
+                    > - it automatically starts the proxy and opens this page in one
+                    click!
+                  </p>
 
                   <hr class="tip-divider" />
 
@@ -632,8 +645,9 @@
                     class="tip-text"
                     style="margin-top: 0.5rem; opacity: 0.8; font-style: italic;"
                   >
-                    <strong>Pro Tip:</strong> Keep both in the list for maximum resilience
-                    (default setup).
+                    <strong>Pro Tip:</strong> Keep both in the list for maximum resilience.
+                    The monitor will automatically retry with backup proxies if one
+                    fails.
                   </p>
                 </div>
               </div>

@@ -25,40 +25,65 @@ export async function fetchListings(
     params.append("type", settings.type);
   }
 
-  if (settings.rarity !== -1) params.append("rarity", settings.rarity.toString());
-  if (settings.defIndex !== -1) params.append("def_index", settings.defIndex.toString());
-  if (settings.paintIndex !== -1) params.append("paint_index", settings.paintIndex.toString());
-  if (settings.paintSeed !== -1) params.append("paint_seed", settings.paintSeed.toString());
-  
-  if (settings.minFloat > 0) params.append("min_float", settings.minFloat.toString());
-  if (settings.maxFloat < 1) params.append("max_float", settings.maxFloat.toString());
-  
-  if (settings.minBlue > 0) params.append("min_blue", settings.minBlue.toString());
-  if (settings.maxBlue < 100) params.append("max_blue", settings.maxBlue.toString());
-  
-  if (settings.minFade > 80) params.append("min_fade", settings.minFade.toString());
-  if (settings.maxFade < 100) params.append("max_fade", settings.maxFade.toString());
+  if (settings.rarity !== -1)
+    params.append("rarity", settings.rarity.toString());
+  if (settings.defIndex !== -1)
+    params.append("def_index", settings.defIndex.toString());
+  if (settings.paintIndex !== -1)
+    params.append("paint_index", settings.paintIndex.toString());
+  if (settings.paintSeed !== -1)
+    params.append("paint_seed", settings.paintSeed.toString());
 
-  if (settings.minRefQty > 0) params.append("min_ref_qty", settings.minRefQty.toString());
+  if (settings.minFloat > 0)
+    params.append("min_float", settings.minFloat.toString());
+  if (settings.maxFloat < 1)
+    params.append("max_float", settings.maxFloat.toString());
+
+  if (settings.minBlue > 0)
+    params.append("min_blue", settings.minBlue.toString());
+  if (settings.maxBlue < 100)
+    params.append("max_blue", settings.maxBlue.toString());
+
+  if (settings.minFade > 80)
+    params.append("min_fade", settings.minFade.toString());
+  if (settings.maxFade < 100)
+    params.append("max_fade", settings.maxFade.toString());
+
+  if (settings.minRefQty > 0)
+    params.append("min_ref_qty", settings.minRefQty.toString());
   if (settings.userId) params.append("user_id", settings.userId);
-  if (settings.marketHashName) params.append("market_hash_name", settings.marketHashName);
+  if (settings.marketHashName)
+    params.append("market_hash_name", settings.marketHashName);
 
   const targetUrl = `https://csfloat.com/api/v1/listings?${params.toString()}`;
 
-  
   let proxiesToUse: (import("./types").ProxyConfig | null)[] = [null];
-  
+
   if (settings.proxies && settings.proxies.length > 0) {
-     const localProxies = settings.proxies.filter(p => p.isDirect && (p.url.includes("localhost") || p.url.includes("127.0.0.1")));
-     const otherProxies = settings.proxies.filter(p => !p.isDirect || (!p.url.includes("localhost") && !p.url.includes("127.0.0.1")));
-     
-     // Shuffle local proxies
-     localProxies.sort(() => Math.random() - 0.5);
-     // Shuffle other proxies
-     otherProxies.sort(() => Math.random() - 0.5);
-     
-     // Prioritize local
-     proxiesToUse = [...localProxies, ...otherProxies];
+    const localProxies = settings.proxies.filter(
+      (p) =>
+        p.isDirect &&
+        (p.url.includes("localhost") || p.url.includes("127.0.0.1"))
+    );
+    const otherProxies = settings.proxies.filter(
+      (p) =>
+        !p.isDirect ||
+        (!p.url.includes("localhost") && !p.url.includes("127.0.0.1"))
+    );
+
+    // Shuffle local proxies
+    localProxies.sort(() => Math.random() - 0.5);
+    // Shuffle other proxies
+    otherProxies.sort(() => Math.random() - 0.5);
+
+    // 15% chance to use non-local proxy first for load distribution
+    const useRandomProxy = Math.random() < 0.15;
+    if (useRandomProxy && otherProxies.length > 0) {
+      proxiesToUse = [...otherProxies, ...localProxies];
+    } else {
+      // Prioritize local (85% of the time)
+      proxiesToUse = [...localProxies, ...otherProxies];
+    }
   }
 
   let lastError = "";
@@ -67,7 +92,7 @@ export async function fetchListings(
     try {
       let url: string;
       const proxyUrl = proxy ? proxy.url : null;
-      
+
       if (proxy && proxy.isDirect) {
         // Direct proxy mode (e.g. lcp --proxyUrl ...)
         // Replaces target domain with proxy URL
@@ -76,9 +101,9 @@ export async function fetchListings(
         const cleanProxy = proxyUrl ? proxyUrl.replace(/\/$/, "") : "";
         url = cleanProxy + targetPath;
       } else {
-         // Standard CORS proxy (append target URL)
-         // Fix for local proxies usually expecting unencoded URLs
-         url = proxyUrl ? proxyUrl + targetUrl : targetUrl;
+        // Standard CORS proxy (append target URL)
+        // Fix for local proxies usually expecting unencoded URLs
+        url = proxyUrl ? proxyUrl + targetUrl : targetUrl;
       }
 
       // Prepare headers
