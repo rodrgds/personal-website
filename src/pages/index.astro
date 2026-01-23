@@ -7,7 +7,7 @@ import { getCollection } from "astro:content";
 import { SOCIALS, EXTRA_SOCIALS } from "../data/socials";
 import Logo from "../components/common/Logo.astro";
 import DateOfBirth from "../components/features/home/date-of-birth.svelte";
-// import WorldMap from "../components/features/home/world-map.svelte";
+
 // import projects from "../data/projects.json";
 
 const posts = await getCollection("blog").then((posts) =>
@@ -102,8 +102,6 @@ const posts = await getCollection("blog").then((posts) =>
           </li>
         ))}
       </ul> -->
-
-      <!-- <WorldMap {lat} {lng} client:only /> -->
 
       <h3>Writings</h3>
       <ul class="writings">

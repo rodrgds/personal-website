@@ -3,6 +3,7 @@ export const CONSTANTS = {
   EMAIL: "hey@rgo.pt",
   APPOINTMENTS: "https://url.rgo.pt/appointments",
   RESUME: "https://url.rgo.pt/resume",
+  LOCATION: { lat: 41.1579, lng: -8.6291 }, // Porto, Portugal
 };
 
 export const SOCIALS = [

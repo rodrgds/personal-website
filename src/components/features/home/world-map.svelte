@@ -1,55 +1,154 @@
 <script>
   import { onMount } from "svelte";
-  import Globe from "globe.gl";
+  import { CONSTANTS } from "../../../data/socials";
 
-  const { lat, lng } = $props();
+  let { lat = null, lng = null } = $props();
 
-  const myLocation = { lat: 45.12, lng: -8.61 }; // Porto, Portugal
+  const myLocation = CONSTANTS.LOCATION;
   let globe;
-  let userLocation = { lat, lng };
-  let zoom = 1.5;
+  let userLocation = null;
+  let container;
+  let animationFrameId;
 
-  function toRad(deg) {
-    return deg * (Math.PI / 180);
-  }
+  onMount(async () => {
+    // Fetch user's location
+    if (lat && lng) {
+      userLocation = { lat, lng };
+    } else {
+      try {
+        const res = await fetch("https://get.geojs.io/v1/ip/geo.json");
+        const data = await res.json();
+        userLocation = {
+          lat: parseFloat(data.latitude),
+          lng: parseFloat(data.longitude),
+        };
+      } catch (e) {
+        console.error("Failed to fetch location:", e);
+      }
+    }
 
-  function getDistance(loc1, loc2) {
-    const R = 6371;
-    const dLat = toRad(loc2.lat - loc1.lat);
-    const dLon = toRad(loc2.lng - loc1.lng);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRad(loc1.lat)) *
-        Math.cos(toRad(loc2.lat)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  }
+    // Load dependencies in order
+    const loadScript = (src) => {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    };
 
-  onMount(() => {
-    globe = Globe()(document.getElementById("globe"))
-      .globeImageUrl("//unpkg.com/three-globe/example/img/earth-night.jpg")
-      .bumpImageUrl("//unpkg.com/three-globe/example/img/earth-topology.png")
-      .backgroundColor("rgba(0,0,0,0)")
-      .labelsData([myLocation, userLocation])
-      .labelLat((d) => d.lat)
-      .labelLng((d) => d.lng)
-      .labelText((d) => (d === myLocation ? "Me" : "You"))
-      .arcStroke(1.5)
-      .arcColor(() => "rgba(255, 100, 100, 0.8)")
-      .width(500)
-      .height(500)
-      .pointOfView({ lat: 20, lng: 0, altitude: zoom });
+    try {
+      // Load data and grid files first
+      await loadScript("/encom-data.js");
+      await loadScript("/encom-grid.js");
+      // Then load the main globe library
+      await loadScript("/encom-globe.min.js");
 
-    const distance = getDistance(myLocation, userLocation);
-    // Modified zoom calculation
-    zoom = Math.max(0.1, 2 - Math.log2(distance) / 2);
+      if (window.ENCOM && window.ENCOM.Globe && window.grid) {
+        const width = container.clientWidth;
+        const height = 500;
 
-    globe.pointOfView(
-      { lat: myLocation.lat, lng: myLocation.lng, altitude: zoom },
-      2000
-    );
+        // Get colors from CSS variables
+        const bgColor = getComputedStyle(document.documentElement)
+          .getPropertyValue("--background-color")
+          .trim();
+        const accentColor = getComputedStyle(document.documentElement)
+          .getPropertyValue("--link-color")
+          .trim();
+
+        globe = new window.ENCOM.Globe(width, height, {
+          font: "Inconsolata",
+          data: window.data || [],
+          tiles: window.grid.tiles,
+          baseColor: accentColor,
+          markerColor: accentColor,
+          pinColor: "#ffffff",
+          satelliteColor: "#ffffff",
+          scale: 1,
+          dayLength: 14000,
+          introLinesDuration: 2000,
+          maxPins: 500,
+          maxMarkers: 4,
+          viewAngle: 0.4,
+        });
+
+        // Override background color using Three.js renderer
+        if (globe.renderer) {
+          // Convert hex color to integer for Three.js
+          const colorInt = parseInt(bgColor.replace("#", ""), 16);
+          globe.renderer.setClearColor(colorInt, 1);
+        }
+
+        container.appendChild(globe.domElement);
+
+        // Animation loop
+        function animate() {
+          if (globe) {
+            globe.tick();
+          }
+          animationFrameId = requestAnimationFrame(animate);
+        }
+
+        // Initialize globe
+        globe.init();
+        animate();
+
+        // Add constellation
+        const constellation = [];
+        const opts = {
+          coreColor: accentColor,
+          numWaves: 8,
+        };
+        const alt = 1;
+
+        for (let i = 0; i < 2; i++) {
+          for (let j = 0; j < 3; j++) {
+            constellation.push({
+              lat: 50 * i - 30 + 15 * Math.random(),
+              lon: 120 * j - 120 + 30 * i,
+              altitude: alt,
+            });
+          }
+        }
+        globe.addConstellation(constellation, opts);
+
+        // Add my location marker
+        setTimeout(() => {
+          globe.addMarker(myLocation.lat, myLocation.lng, "Me");
+
+          // Add visitor location marker if available
+          if (userLocation) {
+            globe.addMarker(
+              userLocation.lat,
+              userLocation.lng,
+              "You",
+              Math.abs(myLocation.lng - userLocation.lng) > 25,
+            );
+          }
+        }, 1000);
+      }
+    } catch (e) {
+      console.error("Failed to load encom-globe:", e);
+    }
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+      if (globe && globe.destroy) {
+        globe.destroy();
+      }
+    };
   });
 </script>
 
-<div id="globe" class="h-[500px] w-full"></div>
+<div bind:this={container} class="globe-container"></div>
+
+<style>
+  .globe-container {
+    width: 100%;
+    height: 500px;
+    position: relative;
+  }
+</style>

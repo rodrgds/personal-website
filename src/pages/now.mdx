@@ -4,6 +4,7 @@ title: Now Page
 ---
 
 import Logo from "../components/common/Logo.astro";
+import WorldMap from "../components/features/home/world-map.svelte";
 
 This is [a now page](https://nownownow.com/about). If you have your own site, [consider making one](https://nownownow.com/about) too!
 
@@ -12,16 +13,116 @@ This is [a now page](https://nownownow.com/about). If you have your own site, [c
 - Attempting to fix the current university system, starting off by building <Logo src="uniseasy" /> [Uni's Easy](https://uniseasy.com), a quick fix for students and [Uni's Bad](https://unisbad.com), a collection of reasons why the system is broken as well as a potential new approach (currently in development); it's in really *early stages*.
 - Pursuing a **Bachelor's Degree in Informatics and Computing Engineering** at the **Faculty of Engineering, University of Porto** ([FEUP](https://www.up.pt/portal/en/feup/)).
 
-## Interested In
+<div className="grid-responsive">
+  <div>
+    <h2>Interested In</h2>
 
-- 🏓 Table Tennis
-- 🏸 Badminton
-- 🥎 Padel
-- 🚴‍♂️ Biking
-- 💪 Working out
-- 🚀 Space
-- 📷 Photography
-- 🔓 Open Source
-- <Logo src="cs2" /> Counter Strike
-- 🎥 [Movies & Shows](http://url.rgo.pt/movies)
-- 🎧 [Music](http://url.rgo.pt/music)
+    <div className="interest-group">
+      <div className="group-label">Sports</div>
+      <ul>
+        <li>🏓 Table Tennis</li>
+        <li>🏸 Badminton</li>
+        <li>🚴‍♂️ Biking</li>
+        <li>🏋️ Weightlifting</li>
+        <li>🤸 Calisthenics</li>
+      </ul>
+    </div>
+
+    <div className="interest-group">
+      <div className="group-label">Tech</div>
+      <ul>
+        <li>🐧 Linux/NixOS</li>
+        <li>🔓 Open Source</li>
+        <li>🤖 Automation</li>
+        <li>🔗 Self-Hosting</li>
+      </ul>
+    </div>
+
+    <div className="interest-group">
+      <div className="group-label">Hobbies</div>
+      <ul>
+        <li>🚀 Space</li>
+        <li>📷 Photography</li>
+        <li><Logo src="cs2" /> Counter Strike</li>
+        <li>🎥 <a href="http://url.rgo.pt/movies">Movies & Shows</a></li>
+        <li>🎧 <a href="http://url.rgo.pt/music">Music</a></li>
+      </ul>
+    </div>
+  </div>
+  <div style={{minHeight: '400px'}}>
+    <WorldMap client:only />
+  </div>
+</div>
+
+<style>{`
+  .grid-responsive {
+    display: grid;
+    grid-template-columns: 1fr 1.8fr;
+    gap: 2rem;
+    align-items: flex-start;
+  }
+  .interest-group {
+    display: flex;
+    margin-bottom: 1.5rem;
+  }
+
+  .group-label {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    padding: 0.5rem 0.2rem;
+    border-left: 2px solid var(--link-color);
+    margin-right: 0rem;
+    color: var(--heading-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 80px;
+  }
+
+  .interest-group ul {
+    margin: 0;
+    padding-left: 1.2rem;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .interest-group li {
+    margin-bottom: 0.3rem;
+  }
+
+  @media (max-width: 768px) {
+    .grid-responsive {
+      grid-template-columns: 1fr;
+    }
+
+    .interest-group {
+      flex-direction: column;
+    }
+
+    .group-label {
+      writing-mode: horizontal-tb;
+      transform: none;
+      border-left: none;
+      border-bottom: 2px solid var(--link-color);
+      width: 100%;
+      min-height: auto;
+      margin-right: 0;
+      margin-bottom: 0.8rem;
+      justify-content: flex-start;
+      padding: 0.2rem 0;
+    }
+
+    .interest-group ul {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      width: 100%;
+      padding-left: 0;
+      gap: 0.5rem;
+    }
+  }
+`}</style>
