@@ -10,6 +10,51 @@
   let container;
   let animationFrameId;
 
+  function haversineKm(a, b) {
+    const toRad = (deg) => (deg * Math.PI) / 180;
+    const R = 6371;
+    const dLat = toRad(b.lat - a.lat);
+    const dLon = toRad(b.lng - a.lng);
+    const lat1 = toRad(a.lat);
+    const lat2 = toRad(b.lat);
+
+    const sinDLat = Math.sin(dLat / 2);
+    const sinDLon = Math.sin(dLon / 2);
+    const h =
+      sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon;
+    return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+  }
+
+  function offsetIfTooClose(loc) {
+    if (!loc) return loc;
+
+    const clampLat = (lat) => Math.max(-89.5, Math.min(89.5, lat));
+    const normalizeLng = (lng) => {
+      // normalize to [-180, 180]
+      let x = ((((lng + 180) % 360) + 360) % 360) - 180;
+      // avoid -180 edge case
+      if (x === -180) x = 180;
+      return x;
+    };
+
+    const distanceKm = haversineKm(myLocation, loc);
+    // If you're basically on top of "Me", nudge "You" so the labels don't overlap.
+    // ENCOM's label rendering can still overlap even when points are fairly close,
+    // so use a larger threshold and a clearly visible offset.
+    if (distanceKm < 200) {
+      // Push mostly east/west to separate label horizontally.
+      const OFFSET_LAT_DEG = 1.5;
+      const OFFSET_LNG_DEG = 3.0;
+
+      const nextLat = clampLat(loc.lat + OFFSET_LAT_DEG);
+      const nextLng = normalizeLng(loc.lng + OFFSET_LNG_DEG);
+
+      return { lat: nextLat, lng: nextLng };
+    }
+
+    return loc;
+  }
+
   onMount(async () => {
     // Fetch user's location
     if (lat && lng) {
@@ -119,11 +164,12 @@
 
           // Add visitor location marker if available
           if (userLocation) {
+            const adjustedUserLocation = offsetIfTooClose(userLocation);
             globe.addMarker(
-              userLocation.lat,
-              userLocation.lng,
+              adjustedUserLocation.lat,
+              adjustedUserLocation.lng,
               "You",
-              Math.abs(myLocation.lng - userLocation.lng) > 25,
+              Math.abs(myLocation.lng - adjustedUserLocation.lng) > 25,
             );
           }
         }, 1000);

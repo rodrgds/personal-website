@@ -5,13 +5,15 @@ title: Now Page
 
 import Logo from "../components/common/Logo.astro";
 import WorldMap from "../components/features/home/world-map.svelte";
+import WeightliftingModal from "../components/features/home/weightlifting-modal.svelte";
+import PingPongModal from "../components/features/home/ping-pong-modal.svelte";
 
 This is [a now page](https://nownownow.com/about). If you have your own site, [consider making one](https://nownownow.com/about) too!
 
 ## Currently
 
 - Attempting to fix the current university system, starting off by building <Logo src="uniseasy" /> [Uni's Easy](https://uniseasy.com), a quick fix for students and [Uni's Bad](https://unisbad.com), a collection of reasons why the system is broken as well as a potential new approach (currently in development); it's in really *early stages*.
-- Pursuing a **Bachelor's Degree in Informatics and Computing Engineering** at the **Faculty of Engineering, University of Porto** ([FEUP](https://www.up.pt/portal/en/feup/)).
+- Pursuing a **Bachelor's Degree in Informatics and Computing Engineering** at the **Faculty of Engineering, University of Porto** ([FEUP](https://fe.up.pt)).
 
 <div className="grid-responsive">
   <div>
@@ -20,10 +22,10 @@ This is [a now page](https://nownownow.com/about). If you have your own site, [c
     <div className="interest-group">
       <div className="group-label">Sports</div>
       <ul>
-        <li>🏓 Table Tennis</li>
+        <li>🏓 <PingPongModal client:load /></li>
         <li>🏸 Badminton</li>
         <li>🚴‍♂️ Biking</li>
-        <li>🏋️ Weightlifting</li>
+        <li>🏋️ <WeightliftingModal client:load /></li>
         <li>🤸 Calisthenics</li>
       </ul>
     </div>

@@ -57,11 +57,11 @@
 
       if (filterLogic === "AND") {
         return Array.from(activeFilters).every((filter) =>
-          (item.categories || []).includes(filter)
+          (item.categories || []).includes(filter),
         );
       } else {
         return Array.from(activeFilters).some((filter) =>
-          (item.categories || []).includes(filter)
+          (item.categories || []).includes(filter),
         );
       }
     });

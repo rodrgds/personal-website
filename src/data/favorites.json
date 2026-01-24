@@ -208,7 +208,7 @@
     },
     {
       "title": "Black Mirror",
-      "year": "2011-2019",
+      "year": "2011-",
       "image": "/images/favorites/black-mirror.webp",
       "icon": "🪞",
       "rating": 4,
@@ -223,6 +223,20 @@
       "rating": 4,
       "comment": "Pretty good actors, but does get repetitive/formulaic (as sort of expected on a show like this) at the end (last 3-4 seasons). Great views of Manhattan though!",
       "categories": ["entertainment", "business", "lifestyle"]
+    },
+    {
+      "title": "The Pitt",
+      "year": "2025",
+      "image": "/images/favorites/the-pitt.png",
+      "icon": "💉",
+      "rating": 5,
+      "categories": [
+        "entertainment",
+        "lifestyle",
+        "psychology",
+        "education",
+        "thriller"
+      ]
     }
   ],
   "podcasts": [
