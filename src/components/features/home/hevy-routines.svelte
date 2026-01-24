@@ -475,7 +475,7 @@
     border-radius: 0.375rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     padding: 0.5rem;
-    z-index: 10;
+    z-index: 1000;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -503,6 +503,9 @@
     display: inline-block;
     width: 100%;
     margin: 0 0 1rem;
+    position: relative;
+    z-index: 0;
+    overflow: visible;
     background: rgba(0, 0, 0, 0.02);
     border: 1px solid var(--border-color, #e5e5e5);
     border-radius: 0.5rem;
@@ -514,6 +517,19 @@
   .routine-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Ensure overlays in a card can render above neighboring cards/columns.
+     This prevents hover/focus flicker when a dropdown overlaps another card. */
+  .routine-card:hover,
+  .routine-card:focus-within {
+    z-index: 50;
+  }
+
+  .exercise-item[open],
+  .more-workouts[open] {
+    position: relative;
+    z-index: 60;
   }
 
   .routine-card h3 {

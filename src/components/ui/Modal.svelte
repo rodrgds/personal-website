@@ -7,6 +7,8 @@
     onClose?: () => void;
     title?: string;
     size?: "sm" | "md" | "lg" | "xl";
+    headerLink?: string;
+    headerLinkText?: string;
     children?: Snippet;
   }
 
@@ -15,6 +17,8 @@
     onClose,
     title,
     size = "md",
+    headerLink,
+    headerLinkText = "View profile",
     children,
   }: Props = $props();
 
@@ -66,13 +70,25 @@
     {#if title}
       <div class="modal-header">
         <h2>{title}</h2>
-        <button
-          class="close-button"
-          onclick={handleClose}
-          aria-label="Close modal"
-        >
-          ×
-        </button>
+        <div class="modal-header-actions">
+          {#if headerLink}
+            <a
+              href={headerLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="header-link"
+            >
+              {headerLinkText} →
+            </a>
+          {/if}
+          <button
+            class="close-button"
+            onclick={handleClose}
+            aria-label="Close modal"
+          >
+            ×
+          </button>
+        </div>
       </div>
     {:else}
       <button
@@ -165,6 +181,24 @@
     margin: 0;
     font-size: 1.5rem;
     font-weight: 600;
+  }
+
+  .modal-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .header-link {
+    font-size: 0.875rem;
+    color: var(--link-color);
+    text-decoration: none;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+  }
+
+  .header-link:hover {
+    opacity: 0.7;
   }
 
   .close-button,

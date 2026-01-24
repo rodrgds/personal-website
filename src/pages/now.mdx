@@ -6,6 +6,8 @@ title: Now Page
 import Logo from "../components/common/Logo.astro";
 import WorldMap from "../components/features/home/world-map.svelte";
 import WeightliftingModal from "../components/features/home/weightlifting-modal.svelte";
+import MusicModal from "../components/features/home/music-modal.svelte";
+import MoviesModal from "../components/features/home/movies-modal.svelte";
 
 This is [a now page](https://nownownow.com/about). If you have your own site, [consider making one](https://nownownow.com/about) too!
 
@@ -45,8 +47,8 @@ This is [a now page](https://nownownow.com/about). If you have your own site, [c
         <li>🚀 Space</li>
         <li>📷 Photography</li>
         <li><Logo src="cs2" /> Counter Strike</li>
-        <li>🎥 <a href="http://url.rgo.pt/movies">Movies & Shows</a></li>
-        <li>🎧 <a href="http://url.rgo.pt/music">Music</a></li>
+        <li>🎥 <MoviesModal client:load /></li>
+        <li>🎧 <MusicModal client:load /></li>
       </ul>
     </div>
   </div>
