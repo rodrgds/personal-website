@@ -103,7 +103,7 @@
           .trim();
 
         globe = new window.ENCOM.Globe(width, height, {
-          font: "Inconsolata",
+          font: "JetBrains Mono",
           data: window.data || [],
           tiles: window.grid.tiles,
           baseColor: accentColor,

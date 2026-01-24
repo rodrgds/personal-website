@@ -255,8 +255,12 @@
   @media (max-width: 768px) {
     .modal {
       max-width: 95vw;
-      max-height: 90vh;
+      max-height: calc(
+        90vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+      );
       width: 100% !important;
+      margin-top: max(1.5rem, env(safe-area-inset-top));
+      margin-bottom: env(safe-area-inset-bottom);
     }
 
     .modal-header {
