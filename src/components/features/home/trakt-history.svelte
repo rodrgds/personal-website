@@ -77,7 +77,7 @@
     return null;
   }
 
-  // Group consecutive episodes from the same show
+  // Group consecutive episodes from the same season
   function groupHistory(history: any[]) {
     if (!history || history.length === 0) return [];
 
@@ -94,19 +94,21 @@
         continue;
       }
 
-      // For episodes, check if the next items are from the same show
+      // For episodes, check if the next items are from the same season
       if (item.type === "episode") {
         const showId = item.show.ids.trakt;
+        const seasonNumber = item.episode.season;
         let episodeCount = 1;
         let j = i + 1;
         let firstWatchedAt = item.watched_at;
         let lastWatchedAt = item.watched_at;
 
-        // Count consecutive episodes from the same show
+        // Count consecutive episodes from the same season
         while (
           j < history.length &&
           history[j].type === "episode" &&
-          history[j].show.ids.trakt === showId
+          history[j].show.ids.trakt === showId &&
+          history[j].episode.season === seasonNumber
         ) {
           lastWatchedAt = history[j].watched_at;
           episodeCount++;
@@ -140,6 +142,14 @@
   <p class="error">Failed to load watch history: {error}</p>
 {:else if data}
   <div class="trakt-container">
+    <!-- Data Source Indicator -->
+    <div class="data-source">
+      <img src="/logos/trakt.png" alt="Trakt" class="source-logo" />
+      <span class="source-text"
+        >Data automatically tracked from my Trakt.tv account</span
+      >
+    </div>
+
     <!-- Stats Header -->
     {#if data.stats}
       <div class="stats-header">
@@ -188,6 +198,9 @@
                     {#if item.episodeCount === 1}
                       {getEpisodeInfo(item)}
                     {:else}
+                      <span class="season-info">
+                        Season {item.episode.season}
+                      </span>
                       <span class="episode-count">
                         {item.episodeCount}
                         {item.episodeCount === 1 ? "episode" : "episodes"}
@@ -209,14 +222,26 @@
           </div>
         </div>
       {/each}
+
+      <!-- And more card -->
+      <a
+        href="https://url.rgo.pt/movies"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="more-card"
+      >
+        <div class="more-card-content">
+          <div class="more-icon">📺</div>
+          <div class="more-text">
+            <div class="more-title">And more...</div>
+            <div class="more-subtitle">View full history</div>
+          </div>
+        </div>
+      </a>
     </div>
 
     <div class="tmdb-credit">
-      <img
-        src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg"
-        alt="TMDB"
-        class="tmdb-logo"
-      />
+      <img src="/images/tmdb-logo.svg" alt="TMDB" class="tmdb-logo" />
       This product uses the TMDB API but is not endorsed or certified by TMDB.
     </div>
   </div>
@@ -227,6 +252,28 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
+  }
+
+  .data-source {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 0.5rem;
+    border: 1px solid var(--border-color, #e5e5e5);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+  }
+
+  .source-logo {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+  }
+
+  .source-text {
+    flex: 1;
   }
 
   .stats-header {
@@ -269,9 +316,26 @@
   }
 
   .history-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1rem;
+    column-count: 4;
+    column-gap: 1rem;
+  }
+
+  @media (max-width: 1200px) {
+    .history-grid {
+      column-count: 3;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .history-grid {
+      column-count: 2;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .history-grid {
+      column-count: 1;
+    }
   }
 
   .history-card {
@@ -280,11 +344,60 @@
     border: 1px solid var(--border-color);
     overflow: hidden;
     transition: all 0.2s;
+    break-inside: avoid;
+    margin-bottom: 1rem;
   }
 
   .history-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .more-card {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border: 2px dashed var(--border-color);
+    overflow: hidden;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    text-decoration: none;
+    color: var(--text-color);
+    break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+
+  .more-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: var(--link-color);
+  }
+
+  .more-card:hover::before {
+    width: 0;
+  }
+
+  .more-card-content {
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .more-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .more-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .more-subtitle {
+    font-size: 0.875rem;
+    color: var(--link-color);
   }
 
   .poster-container {
@@ -355,6 +468,12 @@
     gap: 0.15rem;
   }
 
+  .season-info {
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 0.8125rem;
+  }
+
   .episode-count {
     color: var(--link-color);
     font-weight: 500;
@@ -396,11 +515,6 @@
   }
 
   @media (max-width: 768px) {
-    .history-grid {
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 0.75rem;
-    }
-
     .stats-header {
       flex-direction: column;
     }
@@ -416,12 +530,26 @@
       border-color: rgba(255, 255, 255, 0.1);
     }
 
+    .data-source {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
     .history-card {
       background: rgba(255, 255, 255, 0.03);
       border-color: rgba(255, 255, 255, 0.1);
     }
 
     .history-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .more-card {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .more-card:hover {
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
 

@@ -72,19 +72,27 @@
   <p class="error">Failed to load music data: {error}</p>
 {:else if data}
   <div class="lastfm-container">
-    <!-- Stats Header -->
-    {#if data.stats}
-      <div class="stats-header">
-        <div class="stat-card">
-          <div class="stat-label">Total Scrobbles</div>
-          <div class="stat-value">
-            {formatNumber(data.stats.totalScrobbles)}
-          </div>
-        </div>
-      </div>
-    {/if}
+    <!-- Data Source Indicator -->
+    <div class="data-source">
+      <img src="/logos/lastfm.png" alt="Last.fm" class="source-logo" />
+      <span class="source-text"
+        >Data automatically tracked from my Last.fm account</span
+      >
+    </div>
 
     <div class="tracks-grid">
+      <!-- Total Scrobbles Card -->
+      {#if data.stats}
+        <div class="track-card stats-card">
+          <div class="stats-content">
+            <div class="stat-label">Total Scrobbles</div>
+            <div class="stat-value">
+              {formatNumber(data.stats.totalScrobbles)}
+            </div>
+          </div>
+        </div>
+      {/if}
+
       {#each data.recenttracks.track as track}
         {@const isNowPlaying = track["@attr"]?.nowplaying === "true"}
         {@const albumImage = getAlbumImage(track)}
@@ -116,6 +124,22 @@
           </div>
         </div>
       {/each}
+
+      <!-- And more card -->
+      <a
+        href="https://url.rgo.pt/music"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="more-card"
+      >
+        <div class="more-card-content">
+          <div class="more-icon">🎵</div>
+          <div class="more-text">
+            <div class="more-title">And more...</div>
+            <div class="more-subtitle">View full history</div>
+          </div>
+        </div>
+      </a>
     </div>
   </div>
 {/if}
@@ -127,49 +151,49 @@
     gap: 1rem;
   }
 
-  .stats-header {
+  .data-source {
     display: flex;
-    gap: 1rem;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-  }
-
-  .stat-card {
-    flex: 0 0 auto;
-    min-width: 150px;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
     background: rgba(0, 0, 0, 0.02);
-    border: 1px solid var(--border-color, #e5e5e5);
-    padding: 1rem 1.25rem;
     border-radius: 0.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  }
-
-  .stat-label {
-    font-size: 0.75rem;
-    opacity: 0.7;
-    margin-bottom: 0.25rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 600;
-  }
-
-  .stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    line-height: 1;
-    color: var(--link-color);
-  }
-
-  .profile-link {
-    text-align: right;
+    border: 1px solid var(--border-color, #e5e5e5);
     font-size: 0.875rem;
-    margin-bottom: 0.5rem;
+    color: var(--text-muted);
+  }
+
+  .source-logo {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+  }
+
+  .source-text {
+    flex: 1;
   }
 
   .tracks-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 1rem;
+    column-count: 4;
+    column-gap: 1rem;
+  }
+
+  @media (max-width: 1200px) {
+    .tracks-grid {
+      column-count: 3;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .tracks-grid {
+      column-count: 2;
+    }
+  }
+
+  @media (max-width: 600px) {
+    .tracks-grid {
+      column-count: 1;
+    }
   }
 
   .track-card {
@@ -178,6 +202,8 @@
     border: 1px solid var(--border-color);
     overflow: hidden;
     transition: all 0.2s;
+    break-inside: avoid;
+    margin-bottom: 1rem;
   }
 
   .track-card:hover {
@@ -188,6 +214,87 @@
   .track-card.now-playing {
     border-color: var(--link-color);
     background: color-mix(in srgb, var(--link-color) 5%, var(--bg-secondary));
+  }
+
+  .track-card.stats-card {
+    background: linear-gradient(
+      135deg,
+      var(--link-color) 0%,
+      color-mix(in srgb, var(--link-color) 80%, transparent) 100%
+    );
+    border-color: var(--link-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 180px;
+  }
+
+  .stats-content {
+    text-align: center;
+    color: white;
+    padding: 2rem;
+  }
+
+  .stats-content .stat-label {
+    font-size: 0.875rem;
+    opacity: 0.95;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+  }
+
+  .stats-content .stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .more-card {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    border: 2px dashed var(--border-color);
+    overflow: hidden;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 250px;
+    text-decoration: none;
+    color: var(--text-color);
+    break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+
+  .more-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: var(--link-color);
+  }
+
+  .more-card:hover::before {
+    width: 0;
+  }
+
+  .more-card-content {
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .more-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .more-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .more-subtitle {
+    font-size: 0.875rem;
+    color: var(--link-color);
   }
 
   .track-image {
@@ -300,20 +407,8 @@
     color: var(--text-muted);
   }
 
-  @media (max-width: 768px) {
-    .tracks-grid {
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 0.75rem;
-    }
-
-    .stat-card {
-      min-width: unset;
-      width: 100%;
-    }
-  }
-
   @media (prefers-color-scheme: dark) {
-    .stat-card {
+    .data-source {
       background: rgba(255, 255, 255, 0.03);
       border-color: rgba(255, 255, 255, 0.1);
     }
@@ -324,6 +419,15 @@
     }
 
     .track-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .more-card {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .more-card:hover {
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
 

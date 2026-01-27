@@ -17,6 +17,7 @@
     "@astrojs/rss": "4.0.15",
     "@astrojs/sitemap": "3.7.0",
     "@astrojs/svelte": "7.2.5",
+    "@directus/sdk": "^21.0.0",
     "@types/qrcode": "^1.5.6",
     "astro": "5.16.15",
     "astro-compress": "^2.3.8",

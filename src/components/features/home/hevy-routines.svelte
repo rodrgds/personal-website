@@ -214,6 +214,14 @@
       <button onclick={loadRoutines} class="retry-button">Retry</button>
     </div>
   {:else}
+    <!-- Data Source Indicator -->
+    <div class="data-source">
+      <img src="/logos/hevy.png" alt="Hevy" class="source-logo" />
+      <span class="source-text"
+        >Data automatically tracked from my Hevy account</span
+      >
+    </div>
+
     {#if stats}
       <div class="stats-header">
         <div class="stat-card">
@@ -318,6 +326,29 @@
     width: 100%;
   }
 
+  .data-source {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 0.5rem;
+    border: 1px solid var(--border-color, #e5e5e5);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+  }
+
+  .source-logo {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+  }
+
+  .source-text {
+    flex: 1;
+  }
+
   .loading,
   .error,
   .empty {
@@ -389,6 +420,10 @@
     padding: 1rem 1.25rem;
     border-radius: 0.5rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
   .workouts-card {
@@ -493,7 +528,7 @@
     width: 100%;
   }
 
-  @media (min-width: 900px) {
+  @media (min-width: 600px) {
     .routines-masonry {
       column-count: 2;
     }
@@ -689,6 +724,11 @@
 
   @media (prefers-color-scheme: dark) {
     .stat-card {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .data-source {
       background: rgba(255, 255, 255, 0.03);
       border-color: rgba(255, 255, 255, 0.1);
     }

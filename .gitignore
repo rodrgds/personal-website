@@ -19,6 +19,9 @@ pnpm-debug.log*
 .env
 .env.production
 
+# OAuth tokens (auto-persisted)
+.tokens.json
+
 # macOS-specific files
 .DS_Store
 \n.astro

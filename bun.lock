@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "kraktoos",
@@ -11,6 +10,7 @@
         "@astrojs/rss": "4.0.15",
         "@astrojs/sitemap": "3.7.0",
         "@astrojs/svelte": "7.2.5",
+        "@directus/sdk": "^21.0.0",
         "@types/qrcode": "^1.5.6",
         "astro": "5.16.15",
         "astro-compress": "^2.3.8",
@@ -65,6 +65,8 @@
     "@capsizecss/unpack": ["@capsizecss/unpack@4.0.0", "", { "dependencies": { "fontkitten": "^1.0.0" } }, "sha512-VERIM64vtTP1C4mxQ5thVT9fK0apjPFobqybMtA1UdUujWka24ERHbRHFGmpbbhp73MhV+KSsHQH9C6uOTdEQA=="],
 
     "@commander-js/extra-typings": ["@commander-js/extra-typings@12.1.0", "", { "peerDependencies": { "commander": "~12.1.0" } }, "sha512-wf/lwQvWAA0goIghcb91dQYpkLBcyhOhQNqG/VgWhnKzgt+UOMvra7EX/2fv70arm5RW+PUHoQHHDa6/p77Eqg=="],
+
+    "@directus/sdk": ["@directus/sdk@21.0.0", "", {}, "sha512-+Uld9+anm5N1NfVgEmPBReOrT0uTkE3OnQginvqx7yGS94e20qzNsW8IJnstC1OvdUMTDteDrdYMfx6QG+kY7Q=="],
 
     "@divriots/cheerio": ["@divriots/cheerio@1.0.0-rc.12", "", { "dependencies": { "cheerio-select": "^2.1.0", "dom-serializer": "^2.0.0", "domhandler": "^5.0.3", "domutils": "^3.1.0", "encoding-sniffer": "^0.0.2", "htmlparser2": "^9.0.0", "parse5": "^7.1.2", "parse5-htmlparser2-tree-adapter": "^7.0.0", "parse5-parser-stream": "^7.1.2", "undici": "^5.22.1", "whatwg-mimetype": "^3.0.0" } }, "sha512-kQUVEgMDj0yE7LOdrDhKOC8JkfUzUKsUqp8m9WQDiSxim8Bnga+80opjXaCtHLhO3/W3DIZMow8QXtXUqNS+zA=="],
 

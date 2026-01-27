@@ -1,5 +1,7 @@
 import { defineAction, ActionError } from "astro:actions";
 import { z } from "astro:schema";
+import { directusClient } from "../lib/directus";
+import { readSingleton, updateSingleton } from "@directus/sdk";
 
 // Simple in-memory cache with expiration
 interface CacheEntry<T> {
@@ -323,57 +325,93 @@ export const server = {
 
       const TRAKT_CLIENT_ID = import.meta.env.TRAKT_CLIENT_ID;
       const TRAKT_CLIENT_SECRET = import.meta.env.TRAKT_CLIENT_SECRET;
-      let TRAKT_ACCESS_TOKEN = import.meta.env.TRAKT_ACCESS_TOKEN;
-      let TRAKT_REFRESH_TOKEN = import.meta.env.TRAKT_REFRESH_TOKEN;
       const TMDB_API_KEY = import.meta.env.TMDB_API_KEY;
 
-      if (
-        !TRAKT_ACCESS_TOKEN ||
-        !TRAKT_CLIENT_ID ||
-        !TRAKT_CLIENT_SECRET ||
-        !TRAKT_REFRESH_TOKEN
-      ) {
+      // Read tokens from Directus
+      let tokens = await directusClient.request(readSingleton("trakt_tokens"));
+
+      if (!tokens.access_token || !tokens.refresh_token) {
         throw new ActionError({
           code: "INTERNAL_SERVER_ERROR",
           message:
-            "Trakt credentials not configured (need access token, refresh token, client ID, and client secret)",
+            "Trakt tokens not found in database. Please authenticate first.",
         });
       }
 
-      // Helper function to refresh the token
+      // Helper to refresh token and save to Directus
       const refreshToken = async () => {
-        const response = await fetch("https://api.trakt.tv/oauth/token", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            client_id: TRAKT_CLIENT_ID,
-            client_secret: TRAKT_CLIENT_SECRET,
-            grant_type: "refresh_token",
-            redirect_uri: "urn:ietf:wg:oauth:2.0:oob",
-            refresh_token: TRAKT_REFRESH_TOKEN,
-          }),
-        });
+        try {
+          const response = await fetch("https://api.trakt.tv/oauth/token", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              client_id: TRAKT_CLIENT_ID,
+              client_secret: TRAKT_CLIENT_SECRET,
+              grant_type: "refresh_token",
+              redirect_uri: "urn:ietf:wg:oauth:2.0:oob",
+              refresh_token: tokens.refresh_token,
+            }),
+          });
 
-        if (!response.ok) {
-          const errorBody = await response.text();
+          if (!response.ok) {
+            let errorBody = "";
+            try {
+              errorBody = await response.text();
+            } catch {
+              errorBody = response.statusText;
+            }
+
+            console.error(
+              `❌ Failed to refresh Trakt token: ${response.status} - ${errorBody}`,
+            );
+            throw new ActionError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: `Token refresh failed (${response.status}). Please check your Trakt credentials.`,
+            });
+          }
+
+          const newTokens = await response.json();
+
+          // Calculate expiration timestamp
+          const expiresAt = new Date(
+            Date.now() + newTokens.expires_in * 1000,
+          ).toISOString();
+
+          // Save new tokens to Directus automatically
+          await directusClient.request(
+            updateSingleton("trakt_tokens", {
+              access_token: newTokens.access_token,
+              refresh_token: newTokens.refresh_token,
+              expires_at: expiresAt,
+              token_type: newTokens.token_type,
+              scope: newTokens.scope,
+            }),
+          );
+
+          console.log(
+            "✅ Tokens automatically refreshed and saved to Directus",
+          );
+          console.log(
+            `Token expires in: ${newTokens.expires_in} seconds (${newTokens.expires_in / 3600} hours)`,
+          );
+
+          // Update local tokens variable
+          tokens.access_token = newTokens.access_token;
+          tokens.refresh_token = newTokens.refresh_token;
+
+          return newTokens;
+        } catch (error) {
+          if (error instanceof ActionError) throw error;
+
+          console.error("❌ Network error refreshing Trakt token:", error);
           throw new ActionError({
             code: "INTERNAL_SERVER_ERROR",
-            message: `Failed to refresh Trakt token: ${errorBody || response.statusText}`,
+            message:
+              "Network error connecting to Trakt. Please try again later.",
           });
         }
-
-        const tokens = await response.json();
-        console.log("✅ Successfully refreshed Trakt tokens");
-        console.log(`⚠️  UPDATE YOUR .env WITH THESE NEW VALUES:`);
-        console.log(`TRAKT_ACCESS_TOKEN=${tokens.access_token}`);
-        console.log(`TRAKT_REFRESH_TOKEN=${tokens.refresh_token}`);
-        console.log(
-          `Token expires in: ${tokens.expires_in} seconds (${tokens.expires_in / 3600} hours)`,
-        );
-
-        return tokens;
       };
 
       // Helper function to call Trakt API
@@ -393,16 +431,15 @@ export const server = {
         // Fetch watch history
         const historyUrl = `/users/me/history?limit=${input.limit}&extended=full`;
         let historyResponse = await callTraktAPI(
-          TRAKT_ACCESS_TOKEN,
+          tokens.access_token,
           historyUrl,
         );
 
-        // If 401, refresh and retry
+        // Auto-refresh on 401
         if (historyResponse.status === 401) {
-          console.log("⚠️  Access token expired, refreshing...");
-          const tokens = await refreshToken();
-          TRAKT_ACCESS_TOKEN = tokens.access_token;
-          historyResponse = await callTraktAPI(TRAKT_ACCESS_TOKEN, historyUrl);
+          console.log("⚠️  Token expired, auto-refreshing from Directus...");
+          await refreshToken();
+          historyResponse = await callTraktAPI(tokens.access_token, historyUrl);
         }
 
         if (!historyResponse.ok) {
@@ -417,15 +454,14 @@ export const server = {
 
         // Fetch user stats
         let statsResponse = await callTraktAPI(
-          TRAKT_ACCESS_TOKEN,
+          tokens.access_token,
           "/users/me/stats",
         );
 
         if (statsResponse.status === 401) {
-          const tokens = await refreshToken();
-          TRAKT_ACCESS_TOKEN = tokens.access_token;
+          await refreshToken();
           statsResponse = await callTraktAPI(
-            TRAKT_ACCESS_TOKEN,
+            tokens.access_token,
             "/users/me/stats",
           );
         }
@@ -442,13 +478,20 @@ export const server = {
 
         // Collect unique TMDB IDs to avoid duplicate fetches
         const uniqueMovieIds = new Set<number>();
-        const uniqueShowIds = new Set<number>();
+        const uniqueShowSeasons = new Map<number, Set<number>>(); // showId -> Set of season numbers
 
         historyData.forEach((item: any) => {
           if (item.type === "movie" && item.movie?.ids?.tmdb) {
             uniqueMovieIds.add(item.movie.ids.tmdb);
-          } else if (item.type === "episode" && item.show?.ids?.tmdb) {
-            uniqueShowIds.add(item.show.ids.tmdb);
+          } else if (
+            item.type === "episode" &&
+            item.show?.ids?.tmdb &&
+            item.episode?.season
+          ) {
+            if (!uniqueShowSeasons.has(item.show.ids.tmdb)) {
+              uniqueShowSeasons.set(item.show.ids.tmdb, new Set());
+            }
+            uniqueShowSeasons.get(item.show.ids.tmdb)!.add(item.episode.season);
           }
         });
 
@@ -482,29 +525,42 @@ export const server = {
             },
           );
 
-          const showFetches = Array.from(uniqueShowIds).map(async (tmdbId) => {
-            const cacheKey = `tmdb-show-${tmdbId}`;
-            const cached = tmdbImageCache.get(cacheKey);
-            if (cached) {
-              tmdbCache.set(`show-${tmdbId}`, cached);
-              return;
-            }
+          const showFetches = [];
+          for (const [showId, seasons] of uniqueShowSeasons.entries()) {
+            for (const seasonNumber of seasons) {
+              showFetches.push(
+                (async () => {
+                  const cacheKey = `tmdb-season-${showId}-${seasonNumber}`;
+                  const cached = tmdbImageCache.get(cacheKey);
+                  if (cached) {
+                    tmdbCache.set(
+                      `show-${showId}-season-${seasonNumber}`,
+                      cached,
+                    );
+                    return;
+                  }
 
-            try {
-              const tmdbUrl = `https://api.themoviedb.org/3/tv/${tmdbId}?api_key=${TMDB_API_KEY}`;
-              const tmdbResponse = await fetch(tmdbUrl);
-              if (tmdbResponse.ok) {
-                const tmdbData = await tmdbResponse.json();
-                if (tmdbData.poster_path) {
-                  const posterUrl = `https://image.tmdb.org/t/p/w342${tmdbData.poster_path}`;
-                  tmdbCache.set(`show-${tmdbId}`, posterUrl);
-                  tmdbImageCache.set(cacheKey, posterUrl);
-                }
-              }
-            } catch (e) {
-              // Ignore image fetch errors
+                  try {
+                    const tmdbUrl = `https://api.themoviedb.org/3/tv/${showId}/season/${seasonNumber}?api_key=${TMDB_API_KEY}`;
+                    const tmdbResponse = await fetch(tmdbUrl);
+                    if (tmdbResponse.ok) {
+                      const tmdbData = await tmdbResponse.json();
+                      if (tmdbData.poster_path) {
+                        const posterUrl = `https://image.tmdb.org/t/p/w342${tmdbData.poster_path}`;
+                        tmdbCache.set(
+                          `show-${showId}-season-${seasonNumber}`,
+                          posterUrl,
+                        );
+                        tmdbImageCache.set(cacheKey, posterUrl);
+                      }
+                    }
+                  } catch (e) {
+                    // Ignore image fetch errors
+                  }
+                })(),
+              );
             }
-          });
+          }
 
           await Promise.all([...movieFetches, ...showFetches]);
         }
@@ -515,8 +571,15 @@ export const server = {
 
           if (item.type === "movie" && item.movie?.ids?.tmdb) {
             posterPath = tmdbCache.get(`movie-${item.movie.ids.tmdb}`) || null;
-          } else if (item.type === "episode" && item.show?.ids?.tmdb) {
-            posterPath = tmdbCache.get(`show-${item.show.ids.tmdb}`) || null;
+          } else if (
+            item.type === "episode" &&
+            item.show?.ids?.tmdb &&
+            item.episode?.season
+          ) {
+            posterPath =
+              tmdbCache.get(
+                `show-${item.show.ids.tmdb}-season-${item.episode.season}`,
+              ) || null;
           }
 
           return {
