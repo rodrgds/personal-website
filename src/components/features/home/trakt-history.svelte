@@ -279,7 +279,6 @@
   .stats-header {
     display: flex;
     gap: 1rem;
-    margin-bottom: 1rem;
     flex-wrap: wrap;
   }
 

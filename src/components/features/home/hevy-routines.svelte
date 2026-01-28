@@ -429,6 +429,7 @@
   .workouts-card {
     flex: 1;
     min-width: 300px;
+    text-align: left;
   }
 
   .workouts-header {
