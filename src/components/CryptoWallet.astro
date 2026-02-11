@@ -33,8 +33,7 @@ const modalTitleId = `qr-modal-title-${componentId}`;
   <div class="flex-container">
     <button data-crypto-button
       class="button"
-      id={`${safeCryptoId}-copy-button`}
-      onclick="/* ... copy logic ... */ var button = this; var originalText = button.textContent; navigator.clipboard.writeText(button.parentElement.previousElementSibling.textContent.trim()).then(() => { button.textContent = 'Copied!'; button.classList.add('green'); setTimeout(() => { button.textContent = originalText; button.classList.remove('green'); }, 900); }).catch(err => { console.error('Failed to copy: ', err); button.textContent = 'Copy Failed'; setTimeout(() => { button.textContent = originalText; }, 1500); });">
+      id={`${safeCryptoId}-copy-button`}>
       Copy {symbol} address
     </button>
     {qr && (
@@ -195,6 +194,37 @@ const modalTitleId = `qr-modal-title-${componentId}`;
     const canvasElement = componentWrapper.querySelector('canvas.qr-code-canvas');
     const modalElement = componentWrapper.querySelector('.qr-modal'); // Find modal *within this wrapper*
     const closeButton = modalElement?.querySelector('.modal-close-button');
+    const copyButton = componentWrapper.querySelector('[data-crypto-button]');
+
+    // Setup copy button functionality
+    if (copyButton && !copyButton.dataset.listenerAttached) {
+        copyButton.addEventListener('click', () => {
+            const originalText = copyButton.textContent;
+            const addressElement = copyButton.parentElement.previousElementSibling;
+            
+            if (addressElement) {
+                const addressText = addressElement.textContent.trim();
+                
+                navigator.clipboard.writeText(addressText)
+                    .then(() => {
+                        copyButton.textContent = 'Copied!';
+                        copyButton.classList.add('green');
+                        setTimeout(() => {
+                            copyButton.textContent = originalText;
+                            copyButton.classList.remove('green');
+                        }, 900);
+                    })
+                    .catch((err) => {
+                        console.error('Failed to copy: ', err);
+                        copyButton.textContent = 'Copy Failed';
+                        setTimeout(() => {
+                            copyButton.textContent = originalText;
+                        }, 1500);
+                    });
+            }
+        });
+        copyButton.dataset.listenerAttached = 'true';
+    }
 
     if (canvasElement && modalElement) {
         // Generate QR and attach canvas listeners
