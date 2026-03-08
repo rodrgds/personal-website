@@ -410,6 +410,15 @@
       "icon": "🌌",
       "rating": 5,
       "categories": ["science", "philosophy", "education"]
+    },
+    {
+      "title": "The Four Agreements",
+      "author": "Don Miguel Ruiz",
+      "image": "/images/favorites/the-four-agreements.png",
+      "icon": "🤝",
+      "rating": 5,
+      "comment": "Ancient Toltec wisdom for personal freedom. Simple but profound: be impeccable with your word, don't take anything personally, don't make assumptions, and always do your best.",
+      "categories": ["philosophy", "lifestyle", "self-improvement"]
     }
   ],
   "blogs": [
