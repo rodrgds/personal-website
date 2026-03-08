@@ -1,5 +1,5 @@
 ---
-title: "Running OpenClaw on a Synology NAS with Portainer"
+title: "Running OpenClaw on Synology NAS: complete setup"
 description: "A complete guide to self-hosting the OpenClaw AI agent on a headless Synology NAS"
 tags:
   [
@@ -15,61 +15,66 @@ tags:
 pubDate: "Mar 8 2026"
 ---
 
-I spent longer than I'd like to admit getting this working. The official docs assume you're running OpenClaw on a normal Linux machine where you have root, a display, and a companion app. A headless Synology NAS behind Portainer is none of those things, and the gap between "follow the docs" and "actually working" turned out to be full of weird edge cases.
+> This guide was compiled with the help of Claude (Anthropic) based on my actual setup session with all the little tweaks I had to do to make it work.. He just helped me shape the instructions and explanations in a clear way. If you find any errors or points of confusion, let me know so I can clarify them in the guide.
 
-This is the guide I wish existed when I started.
+---
 
-## What is OpenClaw
+## What we're building
 
-OpenClaw (also called Clawbot or Moltbot depending on which part of the docs you're reading) is a self-hosted AI agent. You give it an API key from Anthropic, OpenAI, or similar, point it at a messaging channel like Telegram, and it becomes a bot you can talk to from your phone. Not just chat — it can run shell commands on your NAS, read and write files, browse the web, and execute arbitrary scripts.
+OpenClaw (also known as Clawbot / Moltbot) is an AI agent that runs as a local gateway and connects to messaging channels like Telegram, WhatsApp, Discord, and Slack so you can control it from your phone. It also has a built-in web dashboard.
 
-It has two separate processes that need to run as two separate Docker containers:
+This guide uses:
+- A custom local Docker image built on top of `ghcr.io/phioranex/openclaw-docker:latest`, which bakes Chrome, pip, and any other system dependencies in permanently
+- Manual `docker run` for onboarding, so data lives cleanly in `/volume1/docker/openclaw/` from the very first moment
+- Portainer Stacks for deployment and all future updates
+- A persistent home directory mount, so the entire `/home/node` is on your NAS and every tool, config file, dotfile, auth token, and credential survives container image updates automatically
 
-**Gateway** — handles routing, Telegram/Discord/Slack channels, the web dashboard, and the WebSocket API. This is what you talk to.
+### Architecture
 
-**Node host** — the actual agent runtime. It's what gives the gateway its tools: file read/write, exec, browser, web search. Without it, the agent only has five messaging tools and can't do anything interesting. The node hardcodes its connection to `127.0.0.1:18789`, which is why it needs to share the gateway's network namespace rather than talk to it over the Docker bridge.
+OpenClaw is two separate processes running as two separate containers:
 
-Both need to run. Both need the same home volume mounted.
+- Gateway (`openclaw-gateway`): handles routing, messaging channels, the web dashboard, and the WebSocket API
+- Node host (`openclaw-node`): the actual agent process that gives OpenClaw its tools (file read/write, exec, browser, web search, etc.). Without this running and paired to the gateway, the agent only has messaging tools and can't interact with files or run commands
 
-## Why a custom Docker image
+Both must be running for a fully functional setup. The node host shares the gateway's network namespace so it can reach it on `127.0.0.1:18789`.
 
-The upstream image from `ghcr.io/phioranex/openclaw-docker` doesn't include Chrome, and the browser tool needs it. You could install Chrome every time the container starts, but that's 300MB on every restart, which is obviously bad.
-
-The fix is a local Dockerfile that extends the upstream image and bakes Chrome in. You rebuild it when you want to update OpenClaw, which adds maybe two minutes to the process. Everything else — configs, tools, auth tokens, installed packages — lives in a volume mounted at `/home/node`, so updates don't touch any of it.
-
-That home volume mount is the other thing this setup does differently from most guides. The usual approach is to mount only `.openclaw/` and then do gymnastics to make Python environments, npm globals, and XDG config directories all point somewhere persistent. Mounting the whole home directory makes all of that unnecessary. Install a Python package inside the container and it stays. OAuth tokens go where they naturally go. Dotfiles like `.gcalclirc` just work. Nothing to configure.
+---
 
 ## Before you start
 
-You need:
+Have these ready:
+- SSH access to your NAS (DSM → Control Panel → Terminal & SNMP → Enable SSH)
+- Portainer already running on your NAS
+- Your AI provider API key (e.g. `sk-ant-...` from console.anthropic.com, or an OpenAI key)
+- Optional but recommended: a Telegram account and a bot token from [@BotFather](https://t.me/BotFather). Do `/newbot` in BotFather, follow the prompts, and copy the token it gives you.
 
-- SSH access to your NAS (DSM → Control Panel → Terminal & SNMP → enable SSH)
-- Portainer running on your NAS
-- An API key from your AI provider (Anthropic, OpenAI, etc.)
-- Optionally: a Telegram bot token from [@BotFather](https://t.me/BotFather) — do `/newbot`, follow the prompts, copy the token
+---
 
-## Step 1 — Create the folder structure
+## Step 1: Create the folder structure
 
-SSH into your NAS, then:
+SSH into your NAS and run:
 
 ```bash
 mkdir -p /volume1/docker/openclaw/home
 mkdir -p /volume1/docker/openclaw/workspace
 ```
 
-Run the chown *after* creating the folders, not before — if you create more directories later without re-running this, they'll be owned by root and the container won't be able to write to them.
+Fix ownership so the container user (UID 1000) can write to these folders. Run this *after* all mkdir commands or newly created directories will be owned by root:
 
 ```bash
 sudo chown -R 1000:$(id -g) /volume1/docker/openclaw
 sudo chmod -R u+rwX,g+rwX,o-rwx /volume1/docker/openclaw
 ```
 
-## Step 2 — Create the Dockerfile and build the image
+---
+
+## Step 2: Create the Dockerfile and build the image
+
+The custom image bakes Google Chrome in permanently so it survives every future update.
 
 Create the Dockerfile:
 
-```bash
-cat > /volume1/docker/openclaw/Dockerfile << 'EOF'
+```dockerfile title="/volume1/docker/openclaw/Dockerfile"
 FROM ghcr.io/phioranex/openclaw-docker:latest
 
 USER root
@@ -100,28 +105,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 USER node
-EOF
 ```
 
-Also create a `.dockerignore`. Without it, Docker will try to include your `home/` and `workspace/` folders in the build context, which fails because those directories have permission structures Docker can't read.
+Also create a `.dockerignore` so Docker doesn't try to include your persistent data folders in the build context (it will fail if it tries):
 
-```bash
-cat > /volume1/docker/openclaw/.dockerignore << 'EOF'
+```text title="/volume1/docker/openclaw/.dockerignore"
 home
 workspace
-EOF
 ```
 
-Build the image — takes a few minutes the first time:
+Build the image (takes a few minutes on first run):
 
 ```bash
 cd /volume1/docker/openclaw
 docker build -t openclaw-custom:latest .
 ```
 
-## Step 3 — Run the onboarding wizard
+---
 
-This is interactive, so it has to happen via SSH before you deploy the stack. It only ever needs to run once — everything it writes goes into your home volume and persists from here on.
+## Step 3: Run the one-time onboarding wizard
+
+Interactive and must be done via SSH before deploying with Portainer. Only ever needs to run once. All config is saved to your volume and persists forever.
 
 ```bash
 docker run -it --rm \
@@ -131,33 +135,38 @@ docker run -it --rm \
   openclaw-custom:latest onboard
 ```
 
-The wizard asks several questions. Most have sensible defaults, but a few will break things if you get them wrong:
+Key answers during the wizard:
 
-| Question | What to pick |
+| Question | What to choose |
 |---|---|
-| Personal-by-default prompt | `Yes` — continue |
-| Onboarding mode | `Manual` |
-| What to set up | `Local gateway (this machine)` |
-| Workspace directory | Leave blank, press Enter |
-| Gateway bind | `LAN (0.0.0.0)` — **do not pick loopback**. Loopback makes the gateway unreachable from outside the container. |
-| Model provider | Your provider, enter your API key when prompted |
-| Tailscale | `no` — enabling it here can leave the instance unreachable |
-| Messaging channel | Your Telegram bot token, or skip |
+| Personal-by-default prompt | Yes, continue |
+| Onboarding mode | Manual |
+| What to set up | Local gateway (this machine) |
+| Workspace directory | Leave default, just press Enter |
+| Gateway bind | LAN (0.0.0.0). Required for Docker port mapping to work. Loopback makes the gateway unreachable from outside the container. |
+| Model provider | Your provider; enter your API key when prompted |
+| Tailscale | No. Configuring it here can leave the instance unreachable. |
+| Messaging channel | Enter your Telegram bot token if you have one, or skip |
 
-If you set up Telegram, the bot will send you a pairing code. Don't try to approve it yet — the gateway isn't running. Do it after Step 4.
+If you set up Telegram during onboarding, OpenClaw will send your bot a pairing code. Don't try to approve it yet. Do that after the gateway starts in Step 4.
 
-Once the wizard finishes, confirm it actually wrote something:
+Once the wizard finishes, verify config was written correctly:
 
 ```bash
 ls /volume1/docker/openclaw/home/.openclaw/
-# Should show openclaw.json and a few other files
+# Should show openclaw.json and other config files
 ```
 
-## Step 4 — Deploy the Portainer stack
+---
 
-In Portainer: Stacks → + Add Stack → name it `openclaw` → paste this:
+## Step 4: Deploy the Portainer stack
 
-```yaml
+1. Log into Portainer
+2. Click Stacks in the left sidebar → + Add stack
+3. Name the stack `openclaw`
+4. Paste the following into the Web editor:
+
+```yaml title="Portainer Stack"
 services:
 
   openclaw-gateway:
@@ -175,7 +184,6 @@ services:
     volumes:
       - /volume1/docker/openclaw/home:/home/node
       - /volume1/docker/openclaw/workspace:/home/node/.openclaw/workspace
-      # Add extra folders here — see "Mounting additional folders" below
     ports:
       - 18789:18789
       - 18790:18790
@@ -200,6 +208,7 @@ services:
     tty: true
     mem_limit: 1g
     cpu_shares: 512
+    # Share the gateway's network namespace so 127.0.0.1:18789 resolves correctly
     network_mode: "service:openclaw-gateway"
     security_opt:
       - no-new-privileges:true
@@ -225,82 +234,96 @@ services:
       - cli
 ```
 
-`pull_policy: never` is important. Portainer will try to pull `openclaw-custom` from Docker Hub if you don't set this, which fails because it's a local image.
+5. Click Deploy the stack
 
-`network_mode: "service:openclaw-gateway"` on the node service makes both containers share a network namespace, so the node can reach the gateway on `127.0.0.1:18789`. This is not optional — without it you'll get constant ECONNREFUSED errors.
-
-Deploy it. Watch the OpenClaw container logs for:
+Watch Portainer → Containers → OpenClaw → Logs and wait until you see:
 
 ```
 [gateway] listening on ws://0.0.0.0:18789 (PID 1)
 ```
 
-Any `getUpdates conflict` warnings from Telegram right after startup will clear on their own within a few seconds.
+Any `getUpdates conflict` Telegram warnings right after that will clear within seconds. Check OpenClaw-Node logs too and confirm there's no `ECONNREFUSED` error.
 
-## Step 5 — Set up the shell alias
+---
 
-The OpenClaw binary path inside the container is long. Add this to your NAS `~/.bashrc`:
+## Step 5: Set up the shell alias
+
+The OpenClaw binary path inside the container is long. Set up an alias on your NAS so you can run all OpenClaw commands cleanly from SSH:
 
 ```bash
 echo "alias openclaw='docker exec OpenClaw /app/node_modules/.pnpm/node_modules/.bin/openclaw'" >> ~/.bashrc
 source ~/.bashrc
 ```
 
-All the `openclaw` commands from here on use this alias. In a fresh SSH session, run `source ~/.bashrc` first.
+All commands from here on use this alias. In a fresh SSH session, run `source ~/.bashrc` first.
 
-## Step 6 — Access the dashboard
+---
+
+## Step 6: Access the dashboard
 
 ```bash
 openclaw dashboard --no-open
 ```
 
-Copy the URL it outputs (it includes a `?token=...` parameter) and open it in your browser. If you see `disconnected (1008): pairing required`, your browser session needs to be approved:
+Copy the URL it outputs (contains `?token=...`) and open it in your browser.
+
+If you see `disconnected (1008): pairing required`, your browser needs to be approved as a device:
 
 ```bash
 openclaw devices list
 openclaw devices approve <requestId>
 ```
 
-## Step 7 — Complete Telegram pairing
+---
 
-If you set up Telegram during onboarding, approve the pairing code the bot sent you:
+## Step 7: Complete Telegram pairing
+
+If you configured Telegram during onboarding, OpenClaw sent your bot a pairing code:
 
 ```bash
 openclaw pairing approve telegram <CODE>
 ```
 
-By default, OpenClaw silently drops all group messages. To allow them:
+### Telegram group messages
+
+By default OpenClaw silently drops all group messages. To allow them:
 
 ```bash
 openclaw config set channels.telegram.groupPolicy open
 ```
 
-## Step 8 — Pair the node host and enable exec
+---
 
-This is the step with the most ways to go wrong, so I'll be explicit.
+## Step 8: Pair the node host
 
-First, trigger a pairing request from the node and immediately check for it:
+The node needs to be approved as a device before the agent gets its full tool set.
+
+Two things worth knowing before you start.
+
+`openclaw nodes list` will always show `Paired: 0`. That's a confirmed bug. The node pairs as a device, not through the nodes store. Ignore `nodes list` entirely and use `devices list` instead.
+
+The node must have a fixed identity. Without `--node-id` in the command, the node fails to generate a device identity and never creates a pairing request. That's already handled in the stack above with `--node-id nas-node --display-name "NAS Node"`.
+
+Restart the node container to trigger a fresh pairing request, then immediately check devices:
 
 ```bash
 docker restart OpenClaw-Node && sleep 5 && openclaw devices list
 ```
 
-You should see a pending device. Approve it:
+You should see a pending request. Approve it:
 
 ```bash
 openclaw devices approve <requestId>
 ```
 
-Verify it shows the `node` role:
+Then verify it shows up with the `node` role:
 
 ```bash
 openclaw devices list
-# Look for: Roles: operator, node
+# Should show a paired device with Roles: operator, node
 ```
 
-One thing worth knowing: `openclaw nodes list` will always show `Paired: 0`. That's a bug in the nodes store — the node actually pairs as a device, not through the nodes system. Ignore `nodes list`, use `devices list`.
-
-Now configure exec routing. You need all four of these:
+Now configure exec routing. All four of these are required:
 
 ```bash
 openclaw config set tools.exec.host node
@@ -309,23 +332,23 @@ openclaw config set tools.exec.security full
 openclaw config set tools.exec.ask off
 ```
 
-`tools.exec.node` is the one that actually matters — without it, the gateway doesn't know which node to target and silently falls back to the sandbox, which doesn't work in Docker. `tools.exec.ask off` disables the approval prompt that would otherwise require a companion app UI that doesn't exist in this setup.
+`tools.exec.node` pins exec to your specific node. Without it, the gateway doesn't know which node to target and falls back to the sandbox, which fails in Docker since there's no companion app. `tools.exec.ask off` disables the approval prompt for the same reason.
 
-Restart both containers:
+Then restart both containers:
 
 ```bash
 docker restart OpenClaw && sleep 10 && docker restart OpenClaw-Node
 ```
 
-Ask your agent to list its available tools. You should see `read`, `write`, `edit`, `exec`, `web_search`, `web_fetch`, and `browser`.
+Ask your agent to list its available tools. It should now include `read`, `write`, `edit`, `exec`, `web_search`, `web_fetch`, and `browser`.
 
-If you still only see messaging tools, check the `tools` block in your config:
+If it still only shows messaging tools, check what the config actually has:
 
 ```bash
 sudo cat /volume1/docker/openclaw/home/.openclaw/openclaw.json | grep -A8 '"tools"'
 ```
 
-It should look like this:
+The `tools` block should look like this:
 
 ```json
 "tools": {
@@ -338,43 +361,53 @@ It should look like this:
 }
 ```
 
-If `tools.profile: "messaging"` is present, that's the problem — onboarding sets it and it overrides everything. Remove it manually:
+If `tools.profile` is present, that's the problem. Remove it manually:
 
 ```bash
 sudo nano /volume1/docker/openclaw/home/.openclaw/openclaw.json
 ```
 
-Delete the `"profile": "messaging",` line, save, restart both containers.
+Find and delete the `"profile": "messaging",` line from the `tools` block, save, then restart both containers.
 
-## Step 9 — Reverse proxy WebSocket headers (if using DSM Application Portal)
+The pairing and exec config persist forever, saved in your home volume so you never need to redo this after image updates.
 
-If you're routing OpenClaw through Synology's built-in reverse proxy, you need to add WebSocket headers or the chat will keep disconnecting.
+---
 
-DSM → Control Panel → Application Portal → Reverse Proxy → edit your OpenClaw entry → Custom Header tab → add:
+## Step 9: Reverse proxy WebSocket (if using DSM Application Portal)
+
+If routing OpenClaw through Synology's built-in reverse proxy you must enable WebSocket support or the chat will disconnect constantly.
+
+DSM → Control Panel → Application Portal → Reverse Proxy → Edit your OpenClaw entry → Custom Header tab → add both:
 
 | Header | Value |
 |---|---|
 | `Upgrade` | `$http_upgrade` |
 | `Connection` | `$connection_upgrade` |
 
+---
+
 ## Updating OpenClaw
 
-Two steps. First rebuild the image from your NAS:
+Because you're using a custom local image, updating is a two-step process. Never use Container Manager; always go through Portainer for the redeploy step.
+
+Rebuild the image (SSH into your NAS):
 
 ```bash
 cd /volume1/docker/openclaw
 docker build --pull -t openclaw-custom:latest .
 ```
 
-The `--pull` flag fetches the latest upstream image before building. Takes about two minutes.
+The `--pull` flag fetches the latest upstream `phioranex` image before building, so you always get the newest OpenClaw version baked together with Chrome. Takes about 2 minutes.
 
-Then in Portainer: Stacks → openclaw → Redeploy. Not "Pull and redeploy" — just Redeploy, since the image is local.
+Then redeploy in Portainer: Stacks → openclaw → Redeploy.
 
-Everything in your home volume and workspace survives the update untouched. The node pairing persists too.
+You don't need "Pull and redeploy" here since the image is local. Just Redeploy is enough. Both containers get restarted on the new image. All config, tools, auth tokens, and credentials live in your mounted volumes so nothing is lost.
 
-## Installing tools
+---
 
-**Python packages** — install directly inside the container. Since home is persistent, they stay:
+## Installing Python tools
+
+Since the entire home directory is persistent, install packages directly inside the container and they survive every update:
 
 ```bash
 docker exec -it OpenClaw bash
@@ -382,91 +415,126 @@ pip install gcalcli yt-dlp --break-system-packages
 exit
 ```
 
-The `--break-system-packages` flag is needed because the base image uses a Debian-managed Python. The packages land in `~/.local/lib/` which is part of your home volume. Make sure `~/.local/bin` is in PATH — add it to `~/.bashrc` inside the container if tools aren't found after install.
+Packages land in `~/.local/` which is part of your mounted home volume. If a tool isn't found after install, add `~/.local/bin` to PATH in your `~/.bashrc` inside the container.
 
-**npm packages** — same deal:
+---
+
+## Installing npm tools (agent-browser, etc.)
+
+Since home is persistent, any `npm install -g` inside the container survives updates:
 
 ```bash
 docker exec OpenClaw npm install -g agent-browser
 docker exec OpenClaw agent-browser install
 ```
 
-`agent-browser install` will download Playwright's Chromium (~167MB). It only happens once because `PLAYWRIGHT_BROWSERS_PATH` points to your persistent home volume.
+`agent-browser install` downloads Playwright's Chromium (~167MB). It only happens once because `PLAYWRIGHT_BROWSERS_PATH` points to your persistent home volume.
 
-**System packages** — these belong in the Dockerfile, not installed at runtime. Add them to the `apt-get install` block and rebuild:
+---
+
+## System packages (ripgrep, ffmpeg, etc.)
+
+System packages belong in the Dockerfile, not installed at runtime. Add them to the `RUN apt-get install` block:
 
 ```dockerfile
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget \
+    gnupg \
     ...existing packages... \
     ripgrep \
     ffmpeg \
-  && ...
+  && ...rest of Chrome install...
 ```
 
-## Mounting additional folders
+Then rebuild and redeploy:
 
-If you want Syncthing, documents, or any other NAS directories accessible to the agent, create the folder first, fix ownership, then add it to the volumes section of both services in the stack.
+```bash
+cd /volume1/docker/openclaw
+docker build --pull -t openclaw-custom:latest .
+# Then Portainer -> Stacks -> openclaw -> Redeploy
+```
+
+---
+
+## Mounting additional folders and Syncthing
+
+Always create the host directory and fix ownership before redeploying. If the path doesn't exist on the host, the container won't start:
 
 ```bash
 mkdir -p /volume1/syncthing/notes
 sudo chown -R 1000:$(id -g) /volume1/syncthing/notes
 ```
 
-Also give the Syncthing user traverse access to the parent directory if needed:
+If Syncthing runs as a different user and can't access the parent directory, give it traverse permission:
 
 ```bash
 sudo chmod o+x /volume1/docker/openclaw
 ```
 
-Then add to both services' volumes:
+Then add entries to the `volumes:` section of both `openclaw-gateway` and `openclaw-node`:
 
 ```yaml
 volumes:
   - /volume1/docker/openclaw/home:/home/node
   - /volume1/docker/openclaw/workspace:/home/node/.openclaw/workspace
+  # Syncthing-synced notes, read-only so the agent can't accidentally delete them
   - /volume1/syncthing/notes:/home/node/.openclaw/workspace/notes:ro
+  # A documents library
   - /volume1/documents:/home/node/.openclaw/workspace/documents:ro
+  # A writable output folder
   - /volume1/docker/openclaw/outputs:/home/node/.openclaw/workspace/outputs
 ```
 
-Use `:ro` for anything you don't want the agent to modify. Syncthing syncs to the host path in real time — changes show up inside the container without a restart.
+Use `:ro` for anything you want the agent to read but never modify. Syncthing writes to the host path in real time so changes appear inside the container instantly, no restart needed.
 
-## What persists
+---
 
-Everything in `/home/node` survives image updates:
+## Full persistence reference
 
-| Data | Location on NAS |
-|---|---|
-| OpenClaw config, memory, API keys | `home/.openclaw/` |
-| Agent workspace | `workspace/` |
-| npm global tools | `home/.local/` or `home/.npm-global/` |
-| Python tools | `home/.local/lib/python3.x/` |
-| Dotfiles (.gcalclirc, .netrc, etc.) | `home/` |
-| Tool auth and cache | `home/.config/`, `home/.cache/` |
-| System packages (Chrome, pip, etc.) | Dockerfile — rebuild to update |
+| Data | Survives image updates? | Location on NAS |
+|---|---|---|
+| OpenClaw config, memory, API keys | yes | `home/.openclaw/` |
+| Agent workspace files | yes | `workspace/` |
+| npm global tools | yes | `home/.local/` or `home/.npm-global/` |
+| Python tools | yes | `home/.local/lib/python3.x/` |
+| All dotfiles (.gcalclirc etc.) | yes | `home/` |
+| All tool auth/config/cache | yes | `home/.config/`, `home/.cache/` etc. |
+| System packages (Chrome, pip etc.) | yes | Dockerfile (rebuild to update) |
+
+---
 
 ## Troubleshooting
 
-**`Config was last written by a newer OpenClaw`**
-Version mismatch. Rebuild and redeploy: `docker build --pull -t openclaw-custom:latest .` then Portainer → Stacks → openclaw → Redeploy.
+**`Config was last written by a newer OpenClaw` warnings**
+Version mismatch between the running image and your config. Rebuild the image and redeploy: `cd /volume1/docker/openclaw && docker build --pull -t openclaw-custom:latest .` then Portainer → Stacks → openclaw → Redeploy.
 
-**`connect ECONNREFUSED 127.0.0.1:18789`**
-The node can't reach the gateway. Check that `network_mode: "service:openclaw-gateway"` is set on the node service.
+**`node host gateway connect failed: connect ECONNREFUSED 127.0.0.1:18789`**
+The node is hardcoded to connect to `127.0.0.1` and needs to share the gateway's network namespace. Make sure `network_mode: "service:openclaw-gateway"` is set on the `openclaw-node` service in the stack.
 
-**`openclaw nodes list` shows `Paired: 0`**
-Confirmed bug — ignore it. Use `openclaw devices list` instead and look for a device with the `node` role.
+**`openclaw nodes list` always shows `Paired: 0`**
+Known bug. The node pairs as a device, not through the nodes store. Use `openclaw devices list` instead and look for a device with the `node` role.
 
-**Agent only has 5 messaging tools**
-Onboarding set `tools.profile: "messaging"` in your config. Open `openclaw.json` with nano, delete that line, restart both containers.
+**Agent only has 5 messaging tools despite node being paired**
+Onboarding sets `tools.profile: "messaging"` in your config which limits the agent to only messaging tools. Remove it manually:
 
-**Container keeps restarting and only prints CLI help**
-The `command:` field is missing from the service. Gateway needs `command: gateway`, node needs `command: node run`.
+```bash
+sudo nano /volume1/docker/openclaw/home/.openclaw/openclaw.json
+```
+
+Find and delete the `"profile": "messaging",` line from the `tools` block, save, then restart both containers:
+
+```bash
+docker restart OpenClaw && sleep 10 && docker restart OpenClaw-Node
+```
+
+**Container restarts in a loop printing only the CLI help text**
+The `command:` is missing from the service. Make sure `command: gateway` is set on the gateway service and `command: node run` on the node service.
 
 **`disconnected (1008): pairing required` in the dashboard**
-Your browser session needs approval. Run `openclaw devices list` then `openclaw devices approve <requestId>`.
+Your browser session needs to be approved as a device. Run `openclaw devices list` then `openclaw devices approve <requestId>`.
 
-**Exec still requires approval / "Policy restriction — can't exec on sandbox"**
-Make sure all four exec config values are set:
+**Exec requires approval / exec fails silently**
+Make sure all four config values are set:
 
 ```bash
 openclaw config set tools.exec.host node
@@ -475,26 +543,33 @@ openclaw config set tools.exec.security full
 openclaw config set tools.exec.ask off
 ```
 
-Then restart both containers. `tools.exec.node` is usually the missing one.
+`tools.exec.node` pins exec to your specific node. `tools.exec.ask off` disables the approval prompt. Without both, exec silently fails in Docker because there's no companion app UI available to handle approval requests.
 
-**Telegram group messages not going through**
+Then restart both containers:
 
 ```bash
-openclaw config set channels.telegram.groupPolicy open
+docker restart OpenClaw && sleep 10 && docker restart OpenClaw-Node
 ```
 
-## Quick reference
+**Telegram group messages silently dropped**
+Run: `openclaw config set channels.telegram.groupPolicy open`
 
-> Replace `openclaw` with `docker exec OpenClaw /app/node_modules/.pnpm/node_modules/.bin/openclaw` if the alias isn't active.
+---
+
+## Quick reference cheat sheet
+
+> All commands assume the shell alias from Step 5 is active.
+> If not, replace `openclaw` with:
+> `docker exec OpenClaw /app/node_modules/.pnpm/node_modules/.bin/openclaw`
 
 ```bash
-# Dashboard URL (with auth token)
+# Get authenticated dashboard URL
 openclaw dashboard --no-open
 
-# Gateway status
+# Check gateway status
 openclaw status
 
-# List paired devices
+# List paired devices (nodes list has a known bug, use this instead)
 openclaw devices list
 
 # Approve a device
@@ -506,19 +581,21 @@ openclaw pairing approve telegram <CODE>
 # Allow Telegram group messages
 openclaw config set channels.telegram.groupPolicy open
 
-# Install a Python tool
-docker exec -it OpenClaw bash -c "pip install <package> --break-system-packages"
-
-# Install an npm tool
+# Install an npm tool (persistent across updates)
 docker exec OpenClaw npm install -g <package>
 
-# Gateway logs
+# Install a Python tool (persistent across updates)
+docker exec -it OpenClaw bash -c "pip install <package> --break-system-packages"
+
+# Add a system package: edit Dockerfile, then rebuild + redeploy
+
+# View gateway logs
 docker logs OpenClaw --tail 50
 
-# Node logs
+# View node logs
 docker logs OpenClaw-Node --tail 50
 
-# Update:
+# Update OpenClaw:
 #   1. cd /volume1/docker/openclaw && docker build --pull -t openclaw-custom:latest .
-#   2. Portainer → Stacks → openclaw → Redeploy
+#   2. Portainer -> Stacks -> openclaw -> Redeploy
 ```
