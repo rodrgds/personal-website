@@ -13,113 +13,80 @@
   
   let contributions: ContributionWeek[] = [];
   let totalContributions = 0;
+  let startYear = new Date().getFullYear();
   let loading = true;
   let error: string | null = null;
-  let startYear = 2020;
-  let endYear = new Date().getFullYear();
+  let fromCache = false;
   
   const username = 'rodrgds';
   
   // Orange/Yellow color scale (warm theme)
-  // Uses CSS custom properties for light/dark mode support
   const colorScale = [
-    'var(--contrib-level-0, #fff5e6)', // level 0 - lightest
+    'var(--contrib-level-0, #fff5e6)', // level 0
     'var(--contrib-level-1, #ffd699)', // level 1
     'var(--contrib-level-2, #ffaa33)', // level 2
     'var(--contrib-level-3, #ff8800)', // level 3
-    'var(--contrib-level-4, #cc5500)'  // level 4 - darkest
+    'var(--contrib-level-4, #cc5500)'  // level 4
   ];
-  
-  function getLevel(count: number): 0 | 1 | 2 | 3 | 4 {
-    if (count === 0) return 0;
-    if (count <= 3) return 1;
-    if (count <= 6) return 2;
-    if (count <= 9) return 3;
-    return 4;
-  }
   
   async function fetchContributions() {
     try {
-      // In production, fetch from GitHub GraphQL API
-      // For now, generate realistic mock data spanning multiple years
-      generateMockData();
+      loading = true;
+      error = null;
+      
+      const response = await fetch(`/api/github-contributions?username=${username}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch contributions');
+      }
+      
+      const data = await response.json();
+      
+      // Reverse so latest is on the left
+      contributions = data.contributions.reverse();
+      totalContributions = data.totalContributions;
+      startYear = data.startYear;
+      fromCache = data.fromCache;
+      
     } catch (e) {
-      error = 'Failed to load contributions';
+      console.error('Error fetching contributions:', e);
+      error = e instanceof Error ? e.message : 'Failed to load contributions';
+    } finally {
       loading = false;
     }
-  }
-  
-  function generateMockData() {
-    const weeks: ContributionWeek[] = [];
-    totalContributions = 0;
-    
-    const today = new Date();
-    // Start from ~5 years ago (adjust based on when you joined GitHub)
-    const startDate = new Date(startYear, 0, 1);
-    
-    // Calculate weeks from start date to today
-    const msPerWeek = 7 * 24 * 60 * 60 * 1000;
-    const totalWeeks = Math.ceil((today.getTime() - startDate.getTime()) / msPerWeek) + 1;
-    
-    for (let week = 0; week < totalWeeks; week++) {
-      const weekDays: ContributionDay[] = [];
-      
-      for (let day = 0; day < 7; day++) {
-        const currentDate = new Date(startDate);
-        currentDate.setDate(startDate.getDate() + week * 7 + day);
-        
-        if (currentDate > today) break;
-        
-        // Generate realistic activity patterns
-        // More activity in recent years, less in early years
-        const yearProgress = (currentDate.getFullYear() - startYear) / (endYear - startYear);
-        const isWeekend = day === 0 || day === 6;
-        
-        // Base probability increases over time (you got more active)
-        let baseProbability = 0.2 + (yearProgress * 0.5);
-        if (isWeekend) baseProbability *= 0.4;
-        
-        // Add some randomness and streaks
-        let count = 0;
-        if (Math.random() < baseProbability) {
-          count = Math.floor(Math.random() * 15) + 1;
-        }
-        
-        totalContributions += count;
-        
-        weekDays.push({
-          date: currentDate.toISOString().split('T')[0],
-          count,
-          level: getLevel(count)
-        });
-      }
-      
-      if (weekDays.length > 0) {
-        weeks.push({ days: weekDays });
-      }
-    }
-    
-    // REVERSE: Latest first (left), earliest last (right)
-    contributions = weeks.reverse();
-    loading = false;
   }
   
   onMount(() => {
     fetchContributions();
   });
+  
+  // Refresh data every hour
+  setInterval(() => {
+    fetchContributions();
+  }, 1000 * 60 * 60);
 </script>
 
 <div class="github-contributions">
   <h3 class="contributions-title">
     <a href="https://github.com/{username}" target="_blank" rel="noopener noreferrer">
       {totalContributions.toLocaleString()} contributions since {startYear}
+      {#if fromCache}
+        <span class="cache-badge" title="Data is cached">cached</span>
+      {/if}
     </a>
   </h3>
   
   {#if loading}
-    <div class="loading">Loading contributions...</div>
+    <div class="loading">
+      <div class="spinner"></div>
+      Loading contributions...
+    </div>
   {:else if error}
-    <div class="error">{error}</div>
+    <div class="error">
+      <p>{error}</p>
+      <button on:click={fetchContributions} class="retry-btn">Retry</button>
+    </div>
   {:else}
     <div class="scroll-hint">
       <span>← Recent</span>
@@ -128,7 +95,6 @@
     
     <div class="contributions-scroll-container">
       <div class="contributions-wrapper">
-        <!-- Contribution grid - latest on left -->
         <div class="contributions-grid">
           {#each contributions as week, weekIndex}
             <div class="week" title="Week of {week.days[0]?.date || 'unknown'}">
@@ -145,7 +111,6 @@
       </div>
     </div>
     
-    <!-- Legend -->
     <div class="legend">
       <span class="legend-label">Less</span>
       {#each colorScale as color, i}
@@ -157,7 +122,6 @@
 </div>
 
 <style>
-  /* Light mode colors */
   :global(:root) {
     --contrib-level-0: #fff5e6;
     --contrib-level-1: #ffd699;
@@ -171,7 +135,6 @@
     --contrib-hover-outline: rgba(0, 0, 0, 0.2);
   }
   
-  /* Dark mode colors */
   :global([data-theme="dark"]) {
     --contrib-level-0: #3d2817;
     --contrib-level-1: #8b5a2b;
@@ -203,11 +166,25 @@
     color: inherit;
     text-decoration: none;
     transition: color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
   }
   
   .contributions-title a:hover {
     color: var(--contrib-text-primary);
     text-decoration: underline;
+  }
+  
+  .cache-badge {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.4rem;
+    background: var(--contrib-level-1);
+    color: var(--contrib-text-primary);
+    border-radius: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
   
   .scroll-hint {
@@ -255,7 +232,6 @@
     display: flex;
     gap: 3px;
     flex-direction: row;
-    /* Latest (reversed array) is now on the left */
   }
   
   .week {
@@ -307,8 +283,38 @@
     font-size: 0.875rem;
   }
   
+  .spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--contrib-border);
+    border-top-color: var(--contrib-level-3);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
   .error {
     color: #cf222e;
+  }
+  
+  .retry-btn {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background: var(--contrib-level-2);
+    color: var(--contrib-text-primary);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: background 0.2s;
+  }
+  
+  .retry-btn:hover {
+    background: var(--contrib-level-3);
   }
   
   @media (max-width: 768px) {
@@ -329,19 +335,5 @@
     .week {
       gap: 2px;
     }
-    
-    .scroll-hint {
-      font-size: 0.7rem;
-    }
-  }
-  
-  /* Animation for loading */
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  
-  .contributions-grid {
-    animation: fadeIn 0.3s ease-in;
   }
 </style>
