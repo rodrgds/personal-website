@@ -7,6 +7,7 @@ import { getCollection } from "astro:content";
 import { SOCIALS, EXTRA_SOCIALS } from "../data/socials";
 import Logo from "../components/common/Logo.astro";
 import DateOfBirth from "../components/features/home/date-of-birth.svelte";
+import GitHubContributions from "../components/GitHubContributions.svelte";
 
 // import projects from "../data/projects.json";
 
@@ -121,6 +122,8 @@ const posts = await getCollection("blog").then((posts) =>
           </li>
         ))}
       </ul> -->
+
+      <GitHubContributions client:load />
 
       <h3>Writings</h3>
       <ul class="writings">

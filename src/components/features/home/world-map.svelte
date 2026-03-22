@@ -102,6 +102,25 @@
           .getPropertyValue("--link-color")
           .trim();
 
+        // Helper to convert any CSS color format to hex integer
+        const colorToInt = (color) => {
+          const tempDiv = document.createElement("div");
+          tempDiv.style.color = color;
+          document.body.appendChild(tempDiv);
+          const computed = getComputedStyle(tempDiv).color;
+          document.body.removeChild(tempDiv);
+          
+          // Parse rgb(r, g, b) or rgba(r, g, b, a)
+          const match = computed.match(/\d+/g);
+          if (match) {
+            const r = parseInt(match[0], 10);
+            const g = parseInt(match[1], 10);
+            const b = parseInt(match[2], 10);
+            return (r << 16) | (g << 8) | b;
+          }
+          return 0xffffff;
+        };
+
         globe = new window.ENCOM.Globe(width, height, {
           font: "JetBrains Mono",
           data: window.data || [],
@@ -120,9 +139,7 @@
 
         // Override background color using Three.js renderer
         if (globe.renderer) {
-          // Convert hex color to integer for Three.js
-          const colorInt = parseInt(bgColor.replace("#", ""), 16);
-          globe.renderer.setClearColor(colorInt, 1);
+          globe.renderer.setClearColor(colorToInt(bgColor), 1);
         }
 
         container.appendChild(globe.domElement);
