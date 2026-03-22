@@ -28,7 +28,26 @@ const posts = await getCollection("blog").then((posts) =>
   <body>
     <Header title={SITE_TITLE} />
     <main>
-      <h2>Hey! I'm Rodrigo Dias 👋</h2>
+      <h2>
+        Hey! I'm
+        <span class="name-wrap">
+          <button class="name-toggle" type="button" aria-label="Animate Rodrigo to rgo.pt">
+            <span class="rodrigo-morph" aria-hidden="true">
+              <span class="glyph r-upper">R</span>
+              <span class="glyph r-lower">r</span>
+              <span class="glyph o-1">o</span>
+              <span class="glyph d">d</span>
+              <span class="glyph r-2">r</span>
+              <span class="glyph i">i</span>
+              <span class="glyph g">g</span>
+              <span class="glyph o-2">o</span>
+              <span class="pt-suffix" aria-hidden="true">.🇵🇹</span>
+            </span>
+          </button>
+          <span class="dias">Dias</span>
+        </span>
+        👋
+      </h2>
 
       <p>Self-taught programmer since the age of 14. Currently, I am <b><DateOfBirth client:load /></b><span style="margin-left: 0.4rem" />years old and a Computer Engineering student at the Faculty of Engineering of the University of Porto.</p>
       <p>
@@ -124,10 +143,62 @@ const posts = await getCollection("blog").then((posts) =>
     <Footer />
 
     <script>
+      function showCopiedToast() {
+        window.dispatchEvent(new CustomEvent('app:toast', {
+          detail: {
+            message: 'Copied rgo.pt',
+            duration: 1700,
+          },
+        }));
+      }
+
+      function showCopyFailedToast() {
+        window.dispatchEvent(new CustomEvent('app:toast', {
+          detail: {
+            message: 'Copy failed',
+            duration: 1700,
+          },
+        }));
+      }
+
+      async function copyDomainToClipboard() {
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText('rgo.pt');
+            showCopiedToast();
+            return;
+          }
+
+          const helper = document.createElement('textarea');
+          helper.value = 'rgo.pt';
+          helper.setAttribute('readonly', '');
+          helper.style.position = 'absolute';
+          helper.style.left = '-9999px';
+          document.body.appendChild(helper);
+          helper.select();
+          const didCopy = document.execCommand('copy');
+          document.body.removeChild(helper);
+
+          if (didCopy) {
+            showCopiedToast();
+          } else {
+            showCopyFailedToast();
+          }
+        } catch {
+          showCopyFailedToast();
+        }
+      }
+
       // Use event delegation so the handler works even after client-side navigation
       document.addEventListener('click', function (event) {
         const target = event.target;
         if (!target || !(target instanceof Element)) return;
+
+        const nameButton = target.closest('.name-toggle');
+        if (nameButton) {
+          copyDomainToClipboard();
+          return;
+        }
 
         // Find the closest expand button (support clicks on the span inside)
         const expandButton = target.closest('#expand-socials');
@@ -245,6 +316,228 @@ const posts = await getCollection("blog").then((posts) =>
   .writings li {
     display: flex;
   }
+
+  .name-wrap {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.24rem;
+  }
+
+  .name-toggle {
+    position: relative;
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    line-height: 1;
+    cursor: pointer;
+    vertical-align: baseline;
+  }
+
+  .name-toggle:not(:hover):not(:focus-visible) .rodrigo-morph {
+    animation: rodrigo-hint-glow 2.8s ease-in-out infinite;
+  }
+
+  .rodrigo-morph {
+    position: relative;
+    width: auto;
+    height: auto;
+    line-height: 1;
+    font-family: var(--font-family-mono);
+    vertical-align: baseline;
+    display: inline-block;
+    overflow: visible;
+  }
+
+  .rodrigo-morph::before {
+    content: "Rodrigo";
+    visibility: hidden;
+    display: inline-block;
+    line-height: 1;
+  }
+
+  .glyph {
+    position: absolute;
+    top: 0;
+    left: calc(var(--x) * 1ch);
+    display: block;
+    line-height: 1em;
+    font-family: inherit;
+    letter-spacing: 0;
+    transition:
+      opacity 0.2s ease,
+      transform 0.42s cubic-bezier(0.2, 0.75, 0.2, 1);
+    will-change: transform, opacity;
+  }
+
+  .r-upper {
+    --x: 0;
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  .r-lower {
+    --x: 0;
+    opacity: 0;
+    transform: translate3d(0, 0.1em, 0) scale(0.88);
+  }
+
+  .o-1 {
+    --x: 1;
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
+  .d {
+    --x: 2;
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
+  .r-2 {
+    --x: 3;
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
+  .i {
+    --x: 4;
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
+  .g {
+    --x: 5;
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
+  .o-2 {
+    --x: 6;
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
+  .dias {
+    display: inline-block;
+    line-height: 1;
+    vertical-align: baseline;
+  }
+
+  .pt-suffix {
+    position: absolute;
+    left: 3.02ch;
+    top: 0;
+    line-height: 1;
+    opacity: 0;
+    transform: translate3d(-0.12rem, 0.2rem, 0) scale(0.9);
+    transition:
+      opacity 0.22s ease,
+      transform 0.26s ease;
+    transition-delay: 0ms;
+  }
+
+  .name-toggle:hover .r-upper,
+  .name-toggle:focus-visible .r-upper {
+    opacity: 0;
+    transform: translate3d(0, -0.08em, 0) scale(1.06);
+  }
+
+  .name-toggle:hover .r-lower,
+  .name-toggle:focus-visible .r-lower {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  .name-toggle:hover .o-1,
+  .name-toggle:focus-visible .o-1,
+  .name-toggle:hover .d,
+  .name-toggle:focus-visible .d,
+  .name-toggle:hover .r-2,
+  .name-toggle:focus-visible .r-2,
+  .name-toggle:hover .i,
+  .name-toggle:focus-visible .i {
+    opacity: 0;
+    transform: translate3d(0, -0.2em, 0) scale(0.9);
+  }
+
+  .name-toggle:hover .g,
+  .name-toggle:focus-visible .g {
+    transform: translate3d(-4ch, 0, 0);
+    transition-delay: 40ms;
+  }
+
+  .name-toggle:hover .o-2,
+  .name-toggle:focus-visible .o-2 {
+    transform: translate3d(-4ch, 0, 0);
+    transition-delay: 70ms;
+  }
+
+  .name-toggle:hover .pt-suffix,
+  .name-toggle:focus-visible .pt-suffix {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    transition-delay: 360ms;
+  }
+
+  .name-toggle:focus-visible {
+    outline: 2px dashed var(--text-color);
+    outline-offset: 0.15rem;
+    border-radius: 0.2rem;
+  }
+
+  .rodrigo-morph::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.14em;
+    height: 1px;
+    border-radius: 999px;
+    background: currentColor;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .name-toggle:not(:hover):not(:focus-visible) .rodrigo-morph::after {
+    animation: rodrigo-hint-underline 2.8s ease-in-out infinite;
+  }
+
+  @keyframes rodrigo-hint-glow {
+    0%,
+    100% {
+      text-shadow: 0 0 0 transparent;
+    }
+    50% {
+      text-shadow: 0 0 0.34rem color-mix(in srgb, currentColor 72%, transparent 28%);
+    }
+  }
+
+  @keyframes rodrigo-hint-underline {
+    0%,
+    100% {
+      opacity: 0;
+      transform: scaleX(0.82);
+    }
+    50% {
+      opacity: 0.36;
+      transform: scaleX(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .name-toggle:not(:hover):not(:focus-visible) .rodrigo-morph {
+      animation: none;
+    }
+
+    .name-toggle:not(:hover):not(:focus-visible) .rodrigo-morph::after {
+      animation: none;
+    }
+  }
+
   .writings li time {
     flex: 0 0 9.3rem;
     font-family: var(--font-family-mono);
