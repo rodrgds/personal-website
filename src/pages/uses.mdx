@@ -1,6 +1,7 @@
 ---
 layout: "../layouts/TwoCols.astro"
 title: Uses Page
+updatedDate: 2026-03-25
 ---
 
 import Logo from "../components/common/Logo.astro";
@@ -10,75 +11,33 @@ import Logo from "../components/common/Logo.astro";
   <p style="margin-top: 0.5rem;">Some links on this page are affiliate/referral links (marked with <sup>ref</sup>). I may earn a commission if you sign up through these links, at no extra cost to you (and may even get you a discount). I only recommend services I personally use and trust. Feel free to search for these services directly if you prefer.</p>
 </details>
 
-## Services
-
-### Free
-
-- <Logo src="obsidian" /> [Obsidian](https://obsidian.md/) - Note-taking & project management
-- <Logo src="todoist" /> [Todoist](https://todoist.com/) - Task manager
-- <Logo src="bitwarden" /> [Bitwarden](https://bitwarden.com/) - Password manager
-- <Logo src="komoot" /> [Komoot](https://www.komoot.com/) - Route planner & navigation
-- <Logo src="trakt" /> [Trakt.tv](https://trakt.tv/) - Movie & TV show tracking
-- <Logo src="lastfm" /> [Last.fm](https://www.last.fm/) - Music tracking
-- <Logo src="tailscale" /> [Tailscale](https://tailscale.com/) - Mesh VPN
-- <Logo src="github" /> [GitHub](https://github.com/) - Git repository
-- <Logo src="uniseasy" /> [Uni's Easy](https://uniseasy.com/) - Study+AI organization
-- <Logo src="controld" /> [ControlD](https://controld.com/free-dns) - DNS
-- <Logo src="cloudflare" /> [Cloudflare](https://www.cloudflare.com/) - Domains & DNS
-- <Logo src="coinbase" /> [Coinbase](https://ref.rgo.pt/coinbase)<sup>ref</sup> - Crypto exchange
-- <Logo src="revolut" /> [Revolut](https://ref.rgo.pt/revolut)<sup>ref</sup> - Banking & finance
-- <Logo src="thunderpick" /> [Thunderpick](https://ref.rgo.pt/thunderpick)<sup>ref</sup> - Esports betting
-- <Logo src="gamerpay" /> [GamerPay](https://ref.rgo.pt/gamerpay)<sup>ref</sup> - CS2 skins marketplace
-
-### Paid
-
-- <Logo src="perplexity" /> [Perplexity](https://www.perplexity.ai/) - AI chat & search
-- <Logo src="purelymail" /> [PurelyMail](https://purelymail.com/) - Email
-- <Logo src="hetzner" /> [Hetzner](https://ref.rgo.pt/hetzner)<sup>ref</sup> - Cloud hosting
-- <Logo src="surfshark" /> [Surfshark](https://ref.rgo.pt/surfshark)<sup>ref</sup> - VPN
-- <Logo src="cloudflare" /> [Cloudflare](https://www.cloudflare.com/) & <Logo src="ovh" /> [OVH](https://www.ovh.com/) - Domains
-- <Logo src="typst" /> [Typst](https://typst.app/) - Document writing
-- <Logo src="typefully" /> [Typefully](https://typefully.com/) - Twitter/X scheduling
-
-### Selfhosted
-
-- <Logo src="n8n" /> [n8n](https://n8n.io/) - Personal automations
-- <Logo src="karakeep" /> [Karakeep](https://karakeep.app/) - Bookmarking
-- <Logo src="shlink" /> [Shlink](https://shlink.io/) - URL shortener
-- <Logo src="umami" /> [Umami](https://umami.is) - Website analytics
-- <Logo src="postiz" /> [Postiz](https://postiz.com) - Social media scheduling
-- <Logo src="teamspeak" /> [TeamSpeak](https://www.teamspeak.com) - Voice chat server
-- <Logo src="ntfy" /> [ntfy](https://ntfy.sh/) - Push notifications
-- <Logo src="penpot" /> [Penpot](https://penpot.app/) - Design & prototyping
-- <Logo src="synology" /> [Synology NAS](https://www.synology.com/en-global) with:
-  - <Logo src="synologydrive" /> [Synology Drive](https://www.synology.com/en-global/dsm/feature/drive) - File drive
-  - <Logo src="immich" /> [Immich](https://immich.app/) - Photo management
-  - <Logo src="jellyfin" /> [Jellyfin](https://jellyfin.org/) - Media streaming
-  - <Logo src="homeassistant" /> [Home Assistant](https://www.home-assistant.io/) - Home automation
-  - <Logo src="audiobookshelf" /> [Audiobookshelf](https://www.audiobookshelf.org/) - Book & audiobook management
-  - <Logo src="paperlessngx" /> [Paperless-ngx](https://docs.paperless-ngx.com/) - Document management
-
 ## Apps/Programs
 
 ### Free
 
 - Operating Systems
-  - <Logo src="nixos" /> [NixOS](https://nixos.org/) - Desktop daily driver
+  - <Logo src="nixos" /> [NixOS](https://nixos.org/) - Desktop & server
     - <Logo src="i3wm" /> [i3wm](https://i3wm.org/) - Window manager
     - <Logo src="bumblebeestatus" /> [Bumblebee Status](https://bumblebee-status.readthedocs.io) - Status bar
+    - <Logo src="nix-darwin" /> [nix-darwin](https://github.com/nix-darwin/nix-darwin) - macOS system management
+    - <Logo src="homemanager" /> [Home Manager](https://github.com/nix-community/home-manager) - User environment management
+  - <Logo src="macos" /> [macOS](https://www.apple.com/macos) - Laptop
   - <Logo src="ubuntu" /> [Ubuntu](https://ubuntu.com/) - Servers
 - <Logo src="microsoftedge" /> [Microsoft Edge](https://www.microsoft.com/en-us/edge/download) - Browser
   - <Logo src="ublockoriginlite" /> [uBlock Origin Lite](https://chromewebstore.google.com/detail/ublock-origin-lite/ddkjiahejlhfcafbddmgiahcphecmpfh) - Ad blocker
   - <Logo src="darkreader" /> [Dark Reader](https://chromewebstore.google.com/detail/dark-reader/eimadpbcbfnmbkopoojfekhnkhdbieeh) - Dark mode
   - <Logo src="bitwarden" /> [Bitwarden](https://chromewebstore.google.com/detail/bitwarden-password-manage/nngceckbapebfimnlniiiahkandclblb) - Password manager
-  - <Logo src="karakeep" /> [Karakeep](https://chromewebstore.google.com/detail/karakeep/kgcjekpmcjjogibpjebkhaanilehneje) - Bookmark manager
+  {/* - <Logo src="karakeep" /> [Karakeep](https://chromewebstore.google.com/detail/karakeep/kgcjekpmcjjogibpjebkhaanilehneje) - Bookmark manager */}
 - Dev
   - <Logo src="vscode" /> [Visual Studio Code](https://code.visualstudio.com/) - Code editor
   - <Logo src="neovim" /> [Neovim](https://neovim.io/) - Config editor
-  - <Logo src="alacritty" /> [Alacritty](https://alacritty.org/) - Terminal emulator
-  - <Logo src="fishshell" /> [fish shell](https://fishshell.com/) - Shell
+  {/* - <Logo src="alacritty" /> [Alacritty](https://alacritty.org/) - Terminal emulator */}
+  - <Logo src="ghostty" /> [Ghostty](https://ghostty.org/) - Terminal emulator
+  - <Logo src="zsh" /> [zsh](https://www.zsh.org/) - Shell
   - <Logo src="starship" /> [Starship](https://starship.rs/) - Shell prompt
 - Others
+  - <Logo src="vicinae" /> [Vicinae](https://www.vicinae.com/) - Application launcher
+  - <Logo src="obsidian" /> [Obsidian](https://obsidian.md/) - Note-taking & project management
   - <Logo src="syncthing" /> [Syncthing](https://syncthing.net/) - File synchronization
   - <Logo src="excalidraw" /> [Excalidraw](https://excalidraw.com) - Diagrams & notes
   - <Logo src="davinciresolve" /> [DaVinci Resolve](https://www.blackmagicdesign.com/products/davinciresolve) - Video editing
@@ -102,3 +61,65 @@ import Logo from "../components/common/Logo.astro";
 - <Logo src="sleepasandroid" /> [Sleep as Android](https://sleep.urbandroid.org/) - Sleep tracker
 - <Logo src="symphonium" /> [Symfonium](https://symfonium.app/) - Music player
 - <Logo src="macrodroid" /> [MacroDroid](https://www.macrodroid.com/) - Android automation
+
+## Services
+
+### Free
+
+{/* - <Logo src="todoist" /> [Todoist](https://todoist.com/) - Task manager */}
+{/* - <Logo src="bitwarden" /> [Bitwarden](https://bitwarden.com/) - Password manager */}
+{/* - <Logo src="uniseasy" /> [Uni's Easy](https://uniseasy.com/) - Study+AI organization */}
+- <Logo src="komoot" /> [Komoot](https://www.komoot.com/) - Route planner & navigation
+- <Logo src="trakt" /> [Trakt.tv](https://trakt.tv/) - Movie & TV show tracking
+- <Logo src="lastfm" /> [Last.fm](https://www.last.fm/) - Music tracking
+- <Logo src="tailscale" /> [Tailscale](https://tailscale.com/) - Mesh VPN
+- <Logo src="github" /> [GitHub](https://github.com/) - Git repository
+- <Logo src="controld" /> [ControlD](https://controld.com/free-dns) - DNS
+- <Logo src="cloudflare" /> [Cloudflare](https://www.cloudflare.com/) - Domains & DNS
+- <Logo src="coinbase" /> [Coinbase](https://ref.rgo.pt/coinbase)<sup>ref</sup> - Crypto exchange
+- <Logo src="revolut" /> [Revolut](https://ref.rgo.pt/revolut)<sup>ref</sup> - Banking & finance
+- <Logo src="thunderpick" /> [Thunderpick](https://ref.rgo.pt/thunderpick)<sup>ref</sup> - Esports betting
+- <Logo src="gamerpay" /> [GamerPay](https://ref.rgo.pt/gamerpay)<sup>ref</sup> - CS2 skins marketplace
+
+### Paid
+
+{/* - <Logo src="perplexity" /> [Perplexity](https://www.perplexity.ai/) - AI chat & search */}
+- <Logo src="hetzner" /> [Hetzner](https://ref.rgo.pt/hetzner)<sup>ref</sup> - Cloud hosting
+- <Logo src="purelymail" /> [PurelyMail](https://purelymail.com/) - Email
+- <Logo src="surfshark" /> [Surfshark](https://ref.rgo.pt/surfshark)<sup>ref</sup> - VPN
+- <Logo src="cloudflare" /> [Cloudflare](https://www.cloudflare.com/) & <Logo src="ovh" /> [OVH](https://www.ovh.com/) - Domains
+- <Logo src="typst" /> [Typst](https://typst.app/) - Document writing
+{/* - <Logo src="typefully" /> [Typefully](https://typefully.com/) - Twitter/X scheduling */}
+
+### Selfhosted
+
+{/* - <Logo src="karakeep" /> [Karakeep](https://karakeep.app/) - Bookmarking */}
+{/* - <Logo src="postiz" /> [Postiz](https://postiz.com) - Social media scheduling */}
+- <Logo src="n8n" /> [n8n](https://n8n.io/) - Personal automations
+- <Logo src="shlink" /> [Shlink](https://shlink.io/) - URL shortener
+- <Logo src="umami" /> [Umami](https://umami.is) - Website analytics
+- <Logo src="vaultwarden" /> [Vaultwarden](https://github.com/dani-garcia/vaultwarden) - Password manager server
+- <Logo src="directus" /> [Directus](https://directus.io/) - Headless CMS
+- <Logo src="openclaw" /> [OpenClaw](https://openclaw.ai/) - Personal AI agent
+- <Logo src="teamspeak" /> [TeamSpeak](https://www.teamspeak.com) - Voice chat server
+- <Logo src="ntfy" /> [ntfy](https://ntfy.sh/) - Push notifications
+- <Logo src="penpot" /> [Penpot](https://penpot.app/) - Design & prototyping
+- <Logo src="synology" /> [Synology NAS](https://www.synology.com/en-global) with:
+  - <Logo src="synologydrive" /> [Synology Drive](https://www.synology.com/en-global/dsm/feature/drive) - File drive
+  - <Logo src="immich" /> [Immich](https://immich.app/) - Photo management
+  - <Logo src="jellyfin" /> [Jellyfin](https://jellyfin.org/) - Media streaming
+  - <Logo src="homeassistant" /> [Home Assistant](https://www.home-assistant.io/) - Home automation
+  - <Logo src="audiobookshelf" /> [Audiobookshelf](https://www.audiobookshelf.org/) - Book & audiobook management
+  - <Logo src="paperlessngx" /> [Paperless-ngx](https://docs.paperless-ngx.com/) - Document management
+
+## In Projects
+
+- <Logo src="svelte" /> [SvelteKit](https://kit.svelte.dev/) - Web framework
+- <Logo src="expo" /> [Expo](https://expo.dev/) - React Native framework
+- <Logo src="typescript" /> [TypeScript](https://www.typescriptlang.org/) - Typed JavaScript
+- <Logo src="golang" /> [Go](https://go.dev/) - Systems programming
+- <Logo src="bun" /> [Bun](https://bun.com/) - JavaScript runtime & toolkit
+- <Logo src="devenv" /> [devenv](https://devenv.sh/) - Developer environments
+- <Logo src="docker" /> [Docker](https://www.docker.com/) - Containerization
+- <Logo src="postgresql" /> [PostgreSQL](https://www.postgresql.org/) - Database
+- <Logo src="sqlite" /> [SQLite](https://www.sqlite.org/) - Smaller database
