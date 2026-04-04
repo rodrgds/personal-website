@@ -134,6 +134,51 @@
 
   // Get grouped history
   let groupedHistory = $derived(data ? groupHistory(data.history) : []);
+
+  // Masonry column helpers — greedy shortest-column algorithm.
+  // Each item is placed in whichever column currently has the least estimated
+  // height, which keeps columns visually balanced regardless of whether cards
+  // have a poster image or not.
+  function greedyColumns<T>(
+    items: T[],
+    numCols: number,
+    estimateHeight: (item: T) => number,
+  ): T[][] {
+    const cols: T[][] = Array.from({ length: numCols }, () => []);
+    const heights = new Array<number>(numCols).fill(0);
+
+    for (const item of items) {
+      const shortestCol = heights.indexOf(Math.min(...heights));
+      cols[shortestCol].push(item);
+      heights[shortestCol] += estimateHeight(item);
+    }
+
+    return cols;
+  }
+
+  // Height estimates (in arbitrary units — only relative values matter).
+  // A card with a poster has a 2:3 portrait image + text; one without is text only.
+  function estimateItemHeight(item: any): number {
+    return item.posterPath ? 420 : 110;
+  }
+
+  let columnCount = $state(4);
+
+  $effect(() => {
+    function update() {
+      if (window.innerWidth <= 600) columnCount = 1;
+      else if (window.innerWidth <= 900) columnCount = 2;
+      else if (window.innerWidth <= 1200) columnCount = 3;
+      else columnCount = 4;
+    }
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  });
+
+  let masonryColumns = $derived(
+    greedyColumns(groupedHistory, columnCount, estimateItemHeight),
+  );
 </script>
 
 {#if loading}
@@ -172,73 +217,78 @@
       </div>
     {/if}
 
-    <div class="history-grid">
-      {#each groupedHistory as item}
-        {@const posterUrl = item.posterPath}
-        <div class="history-card" data-type={item.type}>
-          {#if posterUrl}
-            <div class="poster-container">
-              <img src={posterUrl} alt={getTitle(item)} class="poster-image" />
-              <div class="type-badge">
-                {item.type === "movie" ? "🎬 Movie" : "📺 TV"}
-              </div>
-            </div>
-          {/if}
-          <div class="card-content">
-            <div class="item-header">
-              <div class="item-info">
-                <div class="item-title">
-                  {getTitle(item)}
-                  {#if getYear(item)}
-                    <span class="item-year">({getYear(item)})</span>
-                  {/if}
-                </div>
-                {#if item.type === "episode"}
-                  <div class="episode-info">
-                    {#if item.episodeCount === 1}
-                      {getEpisodeInfo(item)}
-                    {:else}
-                      <span class="season-info">
-                        Season {item.episode.season}
-                      </span>
-                      <span class="episode-count">
-                        {item.episodeCount}
-                        {item.episodeCount === 1 ? "episode" : "episodes"}
-                      </span>
-                    {/if}
+    <div class="history-grid-wrapper">
+      <div class="history-grid">
+        {#each masonryColumns as column}
+          <div class="history-column">
+            {#each column as item}
+              {@const posterUrl = item.posterPath}
+              <div class="history-card" data-type={item.type}>
+                {#if posterUrl}
+                  <div class="poster-container">
+                    <img
+                      src={posterUrl}
+                      alt={getTitle(item)}
+                      class="poster-image"
+                    />
+                    <div class="type-badge">
+                      {item.type === "movie" ? "🎬 Movie" : "📺 TV"}
+                    </div>
                   </div>
                 {/if}
+                <div class="card-content">
+                  <div class="item-header">
+                    <div class="item-info">
+                      <div class="item-title">
+                        {getTitle(item)}
+                        {#if getYear(item)}
+                          <span class="item-year">({getYear(item)})</span>
+                        {/if}
+                      </div>
+                      {#if item.type === "episode"}
+                        <div class="episode-info">
+                          {#if item.episodeCount === 1}
+                            {getEpisodeInfo(item)}
+                          {:else}
+                            <span class="season-info">
+                              Season {item.episode.season}
+                            </span>
+                            <span class="episode-count">
+                              {item.episodeCount}
+                              {item.episodeCount === 1 ? "episode" : "episodes"}
+                            </span>
+                          {/if}
+                        </div>
+                      {/if}
+                    </div>
+                  </div>
+                  <div class="item-time">
+                    {#if item.episodeCount > 1 && item.firstWatchedAt && item.lastWatchedAt}
+                      {formatDate(item.lastWatchedAt)} - {formatDate(
+                        item.firstWatchedAt,
+                      )}
+                    {:else}
+                      {formatDate(item.watched_at)}
+                    {/if}
+                  </div>
+                </div>
               </div>
-            </div>
-            <div class="item-time">
-              {#if item.episodeCount > 1 && item.firstWatchedAt && item.lastWatchedAt}
-                {formatDate(item.lastWatchedAt)} - {formatDate(
-                  item.firstWatchedAt,
-                )}
-              {:else}
-                {formatDate(item.watched_at)}
-              {/if}
-            </div>
+            {/each}
           </div>
-        </div>
-      {/each}
-
-      <!-- And more card -->
-      <a
-        href="https://url.rgo.pt/movies"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="more-card"
-      >
-        <div class="more-card-content">
-          <div class="more-icon">📺</div>
-          <div class="more-text">
-            <div class="more-title">And more...</div>
-            <div class="more-subtitle">View full history</div>
-          </div>
-        </div>
-      </a>
+        {/each}
+      </div>
     </div>
+
+    <a
+      href="https://url.rgo.pt/movies"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="more-row"
+    >
+      <span class="more-row-icon">📺</span>
+      <span class="more-row-label">And more...</span>
+      <span class="more-row-link">View full history →</span>
+    </a>
 
     <div class="tmdb-credit">
       <img src="/images/tmdb-logo.svg" alt="TMDB" class="tmdb-logo" />
@@ -314,27 +364,34 @@
     margin-bottom: 0.5rem;
   }
 
+  .history-grid-wrapper {
+    position: relative;
+  }
+
+  .history-grid-wrapper::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: linear-gradient(to bottom, transparent, var(--background-color));
+    pointer-events: none;
+    z-index: 1;
+  }
+
   .history-grid {
-    column-count: 4;
-    column-gap: 1rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
   }
 
-  @media (max-width: 1200px) {
-    .history-grid {
-      column-count: 3;
-    }
-  }
-
-  @media (max-width: 900px) {
-    .history-grid {
-      column-count: 2;
-    }
-  }
-
-  @media (max-width: 600px) {
-    .history-grid {
-      column-count: 1;
-    }
+  .history-column {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    gap: 1rem;
   }
 
   .history-card {
@@ -343,8 +400,6 @@
     border: 1px solid var(--border-color);
     overflow: hidden;
     transition: all 0.2s;
-    break-inside: avoid;
-    margin-bottom: 1rem;
   }
 
   .history-card:hover {
@@ -352,49 +407,40 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 
-  .more-card {
-    background: var(--bg-secondary);
-    border-radius: 8px;
-    border: 2px dashed var(--border-color);
-    overflow: hidden;
-    transition: all 0.2s;
+  .more-row {
     display: flex;
     align-items: center;
-    justify-content: center;
-    min-height: 300px;
+    gap: 0.75rem;
+    padding: 0.875rem 1.25rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
     text-decoration: none;
     color: var(--text-color);
-    break-inside: avoid;
-    margin-bottom: 1rem;
+    transition: all 0.2s;
   }
 
-  .more-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  .more-row::before {
+    display: none;
+  }
+
+  .more-row:hover {
     border-color: var(--link-color);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
 
-  .more-card:hover::before {
-    width: 0;
-  }
-
-  .more-card-content {
-    text-align: center;
-    padding: 2rem;
-  }
-
-  .more-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-  }
-
-  .more-title {
+  .more-row-icon {
     font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
+    flex-shrink: 0;
   }
 
-  .more-subtitle {
+  .more-row-label {
+    font-weight: 600;
+    flex: 1;
+  }
+
+  .more-row-link {
     font-size: 0.875rem;
     color: var(--link-color);
   }
@@ -543,13 +589,13 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
 
-    .more-card {
+    .more-row {
       background: rgba(255, 255, 255, 0.03);
       border-color: rgba(255, 255, 255, 0.1);
     }
 
-    .more-card:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    .more-row:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     }
 
     .poster-container {

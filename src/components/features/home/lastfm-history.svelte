@@ -10,7 +10,7 @@
     error = null;
 
     try {
-      const result = await actions.getLastfmData({ limit: 20 });
+      const result = await actions.getLastfmData({ limit: 60 });
 
       if (result.error) {
         error = result.error.message || "Failed to load music data";
@@ -64,6 +64,68 @@
       largeImage?.["#text"] || mediumImage?.["#text"] || anyImage?.["#text"];
     return imageUrl && imageUrl.trim() ? imageUrl : null;
   }
+
+  // Masonry column helpers — greedy shortest-column algorithm.
+  // Each item is placed in whichever column currently has the least estimated
+  // height, which keeps columns visually balanced regardless of whether cards
+  // have album art or not.
+  function greedyColumns<T>(
+    items: T[],
+    numCols: number,
+    estimateHeight: (item: T) => number,
+  ): T[][] {
+    const cols: T[][] = Array.from({ length: numCols }, () => []);
+    const heights = new Array<number>(numCols).fill(0);
+
+    for (const item of items) {
+      const shortestCol = heights.indexOf(Math.min(...heights));
+      cols[shortestCol].push(item);
+      heights[shortestCol] += estimateHeight(item);
+    }
+
+    return cols;
+  }
+
+  // Height estimates (in arbitrary units — only relative values matter).
+  // A card with album art is a square image + text; one without is text only.
+  function estimateItemHeight(item: GridItem): number {
+    if (item.__type === "stats") return 200;
+    if (item.__type === "track") return getAlbumImage(item.track) ? 320 : 90;
+    return 90;
+  }
+
+  let columnCount = $state(4);
+
+  $effect(() => {
+    function update() {
+      if (window.innerWidth <= 600) columnCount = 1;
+      else if (window.innerWidth <= 900) columnCount = 2;
+      else if (window.innerWidth <= 1200) columnCount = 3;
+      else columnCount = 4;
+    }
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  });
+
+  type GridItem =
+    | { __type: "stats" }
+    | { __type: "track"; track: any };
+
+  let masonryItems = $derived<GridItem[]>(
+    data
+      ? [
+          ...(data.stats ? [{ __type: "stats" as const }] : []),
+          ...data.recenttracks.track.map((track: any) => ({
+            __type: "track" as const,
+            track,
+          })),
+        ]
+      : [],
+  );
+  let masonryColumns = $derived(
+    greedyColumns(masonryItems, columnCount, estimateItemHeight),
+  );
 </script>
 
 {#if loading}
@@ -80,67 +142,68 @@
       >
     </div>
 
-    <div class="tracks-grid">
-      <!-- Total Scrobbles Card -->
-      {#if data.stats}
-        <div class="track-card stats-card">
-          <div class="stats-content">
-            <div class="stat-label">Total Scrobbles</div>
-            <div class="stat-value">
-              {formatNumber(data.stats.totalScrobbles)}
-            </div>
-          </div>
-        </div>
-      {/if}
-
-      {#each data.recenttracks.track as track}
-        {@const isNowPlaying = track["@attr"]?.nowplaying === "true"}
-        {@const albumImage = getAlbumImage(track)}
-        <div class="track-card" class:now-playing={isNowPlaying}>
-          {#if albumImage}
-            <div class="track-image">
-              <img src={albumImage} alt={track.album["#text"] || track.name} />
-              {#if isNowPlaying}
-                <div class="now-playing-badge">
-                  <span class="pulse-dot"></span>
-                  Playing
+    <div class="tracks-grid-wrapper">
+      <div class="tracks-grid">
+        {#each masonryColumns as column}
+          <div class="tracks-column">
+            {#each column as item}
+              {#if item.__type === "stats"}
+                <div class="track-card stats-card">
+                  <div class="stats-content">
+                    <div class="stat-label">Total Scrobbles</div>
+                    <div class="stat-value">
+                      {formatNumber(data.stats.totalScrobbles)}
+                    </div>
+                  </div>
+                </div>
+              {:else if item.__type === "track"}
+                {@const track = item.track}
+                {@const isNowPlaying = track["@attr"]?.nowplaying === "true"}
+                {@const albumImage = getAlbumImage(track)}
+                <div class="track-card" class:now-playing={isNowPlaying}>
+                  {#if albumImage}
+                    <div class="track-image">
+                      <img src={albumImage} alt={track.album["#text"] || track.name} />
+                      {#if isNowPlaying}
+                        <div class="now-playing-badge">
+                          <span class="pulse-dot"></span>
+                          Playing
+                        </div>
+                      {/if}
+                    </div>
+                  {/if}
+                  <div class="track-content">
+                    <div class="track-header">
+                      <div class="track-info">
+                        <div class="track-name">{track.name}</div>
+                        <div class="track-artist">{track.artist.name}</div>
+                        {#if track.album["#text"]}
+                          <div class="track-album">{track.album["#text"]}</div>
+                        {/if}
+                      </div>
+                    </div>
+                    <div class="track-time">
+                      {isNowPlaying ? "Now playing" : formatDate(track.date?.uts || "")}
+                    </div>
+                  </div>
                 </div>
               {/if}
-            </div>
-          {/if}
-          <div class="track-content">
-            <div class="track-header">
-              <div class="track-info">
-                <div class="track-name">{track.name}</div>
-                <div class="track-artist">{track.artist.name}</div>
-                {#if track.album["#text"]}
-                  <div class="track-album">{track.album["#text"]}</div>
-                {/if}
-              </div>
-            </div>
-            <div class="track-time">
-              {isNowPlaying ? "Now playing" : formatDate(track.date?.uts || "")}
-            </div>
+            {/each}
           </div>
-        </div>
-      {/each}
-
-      <!-- And more card -->
-      <a
-        href="https://url.rgo.pt/music"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="more-card"
-      >
-        <div class="more-card-content">
-          <div class="more-icon">🎵</div>
-          <div class="more-text">
-            <div class="more-title">And more...</div>
-            <div class="more-subtitle">View full history</div>
-          </div>
-        </div>
-      </a>
+        {/each}
+      </div>
     </div>
+
+    <a
+      href="https://url.rgo.pt/music"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="more-row"
+    >
+      <span class="more-row-icon">🎵</span>
+      <span class="more-row-label">And more...</span>
+      <span class="more-row-link">View full history →</span>
+    </a>
   </div>
 {/if}
 
@@ -173,27 +236,34 @@
     flex: 1;
   }
 
+  .tracks-grid-wrapper {
+    position: relative;
+  }
+
+  .tracks-grid-wrapper::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: linear-gradient(to bottom, transparent, var(--background-color));
+    pointer-events: none;
+    z-index: 1;
+  }
+
   .tracks-grid {
-    column-count: 4;
-    column-gap: 1rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
   }
 
-  @media (max-width: 1200px) {
-    .tracks-grid {
-      column-count: 3;
-    }
-  }
-
-  @media (max-width: 900px) {
-    .tracks-grid {
-      column-count: 2;
-    }
-  }
-
-  @media (max-width: 600px) {
-    .tracks-grid {
-      column-count: 1;
-    }
+  .tracks-column {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    gap: 1rem;
   }
 
   .track-card {
@@ -202,8 +272,6 @@
     border: 1px solid var(--border-color);
     overflow: hidden;
     transition: all 0.2s;
-    break-inside: avoid;
-    margin-bottom: 1rem;
   }
 
   .track-card:hover {
@@ -250,49 +318,40 @@
     line-height: 1;
   }
 
-  .more-card {
-    background: var(--bg-secondary);
-    border-radius: 8px;
-    border: 2px dashed var(--border-color);
-    overflow: hidden;
-    transition: all 0.2s;
+  .more-row {
     display: flex;
     align-items: center;
-    justify-content: center;
-    min-height: 250px;
+    gap: 0.75rem;
+    padding: 0.875rem 1.25rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
     text-decoration: none;
     color: var(--text-color);
-    break-inside: avoid;
-    margin-bottom: 1rem;
+    transition: all 0.2s;
   }
 
-  .more-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  .more-row::before {
+    display: none;
+  }
+
+  .more-row:hover {
     border-color: var(--link-color);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
 
-  .more-card:hover::before {
-    width: 0;
-  }
-
-  .more-card-content {
-    text-align: center;
-    padding: 2rem;
-  }
-
-  .more-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-  }
-
-  .more-title {
+  .more-row-icon {
     font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
+    flex-shrink: 0;
   }
 
-  .more-subtitle {
+  .more-row-label {
+    font-weight: 600;
+    flex: 1;
+  }
+
+  .more-row-link {
     font-size: 0.875rem;
     color: var(--link-color);
   }
@@ -422,13 +481,13 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
 
-    .more-card {
+    .more-row {
       background: rgba(255, 255, 255, 0.03);
       border-color: rgba(255, 255, 255, 0.1);
     }
 
-    .more-card:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    .more-row:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     }
 
     .track-image {
