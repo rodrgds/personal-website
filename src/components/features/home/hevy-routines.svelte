@@ -184,6 +184,49 @@
       openDetailsId = null;
     }
   }
+
+  // Masonry column helpers — greedy shortest-column algorithm.
+  // Each item is placed in whichever column currently has the least estimated
+  // height, which keeps columns visually balanced regardless of how many
+  // exercises each routine contains.
+  function greedyColumns<T>(
+    items: T[],
+    numCols: number,
+    estimateHeight: (item: T) => number,
+  ): T[][] {
+    const cols: T[][] = Array.from({ length: numCols }, () => []);
+    const heights = new Array<number>(numCols).fill(0);
+
+    for (const item of items) {
+      const shortestCol = heights.indexOf(Math.min(...heights));
+      cols[shortestCol].push(item);
+      heights[shortestCol] += estimateHeight(item);
+    }
+
+    return cols;
+  }
+
+  // Height estimates (in arbitrary units — only relative values matter).
+  // A card has a base height plus a contribution per exercise row.
+  function estimateRoutineHeight(routine: Routine): number {
+    const exerciseCount = routine.exercises?.length ?? 0;
+    return 60 + exerciseCount * 36;
+  }
+
+  let columnCount = $state(2);
+
+  $effect(() => {
+    function update() {
+      columnCount = window.innerWidth >= 600 ? 2 : 1;
+    }
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  });
+
+  let routineColumns = $derived(
+    greedyColumns(routines, columnCount, estimateRoutineHeight),
+  );
 </script>
 
 <div class="hevy-routines" bind:this={rootEl}>
@@ -266,54 +309,58 @@
       </div>
     {:else}
       <div class="routines-masonry">
-        {#each routines as routine}
-          <div class="routine-card">
-            <h3>{routine.title}</h3>
-            {#if routine.exercises && routine.exercises.length > 0}
-              <div class="exercises">
-                {#each routine.exercises as exercise, exIdx}
-                  {@const setCount = exercise.sets?.length || 0}
-                  {@const ddId = `exercise-${routine.id}-${exercise.exercise_template_id}-${exIdx}`}
-                  <details
-                    class="exercise-item"
-                    data-dd-id={ddId}
-                    ontoggle={(e) => handleDetailsToggle(ddId, e)}
-                  >
-                    <summary class="exercise-header">
-                      <span class="exercise-title">{exercise.title}</span>
-                      {#if setCount > 0}
-                        <span class="set-count"
-                          >{setCount} set{setCount === 1 ? "" : "s"}</span
-                        >
-                      {/if}
-                    </summary>
-                    {#if (exercise.notes && exercise.notes.trim().length > 0) || setCount > 0}
-                      <div class="exercise-dropdown dropdown-content">
-                        {#if exercise.notes && exercise.notes.trim().length > 0}
-                          <div class="exercise-notes">{exercise.notes}</div>
-                        {/if}
-                        {#if exercise.sets && exercise.sets.length > 0}
-                          <div class="sets-grid" role="group" aria-label="Sets">
-                            {#each exercise.sets as set, idx}
-                              <div class="set-item">
-                                <span class="set-number">{idx + 1}</span>
-                                <span class="set-details">{formatSet(set)}</span
-                                >
-                                {#if set.rpe}
-                                  <span class="set-rpe">RPE {set.rpe}</span>
-                                {/if}
+        {#each routineColumns as column}
+          <div class="masonry-column">
+            {#each column as routine}
+              <div class="routine-card">
+                <h3>{routine.title}</h3>
+                {#if routine.exercises && routine.exercises.length > 0}
+                  <div class="exercises">
+                    {#each routine.exercises as exercise, exIdx}
+                      {@const setCount = exercise.sets?.length || 0}
+                      {@const ddId = `exercise-${routine.id}-${exercise.exercise_template_id}-${exIdx}`}
+                      <details
+                        class="exercise-item"
+                        data-dd-id={ddId}
+                        ontoggle={(e) => handleDetailsToggle(ddId, e)}
+                      >
+                        <summary class="exercise-header">
+                          <span class="exercise-title">{exercise.title}</span>
+                          {#if setCount > 0}
+                            <span class="set-count"
+                              >{setCount} set{setCount === 1 ? "" : "s"}</span
+                            >
+                          {/if}
+                        </summary>
+                        {#if (exercise.notes && exercise.notes.trim().length > 0) || setCount > 0}
+                          <div class="exercise-dropdown dropdown-content">
+                            {#if exercise.notes && exercise.notes.trim().length > 0}
+                              <div class="exercise-notes">{exercise.notes}</div>
+                            {/if}
+                            {#if exercise.sets && exercise.sets.length > 0}
+                              <div class="sets-grid" role="group" aria-label="Sets">
+                                {#each exercise.sets as set, idx}
+                                  <div class="set-item">
+                                    <span class="set-number">{idx + 1}</span>
+                                    <span class="set-details">{formatSet(set)}</span
+                                    >
+                                    {#if set.rpe}
+                                      <span class="set-rpe">RPE {set.rpe}</span>
+                                    {/if}
+                                  </div>
+                                {/each}
                               </div>
-                            {/each}
+                            {/if}
                           </div>
                         {/if}
-                      </div>
-                    {/if}
-                  </details>
-                {/each}
+                      </details>
+                    {/each}
+                  </div>
+                {:else}
+                  <p class="no-exercises">No exercises in this routine</p>
+                {/if}
               </div>
-            {:else}
-              <p class="no-exercises">No exercises in this routine</p>
-            {/if}
+            {/each}
           </div>
         {/each}
       </div>
@@ -524,21 +571,23 @@
   /* Masonry layout (CSS columns).
      Real masonry stacking, no overlaps, minimal JS. */
   .routines-masonry {
-    column-count: 1;
-    column-gap: 1.5rem;
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
     width: 100%;
   }
 
-  @media (min-width: 600px) {
-    .routines-masonry {
-      column-count: 2;
-    }
+  .masonry-column {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    gap: 1rem;
   }
 
   .routine-card {
-    display: inline-block;
+    display: block;
     width: 100%;
-    margin: 0 0 1rem;
     position: relative;
     z-index: 0;
     overflow: visible;
@@ -547,7 +596,6 @@
     border-radius: 0.5rem;
     padding: 0.75rem;
     transition: all 0.2s;
-    break-inside: avoid;
   }
 
   .routine-card:hover {
