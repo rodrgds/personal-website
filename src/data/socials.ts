@@ -42,44 +42,44 @@ export const SOCIALS = [
 ];
 
 export const EXTRA_SOCIALS = [
-  {
-    icon_name: "nostr",
-    url: "https://url.rgo.pt/nostr",
-  },
+  // {
+  //   icon_name: "nostr",
+  //   url: "https://url.rgo.pt/nostr",
+  // },
   // {
   //   icon_name: "devto",
   //   url: "https://url.rgo.pt/devto",
   // },
-  {
-    icon_name: "twitch",
-    url: "https://url.rgo.pt/twitch",
-  },
-  {
-    icon_name: "kick",
-    url: "https://url.rgo.pt/kick",
-  },
-  {
-    icon_name: "trakt",
-    url: "https://url.rgo.pt/movies",
-  },
-  {
-    icon_name: "lastfm",
-    url: "https://url.rgo.pt/music",
-  },
-  {
-    icon_name: "hevy",
-    url: "https://url.rgo.pt/hevy",
-  },
-  {
-    icon_name: "komoot",
-    url: "https://url.rgo.pt/komoot",
-  },
-  {
-    icon_name: "leetcode",
-    url: "https://url.rgo.pt/leetcode",
-  },
-  {
-    icon_name: "ko-fi",
-    url: "https://url.rgo.pt/donate",
-  },
+  // {
+  //   icon_name: "twitch",
+  //   url: "https://url.rgo.pt/twitch",
+  // },
+  // {
+  //   icon_name: "kick",
+  //   url: "https://url.rgo.pt/kick",
+  // },
+  // {
+  //   icon_name: "trakt",
+  //   url: "https://url.rgo.pt/movies",
+  // },
+  // {
+  //   icon_name: "lastfm",
+  //   url: "https://url.rgo.pt/music",
+  // },
+  // {
+  //   icon_name: "hevy",
+  //   url: "https://url.rgo.pt/hevy",
+  // },
+  // {
+  //   icon_name: "komoot",
+  //   url: "https://url.rgo.pt/komoot",
+  // },
+  // {
+  //   icon_name: "leetcode",
+  //   url: "https://url.rgo.pt/leetcode",
+  // },
+  // {
+  //   icon_name: "ko-fi",
+  //   url: "https://url.rgo.pt/donate",
+  // },
 ];
