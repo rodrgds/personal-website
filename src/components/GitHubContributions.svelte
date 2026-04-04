@@ -4,19 +4,19 @@
     count: number;
     level: 0 | 1 | 2 | 3 | 4;
   }
-  
+
   interface ContributionWeek {
     days: ContributionDay[];
   }
-  
+
   let contributions = $state<ContributionWeek[]>([]);
   let totalContributions = $state(0);
   let startYear = $state(new Date().getFullYear());
   let loading = $state(true);
   let error = $state<string | null>(null);
-  
+
   const username = 'rodrgds';
-  
+
   const colorScale = [
     'var(--contrib-level-0)',
     'var(--contrib-level-1)',
@@ -24,42 +24,62 @@
     'var(--contrib-level-3)',
     'var(--contrib-level-4)'
   ];
-  
+
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  
-  function getMonthLabels(weeks: ContributionWeek[]): { month: string; index: number; year?: number }[] {
-    const labels: { month: string; index: number; year?: number }[] = [];
+
+  function getMonthLabels(weeks: ContributionWeek[]): { month: string; index: number }[] {
+    const labels: { month: string; index: number }[] = [];
     let lastMonth = -1;
-    let lastYear = -1;
-    
+
     weeks.forEach((week, index) => {
       const firstDay = week.days[0];
       if (firstDay) {
         const date = new Date(firstDay.date);
         const month = date.getMonth();
-        const year = date.getFullYear();
-        
+
         if (month !== lastMonth) {
-          labels.push({ 
-            month: monthNames[month], 
-            index,
-            year: lastYear !== -1 && year !== lastYear ? year : undefined 
-          });
+          labels.push({ month: monthNames[month], index });
           lastMonth = month;
-          if (lastYear === -1 || year !== lastYear) {
-            lastYear = year;
-          }
         }
       }
     });
-    
+
     return labels;
   }
-  
+
+  function getYearLabels(weeks: ContributionWeek[]): { year: string; startWeek: number; endWeek: number }[] {
+    const labels: { year: string; startWeek: number; endWeek: number }[] = [];
+    let lastYear = -1;
+    let startWeek = 0;
+
+    weeks.forEach((week, index) => {
+      const firstDay = week.days[0];
+      if (firstDay) {
+        const date = new Date(firstDay.date);
+        const year = date.getFullYear();
+
+        if (year !== lastYear) {
+          if (lastYear !== -1) {
+            labels[labels.length - 1].endWeek = index - 1;
+          }
+          labels.push({ year: String(year), startWeek: index, endWeek: index });
+          lastYear = year;
+          startWeek = index;
+        }
+      }
+    });
+
+    if (labels.length > 0) {
+      labels[labels.length - 1].endWeek = weeks.length - 1;
+    }
+
+    return labels;
+  }
+
   function filterFutureDays(weeks: ContributionWeek[]): ContributionWeek[] {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     return weeks.map(week => ({
       days: week.days.filter(day => {
         const dayDate = new Date(day.date);
@@ -68,26 +88,26 @@
       })
     })).filter(week => week.days.length > 0);
   }
-  
+
   async function fetchContributions() {
     try {
       loading = true;
       error = null;
-      
+
       const response = await fetch(`/api/github-contributions?username=${username}`);
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to fetch contributions');
       }
-      
+
       const data = await response.json();
-      
+
       const filtered = filterFutureDays(data.contributions);
       contributions = filtered.reverse();
       totalContributions = data.totalContributions;
       startYear = data.startYear;
-      
+
     } catch (e) {
       console.error('Error fetching contributions:', e);
       error = e instanceof Error ? e.message : 'Failed to load contributions';
@@ -95,14 +115,15 @@
       loading = false;
     }
   }
-  
+
   $effect(() => {
     fetchContributions();
     const interval = setInterval(fetchContributions, 1000 * 60 * 60);
     return () => clearInterval(interval);
   });
-  
+
   const monthLabels = $derived(getMonthLabels(contributions));
+  const yearLabels = $derived(getYearLabels(contributions));
 </script>
 
 <div class="github-contributions">
@@ -123,7 +144,7 @@
       </a>
     </div>
   </div>
-  
+
   {#if loading}
     <div class="loading">
       <div class="spinner"></div>
@@ -150,8 +171,8 @@
           {#each contributions as week}
             <div class="week">
               {#each week.days as day}
-                <div 
-                  class="day" 
+                <div
+                  class="day"
                   class:day-empty="{day.level === 0}"
                   style="background-color: {colorScale[day.level]}"
                   title="{day.count} contributions on {day.date}"
@@ -162,14 +183,21 @@
         </div>
         <div class="month-labels">
           {#each monthLabels as label}
-            <span 
-              class="month-label" 
+            <span
+              class="month-label"
               style="left: calc(var(--contrib-cell-size) * {label.index})"
             >
               {label.month}
-              {#if label.year}
-                <span class="year-label">{label.year}</span>
-              {/if}
+            </span>
+          {/each}
+        </div>
+        <div class="year-labels">
+          {#each yearLabels as label}
+            <span
+              class="year-label"
+              style="left: calc(var(--contrib-cell-size) * {label.startWeek})"
+            >
+              {label.year}
             </span>
           {/each}
         </div>
@@ -187,7 +215,7 @@
     --contrib-level-4: #1a4a7a;
     --contrib-cell-size: 13px;
   }
-  
+
   @media (prefers-color-scheme: dark) {
     :global(:root) {
       --contrib-level-0: #2d1f00;
@@ -197,11 +225,11 @@
       --contrib-level-4: #ff9500;
     }
   }
-  
+
   .github-contributions {
     margin: 1.5rem 0;
   }
-  
+
   .contributions-header {
     display: flex;
     justify-content: space-between;
@@ -210,18 +238,18 @@
     flex-wrap: wrap;
     gap: 0.5rem;
   }
-  
+
   .contributions-count {
     font-size: 0.875rem;
     color: var(--text-color);
   }
-  
+
   .header-right {
     display: flex;
     align-items: center;
     gap: 1rem;
   }
-  
+
   .legend {
     display: flex;
     align-items: center;
@@ -229,50 +257,50 @@
     font-size: 0.65rem;
     color: var(--gray-color);
   }
-  
+
   .legend-day {
     width: 10px;
     height: 10px;
     border-radius: 2px;
   }
-  
+
   .legend-label {
     margin: 0 0.25rem;
   }
-  
+
   .github-link {
     font-size: 0.75rem;
     color: var(--link-color);
     text-decoration: none;
   }
-  
+
   .contributions-scroll-container {
     overflow-x: auto;
     overflow-y: hidden;
-    padding-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
     margin: 0 -0.5rem;
     scrollbar-width: thin;
     scrollbar-color: var(--border-color) transparent;
   }
-  
+
   .contributions-scroll-container::-webkit-scrollbar {
     height: 6px;
   }
-  
+
   .contributions-scroll-container::-webkit-scrollbar-track {
     background: transparent;
   }
-  
+
   .contributions-scroll-container::-webkit-scrollbar-thumb {
     background-color: var(--border-color);
     border-radius: 3px;
   }
-  
+
   .contributions-wrapper {
     display: flex;
     flex-direction: column;
   }
-  
+
   .day-labels {
     display: flex;
     flex-direction: column;
@@ -283,26 +311,26 @@
     color: var(--gray-color);
     padding-top: 2px;
   }
-  
+
   .day-labels span {
     height: 10px;
     line-height: 10px;
   }
-  
+
   .contributions-grid {
     display: flex;
     gap: 3px;
     flex-direction: row;
     width: fit-content;
   }
-  
+
   .week {
     display: flex;
     flex-direction: column;
     gap: 3px;
     flex-shrink: 0;
   }
-  
+
   .day {
     width: 10px;
     height: 10px;
@@ -310,7 +338,7 @@
     transition: transform 0.1s, outline 0.1s;
     cursor: pointer;
   }
-  
+
   .day:hover {
     transform: scale(1.2);
     outline: 2px solid var(--link-color);
@@ -318,11 +346,11 @@
     z-index: 10;
     position: relative;
   }
-  
+
   .day-empty {
     background-color: var(--contrib-level-0);
   }
-  
+
   .month-labels {
     position: relative;
     height: 1rem;
@@ -331,17 +359,30 @@
     font-size: 0.65rem;
     color: var(--gray-color);
   }
-  
+
   .month-label {
     position: absolute;
     white-space: nowrap;
   }
-  
-  .year-label {
-    font-weight: 500;
-    margin-left: 0.25rem;
+
+  .year-labels {
+    position: relative;
+    height: 1.25rem;
+    width: fit-content;
+    font-size: 0.65rem;
+    color: var(--gray-color);
+    border-top: 1px solid var(--border-color);
+    padding-top: 0.25rem;
+    margin-top: 0.1rem;
   }
-  
+
+  .year-label {
+    position: absolute;
+    left: 0;
+    text-align: left;
+    font-weight: 500;
+  }
+
   .loading, .error {
     display: flex;
     align-items: center;
@@ -351,7 +392,7 @@
     color: var(--gray-color);
     font-size: 0.875rem;
   }
-  
+
   .spinner {
     width: 16px;
     height: 16px;
@@ -360,20 +401,20 @@
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
   }
-  
+
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
-  
+
   .error {
     flex-direction: column;
     gap: 0.5rem;
   }
-  
+
   .error p {
     margin: 0;
   }
-  
+
   .retry-btn {
     padding: 0.4rem 0.8rem;
     background: var(--link-color);
@@ -385,48 +426,48 @@
     font-family: inherit;
     transition: opacity 0.2s;
   }
-  
+
   .retry-btn:hover {
     opacity: 0.8;
   }
-  
+
   @media (max-width: 768px) {
     .github-contributions {
       --contrib-cell-size: 11px;
     }
-    
+
     .legend {
       display: none;
     }
-    
+
     .header-right {
       gap: 0.5rem;
     }
-    
+
     .day-labels {
       display: none;
     }
-    
+
     .contributions-scroll-container {
       margin-left: -1rem;
       margin-right: -1rem;
       padding-left: 1rem;
       padding-right: 1rem;
     }
-    
+
     .day {
       width: 9px;
       height: 9px;
     }
-    
+
     .week {
       gap: 2px;
     }
-    
+
     .contributions-grid {
       gap: 2px;
     }
-    
+
     .legend-day {
       width: 9px;
       height: 9px;
