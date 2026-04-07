@@ -232,7 +232,7 @@
                       class="poster-image"
                     />
                     <div class="type-badge">
-                      {item.type === "movie" ? "🎬 Movie" : "📺 TV"}
+                      {item.type === "movie" ? "🎬 Movie" : "📺 Show"}
                     </div>
                   </div>
                 {/if}
@@ -375,7 +375,11 @@
     left: 0;
     right: 0;
     height: 100px;
-    background: linear-gradient(to bottom, transparent, var(--background-color));
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      var(--background-color)
+    );
     pointer-events: none;
     z-index: 1;
   }
