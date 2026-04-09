@@ -15,19 +15,34 @@
   let loading = $state(true);
   let error = $state<string | null>(null);
 
-  const username = 'rodrgds';
+  const username = "rodrgds";
 
   const colorScale = [
-    'var(--contrib-level-0)',
-    'var(--contrib-level-1)',
-    'var(--contrib-level-2)',
-    'var(--contrib-level-3)',
-    'var(--contrib-level-4)'
+    "var(--contrib-level-0)",
+    "var(--contrib-level-1)",
+    "var(--contrib-level-2)",
+    "var(--contrib-level-3)",
+    "var(--contrib-level-4)",
   ];
 
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
 
-  function getMonthLabels(weeks: ContributionWeek[]): { month: string; index: number }[] {
+  function getMonthLabels(
+    weeks: ContributionWeek[],
+  ): { month: string; index: number }[] {
     const labels: { month: string; index: number }[] = [];
     let lastMonth = -1;
 
@@ -47,7 +62,9 @@
     return labels;
   }
 
-  function getYearLabels(weeks: ContributionWeek[]): { year: string; startWeek: number; endWeek: number }[] {
+  function getYearLabels(
+    weeks: ContributionWeek[],
+  ): { year: string; startWeek: number; endWeek: number }[] {
     const labels: { year: string; startWeek: number; endWeek: number }[] = [];
     let lastYear = -1;
     let startWeek = 0;
@@ -80,13 +97,15 @@
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    return weeks.map(week => ({
-      days: week.days.filter(day => {
-        const dayDate = new Date(day.date);
-        dayDate.setHours(0, 0, 0, 0);
-        return dayDate <= today;
-      })
-    })).filter(week => week.days.length > 0);
+    return weeks
+      .map((week) => ({
+        days: week.days.filter((day) => {
+          const dayDate = new Date(day.date);
+          dayDate.setHours(0, 0, 0, 0);
+          return dayDate <= today;
+        }),
+      }))
+      .filter((week) => week.days.length > 0);
   }
 
   async function fetchContributions() {
@@ -94,11 +113,13 @@
       loading = true;
       error = null;
 
-      const response = await fetch(`/api/github-contributions?username=${username}`);
+      const response = await fetch(
+        `/api/github-contributions?username=${username}`,
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to fetch contributions');
+        throw new Error(errorData.message || "Failed to fetch contributions");
       }
 
       const data = await response.json();
@@ -107,10 +128,9 @@
       contributions = filtered.reverse();
       totalContributions = data.totalContributions;
       startYear = data.startYear;
-
     } catch (e) {
-      console.error('Error fetching contributions:', e);
-      error = e instanceof Error ? e.message : 'Failed to load contributions';
+      console.error("Error fetching contributions:", e);
+      error = e instanceof Error ? e.message : "Failed to load contributions";
     } finally {
       loading = false;
     }
@@ -139,7 +159,12 @@
         {/each}
         <span class="legend-label">More</span>
       </div>
-      <a href="https://github.com/{username}" target="_blank" rel="noopener noreferrer" class="github-link">
+      <a
+        href="https://github.com/{username}"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="github-link"
+      >
         View on GitHub →
       </a>
     </div>
@@ -173,7 +198,7 @@
               {#each week.days as day}
                 <div
                   class="day"
-                  class:day-empty="{day.level === 0}"
+                  class:day-empty={day.level === 0}
                   style="background-color: {colorScale[day.level]}"
                   title="{day.count} contributions on {day.date}"
                 ></div>
@@ -335,7 +360,9 @@
     width: 10px;
     height: 10px;
     border-radius: 2px;
-    transition: transform 0.1s, outline 0.1s;
+    transition:
+      transform 0.1s,
+      outline 0.1s;
     cursor: pointer;
   }
 
@@ -383,7 +410,8 @@
     font-weight: 500;
   }
 
-  .loading, .error {
+  .loading,
+  .error {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -403,7 +431,9 @@
   }
 
   @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .error {

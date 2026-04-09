@@ -9,6 +9,7 @@ import WorldMap from "../components/features/home/world-map.svelte";
 import WeightliftingModal from "../components/features/home/weightlifting-modal.svelte";
 import MusicModal from "../components/features/home/music-modal.svelte";
 import MoviesModal from "../components/features/home/movies-modal.svelte";
+import TableTennisMiniGame from "../components/features/now/table-tennis-mini-game.svelte";
 
 This is [a now page](https://nownownow.com/about). If you have your own site, [consider making one](https://nownownow.com/about) too!
 
@@ -25,7 +26,7 @@ This is [a now page](https://nownownow.com/about). If you have your own site, [c
     <div className="interest-group">
       <div className="group-label">Sports</div>
       <ul>
-        <li>🏓 Table Tennis</li>
+        <li><TableTennisMiniGame client:load /></li>
         <li>🏸 Badminton</li>
         <li>🚴‍♂️ Biking</li>
         <li>🏋️ <WeightliftingModal client:load /></li>

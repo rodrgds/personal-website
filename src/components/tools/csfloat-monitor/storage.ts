@@ -1,34 +1,23 @@
 import { writable } from "svelte/store";
 import { type MonitorSettings, DEFAULT_SETTINGS } from "./types";
+import { getStoredJSON, setStoredJSON } from "../../../lib/client-storage";
 
 const STORAGE_KEY = "csfloat_monitor_settings";
 
 function createSettingsStore() {
-  // Initialize with defaults
   const { subscribe, set, update } =
     writable<MonitorSettings>(DEFAULT_SETTINGS);
 
   return {
     subscribe,
     set: (value: MonitorSettings) => {
-      if (typeof localStorage !== "undefined") {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
-      }
+      setStoredJSON(STORAGE_KEY, value);
       set(value);
     },
     update,
     load: () => {
-      if (typeof localStorage !== "undefined") {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored);
-            set({ ...DEFAULT_SETTINGS, ...parsed }); // Merge with defaults to handle new fields
-          } catch (e) {
-            console.error("Failed to parse settings", e);
-          }
-        }
-      }
+      const stored = getStoredJSON(STORAGE_KEY, DEFAULT_SETTINGS);
+      set({ ...DEFAULT_SETTINGS, ...stored });
     },
     reset: () => {
       set(DEFAULT_SETTINGS);
