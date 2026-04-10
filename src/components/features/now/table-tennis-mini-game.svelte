@@ -68,6 +68,7 @@
   let previousTrajectoryY = 0;
   let repeatedTrajectoryCount = 0;
   let antiCheatCooldown = 0;
+  let hitCooldown = 0;
   let nextParticleId = 1;
 
   let rafId: number | undefined;
@@ -122,6 +123,7 @@
     previousTrajectoryY = 0;
     repeatedTrajectoryCount = 0;
     antiCheatCooldown = 0;
+    hitCooldown = 0;
     trailParticles = [];
     burstParticles = [];
   }
@@ -137,6 +139,7 @@
     previousTrajectoryY = 0;
     repeatedTrajectoryCount = 0;
     antiCheatCooldown = Math.max(antiCheatCooldown, 0.5);
+    hitCooldown = 0;
   }
 
   function persistHighScore(): void {
@@ -366,6 +369,7 @@
     const dt = clamp((timestamp - lastFrame) / 1000, 0.001, 0.028);
     lastFrame = timestamp;
     antiCheatCooldown = Math.max(0, antiCheatCooldown - dt);
+    hitCooldown = Math.max(0, hitCooldown - dt);
 
     const pointer = pointerToField(pointerClientX, pointerClientY);
 
@@ -380,24 +384,32 @@
       fieldHeight - PADDLE_HEIGHT * 1.2,
     );
 
-    // Sub-stepping to prevent tunneling (fast ball/paddle passing through)
+    // Calculate final paddle state for this frame
+    const previousFramePaddleX = paddleX;
+    const previousFramePaddleY = paddleY;
+    const previousFrameAngle = paddleAngle;
+
+    const nextPaddleX = lerp(paddleX, targetPaddleX, 0.42);
+    const nextPaddleY = lerp(paddleY, targetPaddleY, 0.36);
+    
+    // Average velocity of the paddle over the whole frame
+    paddleVx = (nextPaddleX - previousFramePaddleX) / dt;
+    paddleVy = (nextPaddleY - previousFramePaddleY) / dt;
+    
+    const targetAngle = clamp(paddleVx * 0.0014, -0.44, 0.44);
+    const nextPaddleAngle = lerp(paddleAngle, targetAngle, 0.25);
+
+    // Sub-stepping to prevent tunneling
     const SUBSTEPS = 6;
     const stepDt = dt / SUBSTEPS;
-    
-    // Adjust lerp values to match the original feel over the full frame dt
-    const paddleLerpAlpha = 1 - Math.pow(1 - 0.42, 1 / SUBSTEPS);
-    const angleLerpAlpha = 1 - Math.pow(1 - 0.25, 1 / SUBSTEPS);
 
     for (let i = 0; i < SUBSTEPS; i++) {
-      const previousPaddleX = paddleX;
-      const previousPaddleY = paddleY;
-      paddleX = lerp(paddleX, targetPaddleX, paddleLerpAlpha);
-      paddleY = lerp(paddleY, targetPaddleY, paddleLerpAlpha);
-      paddleVx = (paddleX - previousPaddleX) / stepDt;
-      paddleVy = (paddleY - previousPaddleY) / stepDt;
+      const alpha = (i + 1) / SUBSTEPS;
       
-      const targetAngle = clamp(paddleVx * 0.0014, -0.44, 0.44);
-      paddleAngle = lerp(paddleAngle, targetAngle, angleLerpAlpha);
+      // Move paddle smoothly across sub-steps
+      paddleX = lerp(previousFramePaddleX, nextPaddleX, alpha);
+      paddleY = lerp(previousFramePaddleY, nextPaddleY, alpha);
+      paddleAngle = lerp(previousFrameAngle, nextPaddleAngle, alpha);
 
       ballVy += GRAVITY * stepDt;
 
@@ -452,45 +464,47 @@
         const normalX = cos * localNormalX - sin * localNormalY;
         const normalY = sin * localNormalX + cos * localNormalY;
 
+        // Push ball out of paddle
         ballX += normalX * penetration;
         ballY += normalY * penetration;
 
-        const normalVelocity = ballVx * normalX + ballVy * normalY;
-        if (normalVelocity < 0) {
-          const restitution = 1.12;
-          ballVx -= (1 + restitution) * normalVelocity * normalX;
-          ballVy -= (1 + restitution) * normalVelocity * normalY;
+        // Use relative velocity for physically accurate bounces!
+        const relVx = ballVx - paddleVx;
+        const relVy = ballVy - paddleVy;
+        const relNormalVel = relVx * normalX + relVy * normalY;
 
-          const extraLift = Math.max(130, Math.abs(paddleVx) * 0.05);
-          ballVy -= extraLift;
-          ballVx += paddleVx * 0.3 + Math.sin(paddleAngle) * 70;
+        if (relNormalVel < 0) {
+          const restitution = 0.85; // Lower than old 1.12 because we are adding paddle velocity now
+          
+          // Apply impulse relative to the paddle
+          ballVx -= (1 + restitution) * relNormalVel * normalX;
+          ballVy -= (1 + restitution) * relNormalVel * normalY;
+
+          // Arcady tweaks to keep the game fun and responsive
+          const extraLift = Math.max(100, Math.abs(paddleVx) * 0.03);
+          ballVy -= extraLift; // Always add a little bit of baseline upward bounce
+          
+          // Transfer horizontal friction/spin
+          ballVx += paddleVx * 0.2 + Math.sin(paddleAngle) * 50;
+          
+          // If the paddle is moving UP, explicitly transfer more of that upward momentum to the ball
+          if (paddleVy < -10) {
+             ballVy += paddleVy * 0.4;
+          }
 
           const speed = Math.hypot(ballVx, ballVy);
-          const maxSpeed = 660;
+          const maxSpeed = 720;
           if (speed > maxSpeed) {
             const ratio = maxSpeed / speed;
             ballVx *= ratio;
             ballVy *= ratio;
           }
 
-          streak += 1;
-          persistHighScore();
-          registerTrajectoryAfterBounce();
-        }
-      }
-
-      if (paddleVy < -200) {
-        const paddleTop = paddleY - PADDLE_HEIGHT * 0.5;
-        const wasBelow = ballY - ballVy * stepDt > paddleTop + BALL_RADIUS;
-        const nowAbove = ballY < paddleTop;
-        const horizontalClose = Math.abs(ballX - paddleX) < PADDLE_WIDTH * 0.58;
-
-        if (wasBelow && nowAbove && horizontalClose && ballVy > -90) {
-          ballY = paddleTop - BALL_RADIUS;
-          ballVy = -Math.max(260, Math.abs(ballVy) + Math.abs(paddleVy) * 0.46);
-          ballVx += paddleVx * 0.2;
-          streak += 1;
-          persistHighScore();
+          if (hitCooldown === 0) {
+            streak += 1;
+            hitCooldown = 0.15; // 150ms cooldown before another hit counts
+            persistHighScore();
+          }
           registerTrajectoryAfterBounce();
         }
       }
