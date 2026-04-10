@@ -247,6 +247,14 @@
 
     const trajectoryX = ballVx / speed;
     const trajectoryY = ballVy / speed;
+    const isNearlyVertical = Math.abs(trajectoryX) < 0.18;
+
+    if (!isNearlyVertical) {
+      repeatedTrajectoryCount = 0;
+      previousTrajectoryX = 0;
+      previousTrajectoryY = 0;
+      return;
+    }
 
     if (previousTrajectoryX !== 0 || previousTrajectoryY !== 0) {
       const alignment =
@@ -501,6 +509,21 @@
     };
   });
 
+  $effect(() => {
+    if (!active || typeof document === "undefined") return;
+
+    const previousOverflow = document.body.style.overflow;
+    const previousTouchAction = document.body.style.touchAction;
+
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.body.style.touchAction = previousTouchAction;
+    };
+  });
+
   onMount(() => {
     const stored = getStoredJSON(STORAGE_KEY, DEFAULT_SCORE);
     highScore = stored.highScore;
@@ -592,6 +615,7 @@
     gap: 0.3rem;
     cursor: pointer;
     line-height: inherit;
+    touch-action: none;
   }
 
   .table-tennis-trigger:focus-visible {
