@@ -380,108 +380,119 @@
       fieldHeight - PADDLE_HEIGHT * 1.2,
     );
 
-    const previousPaddleX = paddleX;
-    const previousPaddleY = paddleY;
-    paddleX = lerp(paddleX, targetPaddleX, 0.42);
-    paddleY = lerp(paddleY, targetPaddleY, 0.36);
-    paddleVx = (paddleX - previousPaddleX) / dt;
-    paddleVy = (paddleY - previousPaddleY) / dt;
-    const targetAngle = clamp(paddleVx * 0.0014, -0.44, 0.44);
-    paddleAngle = lerp(paddleAngle, targetAngle, 0.25);
+    // Sub-stepping to prevent tunneling (fast ball/paddle passing through)
+    const SUBSTEPS = 6;
+    const stepDt = dt / SUBSTEPS;
+    
+    // Adjust lerp values to match the original feel over the full frame dt
+    const paddleLerpAlpha = 1 - Math.pow(1 - 0.42, 1 / SUBSTEPS);
+    const angleLerpAlpha = 1 - Math.pow(1 - 0.25, 1 / SUBSTEPS);
 
-    ballVy += GRAVITY * dt;
+    for (let i = 0; i < SUBSTEPS; i++) {
+      const previousPaddleX = paddleX;
+      const previousPaddleY = paddleY;
+      paddleX = lerp(paddleX, targetPaddleX, paddleLerpAlpha);
+      paddleY = lerp(paddleY, targetPaddleY, paddleLerpAlpha);
+      paddleVx = (paddleX - previousPaddleX) / stepDt;
+      paddleVy = (paddleY - previousPaddleY) / stepDt;
+      
+      const targetAngle = clamp(paddleVx * 0.0014, -0.44, 0.44);
+      paddleAngle = lerp(paddleAngle, targetAngle, angleLerpAlpha);
 
-    const drag = Math.exp(-AIR_DRAG * dt);
-    ballVx *= drag;
+      ballVy += GRAVITY * stepDt;
 
-    ballX += ballVx * dt;
-    ballY += ballVy * dt;
+      const drag = Math.exp(-AIR_DRAG * stepDt);
+      ballVx *= drag;
 
-    spawnTrail(ballX, ballY);
+      ballX += ballVx * stepDt;
+      ballY += ballVy * stepDt;
 
-    if (ballX - BALL_RADIUS <= 0) {
-      ballX = BALL_RADIUS;
-      ballVx = Math.abs(ballVx) * 0.9;
-    } else if (ballX + BALL_RADIUS >= fieldWidth) {
-      ballX = fieldWidth - BALL_RADIUS;
-      ballVx = -Math.abs(ballVx) * 0.9;
-    }
+      if (i === 0) spawnTrail(ballX, ballY);
 
-    if (ballY - BALL_RADIUS <= 0) {
-      ballY = BALL_RADIUS;
-      ballVy = Math.abs(ballVy) * 0.84;
-    } else if (ballY - BALL_RADIUS > fieldHeight) {
-      respawnBallOnPaddle();
-    }
-
-    const cos = Math.cos(paddleAngle);
-    const sin = Math.sin(paddleAngle);
-    const localX = cos * (ballX - paddleX) + sin * (ballY - paddleY);
-    const localY = -sin * (ballX - paddleX) + cos * (ballY - paddleY);
-
-    const halfW = PADDLE_WIDTH * 0.5;
-    const halfH = PADDLE_HEIGHT * 0.5;
-
-    const closestX = clamp(localX, -halfW, halfW);
-    const closestY = clamp(localY, -halfH, halfH);
-    const deltaX = localX - closestX;
-    const deltaY = localY - closestY;
-    const distSq = deltaX * deltaX + deltaY * deltaY;
-
-    if (distSq < BALL_RADIUS * BALL_RADIUS) {
-      const dist = Math.sqrt(Math.max(distSq, 0.0001));
-      const penetration = BALL_RADIUS - dist;
-
-      let localNormalX = deltaX / dist;
-      let localNormalY = deltaY / dist;
-      if (!Number.isFinite(localNormalX) || !Number.isFinite(localNormalY)) {
-        localNormalX = 0;
-        localNormalY = -1;
+      if (ballX - BALL_RADIUS <= 0) {
+        ballX = BALL_RADIUS;
+        ballVx = Math.abs(ballVx) * 0.9;
+      } else if (ballX + BALL_RADIUS >= fieldWidth) {
+        ballX = fieldWidth - BALL_RADIUS;
+        ballVx = -Math.abs(ballVx) * 0.9;
       }
 
-      const normalX = cos * localNormalX - sin * localNormalY;
-      const normalY = sin * localNormalX + cos * localNormalY;
+      if (ballY - BALL_RADIUS <= 0) {
+        ballY = BALL_RADIUS;
+        ballVy = Math.abs(ballVy) * 0.84;
+      } else if (ballY - BALL_RADIUS > fieldHeight) {
+        respawnBallOnPaddle();
+      }
 
-      ballX += normalX * penetration;
-      ballY += normalY * penetration;
+      const cos = Math.cos(paddleAngle);
+      const sin = Math.sin(paddleAngle);
+      const localX = cos * (ballX - paddleX) + sin * (ballY - paddleY);
+      const localY = -sin * (ballX - paddleX) + cos * (ballY - paddleY);
 
-      const normalVelocity = ballVx * normalX + ballVy * normalY;
-      if (normalVelocity < 0) {
-        const restitution = 1.12;
-        ballVx -= (1 + restitution) * normalVelocity * normalX;
-        ballVy -= (1 + restitution) * normalVelocity * normalY;
+      const halfW = PADDLE_WIDTH * 0.5;
+      const halfH = PADDLE_HEIGHT * 0.5;
 
-        const extraLift = Math.max(130, Math.abs(paddleVx) * 0.05);
-        ballVy -= extraLift;
-        ballVx += paddleVx * 0.3 + Math.sin(paddleAngle) * 70;
+      const closestX = clamp(localX, -halfW, halfW);
+      const closestY = clamp(localY, -halfH, halfH);
+      const deltaX = localX - closestX;
+      const deltaY = localY - closestY;
+      const distSq = deltaX * deltaX + deltaY * deltaY;
 
-        const speed = Math.hypot(ballVx, ballVy);
-        const maxSpeed = 660;
-        if (speed > maxSpeed) {
-          const ratio = maxSpeed / speed;
-          ballVx *= ratio;
-          ballVy *= ratio;
+      if (distSq < BALL_RADIUS * BALL_RADIUS) {
+        const dist = Math.sqrt(Math.max(distSq, 0.0001));
+        const penetration = BALL_RADIUS - dist;
+
+        let localNormalX = deltaX / dist;
+        let localNormalY = deltaY / dist;
+        if (!Number.isFinite(localNormalX) || !Number.isFinite(localNormalY)) {
+          localNormalX = 0;
+          localNormalY = -1;
         }
 
-        streak += 1;
-        persistHighScore();
-        registerTrajectoryAfterBounce();
+        const normalX = cos * localNormalX - sin * localNormalY;
+        const normalY = sin * localNormalX + cos * localNormalY;
+
+        ballX += normalX * penetration;
+        ballY += normalY * penetration;
+
+        const normalVelocity = ballVx * normalX + ballVy * normalY;
+        if (normalVelocity < 0) {
+          const restitution = 1.12;
+          ballVx -= (1 + restitution) * normalVelocity * normalX;
+          ballVy -= (1 + restitution) * normalVelocity * normalY;
+
+          const extraLift = Math.max(130, Math.abs(paddleVx) * 0.05);
+          ballVy -= extraLift;
+          ballVx += paddleVx * 0.3 + Math.sin(paddleAngle) * 70;
+
+          const speed = Math.hypot(ballVx, ballVy);
+          const maxSpeed = 660;
+          if (speed > maxSpeed) {
+            const ratio = maxSpeed / speed;
+            ballVx *= ratio;
+            ballVy *= ratio;
+          }
+
+          streak += 1;
+          persistHighScore();
+          registerTrajectoryAfterBounce();
+        }
       }
-    }
 
-    if (paddleVy < -200) {
-      const paddleTop = paddleY - PADDLE_HEIGHT * 0.5;
-      const wasBelow = ballY - ballVy * dt > paddleTop + BALL_RADIUS;
-      const nowAbove = ballY < paddleTop;
-      const horizontalClose = Math.abs(ballX - paddleX) < PADDLE_WIDTH * 0.58;
+      if (paddleVy < -200) {
+        const paddleTop = paddleY - PADDLE_HEIGHT * 0.5;
+        const wasBelow = ballY - ballVy * stepDt > paddleTop + BALL_RADIUS;
+        const nowAbove = ballY < paddleTop;
+        const horizontalClose = Math.abs(ballX - paddleX) < PADDLE_WIDTH * 0.58;
 
-      if (wasBelow && nowAbove && horizontalClose && ballVy > -90) {
-        ballY = paddleTop - BALL_RADIUS;
-        ballVy = -Math.max(260, Math.abs(ballVy) + Math.abs(paddleVy) * 0.46);
-        ballVx += paddleVx * 0.2;
-        streak += 1;
-        persistHighScore();
-        registerTrajectoryAfterBounce();
+        if (wasBelow && nowAbove && horizontalClose && ballVy > -90) {
+          ballY = paddleTop - BALL_RADIUS;
+          ballVy = -Math.max(260, Math.abs(ballVy) + Math.abs(paddleVy) * 0.46);
+          ballVx += paddleVx * 0.2;
+          streak += 1;
+          persistHighScore();
+          registerTrajectoryAfterBounce();
+        }
       }
     }
 
@@ -543,7 +554,7 @@
     <span class="label-wrap">
       <HoverMorphHint
         idleText="Table Tennis"
-        hoverText="Drag me!!!"
+        hoverText="Drag This!"
         {hovered}
         active={active || fadingOut}
       />
