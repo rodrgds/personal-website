@@ -100,7 +100,7 @@
       </button>
     {/if}
     <div class="modal-body">
-      {#if children}
+      {#if isOpen && children}
         {@render children()}
       {/if}
     </div>

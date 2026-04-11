@@ -1,0 +1,128 @@
+---
+title: "Fonts I Love"
+pubDate: "2026-04-11"
+description: "My go-to font stack for everything I do, from my website to my projects."
+tags: ["fonts", "typography", "design"]
+---
+
+import { Image } from "astro:assets";
+import thumb1 from "./thumb1.png";
+import thumb2 from "./thumb2.png";
+import thumb3 from "./thumb3.png";
+import thumb4 from "./thumb4.png";
+import unisEasy from "./uniseasy.png";
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+<link
+  href="https://fonts.googleapis.com/css2?family=Bangers&family=Bricolage+Grotesque:wght@400;700&family=Inter:opsz,wght@14..32,100..900&family=Source+Serif+4:opsz,wght@8..72,200..900&family=JetBrains+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+  rel="stylesheet"
+/>
+
+<style>{`
+  .font-serif, .font-serif p { font-family: 'Source Serif 4', serif; }
+  .font-mono, .font-mono p { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace; }
+  .font-mono p { font-size: 0.95rem; }
+  .font-bangers { font-family: 'Bangers', cursive; line-height: 0.95; }
+  .font-bangers p { font-family: 'Bangers', cursive; font-size: 1.45rem; margin-top: 0.4rem; }
+  .font-bricolage, .font-bricolage p { font-family: 'Bricolage Grotesque', 'Helvetica Neue', Arial, sans-serif; }
+  .font-inter, .font-inter p { font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; }
+  .thumb-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem;
+    margin-top: 1rem;
+  }
+  .thumb-grid img {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+  }
+  h2 {
+    margin-top: 1.6rem;
+    margin-bottom: 0.5rem;
+  }
+  .font-serif h2 { font-family: 'Source Serif 4', serif; }
+  .font-mono h2 { font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', 'Courier New', monospace; }
+  .font-bangers h2 { 
+    font-family: 'Bangers', cursive;
+    font-size: 2.2rem;
+    line-height: 1;
+    margin-top: 2rem;
+  }
+  .font-bricolage h2 { font-family: 'Bricolage Grotesque', 'Helvetica Neue', Arial, sans-serif; }
+  .font-inter h2 { font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif; }
+`}</style>
+
+I've used these 5 fonts on my website and in my projects for the past few years. They're the result of a lot of testing, and I don't expect to need new ones for a very, very long time.
+
+<div class="font-serif">
+## Source Serif 4
+
+Source Serif 4 is the main font on my website (and it's the one you're seeing right now). I use it for any long-form reading because it's, well, serif'd and really readable and (imo) well-balanced.
+</div>
+
+<div class="font-mono">
+## JetBrains Mono
+
+JetBrains Mono is the font I use for anything that has code, be it a terminal, IDE, or even the code blocks on my site (and even the status bar of my [NixOS setup](https://github.com/rodrgds/nix-config)).
+
+```js
+// JetBrains Mono in action
+function greet(name) {
+  return `Hello, ${name}!`;
+}
+console.log(greet('world'));
+```
+
+It also has versions with ligatures, which look AMAZING!
+
+I've gone through all of the `Fira Code` and `Iosevka` (etc.) alternatives but JetBrains Mono remains just so clean and readable to me!
+</div>
+
+<div class="font-bangers">
+## Bangers
+
+It's a really fun font! I don't use it too too much, just mainly for big, bold titles when I want to add a bit of personality and energy. It's got a lot of character and really stands out.
+
+<div className="thumb-grid" aria-hidden="false">
+  <Image src={thumb1} alt="Bangers thumbnail 1" />
+  <Image src={thumb2} alt="Bangers thumbnail 2" />
+  <Image src={thumb3} alt="Bangers thumbnail 3" />
+  <Image src={thumb4} alt="Bangers thumbnail 4" />
+</div>
+
+^ it's really cool for thumbnails, as you can see!
+</div>
+
+<div class="font-bricolage">
+## Bricolage Grotesque
+
+Bricolage Grotesque is my go-to UI AND marketing sans; a friendly, slightly quirky font that works well in interfaces and promos!
+
+<Image src={unisEasy} alt="Uni's Easy interface" />
+
+^ it was the font with which I built most of *Uni's Easy*!
+</div>
+
+<div class="font-inter">
+## Inter
+
+Inter is my really clean minimalist sans. I use it when I want neutral, modern UI typography with very high readability.
+
+I haven't been using it a lot recently, but it's a genuinely pleasing font to look at, it's just a bit overused in the design world and I prefer Bricolage Grotesque's character for most of my projects.
+</div>
+
+## Links
+
+- [Bangers](https://fonts.google.com/specimen/Bangers)
+- [Bricolage Grotesque](https://fonts.google.com/specimen/Bricolage+Grotesque)
+- [Source Serif 4](https://fonts.google.com/specimen/Source+Serif+4)
+- [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono)
+- [Inter](https://fonts.google.com/specimen/Inter)
+
+This was it, really. I'm glad you made it here and might want to check out one of these that you haven't tried before! They're all free on Google Fonts, so you can easily test them out and see if you like them as much as I do.
+
+If you want to continue exploring my website, feel free to do so! Check out my [home](/), [now](/now), [uses](/uses), or [faves](/faves) pages, though you might get stuck on a rabbit hole (you have been warned!).

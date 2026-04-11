@@ -19,23 +19,23 @@ This is [a now page](https://nownownow.com/about). If you have your own site, [c
 - Working on [edu.rgo.pt](https://edu.rgo.pt), a collection of reasons why the university system is broken as well as a potential new approach (currently in early development).
 - Pursuing a **Bachelor's Degree in Informatics and Computing Engineering** at the **Faculty of Engineering, University of Porto** ([FEUP](https://fe.up.pt)).
 
-<div className="grid-responsive">
+<div class="grid-responsive">
   <div>
     <h2>Interested In</h2>
 
-    <div className="interest-group">
-      <div className="group-label">Sports</div>
+    <div class="interest-group">
+      <div class="group-label">Sports</div>
       <ul>
-        <li><TableTennisMiniGame client:load /></li>
+        <li><TableTennisMiniGame client:visible /></li>
         <li>🏸 Badminton</li>
         <li>🚴‍♂️ Biking</li>
-        <li>🏋️ <WeightliftingModal client:load /></li>
+        <li>🏋️ <WeightliftingModal client:visible /></li>
         <li>🤸 Calisthenics</li>
       </ul>
     </div>
 
-    <div className="interest-group">
-      <div className="group-label">Tech</div>
+    <div class="interest-group">
+      <div class="group-label">Tech</div>
       <ul>
         <li>🐧 Linux/NixOS</li>
         <li>🔓 Open Source</li>
@@ -44,21 +44,21 @@ This is [a now page](https://nownownow.com/about). If you have your own site, [c
       </ul>
     </div>
 
-    <div className="interest-group">
-      <div className="group-label">Others</div>
+    <div class="interest-group">
+      <div class="group-label">Others</div>
       <ul>
         <li>🚀 Space</li>
         <li>📷 Photography</li>
         <li><Logo src="cs2" /> Counter Strike</li>
-        <li>🎥 <MoviesModal client:load /></li>
-        <li>🎧 <MusicModal client:load /></li>
+        <li>🎥 <MoviesModal client:visible /></li>
+        <li>🎧 <MusicModal client:visible /></li>
       </ul>
     </div>
-  </div>
-  <div style={{minHeight: '400px'}}>
-    <WorldMap client:only />
-  </div>
-</div>
+    </div>
+    <div style={{minHeight: '400px'}}>
+    <WorldMap client:visible={{ rootMargin: '200px' }} client:only="svelte" />
+    </div>
+    </div>
 
 <style>{`
   .grid-responsive {

@@ -22,7 +22,7 @@
   const TRAIL_LIFETIME = 0.18;
   const BURST_LIFETIME = 0.46;
 
-  interface Particle {
+  class Particle {
     id: number;
     x: number;
     y: number;
@@ -31,10 +31,30 @@
     life: number;
     maxLife: number;
     size: number;
+
+    constructor(id: number, x: number, y: number, vx: number, vy: number, life: number, size: number) {
+      this.id = id;
+      this.x = x;
+      this.y = y;
+      this.vx = vx;
+      this.vy = vy;
+      this.life = life;
+      this.maxLife = life;
+      this.size = size;
+    }
+
+    update(dt: number) {
+      this.life -= dt;
+      this.x += this.vx * dt;
+      this.y += this.vy * dt;
+      return this.life > 0;
+    }
   }
 
   let host = $state<HTMLSpanElement | undefined>(undefined);
-  let playfield = $state<HTMLDivElement | undefined>(undefined);
+  let playfieldContainer = $state<HTMLDivElement | undefined>(undefined);
+  let canvas = $state<HTMLCanvasElement | undefined>(undefined);
+  let ctx: CanvasRenderingContext2D | null = null;
 
   let hovered = $state(false);
   let active = $state(false);
@@ -42,27 +62,28 @@
   let visible = $state(false);
 
   let pointerId = $state<number | null>(null);
-  let pointerClientX = $state(0);
-  let pointerClientY = $state(0);
+  let pointerClientX = 0;
+  let pointerClientY = 0;
 
-  let fieldWidth = $state(280);
-  let fieldHeight = $state(170);
+  let fieldWidth = 0;
+  let fieldHeight = 0;
+  let dpr = 1;
 
-  let ballX = $state(0);
-  let ballY = $state(0);
-  let ballVx = $state(0);
-  let ballVy = $state(0);
+  let ballX = 0;
+  let ballY = 0;
+  let ballVx = 0;
+  let ballVy = 0;
 
-  let paddleX = $state(0);
-  let paddleY = $state(0);
-  let paddleVx = $state(0);
-  let paddleVy = $state(0);
-  let paddleAngle = $state(0);
+  let paddleX = 0;
+  let paddleY = 0;
+  let paddleVx = 0;
+  let paddleVy = 0;
+  let paddleAngle = 0;
 
   let streak = $state(0);
   let highScore = $state(0);
-  let trailParticles = $state<Particle[]>([]);
-  let burstParticles = $state<Particle[]>([]);
+  let trailParticles: Particle[] = [];
+  let burstParticles: Particle[] = [];
 
   let previousTrajectoryX = 0;
   let previousTrajectoryY = 0;
@@ -70,6 +91,8 @@
   let antiCheatCooldown = 0;
   let hitCooldown = 0;
   let nextParticleId = 1;
+
+  let linkColor = $state("rgba(0, 102, 204, 0.8)");
 
   let rafId: number | undefined;
   let lastFrame = 0;
@@ -93,23 +116,28 @@
   }
 
   function syncFieldRect(): void {
-    if (!playfield) return;
-    const rect = playfield.getBoundingClientRect();
+    if (!playfieldContainer || !canvas) return;
+    const rect = playfieldContainer.getBoundingClientRect();
     fieldWidth = rect.width;
     fieldHeight = rect.height;
+    dpr = window.devicePixelRatio || 1;
+    
+    canvas.width = fieldWidth * dpr;
+    canvas.height = fieldHeight * dpr;
+    canvas.style.width = `${fieldWidth}px`;
+    canvas.style.height = `${fieldHeight}px`;
+    
+    ctx = canvas.getContext("2d", { alpha: true });
+    if (ctx) {
+      ctx.scale(dpr, dpr);
+      const style = getComputedStyle(document.documentElement);
+      linkColor = style.getPropertyValue("--link-color").trim() || "rgba(0, 102, 204, 0.8)";
+    }
   }
 
   function resetSimulation(startX: number, startY: number): void {
-    paddleX = clamp(
-      startX,
-      PADDLE_WIDTH * 0.5,
-      fieldWidth - PADDLE_WIDTH * 0.5,
-    );
-    paddleY = clamp(
-      startY,
-      PADDLE_HEIGHT * 1.2,
-      fieldHeight - PADDLE_HEIGHT * 1.1,
-    );
+    paddleX = clamp(startX, PADDLE_WIDTH * 0.5, fieldWidth - PADDLE_WIDTH * 0.5);
+    paddleY = clamp(startY, PADDLE_HEIGHT * 1.2, fieldHeight - PADDLE_HEIGHT * 1.1);
     paddleVx = 0;
     paddleVy = 0;
     paddleAngle = 0;
@@ -150,69 +178,34 @@
   }
 
   function spawnTrail(x: number, y: number): void {
-    const particle: Particle = {
-      id: nextParticleId++,
-      x: x + randomRange(-1.6, 1.6),
-      y: y + randomRange(-1.6, 1.6),
-      vx: randomRange(-18, 18),
-      vy: randomRange(-12, 12),
-      life: TRAIL_LIFETIME,
-      maxLife: TRAIL_LIFETIME,
-      size: randomRange(2.2, 4.2),
-    };
-
-    trailParticles = [...trailParticles, particle].slice(-56);
+    const p = new Particle(
+      nextParticleId++,
+      x + randomRange(-1.6, 1.6),
+      y + randomRange(-1.6, 1.6),
+      randomRange(-18, 18),
+      randomRange(-12, 12),
+      TRAIL_LIFETIME,
+      randomRange(2.2, 4.2)
+    );
+    trailParticles.push(p);
+    if (trailParticles.length > 56) trailParticles.shift();
   }
 
   function spawnImpactBurst(x: number, y: number, side: number): void {
-    const created: Particle[] = [];
     for (let i = 0; i < 12; i += 1) {
       const outward = side < 0 ? 1 : -1;
-      created.push({
-        id: nextParticleId++,
+      const p = new Particle(
+        nextParticleId++,
         x,
         y,
-        vx: outward * randomRange(45, 120) + randomRange(-12, 12),
-        vy: randomRange(-72, 72),
-        life: BURST_LIFETIME,
-        maxLife: BURST_LIFETIME,
-        size: randomRange(2.2, 5.2),
-      });
+        outward * randomRange(45, 120) + randomRange(-12, 12),
+        randomRange(-72, 72),
+        BURST_LIFETIME,
+        randomRange(2.2, 5.2)
+      );
+      burstParticles.push(p);
     }
-
-    burstParticles = [...burstParticles, ...created].slice(-100);
-  }
-
-  function updateParticles(dt: number): void {
-    if (trailParticles.length > 0) {
-      const nextTrail: Particle[] = [];
-      for (const particle of trailParticles) {
-        const life = particle.life - dt;
-        if (life <= 0) continue;
-        nextTrail.push({
-          ...particle,
-          life,
-          x: particle.x + particle.vx * dt,
-          y: particle.y + particle.vy * dt,
-        });
-      }
-      trailParticles = nextTrail;
-    }
-
-    if (burstParticles.length > 0) {
-      const nextBurst: Particle[] = [];
-      for (const particle of burstParticles) {
-        const life = particle.life - dt;
-        if (life <= 0) continue;
-        nextBurst.push({
-          ...particle,
-          life,
-          x: particle.x + particle.vx * dt,
-          y: particle.y + particle.vy * dt,
-        });
-      }
-      burstParticles = nextBurst;
-    }
+    if (burstParticles.length > 100) burstParticles.splice(0, burstParticles.length - 100);
   }
 
   function applyAntiCheatKick(): void {
@@ -244,9 +237,7 @@
 
   function registerTrajectoryAfterBounce(): void {
     const speed = Math.hypot(ballVx, ballVy);
-    if (speed < 160 || antiCheatCooldown > 0) {
-      return;
-    }
+    if (speed < 160 || antiCheatCooldown > 0) return;
 
     const trajectoryX = ballVx / speed;
     const trajectoryY = ballVy / speed;
@@ -260,8 +251,7 @@
     }
 
     if (previousTrajectoryX !== 0 || previousTrajectoryY !== 0) {
-      const alignment =
-        trajectoryX * previousTrajectoryX + trajectoryY * previousTrajectoryY;
+      const alignment = trajectoryX * previousTrajectoryX + trajectoryY * previousTrajectoryY;
       if (alignment > 0.992) {
         repeatedTrajectoryCount += 1;
       } else {
@@ -274,17 +264,12 @@
     previousTrajectoryX = trajectoryX;
     previousTrajectoryY = trajectoryY;
 
-    if (repeatedTrajectoryCount >= 3) {
-      applyAntiCheatKick();
-    }
+    if (repeatedTrajectoryCount >= 3) applyAntiCheatKick();
   }
 
-  function pointerToField(
-    clientX: number,
-    clientY: number,
-  ): { x: number; y: number } {
-    if (!playfield) return { x: fieldWidth * 0.5, y: fieldHeight * 0.78 };
-    const rect = playfield.getBoundingClientRect();
+  function pointerToField(clientX: number, clientY: number): { x: number; y: number } {
+    if (!playfieldContainer) return { x: fieldWidth * 0.5, y: fieldHeight * 0.78 };
+    const rect = playfieldContainer.getBoundingClientRect();
     return {
       x: clientX - rect.left,
       y: clientY - rect.top,
@@ -314,7 +299,7 @@
       try {
         target.setPointerCapture(event.pointerId);
       } catch {
-        // ignore capture errors on unsupported environments
+        // ignore
       }
     }
 
@@ -359,8 +344,67 @@
     endInteraction();
   }
 
+  function renderGame() {
+    if (!ctx || !canvas) return;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, fieldWidth, fieldHeight);
+
+    // Draw trail particles
+    ctx.fillStyle = "rgba(155, 155, 155, 0.5)";
+    for (const p of trailParticles) {
+      ctx.globalAlpha = p.life / p.maxLife;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Draw burst particles
+    ctx.fillStyle = linkColor;
+    for (const p of burstParticles) {
+      ctx.globalAlpha = p.life / p.maxLife;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1.0;
+
+    // Draw ball
+    ctx.save();
+    ctx.translate(ballX, ballY);
+    ctx.beginPath();
+    ctx.arc(0, 0, BALL_RADIUS, 0, Math.PI * 2);
+    const ballGradient = ctx.createRadialGradient(-BALL_RADIUS * 0.3, -BALL_RADIUS * 0.3, 0, 0, 0, BALL_RADIUS);
+    ballGradient.addColorStop(0, "#ffffff");
+    ballGradient.addColorStop(0.45, "#ffffff");
+    ballGradient.addColorStop(0.74, "#ececec");
+    ballGradient.addColorStop(1, "#cacaca");
+    ctx.fillStyle = ballGradient;
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = "rgba(0, 0, 0, 0.28)";
+    ctx.shadowOffsetY = 2;
+    ctx.fill();
+    ctx.restore();
+
+    // Draw paddle
+    ctx.save();
+    ctx.translate(paddleX, paddleY);
+    ctx.rotate(paddleAngle);
+    ctx.beginPath();
+    // Round rect for paddle
+    const hw = PADDLE_WIDTH / 2;
+    const hh = PADDLE_HEIGHT / 2;
+    ctx.roundRect(-hw, -hh, PADDLE_WIDTH, PADDLE_HEIGHT, hh);
+    ctx.fillStyle = linkColor;
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = "rgba(0, 0, 0, 0.24)";
+    ctx.shadowOffsetY = 4;
+    ctx.fill();
+    ctx.restore();
+  }
+
   function simulationFrame(timestamp: number): void {
-    if (!visible || !playfield) {
+    if (!visible || !playfieldContainer) {
       rafId = undefined;
       return;
     }
@@ -373,18 +417,9 @@
 
     const pointer = pointerToField(pointerClientX, pointerClientY);
 
-    const targetPaddleX = clamp(
-      pointer.x,
-      PADDLE_WIDTH * 0.5,
-      fieldWidth - PADDLE_WIDTH * 0.5,
-    );
-    const targetPaddleY = clamp(
-      pointer.y,
-      PADDLE_HEIGHT * 1.2,
-      fieldHeight - PADDLE_HEIGHT * 1.2,
-    );
+    const targetPaddleX = clamp(pointer.x, PADDLE_WIDTH * 0.5, fieldWidth - PADDLE_WIDTH * 0.5);
+    const targetPaddleY = clamp(pointer.y, PADDLE_HEIGHT * 1.2, fieldHeight - PADDLE_HEIGHT * 1.2);
 
-    // Calculate final paddle state for this frame
     const previousFramePaddleX = paddleX;
     const previousFramePaddleY = paddleY;
     const previousFrameAngle = paddleAngle;
@@ -392,30 +427,25 @@
     const nextPaddleX = lerp(paddleX, targetPaddleX, 0.42);
     const nextPaddleY = lerp(paddleY, targetPaddleY, 0.36);
     
-    // Average velocity of the paddle over the whole frame
     paddleVx = (nextPaddleX - previousFramePaddleX) / dt;
     paddleVy = (nextPaddleY - previousFramePaddleY) / dt;
     
     const targetAngle = clamp(paddleVx * 0.0014, -0.44, 0.44);
     const nextPaddleAngle = lerp(paddleAngle, targetAngle, 0.25);
 
-    // Sub-stepping to prevent tunneling
     const SUBSTEPS = 6;
     const stepDt = dt / SUBSTEPS;
 
     for (let i = 0; i < SUBSTEPS; i++) {
       const alpha = (i + 1) / SUBSTEPS;
       
-      // Move paddle smoothly across sub-steps
       paddleX = lerp(previousFramePaddleX, nextPaddleX, alpha);
       paddleY = lerp(previousFramePaddleY, nextPaddleY, alpha);
       paddleAngle = lerp(previousFrameAngle, nextPaddleAngle, alpha);
 
       ballVy += GRAVITY * stepDt;
-
       const drag = Math.exp(-AIR_DRAG * stepDt);
       ballVx *= drag;
-
       ballX += ballVx * stepDt;
       ballY += ballVy * stepDt;
 
@@ -464,33 +494,21 @@
         const normalX = cos * localNormalX - sin * localNormalY;
         const normalY = sin * localNormalX + cos * localNormalY;
 
-        // Push ball out of paddle
         ballX += normalX * penetration;
         ballY += normalY * penetration;
 
-        // Use relative velocity for physically accurate bounces!
         const relVx = ballVx - paddleVx;
         const relVy = ballVy - paddleVy;
         const relNormalVel = relVx * normalX + relVy * normalY;
 
         if (relNormalVel < 0) {
-          const restitution = 0.85; // Lower than old 1.12 because we are adding paddle velocity now
-          
-          // Apply impulse relative to the paddle
+          const restitution = 0.85; 
           ballVx -= (1 + restitution) * relNormalVel * normalX;
           ballVy -= (1 + restitution) * relNormalVel * normalY;
-
-          // Arcady tweaks to keep the game fun and responsive
           const extraLift = Math.max(100, Math.abs(paddleVx) * 0.03);
-          ballVy -= extraLift; // Always add a little bit of baseline upward bounce
-          
-          // Transfer horizontal friction/spin
+          ballVy -= extraLift; 
           ballVx += paddleVx * 0.2 + Math.sin(paddleAngle) * 50;
-          
-          // If the paddle is moving UP, explicitly transfer more of that upward momentum to the ball
-          if (paddleVy < -10) {
-             ballVy += paddleVy * 0.4;
-          }
+          if (paddleVy < -10) ballVy += paddleVy * 0.4;
 
           const speed = Math.hypot(ballVx, ballVy);
           const maxSpeed = 720;
@@ -502,7 +520,7 @@
 
           if (hitCooldown === 0) {
             streak += 1;
-            hitCooldown = 0.15; // 150ms cooldown before another hit counts
+            hitCooldown = 0.15;
             persistHighScore();
           }
           registerTrajectoryAfterBounce();
@@ -510,19 +528,19 @@
       }
     }
 
-    updateParticles(dt);
+    // Update particles efficiently
+    trailParticles = trailParticles.filter(p => p.update(dt));
+    burstParticles = burstParticles.filter(p => p.update(dt));
 
+    renderGame();
     rafId = requestAnimationFrame(simulationFrame);
   }
 
   $effect(() => {
-    if (!playfield || !visible) return;
-
-    const observer = new ResizeObserver(() => {
-      syncFieldRect();
-    });
-
-    observer.observe(playfield);
+    if (!playfieldContainer || !visible) return;
+    const observer = new ResizeObserver(() => syncFieldRect());
+    observer.observe(playfieldContainer);
+    syncFieldRect();
     return () => observer.disconnect();
   });
 
@@ -536,13 +554,10 @@
 
   $effect(() => {
     if (!active || typeof document === "undefined") return;
-
     const previousOverflow = document.body.style.overflow;
     const previousTouchAction = document.body.style.touchAction;
-
     document.body.style.overflow = "hidden";
     document.body.style.touchAction = "none";
-
     return () => {
       document.body.style.overflow = previousOverflow;
       document.body.style.touchAction = previousTouchAction;
@@ -577,9 +592,9 @@
 
   {#if visible}
     <div
-      class="playfield"
+      class="playfield-container"
       class:is-fading={fadingOut}
-      bind:this={playfield}
+      bind:this={playfieldContainer}
       aria-hidden="true"
       role="presentation"
     >
@@ -588,28 +603,7 @@
         <div>high: {highScore}</div>
       </div>
 
-      {#each trailParticles as particle (particle.id)}
-        <div
-          class="trail-particle"
-          style={`transform: translate3d(${particle.x - particle.size * 0.5}px, ${particle.y - particle.size * 0.5}px, 0); width: ${particle.size}px; height: ${particle.size}px; opacity: ${particle.life / particle.maxLife};`}
-        ></div>
-      {/each}
-
-      {#each burstParticles as particle (particle.id)}
-        <div
-          class="impact-particle"
-          style={`transform: translate3d(${particle.x - particle.size * 0.5}px, ${particle.y - particle.size * 0.5}px, 0); width: ${particle.size}px; height: ${particle.size}px; opacity: ${particle.life / particle.maxLife};`}
-        ></div>
-      {/each}
-
-      <div
-        class="ball"
-        style={`transform: translate3d(${ballX - BALL_RADIUS}px, ${ballY - BALL_RADIUS}px, 0);`}
-      ></div>
-      <div
-        class="paddle"
-        style={`transform: translate3d(${paddleX - PADDLE_WIDTH * 0.5}px, ${paddleY - PADDLE_HEIGHT * 0.5}px, 0) rotate(${paddleAngle}rad);`}
-      ></div>
+      <canvas bind:this={canvas} class="game-canvas"></canvas>
     </div>
   {/if}
 </span>
@@ -653,7 +647,7 @@
     color: var(--link-color);
   }
 
-  .playfield {
+  .playfield-container {
     position: fixed;
     inset: 0;
     background: color-mix(
@@ -670,6 +664,12 @@
       opacity 220ms ease,
       transform 220ms ease;
     z-index: 18;
+  }
+
+  .game-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
   }
 
   .streak-badge {
@@ -691,72 +691,21 @@
     );
     color: var(--heading-color);
     box-shadow: 0 0.2rem 0.4rem color-mix(in srgb, #000 12%, transparent 88%);
+    z-index: 20;
   }
 
-  .playfield.is-fading {
+  .playfield-container.is-fading {
     opacity: 0;
     transform: translateY(0.35rem) scale(0.98);
   }
 
-  .ball {
-    position: absolute;
-    width: calc(2 * 8px);
-    height: calc(2 * 8px);
-    border-radius: 50%;
-    background: radial-gradient(
-      circle at 36% 34%,
-      #fff 0 45%,
-      #ececec 74%,
-      #cacaca 100%
-    );
-    box-shadow:
-      0 0.15rem 0.44rem color-mix(in srgb, #000 28%, transparent 72%),
-      inset -0.05rem -0.1rem 0.08rem
-        color-mix(in srgb, #000 18%, transparent 82%);
-    will-change: transform;
-  }
-
-  .trail-particle,
-  .impact-particle {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    will-change: transform, opacity;
-  }
-
-  .trail-particle {
-    background: color-mix(in srgb, #9b9b9b 75%, transparent 25%);
-    filter: blur(0.2px);
-  }
-
-  .impact-particle {
-    background: color-mix(in srgb, var(--link-color) 70%, white 30%);
-  }
-
-  .paddle {
-    position: absolute;
-    width: calc(96px);
-    height: calc(12px);
-    border-radius: 999px;
-    transform-origin: center;
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--link-color) 68%, white 32%),
-      color-mix(in srgb, var(--link-color) 76%, black 24%)
-    );
-    box-shadow:
-      inset 0 -0.1rem 0.15rem color-mix(in srgb, #000 32%, transparent 68%),
-      0 0.2rem 0.5rem color-mix(in srgb, #000 24%, transparent 76%);
-    will-change: transform;
-  }
-
   @media (prefers-reduced-motion: reduce) {
-    .playfield {
+    .playfield-container {
       transition: opacity 200ms ease;
       transform: none;
     }
 
-    .playfield.is-fading {
+    .playfield-container.is-fading {
       transform: none;
     }
   }
