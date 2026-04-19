@@ -41,6 +41,18 @@ const {
 									{left: "$$", right: "$$", display: true},
 								{left: "$", right: "$", display: false}
 		]});'/>}
+		{Astro.props.content.katex && <script is:inline>
+			document.addEventListener('astro:after-swap', () => {
+				if (typeof renderMathInElement === 'function') {
+					renderMathInElement(document.body, {
+						delimiters: [
+							{left: "$$", right: "$$", display: true},
+							{left: "$", right: "$", display: false}
+						]
+					});
+				}
+			});
+		</script>}
 	</head>
 
 	<body>
@@ -48,7 +60,7 @@ const {
 		<main>
 			<article>
 				{heroImage && <img width={720} height={360} src={heroImage} alt="" />}
-				<h1 class="title" transition:name="blogpost-name">{title} APENAS UM TESTE</h1>
+				<h1 class="title" transition:name="blogpost-name">{title}</h1>
 				{pubDate && <time>{pubDate}</time>}
 				{
 					updatedDate && (

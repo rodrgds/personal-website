@@ -291,7 +291,7 @@
     </a>
 
     <div class="tmdb-credit">
-      <img src="/images/tmdb-logo.svg" alt="TMDB" class="tmdb-logo" />
+      <img src="/logos/tmdb.svg" alt="TMDB" class="tmdb-logo" />
       This product uses the TMDB API but is not endorsed or certified by TMDB.
     </div>
   </div>

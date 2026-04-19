@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-Astro 5 + Svelte 5 personal website with SSR (Vercel adapter). Package manager: **bun**. Node 22.
+Astro 6 + Svelte 5 personal website with SSR (Vercel adapter). Package manager: **bun**. Node 22.
 
 ## Commands
 
@@ -114,3 +114,14 @@ When writing Svelte code:
 2. Use `get-documentation` to fetch ALL relevant sections
 3. Use `svelte-autofixer` on ALL Svelte code before sending to user — keep calling until clean
 4. Offer a `playground-link` after completing standalone components (never if writing to project files)
+
+### View Transitions (SPA Navigation)
+
+The site uses Astro's `<ClientRouter />` for View Transitions (SPA-like navigation). This means:
+
+- **Never capture DOM element references at script load time** — the element may be swapped out during a View Transition, leaving you with a stale reference to a detached node. Always re-query (`document.getElementById`, `querySelector`, etc.) inside the event handler or function that uses it.
+- **`window`/`document` event listeners persist across navigations** — this is fine for listeners, but any closures that captured DOM elements will be broken after a transition swaps content.
+- **`<script>` blocks in Astro components only run once** on initial page load. They do NOT re-execute when navigating via View Transitions.
+- **Svelte components hydrate fresh on each navigation** — client-side Svelte components (`client:load`, `client:visible`, etc.) are re-created when navigating to a page that includes them, so their internal state is fine. The issue is only with `<script>` blocks in `.astro` files that capture DOM references.
+
+**Rule of thumb:** If a `<script>` in an `.astro` component needs to interact with a DOM element, query it inside the function/handler that uses it, not at the top level of the script.
