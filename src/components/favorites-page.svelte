@@ -1,16 +1,101 @@
 <script>
   import { onMount } from "svelte";
-  import favoritesData from "../data/favorites.json";
+
+  // The component expects a collection of favorites entries
+  export let favorites;
+
+  // Transform collection entries into the format the component expects
+  const favoritesData = (() => {
+    const grouped = {};
+
+    const typeToSection = {
+      movie: "movies",
+      show: "shows",
+      podcast: "podcasts",
+      book: "books",
+      blog: "blogs",
+      article: "articles",
+      video: "videos",
+      cool: "cool",
+    };
+
+    const sectionOrder = [
+      "movies",
+      "shows",
+      "podcasts",
+      "books",
+      "blogs",
+      "articles",
+      "videos",
+      "cool",
+    ];
+
+    for (const entry of favorites) {
+      const section =
+        typeToSection[(entry.data && entry.data.type) || entry.type] || "cool";
+      if (!grouped[section]) grouped[section] = [];
+
+      const item = {
+        title: entry.data?.title ?? entry.title,
+        rating: entry.data?.rating ?? entry.rating,
+        categories: entry.data?.categories ?? entry.categories ?? [],
+      };
+
+      if (entry.data?.year) item.year = entry.data.year;
+      if (entry.data?.author) item.author = entry.data.author;
+      if (entry.data?.url) item.url = entry.data.url;
+      if (entry.data?.image) item.image = entry.data.image;
+      if (entry.data?.icon) item.icon = entry.data.icon;
+
+      // Comment fallback: prefer frontmatter, otherwise first paragraph of body
+      if (entry.data && entry.data.comment) {
+        item.comment = entry.data.comment;
+      } else if (entry.body) {
+        const body = String(entry.body).trim();
+        const parts = body
+          .split(/\n\n+/)
+          .map((p) => p.trim())
+          .filter(Boolean);
+        if (parts.length > 0) item.comment = parts[0];
+      }
+
+      // Favorite episodes fallback: prefer frontmatter, otherwise parse from body
+      if (entry.data && entry.data.favoriteEpisodes) {
+        item.favoriteEpisodes = entry.data.favoriteEpisodes;
+      } else if (entry.body) {
+        const body = String(entry.body);
+        const match = body.match(/##\s*Favorite episodes\s*\n([\s\S]*)/i);
+        if (match) {
+          const list = match[1]
+            .split(/\n/)
+            .map((l) => l.trim())
+            .filter((l) => l.startsWith("-"))
+            .map((l) => l.replace(/^[-\s]+/, ""));
+
+          const eps = list.map((line) => {
+            const m = line.match(/^(#?\d+)?\s*[-—]?\s*(.*)$/);
+            if (m) return { number: m[1] || undefined, title: m[2].trim() };
+            return { title: line };
+          });
+          if (eps.length) item.favoriteEpisodes = eps;
+        }
+      }
+
+      grouped[section].push(item);
+    }
+
+    return grouped;
+  })();
 
   // Reactive state
   let activeFilters = new Set();
   let expandedItems = new Set();
-  let filterLogic = "AND"; // "AND" or "OR"
+  let filterLogic = "AND";
   let isMobile = false;
-  let sortBy = "alpha"; // "alpha", "alpha-desc", "rating", "rating-desc"
+  let sortBy = "alpha";
   let mounted = false;
+  let collapsedSections = new Set();
 
-  // Default icons for sections
   const getDefaultIcon = (section) => {
     switch (section) {
       case "movies":
@@ -34,7 +119,6 @@
     }
   };
 
-  // Reactive computed values
   $: showClearButton = activeFilters.size > 0;
 
   // Get all available categories
@@ -50,44 +134,73 @@
     return Array.from(categories).sort();
   })();
 
-  $: visibleSections = Object.entries(favoritesData).map(([section, items]) => {
-    const visibleItems = items.filter((item) => {
-      // Check category filters
-      if (activeFilters.size === 0) return true;
+  function toggleSection(section) {
+    const newCollapsed = new Set(collapsedSections);
+    if (newCollapsed.has(section)) newCollapsed.delete(section);
+    else newCollapsed.add(section);
+    collapsedSections = newCollapsed;
+  }
 
-      if (filterLogic === "AND") {
-        return Array.from(activeFilters).every((filter) =>
-          (item.categories || []).includes(filter),
-        );
-      } else {
-        return Array.from(activeFilters).some((filter) =>
-          (item.categories || []).includes(filter),
-        );
+  $: visibleSections = (() => {
+    const order = [
+      "movies",
+      "shows",
+      "podcasts",
+      "books",
+      "blogs",
+      "articles",
+      "videos",
+      "cool",
+    ];
+
+    const sections = [];
+
+    const pushSection = (section, items) => {
+      const visibleItems = items.filter((item) => {
+        if (activeFilters.size === 0) return true;
+        if (filterLogic === "AND") {
+          return Array.from(activeFilters).every((filter) =>
+            (item.categories || []).includes(filter),
+          );
+        } else {
+          return Array.from(activeFilters).some((filter) =>
+            (item.categories || []).includes(filter),
+          );
+        }
+      });
+
+      const sortedItems = [...visibleItems].sort((a, b) => {
+        switch (sortBy) {
+          case "alpha":
+            return a.title.localeCompare(b.title);
+          case "alpha-desc":
+            return b.title.localeCompare(a.title);
+          case "rating":
+            return (a.rating || 0) - (b.rating || 0);
+          case "rating-desc":
+            return (b.rating || 0) - (a.rating || 0);
+          default:
+            return 0;
+        }
+      });
+
+      if (visibleItems.length > 0) {
+        sections.push({ section, items: sortedItems, visible: true });
       }
-    });
-
-    // Sort the visible items
-    const sortedItems = [...visibleItems].sort((a, b) => {
-      switch (sortBy) {
-        case "alpha":
-          return a.title.localeCompare(b.title);
-        case "alpha-desc":
-          return b.title.localeCompare(a.title);
-        case "rating":
-          return (a.rating || 0) - (b.rating || 0);
-        case "rating-desc":
-          return (b.rating || 0) - (a.rating || 0);
-        default:
-          return 0;
-      }
-    });
-
-    return {
-      section,
-      items: sortedItems,
-      visible: visibleItems.length > 0,
     };
-  });
+
+    // Add in the preferred order first
+    for (const s of order) {
+      if (favoritesData[s]) pushSection(s, favoritesData[s]);
+    }
+
+    // Add any unexpected sections afterward
+    for (const [s, items] of Object.entries(favoritesData)) {
+      if (!order.includes(s)) pushSection(s, items);
+    }
+
+    return sections;
+  })();
 
   // Functions
   function initFromURL() {
@@ -298,139 +411,154 @@
     {#if visible}
       <section class="content-section">
         <h2 class="section-title">
-          {section === "cool"
-            ? "Cool Stuff"
-            : section.charAt(0).toUpperCase() + section.slice(1)}
-        </h2>
-        <div class="items-list">
-          {#each items as item, index}
-            {@const itemId = `${section}-${index}`}
-            {@const isExpanded = expandedItems.has(itemId)}
-            <div
-              class="favorite-item"
-              class:expanded={isExpanded}
-              on:click={(e) => handleItemClick(e, itemId)}
-              role="button"
-              tabindex="0"
-              on:keydown={(e) =>
-                e.key === "Enter" && handleItemClick(e, itemId)}
+          <button
+            class:collapsed={collapsedSections.has(section)}
+            class="section-toggle"
+            on:click={() => toggleSection(section)}
+            aria-expanded={!collapsedSections.has(section)}
+          >
+            <span class="collapse-icon"
+              >{collapsedSections.has(section) ? "▶" : "▼"}</span
             >
-              <!-- Image/Icon -->
-              <div class="item-image">
-                {#if item.image}
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    class="item-img {section === 'books'
-                      ? 'aspect-book'
-                      : section === 'movies' || section === 'shows'
-                        ? 'aspect-poster'
-                        : 'aspect-square'}"
-                    loading="lazy"
-                  />
-                {:else}
-                  <div class="item-icon">
-                    {item.icon || getDefaultIcon(section)}
-                  </div>
-                {/if}
-              </div>
-
-              <!-- Content -->
-              <div class="item-content">
-                <div class="item-header">
-                  <div class="title-with-indicators">
-                    <div class="title-and-meta">
-                      <h3 class="item-title">
-                        {#if item.url}
-                          <a
-                            href={item.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {item.title}
-                          </a>
-                        {:else}
-                          {item.title}
-                        {/if}
-                      </h3>
-                      <div class="item-meta">
-                        {#if item.author}<span class="author"
-                            >by {item.author}</span
-                          >{/if}
-                        {#if item.year}<span class="year">({item.year})</span
-                          >{/if}
-                      </div>
-                    </div>
-                    <div class="rating-container">
-                      {#if item.rating}
-                        <div class="rating-top">
-                          {renderStars(item.rating)}
-                        </div>
-                      {/if}
-                      <div class="indicators">
-                        {#if item.comment}
-                          <span class="indicator" title="Has comment">💬</span>
-                        {/if}
-                        {#if section === "podcasts" && item.favoriteEpisodes}
-                          <span class="indicator" title="Has favorite episodes"
-                            >⭐</span
-                          >
-                        {/if}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <p class="item-comment">
-                  {#if item.comment}
-                    {item.comment}
+            {section === "cool"
+              ? "Cool Stuff"
+              : section.charAt(0).toUpperCase() + section.slice(1)}
+            <span class="item-count">({items.length})</span>
+          </button>
+        </h2>
+        {#if !collapsedSections.has(section)}
+          <div class="items-list">
+            {#each items as item, index}
+              {@const itemId = `${section}-${index}`}
+              {@const isExpanded = expandedItems.has(itemId)}
+              <div
+                class="favorite-item"
+                class:expanded={isExpanded}
+                on:click={(e) => handleItemClick(e, itemId)}
+                role="button"
+                tabindex="0"
+                on:keydown={(e) =>
+                  e.key === "Enter" && handleItemClick(e, itemId)}
+              >
+                <!-- Image/Icon -->
+                <div class="item-image">
+                  {#if item.image}
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      class="item-img {section === 'books'
+                        ? 'aspect-book'
+                        : section === 'movies' || section === 'shows'
+                          ? 'aspect-poster'
+                          : 'aspect-square'}"
+                      loading="lazy"
+                    />
                   {:else}
-                    <em>No comment</em>
+                    <div class="item-icon">
+                      {item.icon || getDefaultIcon(section)}
+                    </div>
                   {/if}
-                </p>
+                </div>
 
-                <!-- Favorite Episodes (for podcasts) - only show on hover/click -->
-                {#if section === "podcasts" && item.favoriteEpisodes}
-                  <div class="favorite-episodes">
-                    <h4>Favorite Episodes:</h4>
-                    <ul>
-                      {#each item.favoriteEpisodes as episode}
-                        <li>
-                          {#if episode.number}
-                            <strong
-                              >{episode.number}{episode.guest
-                                ? ` - ${episode.guest}:`
-                                : ":"}</strong
+                <!-- Content -->
+                <div class="item-content">
+                  <div class="item-header">
+                    <div class="title-with-indicators">
+                      <div class="title-and-meta">
+                        <h3 class="item-title">
+                          {#if item.url}
+                            <a
+                              href={item.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
                             >
-                            {episode.title}
+                              {item.title}
+                            </a>
                           {:else}
-                            <strong>{episode.title}</strong>
+                            {item.title}
                           {/if}
-                        </li>
-                      {/each}
-                    </ul>
+                        </h3>
+                        <div class="item-meta">
+                          {#if item.author}<span class="author"
+                              >by {item.author}</span
+                            >{/if}
+                          {#if item.year}<span class="year">({item.year})</span
+                            >{/if}
+                        </div>
+                      </div>
+                      <div class="rating-container">
+                        {#if item.rating}
+                          <div class="rating-top">
+                            {renderStars(item.rating)}
+                          </div>
+                        {/if}
+                        <div class="indicators">
+                          {#if item.comment}
+                            <span class="indicator" title="Has comment">💬</span
+                            >
+                          {/if}
+                          {#if section === "podcasts" && item.favoriteEpisodes}
+                            <span
+                              class="indicator"
+                              title="Has favorite episodes">⭐</span
+                            >
+                          {/if}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                {/if}
 
-                <!-- Tags -->
-                <div class="item-tags">
-                  <div class="tags-list">
-                    {#each item.categories || [] as category}
-                      <button
-                        class="tag-pill"
-                        class:highlighted={isTagHighlighted(category, itemId)}
-                        data-tag={category}
-                        on:click={(e) => handleTagClick(e, category)}
-                      >
-                        {formatCategoryName(category)}
-                      </button>
-                    {/each}
+                  <p class="item-comment">
+                    {#if item.comment}
+                      {item.comment}
+                    {:else}
+                      <em>No comment</em>
+                    {/if}
+                  </p>
+
+                  <!-- Favorite Episodes (for podcasts) - only show on hover/click -->
+                  {#if section === "podcasts" && item.favoriteEpisodes}
+                    <div class="favorite-episodes">
+                      <h4>Favorite Episodes:</h4>
+                      <ul>
+                        {#each item.favoriteEpisodes as episode}
+                          <li>
+                            {#if episode.number}
+                              <strong
+                                >{episode.number}{episode.guest
+                                  ? ` - ${episode.guest}:`
+                                  : ":"}</strong
+                              >
+                              {episode.title}
+                            {:else}
+                              <strong>{episode.title}</strong>
+                            {/if}
+                          </li>
+                        {/each}
+                      </ul>
+                    </div>
+                  {/if}
+
+                  <!-- Tags -->
+                  <div class="item-tags">
+                    <div class="tags-list">
+                      {#each item.categories || [] as category}
+                        <button
+                          class="tag-pill"
+                          class:highlighted={isTagHighlighted(category, itemId)}
+                          data-tag={category}
+                          on:click={(e) => handleTagClick(e, category)}
+                        >
+                          {formatCategoryName(category)}
+                        </button>
+                      {/each}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          {/each}
-        </div>
+            {/each}
+          </div>
+        {/if}
       </section>
     {/if}
   {/each}
@@ -590,7 +718,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    max-height: 7.5rem; /* ~3 rows */
+    max-height: 7.5rem;
     overflow-y: auto;
     padding: 0.5rem 0;
     margin-bottom: 0.5rem;
@@ -643,6 +771,16 @@
     margin-bottom: 1.5rem;
     color: var(--text-color);
     text-transform: capitalize;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    user-select: none;
+    transition: opacity 0.2s;
+  }
+
+  .section-title:hover {
+    opacity: 0.8;
   }
 
   .items-list {
@@ -652,7 +790,27 @@
     align-items: start;
   }
 
-  /* Responsive grid - 2 columns on larger screens */
+  .section-toggle {
+    all: unset;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 1.125rem;
+    color: var(--text-color);
+  }
+
+  .collapse-icon {
+    font-size: 0.85rem;
+    color: var(--link-color);
+  }
+
+  .item-count {
+    font-size: 0.9rem;
+    opacity: 0.7;
+    margin-left: 0.5rem;
+  }
+
   @media (min-width: 768px) {
     .items-list {
       grid-template-columns: repeat(2, 1fr);
@@ -697,11 +855,9 @@
   .aspect-square {
     height: 3rem;
   }
-
   .aspect-book {
     height: 4rem;
   }
-
   .aspect-poster {
     height: 4rem;
   }
@@ -810,7 +966,6 @@
     transition: all 0.2s ease;
   }
 
-  /* Desktop hover behavior */
   @media (hover: hover) and (pointer: fine) {
     .favorite-item:hover .item-comment {
       opacity: 1;
@@ -820,7 +975,6 @@
     }
   }
 
-  /* Mobile click behavior */
   @media (hover: none) and (pointer: coarse) {
     .favorite-item.expanded .item-comment {
       opacity: 1;
@@ -845,7 +999,6 @@
     border-top: none;
   }
 
-  /* Desktop hover behavior */
   @media (hover: hover) and (pointer: fine) {
     .favorite-item:hover .favorite-episodes {
       opacity: 1;
@@ -857,7 +1010,6 @@
     }
   }
 
-  /* Mobile click behavior */
   @media (hover: none) and (pointer: coarse) {
     .favorite-item.expanded .favorite-episodes {
       opacity: 1;
@@ -905,7 +1057,6 @@
       height 0.2s ease;
   }
 
-  /* Desktop hover behavior */
   @media (hover: hover) and (pointer: fine) {
     .favorite-item:hover .item-tags {
       opacity: 1;
@@ -914,7 +1065,6 @@
     }
   }
 
-  /* Mobile click behavior - always show tags when expanded for filtering */
   @media (hover: none) and (pointer: coarse) {
     .favorite-item.expanded .item-tags {
       opacity: 1;
@@ -952,113 +1102,90 @@
     box-shadow: 0 0 0 2px rgba(255, 136, 0, 0.3);
   }
 
-  /* Dark mode */
   @media (prefers-color-scheme: dark) {
     .favorite-item {
       border-color: rgba(255, 255, 255, 0.1);
     }
-
     .favorite-item:hover,
     .favorite-item.expanded {
       border-color: var(--link-color);
     }
-
-    /* Dark mode favorite episodes border */
     .favorite-item:hover .favorite-episodes,
     .favorite-item.expanded .favorite-episodes {
       border-top-color: rgba(255, 255, 255, 0.1);
     }
-
     .filter-logic {
       background: rgba(255, 255, 255, 0.05);
     }
-
     .logic-btn:hover {
       background: rgba(255, 255, 255, 0.1);
     }
-
     .sort-options select {
       background: var(--background-color);
       border-color: rgba(255, 255, 255, 0.2);
       color: var(--text-color);
     }
-
     .filter-tags::-webkit-scrollbar-track {
       background: rgba(255, 255, 255, 0.1);
     }
   }
 
-  /* Mobile responsive */
   @media (max-width: 768px) {
     .favorites-container {
       padding: 0 1rem;
     }
-
     .favorite-item {
       gap: 0.75rem;
     }
-
     .item-img,
     .item-icon {
       width: 2.5rem;
       height: 2.5rem;
     }
-
     .aspect-book,
     .aspect-poster {
       height: 3.5rem;
     }
-
     .item-icon {
       font-size: 1.25rem;
     }
-
     .filter-header {
       flex-direction: column;
       align-items: flex-start;
       gap: 0.75rem;
     }
-
     .filter-title-row {
       width: 100%;
       justify-content: space-between;
     }
-
     .surprise-btn {
       font-size: 0.8rem;
       padding: 0.3rem 0.6rem;
     }
-
     .filter-options {
       width: 100%;
       justify-content: space-between;
       gap: 0.75rem;
     }
-
     .filter-logic {
       flex: 1;
     }
-
     .logic-btn {
       flex: 1;
       font-size: 0.8rem;
       padding: 0.35rem 0.5rem;
       text-align: center;
     }
-
     .sort-options {
       flex-shrink: 0;
     }
-
     .sort-options select {
       font-size: 0.8rem;
       padding: 0.4rem 0.5rem;
     }
-
     .filter-tags {
-      max-height: 6rem; /* Slightly less on mobile */
+      max-height: 6rem;
     }
-
     .filter-chip {
       font-size: 0.8rem;
       padding: 0.3rem 0.6rem;

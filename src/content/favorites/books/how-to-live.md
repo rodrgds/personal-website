@@ -13,4 +13,4 @@ categories:
 type: "book"
 ---
 
-27 conflicting answers to an impossible question. Short, sweet, and thought-provoking (and mostly stuff you've already thought about but just never articulated).
+27 conflicting answers to an impossible question. Short, sweet, and thought-provoking (and mostly stuff you've already thought about but just never put into words).
