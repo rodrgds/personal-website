@@ -1,22 +1,10 @@
 ---
 import ToolLayout from "../../layouts/ToolLayout.astro";
+import { getCollection } from "astro:content";
 import Card from "../../components/ui/Card.astro";
-import Button from "../../components/ui/Button.astro";
 import Link from "../../components/ui/Link.astro";
 
-const tools = [
-  {
-    title: "CSFloat Monitor",
-    description:
-      "Client-side monitor for CSFloat listings with deal detection.",
-    link: "/tools/csfloat-monitor",
-  },
-  {
-    title: "Example Tool 2",
-    description: "Another placeholder tool.",
-    link: "/tools/example-2",
-  },
-];
+const tools = await getCollection("tools");
 ---
 
 <ToolLayout
@@ -27,19 +15,14 @@ const tools = [
     {
       tools.map((tool) => (
         <Card class="tool-card">
-          <h2>{tool.title}</h2>
-          <p>{tool.description}</p>
-          <Link href={tool.link} variant="primary" size="sm">
+          <h2>{tool.data.title}</h2>
+          <p>{tool.data.description}</p>
+          <Link href={`/tools/${tool.id}`} variant="primary" size="sm">
             Open Tool
           </Link>
         </Card>
       ))
     }
-  </div>
-
-  <div class="coming-soon">
-    <h3>More tools coming soon!</h3>
-    <p>I am currently migrating my tools to this new platform.</p>
   </div>
 </ToolLayout>
 
@@ -82,38 +65,5 @@ const tools = [
     color: var(--text-color);
     line-height: 1.6;
     opacity: 0.9;
-  }
-
-  .coming-soon {
-    margin-top: 4rem;
-    padding: 3rem 2rem;
-    background-color: var(--background-color);
-    border: 2px dashed var(--link-color);
-    border-radius: 1rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 1rem;
-    opacity: 0.8;
-    transition: opacity 0.2s;
-  }
-
-  .coming-soon:hover {
-    opacity: 1;
-  }
-
-  .coming-soon h3 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin: 0;
-    color: var(--heading-color);
-  }
-
-  .coming-soon p {
-    margin: 0;
-    font-size: 1.1rem;
-    max-width: 40ch;
-    color: var(--text-color);
   }
 </style>

@@ -22,8 +22,6 @@ const URLS = {
     "https://raw.githubusercontent.com/somespecialone/cs2-items-schema/refs/heads/master/schemas/items.json",
 };
 
-
-
 export async function fetchSchemas() {
   if (fetched) return;
 

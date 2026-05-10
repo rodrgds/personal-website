@@ -1,0 +1,17 @@
+---
+import ToolLayout from "../../layouts/ToolLayout.astro";
+import { getEntry, render } from "astro:content";
+
+const { slug } = Astro.params;
+const tool = await getEntry("tools", slug as string);
+
+if (!tool) {
+  return Astro.redirect("/404");
+}
+
+const { Content } = await render(tool);
+---
+
+<ToolLayout title={tool.data.title} description={tool.data.description} fullWidth={tool.data.fullWidth}>
+  <Content />
+</ToolLayout>
