@@ -1,0 +1,46 @@
+---
+interface RelatedLink {
+  href: string;
+  title: string;
+}
+
+interface Props {
+  items: RelatedLink[];
+}
+
+const { items } = Astro.props;
+---
+
+{
+  items.length > 0 && (
+    <p class="related-label">
+      Related:{" "}
+      {items
+        .map((item) => (
+          <a href={item.href} class="related-link">
+            {item.title}
+          </a>
+        ))
+        .reduce(
+          (previous, current, index) =>
+            [
+              previous,
+              index > 0 && <span class="related-sep">, </span>,
+              current,
+            ] as any,
+        )}
+    </p>
+  )
+}
+
+<style>
+  .related-label {
+    margin: 0.6rem 0 0 0;
+    font-size: 0.87rem;
+    color: var(--gray-color);
+  }
+
+  .related-sep {
+    color: var(--gray-color);
+  }
+</style>

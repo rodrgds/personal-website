@@ -1,0 +1,32 @@
+---
+import Logo from "../../common/Logo.astro";
+
+interface Props {
+  src?: string;
+  alt: string;
+  size?: number;
+}
+
+const { src, alt, size = 28 } = Astro.props;
+const isImageSource = typeof src === "string" && src.includes("/");
+---
+
+{
+  src &&
+    (isImageSource ? (
+      <img class="entry-logo-img" src={src} alt={alt} />
+    ) : (
+      <Logo src={src} alt={alt} size={size} />
+    ))
+}
+
+<style>
+  .entry-logo-img {
+    height: 30px;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+    display: inline-block;
+    vertical-align: middle;
+  }
+</style>

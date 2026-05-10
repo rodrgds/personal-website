@@ -1,0 +1,46 @@
+---
+company: "NECHO TECHLAW (Cybersecure.pt)"
+role: "Full-stack Developer"
+type: "part-time"
+location: "Remote"
+startDate: "2023-08"
+endDate: "2025-08"
+url: "https://cybersecure.pt"
+logo: "cybersecure"
+tags:
+  [
+    "Next.js",
+    "React",
+    "TypeScript",
+    "DrizzleORM",
+    "Stripe",
+    "AWS S3",
+    "MariaDB",
+  ]
+featured: true
+bullets:
+  - "Built a cybersecurity platform for Portuguese SMEs, delivering real-time dashboards, RBAC and multi-tenant access control"
+  - "Used a modern-ish Next.js stack + DrizzleORM + MariaDB"
+---
+import Logo from "../../components/common/Logo.astro";
+
+> **Note:** The domain `cybersecure.pt` now hosts a new platform that NECHO TECHLAW is building. The project I worked on has been archived and replaced with a different product.
+
+I worked for 2 years at NECHO TECHLAW helping build **Cybersecure.pt**, a cybersecurity platform for Portuguese SMEs. The company has since pivoted to a different product and replaced the version I built.
+
+Started as a web development intern doing frontend work, later moving to a part-time full-stack role where I took on more backend responsibility. I was responsible for the core application logic and integrating third-party services like <Logo fixed src="stripe" /> **Stripe** and <Logo fixed src="aws" /> **AWS S3**.
+
+I implemented key features such as:
+- Real-time dashboards and assessment data visualization for end-users and administrators
+- PDF report generation and email delivery using <Logo fixed src="react" /> **React Email** templates
+- Database schema design and query optimization with <Logo fixed src="drizzleorm" /> **DrizzleORM**
+- Magic link, **WebAuthn** passwordless, and MFA (TOTP) authentication and role-based access control (superadmin, admin, employee)
+- Stripe payment integration for subscription management
+- AWS S3 integration for secure assessment file uploads and downloads
+- Internationalization (i18n) support for Portuguese and English
+- Multi-tenant data architecture with company, division, and user hierarchy
+- Comprehensive API routes for assessments, users, roles, notifications, and webhooks
+- Metadata management (with multilingual support as well)
+- The whole web interface for all types of roles and users which ended up being huge
+- Database at rest encryption + backup flows that actually worked
+- All microservices/services hosted within the same VPS so that as few data as possible left the machine

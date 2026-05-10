@@ -1,0 +1,46 @@
+---
+name: "OpenPost"
+startDate: "2025-03"
+url: "https://op.rgo.pt"
+repo: "rodrgds/openpost"
+logo: "openpost"
+tags: ["Go", "SvelteKit", "SQLite", "OAuth", "Docker", "Self-hosted"]
+featured: true
+status: "active"
+bullets:
+  - "Open-source social media scheduler that ships as a single Go binary with zero external dependencies and a SvelteKit frontend"
+  - "Supports X, Mastodon, Bluesky, Threads, and LinkedIn using OAuth"
+  - "Includes a SQLite-backed job queue and multi-tenant RBAC"
+  - "Built entirely with coding agents to see what's possible right now; I don't actually know Go, but I made this anyway"
+---
+
+import CVImage from "../../components/features/cv/CVImage.astro";
+import Logo from "../../components/common/Logo.astro";
+import openpostAccounts from "../../assets/cv/openpost/accounts.png";
+import openpostMain from "../../assets/cv/openpost/main.png";
+import openpostMedia from "../../assets/cv/openpost/media.png";
+import openpostSettings from "../../assets/cv/openpost/settings.png";
+
+**OpenPost** is an open-source alternative to tools like <Logo fixed src="typefully" /> **Typefully** and Buffer. I built it because most self-hosted alternatives like <Logo fixed src="postiz" /> **Postiz** were just too heavy and bloated for what I needed. I wanted something that was completely self-contained, where you could run a single <Logo fixed src="golang" /> **Go** binary on your own server without worrying about data leaving your machine or paying for monthly subscriptions.
+
+The app uses a <Logo fixed src="svelte" /> **SvelteKit** frontend, <Logo fixed src="sqlite" /> **SQLite** for local persistence, and can run with <Logo fixed src="docker" /> **Docker**. It currently supports publishing to <Logo fixed src="x" /> **X**, <Logo fixed src="mastodon" /> **Mastodon**, <Logo fixed src="bluesky" /> **Bluesky**, <Logo fixed src="threads" /> **Threads**, and <Logo fixed src="linkedin" /> **LinkedIn**.
+
+This is still in early development but is already functional for scheduling and publishing posts.
+
+## Screenshots
+
+<CVImage src={openpostMain} alt="OpenPost main dashboard" />
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;">
+  <div>
+    <CVImage src={openpostSettings} alt="OpenPost settings" />
+  </div>
+  <div style="display: grid; gap: 16px;">
+    <div>
+      <CVImage src={openpostAccounts} alt="OpenPost accounts" />
+    </div>
+    <div>
+      <CVImage src={openpostMedia} alt="OpenPost media library" />
+    </div>
+  </div>
+</div>

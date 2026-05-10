@@ -1,0 +1,100 @@
+---
+name: "The Actual World"
+startDate: "2022-08"
+endDate: "2024-07"
+url: "https://github.com/the-actual-world"
+tags:
+  [
+    "React Native",
+    "Expo",
+    "Expo Router",
+    "PHP",
+    "MySQL",
+    "PostgreSQL",
+    "Supabase",
+    "Stripe",
+    "Social Platform",
+  ]
+logo: "theactualworld"
+featured: true
+status: "archived"
+bullets:
+  - "Built a privacy-first social platform for my high-school final project, centered on friend-only sharing and QR-based connections"
+  - "Shipped an Expo mobile app with private posts, interactive maps, rewind summaries, and real-time chat"
+  - "Also built the landing site and admin tooling, including multilingual marketing pages and usage dashboards"
+related: ["colegio-gaia"]
+---
+
+import CVImage from "../../components/features/cv/CVImage.astro";
+import Logo from "../../components/common/Logo.astro";
+import auth from "../../assets/cv/the-actual-world/auth.png";
+import chatMessages from "../../assets/cv/the-actual-world/chat-messages.png";
+import chats from "../../assets/cv/the-actual-world/chats.png";
+import creditsGift from "../../assets/cv/the-actual-world/credits-gift.png";
+import credits from "../../assets/cv/the-actual-world/credits.png";
+import friends from "../../assets/cv/the-actual-world/friends.png";
+import maps from "../../assets/cv/the-actual-world/maps.png";
+import onboarding from "../../assets/cv/the-actual-world/onboarding.png";
+import postFeed from "../../assets/cv/the-actual-world/post-feed.png";
+import posts from "../../assets/cv/the-actual-world/posts.png";
+import security from "../../assets/cv/the-actual-world/security.png";
+import settings from "../../assets/cv/the-actual-world/settings.png";
+import summaries from "../../assets/cv/the-actual-world/summaries.png";
+
+**The Actual World** was my **Professional Aptitude Project** for high school. It consists of a mobile app ([the-actual-world/mobile](https://github.com/the-actual-world/mobile)) and a separate landing/admin site ([the-actual-world/landing](https://github.com/the-actual-world/landing)).
+
+The mobile product was built with <Logo fixed src="expo" /> **Expo** / **Expo Router** + <Logo fixed src="react" /> **React Native**, <Logo fixed src="supabase" /> **Supabase**, <Logo fixed src="postgresql" /> **PostgreSQL**, <Logo fixed src="stripe" /> **Stripe**, maps, QR codes, and push-notification tooling. The landing site and backoffice were built separately in <Logo fixed src="php" /> **PHP** / <Logo fixed src="mysql" /> **MySQL**, with multilingual content, download/waitlist/contact flows, and admin analytics.
+
+The technical setup involved push notifications, QR code generation for secure connections, and a custom backoffice in PHP for analytics.
+
+### Onboarding and account creation
+
+I designed a guided onboarding flow to introduce the app's focus on privacy and authentic sharing.
+
+<CVImage src={onboarding} alt="The Actual World onboarding flow" />
+
+### Auth and account recovery
+
+<CVImage src={auth} alt="The Actual World authentication screens" />
+
+### Privacy, security, and account controls
+
+<CVImage src={security} alt="The Actual World security and account settings" />
+
+### Friends, private graph, and feed
+
+<CVImage src={friends} alt="The Actual World friends and connections screens" />
+
+<CVImage src={postFeed} alt="The Actual World private post feed" />
+
+### Posting flow and social interactions
+
+Posts supported text, images (automatically captioned), locations, tagged users, and comments.
+
+<CVImage src={posts} alt="The Actual World post creation and post detail screens" />
+
+### Maps and rewind summaries
+
+Browse memories on a map (with clustering) and generate rewind-style summaries from recent activity or journal/write personal notes.
+
+<CVImage src={maps} alt="The Actual World map and location timeline" />
+
+<CVImage src={summaries} alt="The Actual World summaries and rewind views" />
+
+### Real-time chat
+
+<CVImage src={chats} alt="The Actual World chats overview" />
+
+<CVImage src={chatMessages} alt="The Actual World chat message screens" />
+
+### Credits and premium mechanics
+
+I experimented with a credit system and paid mechanics too, including buying and gifting credits, which tied into the Stripe/payment side of the product. This was so that the social media didn't need to be supported by ads, but instead pay per what you use.
+
+<CVImage src={credits} alt="The Actual World credits management screens" />
+
+<CVImage src={creditsGift} alt="The Actual World credit gifting screens" />
+
+### Settings, personalization, and the landing/admin side
+
+<CVImage src={settings} alt="The Actual World settings screens" />

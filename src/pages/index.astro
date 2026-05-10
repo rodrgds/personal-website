@@ -13,15 +13,17 @@ import GitHubContributions from "../components/GitHubContributions.svelte";
 
 const posts = await getCollection("blog").then((posts) =>
   posts.sort((a, b) => {
-    return new Date(b.data.pubDate).valueOf() - new Date(a.data.pubDate).valueOf();
-  })
+    return (
+      new Date(b.data.pubDate).valueOf() - new Date(a.data.pubDate).valueOf()
+    );
+  }),
 );
 
 // const res = await fetch("http://localhost:4321/api/location");
 // const { lat, lng } = await res.json();
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
@@ -32,7 +34,11 @@ const posts = await getCollection("blog").then((posts) =>
       <h2>
         Hey! I'm
         <span class="name-wrap">
-          <button class="name-toggle" type="button" aria-label="Animate Rodrigo to rgo.pt">
+          <button
+            class="name-toggle"
+            type="button"
+            aria-label="Animate Rodrigo to rgo.pt"
+          >
             <span class="rodrigo-morph" aria-hidden="true">
               <span class="glyph r-upper">R</span>
               <span class="glyph r-lower">r</span>
@@ -50,24 +56,43 @@ const posts = await getCollection("blog").then((posts) =>
         👋
       </h2>
 
-      <p>Self-taught programmer since the age of 14. Currently, I am <b><DateOfBirth client:load /></b><span style="margin-left: 0.4rem" />years old and a Computer Engineering student at the Faculty of Engineering of the University of Porto.</p>
       <p>
-        I love <b><i>teaching</i></b> and <b>learning</b>. I have a special interest in <Logo src="firefox" /> <b>web dev</b>, <Logo src="linux" /> <b>Linux</b>, <b>FOSS</b>, <b>self-hosting</b>, and <i>minimalism</i>.
+        Self-taught programmer since the age of 14. Currently, I am <b
+          ><DateOfBirth client:load /></b
+        ><span style="margin-left: 0.4rem"></span>years old and a Computer
+        Engineering student at the Faculty of Engineering of the University of
+        Porto.
       </p>
       <p>
-        Outside tech, I enjoy 🚴‍♂️ <b>biking</b>, 📷 <b>photography</b>, 🏋️‍♂️ <b>weight lifting</b>, and playing 🏓 <b>table tennis</b>.
+        I love <b><i>teaching</i></b> and <b>learning</b>. I have a special
+        interest in <Logo src="firefox" />
+        <b>web dev</b>, <Logo src="linux" />
+        <b>Linux</b>, <b>FOSS</b>, <b>self-hosting</b>, and <i>minimalism</i>.
+      </p>
+      <p>
+        Outside tech, I enjoy 🚴‍♂️ <b>biking</b>, 📷 <b>photography</b>, 🏋️‍♂️ <b
+          >weight lifting</b
+        >, and playing 🏓 <b>table tennis</b>.
       </p>
 
-      See <a href="/now">what I'm up to</a>, check <a href="/uses">what I use</a>, browse <a href="/faves">my favorite media</a>, <a href="mailto:hey@rgo.pt">email me</a> or <a href="/donate">support me</a>.
+      See <a href="/now">what I'm up to</a>, check my <a href="/cv"
+        >professional CV</a
+      >, look at <a href="/uses">what I use</a>, browse <a href="/faves"
+        >my favorite media</a
+      >, <a href="mailto:hey@rgo.pt">email me</a> or <a href="/donate"
+        >support me</a
+      >.
 
       <ul class="socials">
-        {SOCIALS.map((social) => (
-          <li>
-            <a href={social.url} target="_blank">
-              <Logo src={social.icon_name} size={36} />
-            </a>
-          </li>
-        ))}
+        {
+          SOCIALS.map((social) => (
+            <li>
+              <a href={social.url} target="_blank">
+                <Logo src={social.icon_name} size={36} fixed />
+              </a>
+            </li>
+          ))
+        }
       </ul>
 
       <!-- <h3>Projects</h3>
@@ -116,14 +141,22 @@ const posts = await getCollection("blog").then((posts) =>
         {
           posts.map((post) => (
             <li>
-              <time datetime={post.data.pubDate} transition:name={`blogpost-pubdate-${post.slug}`}>
+              <time
+                datetime={post.data.pubDate}
+                transition:name={`blogpost-pubdate-${post.id}`}
+              >
                 {new Date(post.data.pubDate).toLocaleDateString("en-us", {
                   year: "numeric",
                   month: "short",
                   day: "numeric",
                 })}
               </time>
-              <a href={"/posts/" + post.slug} transition:name={`blogpost-name-${post.slug}`}>{post.data.title}</a>
+              <a
+                href={"/posts/" + post.id}
+                transition:name={`blogpost-name-${post.id}`}
+              >
+                {post.data.title}
+              </a>
             </li>
           ))
         }
@@ -133,39 +166,43 @@ const posts = await getCollection("blog").then((posts) =>
 
     <script>
       function showCopiedToast() {
-        window.dispatchEvent(new CustomEvent('app:toast', {
-          detail: {
-            message: 'Copied rgo.pt',
-            duration: 1700,
-          },
-        }));
+        window.dispatchEvent(
+          new CustomEvent("app:toast", {
+            detail: {
+              message: "Copied rgo.pt",
+              duration: 1700,
+            },
+          }),
+        );
       }
 
       function showCopyFailedToast() {
-        window.dispatchEvent(new CustomEvent('app:toast', {
-          detail: {
-            message: 'Copy failed',
-            duration: 1700,
-          },
-        }));
+        window.dispatchEvent(
+          new CustomEvent("app:toast", {
+            detail: {
+              message: "Copy failed",
+              duration: 1700,
+            },
+          }),
+        );
       }
 
       async function copyDomainToClipboard() {
         try {
           if (navigator.clipboard && navigator.clipboard.writeText) {
-            await navigator.clipboard.writeText('rgo.pt');
+            await navigator.clipboard.writeText("rgo.pt");
             showCopiedToast();
             return;
           }
 
-          const helper = document.createElement('textarea');
-          helper.value = 'rgo.pt';
-          helper.setAttribute('readonly', '');
-          helper.style.position = 'absolute';
-          helper.style.left = '-9999px';
+          const helper = document.createElement("textarea");
+          helper.value = "rgo.pt";
+          helper.setAttribute("readonly", "");
+          helper.style.position = "absolute";
+          helper.style.left = "-9999px";
           document.body.appendChild(helper);
           helper.select();
-          const didCopy = document.execCommand('copy');
+          const didCopy = document.execCommand("copy");
           document.body.removeChild(helper);
 
           if (didCopy) {
@@ -179,17 +216,17 @@ const posts = await getCollection("blog").then((posts) =>
       }
 
       // Use event delegation so the handler works even after client-side navigation
-      document.addEventListener('click', function (event) {
+      document.addEventListener("click", function (event) {
         const target = event.target;
         if (!target || !(target instanceof Element)) return;
 
-        const nameButton = target.closest('.name-toggle');
+        const nameButton = target.closest(".name-toggle");
         if (nameButton) {
           copyDomainToClipboard();
           return;
         }
 
-        const expandButton = target.closest('#expand-socials');
+        const expandButton = target.closest("#expand-socials");
         if (!expandButton) return;
 
         // Extra socials feature removed
@@ -221,7 +258,7 @@ const posts = await getCollection("blog").then((posts) =>
   .socials li > a:hover::before {
     width: 0;
   }
-  
+
   .socials li > a:hover {
     transform: scale(1.15);
     transition: transform 0.1s;
@@ -431,7 +468,8 @@ const posts = await getCollection("blog").then((posts) =>
       text-shadow: 0 0 0 transparent;
     }
     50% {
-      text-shadow: 0 0 0.34rem color-mix(in srgb, currentColor 72%, transparent 28%);
+      text-shadow: 0 0 0.34rem
+        color-mix(in srgb, currentColor 72%, transparent 28%);
     }
   }
 
@@ -467,15 +505,28 @@ const posts = await getCollection("blog").then((posts) =>
     color: var(--visited-color);
   }
 
-  .writings li > a:hover::before {
-    content: "→";
-    width: 0;
-    bottom: 1.8rem;
-    left: -1.1rem;
+  .writings li > a {
+    position: relative;
   }
-  .writings li > a:hover::after {
+
+  .writings li > a:hover::before,
+  .writings li > a:focus-visible::before {
+    content: "→";
+    position: absolute;
+    left: -1.1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .writings li > a:hover::after,
+  .writings li > a:focus-visible::after {
     content: "←";
-    margin-left: 0.4rem;
+    position: absolute;
+    right: -1.1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
   }
 
   .popover__wrapper {

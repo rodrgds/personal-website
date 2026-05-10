@@ -1,0 +1,121 @@
+---
+import CVExpandable from "./CVExpandable.svelte";
+import CVEntryVisual from "./CVEntryVisual.astro";
+
+interface Props {
+  id: string;
+  title: string;
+  timeLabel: string;
+  visual?: string;
+  visualAlt: string;
+}
+
+const { id, title, timeLabel, visual, visualAlt } = Astro.props;
+---
+
+<CVExpandable client:load id={id}>
+  <Fragment slot="summary">
+    <div class="entry-head">
+      <div>
+        {
+          visual && (
+            <p class="entry-logo">
+              <CVEntryVisual src={visual} alt={visualAlt} />
+            </p>
+          )
+        }
+        <h3>{title}</h3>
+        <slot name="meta" />
+      </div>
+      <time>{timeLabel}</time>
+    </div>
+  </Fragment>
+
+  <Fragment slot="details">
+    <div class="details-content">
+      <slot />
+    </div>
+  </Fragment>
+</CVExpandable>
+
+<style>
+  .entry-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.7rem;
+    align-items: flex-start;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 1.08rem;
+  }
+
+  .entry-logo {
+    margin: 0 0 0.4rem 0;
+    line-height: 1;
+  }
+
+  .details-content :global(p) {
+    margin: 0.3rem 0 0.8rem 0;
+  }
+
+  .details-content :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
+  .details-content :global(img) {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .details-content :global(ul) {
+    margin: 0 0 1rem 1.85rem;
+    padding-inline-start: 0.35rem;
+    list-style: disc;
+  }
+
+  .details-content :global(ol) {
+    margin: 0 0 1rem 1.85rem;
+    padding-inline-start: 0.35rem;
+    list-style: decimal;
+  }
+
+  .details-content :global(strong) {
+    color: var(--heading-color);
+  }
+
+  :global(.meta) {
+    margin: 0.12rem 0 0 0;
+    font-size: 0.93rem;
+    color: var(--gray-color);
+  }
+
+  :global(.subheading) {
+    margin: 0.8rem 0 0.25rem 0;
+    font-size: 0.88rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--gray-color);
+    font-weight: 600;
+  }
+
+  time {
+    white-space: nowrap;
+    font-size: 0.82rem;
+    color: var(--gray-color);
+    font-family: var(--font-family-mono);
+  }
+
+  @media (max-width: 700px) {
+    .entry-head {
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    time {
+      white-space: normal;
+    }
+  }
+</style>

@@ -1,0 +1,466 @@
+---
+import { render } from "astro:content";
+import BaseHead from "../components/common/BaseHead.astro";
+import Footer from "../components/common/Footer.astro";
+import Header from "../components/common/Header.astro";
+import CVEntryCard from "../components/features/cv/CVEntryCard.astro";
+import CVNavigation from "../components/features/cv/CVNavigation.svelte";
+import CVRelatedLinks from "../components/features/cv/CVRelatedLinks.astro";
+import CVSection from "../components/features/cv/CVSection.astro";
+import CVYouTubeEmbed from "../components/features/cv/CVYouTubeEmbed.svelte";
+import {
+  formatCVDate,
+  formatCVRange,
+  getCVCollectionsData,
+  getCVEntryHref,
+  getCVRelatedItems,
+} from "../cv/data";
+import { cvProfiles } from "../cv/profiles";
+
+const cvData = await getCVCollectionsData();
+
+const profileDownloads = Object.entries(cvProfiles).map(([slug, profile]) => ({
+  slug,
+  label: profile.label,
+}));
+
+const getEntryVisual = (logo?: string, image?: string): string | undefined =>
+  image ?? logo;
+
+const getRelatedLinks = (currentSlug: string, relatedSlugs?: string[]) =>
+  getCVRelatedItems(cvData, currentSlug, relatedSlugs).map((item) => ({
+    href: getCVEntryHref(cvData, item.slug),
+    title: item.title,
+  }));
+
+const renderedCollections = await Promise.all([
+  Promise.all(
+    cvData.experience.map(async (entry) => ({
+      ...entry,
+      rendered: await render(entry),
+    })),
+  ),
+  Promise.all(
+    cvData.projects.map(async (entry) => ({
+      ...entry,
+      rendered: await render(entry),
+    })),
+  ),
+  Promise.all(
+    cvData.education.map(async (entry) => ({
+      ...entry,
+      rendered: await render(entry),
+    })),
+  ),
+  Promise.all(
+    cvData.honors.map(async (entry) => ({
+      ...entry,
+      rendered: await render(entry),
+    })),
+  ),
+  Promise.all(
+    cvData.certifications.map(async (entry) => ({
+      ...entry,
+      rendered: await render(entry),
+    })),
+  ),
+]);
+
+const [
+  renderedExperience,
+  renderedProjects,
+  renderedEducation,
+  renderedHonors,
+  renderedCertifications,
+] = renderedCollections;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead
+      title="CV | Rodrigo Dias"
+      description="Curriculum Vitae and downloadable PDF profiles."
+    />
+  </head>
+  <body>
+    <CVNavigation client:load />
+    <Header />
+    <main>
+      <section class="hero">
+        <p class="kicker">Curriculum Vitae</p>
+        <h1>Rodrigo Dias</h1>
+        <p class="lede">
+          Software engineer focused on product execution, clear communication,
+          fast iteration, and always going the extra mile.
+        </p>
+        <div class="contact-row">
+          <a href="mailto:hey@rgo.pt">hey@rgo.pt</a>
+          <span>Vila Nova de Gaia, Porto, Portugal</span>
+          <a href="https://github.com/rodrgds" target="_blank" rel="noreferrer"
+            >github.com/rodrgds</a
+          >
+          <a
+            href="https://linkedin.com/in/rodrigo-dias-177310209"
+            target="_blank"
+            rel="noreferrer">LinkedIn</a
+          >
+        </div>
+        <div class="downloads">
+          {
+            profileDownloads.map((profile) => (
+              <a href={`/cv/${profile.slug}.pdf`} class="download-pill">
+                Download {profile.label.replace("Rodrigo Dias - ", "")}
+              </a>
+            ))
+          }
+        </div>
+      </section>
+
+      <CVSection id="experience" title="Experience">
+        {
+          renderedExperience.map((entry) => (
+            <CVEntryCard
+              id={`experience-${entry.id}`}
+              title={entry.data.role}
+              timeLabel={formatCVRange(
+                entry.data.startDate,
+                entry.data.endDate,
+              )}
+              visual={getEntryVisual(entry.data.logo, entry.data.image)}
+              visualAlt={`${entry.data.company} logo`}
+            >
+              <Fragment slot="meta">
+                <p class="meta">
+                  {entry.data.url ? (
+                    <a href={entry.data.url} target="_blank" rel="noreferrer">
+                      {entry.data.company}
+                    </a>
+                  ) : (
+                    entry.data.company
+                  )}
+                  <span> · {entry.data.type}</span>
+                  <span> · {entry.data.location}</span>
+                </p>
+              </Fragment>
+
+              {entry.data.bullets && entry.data.bullets.length > 0 && (
+                <ul>
+                  {entry.data.bullets.map((bullet) => (
+                    <li>{bullet}</li>
+                  ))}
+                </ul>
+              )}
+
+              <CVRelatedLinks
+                items={getRelatedLinks(entry.id, entry.data.related)}
+              />
+
+              <entry.rendered.Content />
+            </CVEntryCard>
+          ))
+        }
+      </CVSection>
+
+      <CVSection id="projects" title="Projects">
+        {
+          renderedProjects.map((entry) => (
+            <CVEntryCard
+              id={`project-${entry.id}`}
+              title={entry.data.name}
+              timeLabel={formatCVRange(
+                entry.data.startDate,
+                entry.data.endDate,
+              )}
+              visual={getEntryVisual(entry.data.logo, entry.data.image)}
+              visualAlt={`${entry.data.name} logo`}
+            >
+              <Fragment slot="meta">
+                <p class="meta">
+                  {entry.data.cvRole ? (
+                    <span>{entry.data.cvRole}</span>
+                  ) : (
+                    <span>Project</span>
+                  )}
+                  {entry.data.url && (
+                    <>
+                      <span> · </span>
+                      <a href={entry.data.url} target="_blank" rel="noreferrer">
+                        Link
+                      </a>
+                    </>
+                  )}
+                  {entry.data.repo && (
+                    <>
+                      <span> · </span>
+                      <a
+                        href={`https://github.com/${entry.data.repo}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {entry.data.repo}
+                      </a>
+                    </>
+                  )}
+                </p>
+              </Fragment>
+
+              {entry.data.bullets && entry.data.bullets.length > 0 && (
+                <ul>
+                  {entry.data.bullets.map((bullet) => (
+                    <li>{bullet}</li>
+                  ))}
+                </ul>
+              )}
+
+              <CVRelatedLinks
+                items={getRelatedLinks(entry.id, entry.data.related)}
+              />
+
+              {entry.data.demoVideo && (
+                <CVYouTubeEmbed
+                  client:load
+                  url={entry.data.demoVideo}
+                  title={`${entry.data.name} walkthrough`}
+                />
+              )}
+
+              <entry.rendered.Content />
+            </CVEntryCard>
+          ))
+        }
+      </CVSection>
+
+      <CVSection id="education" title="Education">
+        {
+          renderedEducation.map((entry) => (
+            <CVEntryCard
+              id={`education-${entry.id}`}
+              title={entry.data.institution}
+              timeLabel={formatCVRange(
+                entry.data.startDate,
+                entry.data.endDate,
+              )}
+              visual={getEntryVisual(entry.data.logo, entry.data.image)}
+              visualAlt={`${entry.data.institution} logo`}
+            >
+              <Fragment slot="meta">
+                <p class="meta">
+                  {entry.data.degree} in {entry.data.area} ·{" "}
+                  {entry.data.location}
+                </p>
+                {entry.data.grade && (
+                  <p class="meta">
+                    Grade: {entry.data.grade}
+                    {entry.data.gradeNote ? ` - ${entry.data.gradeNote}` : ""}
+                  </p>
+                )}
+              </Fragment>
+
+              {entry.data.activities && entry.data.activities.length > 0 && (
+                <>
+                  <p class="subheading">Activities</p>
+                  <ul>
+                    {entry.data.activities.map((activity) => (
+                      <li>{activity}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
+
+              {entry.data.bullets && entry.data.bullets.length > 0 && (
+                <>
+                  <p class="subheading">CV Highlights</p>
+                  <ul>
+                    {entry.data.bullets.map((bullet) => (
+                      <li>{bullet}</li>
+                    ))}
+                  </ul>
+                </>
+              )}
+
+              <CVRelatedLinks
+                items={getRelatedLinks(entry.id, entry.data.related)}
+              />
+
+              <entry.rendered.Content />
+            </CVEntryCard>
+          ))
+        }
+      </CVSection>
+
+      <CVSection id="honors" title="Honors">
+        {
+          renderedHonors.map((entry) => (
+            <CVEntryCard
+              id={`honor-${entry.id}`}
+              title={entry.data.title}
+              timeLabel={formatCVDate(entry.data.date)}
+              visual={getEntryVisual(entry.data.logo, entry.data.image)}
+              visualAlt={`${entry.data.title} logo`}
+            >
+              <Fragment slot="meta">
+                <p class="meta">
+                  {entry.data.issuer}
+                  {entry.data.association ? ` · ${entry.data.association}` : ""}
+                </p>
+              </Fragment>
+
+              {entry.data.bullets && entry.data.bullets.length > 0 && (
+                <ul>
+                  {entry.data.bullets.map((bullet) => (
+                    <li>{bullet}</li>
+                  ))}
+                </ul>
+              )}
+
+              <CVRelatedLinks
+                items={getRelatedLinks(entry.id, entry.data.related)}
+              />
+
+              <entry.rendered.Content />
+            </CVEntryCard>
+          ))
+        }
+      </CVSection>
+
+      <CVSection id="certifications" title="Certifications/Courses">
+        {
+          renderedCertifications.map((entry) => (
+            <CVEntryCard
+              id={`certification-${entry.id}`}
+              title={entry.data.name}
+              timeLabel={formatCVDate(entry.data.issueDate)}
+              visual={getEntryVisual(entry.data.logo, entry.data.image)}
+              visualAlt={`${entry.data.name} logo`}
+            >
+              <Fragment slot="meta">
+                <p class="meta">{entry.data.issuer}</p>
+              </Fragment>
+
+              {entry.data.credentialUrl && (
+                <p class="meta">
+                  <a
+                    href={entry.data.credentialUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Credential URL
+                  </a>
+                </p>
+              )}
+
+              {entry.data.expiryDate && (
+                <p class="meta">
+                  Expires: {formatCVDate(entry.data.expiryDate)}
+                </p>
+              )}
+
+              {entry.data.bullets && entry.data.bullets.length > 0 && (
+                <ul>
+                  {entry.data.bullets.map((bullet) => (
+                    <li>{bullet}</li>
+                  ))}
+                </ul>
+              )}
+
+              <CVRelatedLinks
+                items={getRelatedLinks(entry.id, entry.data.related)}
+              />
+
+              <entry.rendered.Content />
+            </CVEntryCard>
+          ))
+        }
+      </CVSection>
+    </main>
+    <Footer />
+  </body>
+</html>
+
+<style>
+  .hero {
+    --cv-accent: var(--link-color);
+
+    padding: 1.6rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.9rem;
+    background:
+      radial-gradient(
+        circle at 84% 18%,
+        color-mix(in srgb, var(--cv-accent) 30%, transparent),
+        transparent 42%
+      ),
+      radial-gradient(
+        circle at 10% 92%,
+        color-mix(in srgb, var(--cv-accent) 16%, transparent),
+        transparent 45%
+      ),
+      color-mix(in srgb, var(--background-color) 88%, var(--cv-accent) 12%);
+    margin-bottom: 2rem;
+  }
+
+  .kicker {
+    margin: 0;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--gray-color);
+  }
+
+  h1 {
+    margin-top: 0.25rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .lede {
+    margin: 0;
+    max-width: 56ch;
+  }
+
+  .contact-row {
+    margin-top: 0.9rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    font-size: 0.95rem;
+  }
+
+  .downloads {
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
+
+  .download-pill {
+    --cv-accent: var(--link-color);
+    display: inline-block;
+    border: 1px solid var(--cv-accent);
+    border-radius: 999px;
+    padding: 0.26rem 0.85rem;
+    font-size: 0.84rem;
+    font-family: var(--font-family-mono);
+    background: color-mix(
+      in srgb,
+      var(--background-color) 72%,
+      var(--cv-accent) 28%
+    );
+    color: var(--heading-color);
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .download-pill:hover {
+    background: var(--cv-accent);
+    color: var(--background-color);
+    transform: translateY(-2px);
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  .download-pill::before {
+    display: none;
+  }
+</style>
