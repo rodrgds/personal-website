@@ -1,48 +1,63 @@
 ---
 import { Image, getImage } from "astro:assets";
+import { whiteLogos, blackLogos } from "../../data/white-logos";
 
 export interface Props {
   src: string;
   alt?: string;
   size?: number;
+  fixed?: boolean;
 }
 
-let { src, alt, size } = Astro.props as Props;
+let { src, alt, size, fixed = false } = Astro.props as Props;
+const normalizedSrc = src.replace(/\.(png|webp|jpe?g|svg)$/i, "");
 
 size = size || 22;
 const doubleSize = size * 2;
 
 // Check if src is an emoji or special character
 function isEmoji(str: string) {
-  return /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(str);
+  return /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(
+    str,
+  );
 }
+
+// Determine if logo needs inversion
+const isWhiteLogo = whiteLogos.includes(normalizedSrc as any);
+const isBlackLogo = blackLogos.includes(normalizedSrc as any);
 ---
 
-{isEmoji(src) ? (
-  <span 
-    style={{
-      fontSize: size + "px",
-      margin: "0",
-      verticalAlign: "middle",
-      display: "inline-block",
-      lineHeight: "1",
-    }}
-  >
-    {src}
-  </span>
-) : (
-  <Image
-    src={import(`../../logos/${src}.png`)}
-    alt={alt || src + " logo"}
-    format="webp"
-    width={doubleSize}
-    height={doubleSize}
-    style={{
-      width: size + "px",
-      margin: "0",
-      verticalAlign: "middle",
-      display: "inline-block",
-      objectFit: "cover",
-    }}
-  />
-)}
+{
+  isEmoji(src) ? (
+    <span
+      style={{
+        fontSize: size + "px",
+        margin: "0",
+        verticalAlign: "middle",
+        display: "inline-block",
+        lineHeight: "1",
+      }}
+    >
+      {src}
+    </span>
+  ) : (
+    <Image
+      src={import(`../../logos/${normalizedSrc}.png`)}
+      alt={alt || normalizedSrc + " logo"}
+      format="webp"
+      height={doubleSize}
+      class:list={[
+        isWhiteLogo && "logo-needs-invert",
+        isBlackLogo && "logo-needs-dark-invert",
+      ]}
+      style={{
+        height: size + "px",
+        width: fixed ? size + "px" : "auto",
+        margin: "0",
+        verticalAlign: "middle",
+        display: "inline-block",
+        objectFit: "contain",
+      }}
+    />
+  )
+}
