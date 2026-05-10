@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { actions } from "astro:actions";
+
   interface ContributionDay {
     date: string;
     count: number;
@@ -9,11 +11,11 @@
     days: ContributionDay[];
   }
 
-  let contributions = $state<ContributionWeek[]>([]);
+  let contributions: ContributionWeek[] = $state([]);
   let totalContributions = $state(0);
   let startYear = $state(new Date().getFullYear());
   let loading = $state(true);
-  let error = $state<string | null>(null);
+  let error: string | null = $state(null);
 
   const username = "rodrgds";
 
@@ -45,14 +47,23 @@
   ): { month: string; index: number }[] {
     const labels: { month: string; index: number }[] = [];
     let lastMonth = -1;
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    const isEarlyInMonth = now.getDate() <= 14;
 
     weeks.forEach((week, index) => {
       const firstDay = week.days[0];
       if (firstDay) {
         const date = new Date(firstDay.date);
         const month = date.getMonth();
+        const year = date.getFullYear();
 
         if (month !== lastMonth) {
+          // Skip the latest month if we are in the first 14 days of that month
+          if (isEarlyInMonth && month === currentMonth && year === currentYear) {
+            return;
+          }
           labels.push({ month: monthNames[month], index });
           lastMonth = month;
         }
@@ -67,7 +78,10 @@
   ): { year: string; startWeek: number; endWeek: number }[] {
     const labels: { year: string; startWeek: number; endWeek: number }[] = [];
     let lastYear = -1;
-    let startWeek = 0;
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const isEarlyInYear =
+      now.getMonth() === 0 && now.getDate() <= 14; // First 14 days of January
 
     weeks.forEach((week, index) => {
       const firstDay = week.days[0];
@@ -76,12 +90,15 @@
         const year = date.getFullYear();
 
         if (year !== lastYear) {
+          // Skip the latest year if we are in the first 14 days of that year
+          if (isEarlyInYear && year === currentYear) {
+            return;
+          }
           if (lastYear !== -1) {
             labels[labels.length - 1].endWeek = index - 1;
           }
           labels.push({ year: String(year), startWeek: index, endWeek: index });
           lastYear = year;
-          startWeek = index;
         }
       }
     });
@@ -113,16 +130,17 @@
       loading = true;
       error = null;
 
-      const response = await fetch(
-        `/api/github-contributions?username=${username}`,
-      );
+      const result = await actions.getGitHubContributions({ username });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to fetch contributions");
+      if (result.error) {
+        throw new Error(result.error.message || "Failed to fetch contributions");
       }
 
-      const data = await response.json();
+      const data = result.data;
+
+      if (!data) {
+        throw new Error("Failed to fetch contributions");
+      }
 
       const filtered = filterFutureDays(data.contributions);
       contributions = filtered.reverse();

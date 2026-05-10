@@ -1,8 +1,8 @@
 <script lang="ts">
   import { actions } from "astro:actions";
 
-  let data = $state<any>(null);
-  let error = $state<string | null>(null);
+  let data: any = $state(null);
+  let error: string | null = $state(null);
   let loading = $state(true);
 
   async function loadData() {
@@ -358,12 +358,6 @@
     color: var(--link-color);
   }
 
-  .profile-link {
-    text-align: right;
-    font-size: 0.875rem;
-    margin-bottom: 0.5rem;
-  }
-
   .history-grid-wrapper {
     position: relative;
   }
@@ -497,6 +491,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
+    line-clamp: 2;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     line-height: 1.3;

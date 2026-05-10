@@ -1,15 +1,16 @@
 <script>
   let age = $state(0);
   const dateOfBirthTime = new Date("2006-12-02").getTime();
+  const yearInMilliseconds = 31556952000;
 
   function calculateInitialAge() {
     const now = new Date();
     const diff = now.getTime() - dateOfBirthTime;
-    age = diff / 31556952000;
+    age = diff / yearInMilliseconds;
   }
 
   const timerValue = 50;
-  const decreaseBy = timerValue / 31556952000;
+  const decreaseBy = timerValue / yearInMilliseconds;
 
   calculateInitialAge();
 

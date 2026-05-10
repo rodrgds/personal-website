@@ -1,0 +1,33 @@
+---
+import { getCollection } from "astro:content";
+import BlueskyThoughtInner from "./bluesky-thought-inner.svelte";
+
+const thoughts = await getCollection("thoughts");
+const postsOnly = thoughts.filter(t => !t.data.isReply);
+
+function formatDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function formatText(text: string): string {
+  return text
+    .replace(/https?:\/\/[^\s]+/g, "")
+    .replace(/\n+/g, " ")
+    .trim();
+}
+
+const postsData = postsOnly.map(t => ({
+  text: formatText(t.data.text),
+  date: formatDate(t.data.createdAt),
+  url: `https://bsky.app/profile/rgo.pt/post/${t.data.uri.split("/").at(-1)}`
+}));
+
+const initialIndex = postsData.length > 0 ? Math.floor(Math.random() * postsData.length) : 0;
+---
+
+<BlueskyThoughtInner posts={postsData} initialIndex={initialIndex} client:load />

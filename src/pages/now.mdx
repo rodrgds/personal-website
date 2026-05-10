@@ -10,6 +10,7 @@ import WeightliftingModal from "../components/features/home/weightlifting-modal.
 import MusicModal from "../components/features/home/music-modal.svelte";
 import MoviesModal from "../components/features/home/movies-modal.svelte";
 import TableTennisMiniGame from "../components/features/now/table-tennis-mini-game.svelte";
+import BlueskyThoughts from "../components/features/home/bluesky-thoughts.astro";
 
 This is [a now page](https://nownownow.com/about). If you have your own site, [consider making one](https://nownownow.com/about) too!
 
@@ -54,11 +55,13 @@ This is [a now page](https://nownownow.com/about). If you have your own site, [c
         <li>🎧 <MusicModal client:visible /></li>
       </ul>
     </div>
-    </div>
-    <div style={{minHeight: '400px'}}>
+  </div>
+  <div style={{minHeight: '400px'}}>
     <WorldMap client:visible={{ rootMargin: '200px' }} client:only="svelte" />
-    </div>
-    </div>
+    <BlueskyThoughts />
+  </div>
+</div>
+
 
 <style>{`
   .grid-responsive {

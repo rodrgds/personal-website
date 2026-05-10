@@ -1,18 +1,18 @@
 ---
-import { getCollection } from "astro:content";
+import { getCollection, render } from "astro:content";
 import BaseHead from "../../components/common/BaseHead.astro";
 import Header from "../../components/common/Header.astro";
 import Footer from "../../components/common/Footer.astro";
 
 const { slug } = Astro.params;
 const blogEntries = await getCollection("blog");
-const entry = blogEntries.find((e) => e.slug === slug);
+const entry = blogEntries.find((e) => e.id === slug);
 
 if (!entry) {
   return Astro.redirect("/404");
 }
 
-const { Content } = await entry.render();
+const { Content } = await render(entry);
 ---
 
 <html lang="en">
@@ -38,6 +38,18 @@ const { Content } = await entry.render();
 									{left: "$$", right: "$$", display: true},
 								{left: "$", right: "$", display: false}
 			]});'/>
+			<script is:inline>
+				document.addEventListener('astro:after-swap', () => {
+					if (typeof renderMathInElement === 'function') {
+						renderMathInElement(document.body, {
+							delimiters: [
+								{left: "$$", right: "$$", display: true},
+								{left: "$", right: "$", display: false}
+							]
+						});
+					}
+				});
+			</script>
 		)}
 	</head>
 
@@ -46,8 +58,8 @@ const { Content } = await entry.render();
 		<main>
 			<article>
 				<!-- {heroImage && <img width={720} height={360} src={heroImage} alt="" />} -->
-				<h1 class="title" transition:name={`blogpost-name-${entry.slug}`}>{entry.data.title}</h1>
-				{entry.data.pubDate && <time transition:name={`blogpost-pubdate-${entry.slug}`}>{entry.data.pubDate}</time>}
+				<h1 class="title" transition:name={`blogpost-name-${entry.id}`}>{entry.data.title}</h1>
+				{entry.data.pubDate && <time transition:name={`blogpost-pubdate-${entry.id}`}>{entry.data.pubDate}</time>}
 				<!-- {
 					updatedDate && (
 						<div>

@@ -7,7 +7,7 @@ export interface Props {
   image?: string;
 }
 
-import { ViewTransitions } from 'astro:transitions';
+import { ClientRouter } from "astro:transitions";
 
 const { title, description, image = "" } = Astro.props;
 ---
@@ -15,12 +15,7 @@ const { title, description, image = "" } = Astro.props;
 <!-- Global Metadata -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<link
-  rel="icon"
-  type="image/webp"
-  sizes="32x32"
-  href="/favicon.webp"
-/>
+<link rel="icon" type="image/webp" sizes="32x32" href="/favicon.webp" />
 <link rel="alternate" type="application/rss+xml" href="/rss.xml" />
 <link rel="sitemap" href="/sitemap-index.xml" />
 <meta name="generator" content={Astro.generator} />
@@ -45,7 +40,175 @@ const { title, description, image = "" } = Astro.props;
 <meta property="twitter:image" content={new URL(image, Astro.url)} /> -->
 
 <!-- Umami Analytics -->
-<script defer src="https://analytics.rgo.pt/script.js" data-website-id="f8aa3433-d34d-4b3a-9eaa-4b828d2a5338"></script>
+<script
+  defer
+  src="https://analytics.rgo.pt/script.js"
+  data-website-id="f8aa3433-d34d-4b3a-9eaa-4b828d2a5338"></script>
+
+<script is:inline>
+  (() => {
+    const TOKEN_CLASS = "animated-link-token";
+    const LINE_CLASS = "animated-link-line";
+    const RESIZE_DEBOUNCE_MS = 120;
+    let resizeTimeout;
+    let mutationObserver;
+
+    function shouldEnhanceLink(anchor) {
+      if (!(anchor instanceof HTMLAnchorElement)) return false;
+      if (!anchor.href) return false;
+      if (anchor.closest("nav, button, .socials")) return false;
+      if (anchor.classList.contains("download-pill")) return false;
+      if (anchor.querySelector("img, svg, video, picture, iframe"))
+        return false;
+
+      const originalText =
+        anchor.dataset.animatedLinkOriginalText ?? anchor.textContent ?? "";
+      const normalizedText = originalText.replace(/\s+/g, " ").trim();
+
+      return normalizedText.length > 0;
+    }
+
+    function getOriginalText(anchor) {
+      if (anchor.dataset.animatedLinkOriginalText) {
+        return anchor.dataset.animatedLinkOriginalText;
+      }
+
+      const text = (anchor.textContent ?? "").replace(/\s+/g, " ").trim();
+      anchor.dataset.animatedLinkOriginalText = text;
+      return text;
+    }
+
+    function tokenize(text) {
+      return text.match(/\S+\s*/g) ?? [text];
+    }
+
+    function appendMeasurementTokens(anchor, tokens) {
+      anchor.textContent = "";
+
+      for (const token of tokens) {
+        const span = document.createElement("span");
+        span.className = TOKEN_CLASS;
+        span.textContent = token;
+        anchor.appendChild(span);
+      }
+    }
+
+    function groupTokensIntoLines(anchor) {
+      const tokenElements = Array.from(
+        anchor.querySelectorAll(`.${TOKEN_CLASS}`),
+      );
+      const lines = [];
+      let currentLine = [];
+      let previousTop = null;
+
+      for (const token of tokenElements) {
+        const top = Math.round(token.getBoundingClientRect().top);
+
+        if (previousTop === null || Math.abs(top - previousTop) <= 1) {
+          currentLine.push(token.textContent ?? "");
+        } else {
+          lines.push(currentLine.join("").trimEnd());
+          currentLine = [token.textContent ?? ""];
+        }
+
+        previousTop = top;
+      }
+
+      if (currentLine.length > 0) {
+        lines.push(currentLine.join("").trimEnd());
+      }
+
+      return lines.filter(Boolean);
+    }
+
+    function renderAnimatedLines(anchor, lines) {
+      anchor.textContent = "";
+      anchor.dataset.animatedLink = "true";
+
+      lines.forEach((line, index) => {
+        const lineSpan = document.createElement("span");
+        lineSpan.className = LINE_CLASS;
+        lineSpan.textContent = line;
+        anchor.appendChild(lineSpan);
+
+        if (index < lines.length - 1) {
+          anchor.appendChild(document.createElement("br"));
+        }
+      });
+    }
+
+    function enhanceAnchor(anchor) {
+      if (!shouldEnhanceLink(anchor)) {
+        delete anchor.dataset.animatedLink;
+        return;
+      }
+
+      const originalText = getOriginalText(anchor);
+      const tokens = tokenize(originalText);
+
+      appendMeasurementTokens(anchor, tokens);
+      const lines = groupTokensIntoLines(anchor);
+      renderAnimatedLines(anchor, lines.length > 0 ? lines : [originalText]);
+    }
+
+    function enhanceAnchorsIn(root) {
+      if (root instanceof HTMLAnchorElement) {
+        enhanceAnchor(root);
+        return;
+      }
+
+      if (!(root instanceof Element || root instanceof Document)) return;
+
+      const anchors = root.querySelectorAll("a[href]");
+      for (const anchor of anchors) {
+        enhanceAnchor(anchor);
+      }
+    }
+
+    function enhanceAnimatedLinks() {
+      enhanceAnchorsIn(document);
+    }
+
+    function queueEnhancement() {
+      window.clearTimeout(resizeTimeout);
+      resizeTimeout = window.setTimeout(
+        enhanceAnimatedLinks,
+        RESIZE_DEBOUNCE_MS,
+      );
+    }
+
+    function observeInsertedLinks() {
+      mutationObserver?.disconnect();
+
+      if (!document.body) return;
+
+      mutationObserver = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          for (const node of mutation.addedNodes) {
+            requestAnimationFrame(() => enhanceAnchorsIn(node));
+          }
+        }
+      });
+
+      mutationObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
+    }
+
+    document.addEventListener("astro:page-load", () => {
+      enhanceAnimatedLinks();
+      observeInsertedLinks();
+    });
+
+    document.addEventListener("astro:after-swap", () => {
+      enhanceAnimatedLinks();
+      observeInsertedLinks();
+    });
+
+    window.addEventListener("resize", queueEnhancement);
+  })();
+</script>
 
 <!-- View Transitions -->
-<ViewTransitions />
+<ClientRouter />

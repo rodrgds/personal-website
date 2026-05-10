@@ -51,9 +51,9 @@
     }
   }
 
-  let host = $state<HTMLSpanElement | undefined>(undefined);
-  let playfieldContainer = $state<HTMLDivElement | undefined>(undefined);
-  let canvas = $state<HTMLCanvasElement | undefined>(undefined);
+  let host: HTMLSpanElement | undefined = $state(undefined);
+  let playfieldContainer: HTMLDivElement | undefined = $state(undefined);
+  let canvas: HTMLCanvasElement | undefined = $state(undefined);
   let ctx: CanvasRenderingContext2D | null = null;
 
   let hovered = $state(false);
@@ -61,7 +61,7 @@
   let fadingOut = $state(false);
   let visible = $state(false);
 
-  let pointerId = $state<number | null>(null);
+  let pointerId: number | null = $state(null);
   let pointerClientX = 0;
   let pointerClientY = 0;
 

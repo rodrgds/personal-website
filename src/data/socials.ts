@@ -39,6 +39,10 @@ export const SOCIALS = [
     icon_name: "github",
     url: "https://url.rgo.pt/github",
   },
+  {
+    icon_name: "leetcode",
+    url: "https://url.rgo.pt/leetcode",
+  },
 ];
 
 export const EXTRA_SOCIALS = [
@@ -79,7 +83,7 @@ export const EXTRA_SOCIALS = [
   //   url: "https://url.rgo.pt/leetcode",
   // },
   // {
-  //   icon_name: "ko-fi",
+  //   icon_name: "kofi",
   //   url: "https://url.rgo.pt/donate",
   // },
 ];

@@ -37,13 +37,13 @@
     recentWorkouts: Workout[];
   }
 
-  let routines = $state<Routine[]>([]);
-  let stats = $state<WorkoutStats | null>(null);
+  let routines: Routine[] = $state([]);
+  let stats: WorkoutStats | null = $state(null);
   let loading = $state(true);
-  let error = $state<string | null>(null);
+  let error: string | null = $state(null);
 
   let rootEl: HTMLDivElement | null = $state(null);
-  let openDetailsId = $state<string | null>(null);
+  let openDetailsId: string | null = $state(null);
 
   // Helper function to format date
   function formatDate(isoDate: string): string {

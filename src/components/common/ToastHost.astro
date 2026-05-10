@@ -2,12 +2,12 @@
 
 <script>
   if (typeof window !== 'undefined') {
-    const toastEl = document.getElementById('app-toast');
     let toastVersion = 0;
     let queuedMessage = '';
     let queuedDuration = 1900;
 
     const showQueuedToast = () => {
+      const toastEl = document.getElementById('app-toast');
       if (!toastEl || !queuedMessage) return;
 
       const currentVersion = ++toastVersion;

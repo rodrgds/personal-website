@@ -1,8 +1,8 @@
 <script lang="ts">
   import { actions } from "astro:actions";
 
-  let data = $state<any>(null);
-  let error = $state<string | null>(null);
+  let data: any = $state(null);
+  let error: string | null = $state(null);
   let loading = $state(true);
 
   async function loadScrobbles() {
