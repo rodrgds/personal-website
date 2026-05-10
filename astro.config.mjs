@@ -1,17 +1,38 @@
 import { defineConfig } from "astro/config";
 import mdx from "@astrojs/mdx";
+import node from "@astrojs/node";
 import sitemap from "@astrojs/sitemap";
 import svelte from "@astrojs/svelte";
 import vercel from "@astrojs/vercel";
 import rehypePrettyCode from "rehype-pretty-code";
 import { transformerCopyButton } from "@rehype-pretty/transformers";
 import compress from "astro-compress";
+import { whiteLogosIntegration } from "./src/integrations/white-logos";
+
+function raiseWatcherListenerLimit() {
+  return {
+    name: "raise-watcher-listener-limit",
+    configureServer(server) {
+      const current = server.watcher.getMaxListeners();
+
+      if (current !== 0 && current < 25) {
+        server.watcher.setMaxListeners(25);
+      }
+    },
+  };
+}
 
 export default defineConfig({
   site: "https://rgo.pt",
   output: "server",
-  adapter: vercel(),
-  integrations: [mdx(), sitemap(), svelte(), compress()],
+  adapter: process.env.VERCEL === "1" ? vercel() : node({ mode: "standalone" }),
+  integrations: [
+    mdx(),
+    sitemap(),
+    svelte(),
+    compress(),
+    whiteLogosIntegration(),
+  ],
   markdown: {
     syntaxHighlight: false,
     rehypePlugins: [
@@ -29,5 +50,8 @@ export default defineConfig({
         },
       ],
     ],
+  },
+  vite: {
+    plugins: [raiseWatcherListenerLimit()],
   },
 });
