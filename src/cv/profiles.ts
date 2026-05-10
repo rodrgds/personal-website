@@ -20,12 +20,12 @@ const defaultProfile: CVProfile = {
 
 const compactProfile: CVProfile = {
   label: "Rodrigo Dias - CV (Compact)",
-  headline: "Software Engineer",
+  headline: "Computer Engineering Student",
   include: {
     education: ["feup", "colegio-gaia"],
     experience: [
       "feup-tutor",
-      "acm-feup",
+      // "acm-feup",
       "dias-solutions",
       "unis-easy",
       "necho",
@@ -45,16 +45,13 @@ const compactProfile: CVProfile = {
     honors: ["tecla-2024", "tecla-2023", "high-school-grade"],
   },
   overrides: {
-    "education/colegio-gaia": [
-      "Graduated top of class (19.9/20) in IT and Multimedia Technologies track",
-    ],
-    "experience/unis-easy": [
-      "Founded and sole-built an AI-powered study platform: TypeScript, React.js, Node.js, PostgreSQL (Supabase), Docker - zero to launch",
-      "Handled product design, full-stack engineering, AI integration, and DevOps entirely independently",
+    "education/feup": [],
+    "education/colegio-gaia": [],
+    "experience/feup-tutor": [
+      "Tutor 1st and 2nd-year engineering students in mathematics, physics, and programming",
     ],
     "projects/openpost": [
-      "Open-source self-hosted social media scheduler: single Go binary + embedded SvelteKit frontend, zero runtime dependencies",
-      "Supports X, Mastodon, Bluesky, Threads, LinkedIn; AES-256-GCM token encryption, SQLite job queue, platform adapter pattern",
+      "Open-source self-hosted social media scheduler: single Go binary + embedded SvelteKit frontend",
     ],
   },
 };

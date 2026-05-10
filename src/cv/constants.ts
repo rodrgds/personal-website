@@ -14,22 +14,22 @@ export const CV_IDENTITY = {
 
 export const CV_SKILLS = {
   languages: [
-    "Go",
     "TypeScript",
     "JavaScript",
     "Python",
-    "C/C++",
     "SQL",
+    "C/C++",
+    "Java",
     "PHP",
+    "Go",
     "Bash",
   ],
   frameworks: [
     "SvelteKit",
-    "React",
     "Next.js",
-    "Astro",
+    "React",
     "React Native",
-    "Node.js",
+    "Astro",
     "Tailwind CSS",
   ],
   infrastructure: [

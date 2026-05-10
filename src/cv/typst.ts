@@ -3,10 +3,14 @@ import type { ResolvedCV } from "./types";
 import { CV_IDENTITY, CV_SKILLS } from "./constants";
 import { formatCVDate } from "./data";
 
-function escapeTypst(value: string): string {
+function escapeTypstString(value: string): string {
   return value
     .replace(/\\/g, "\\\\")
-    .replace(/"/g, '\\"')
+    .replace(/"/g, '\\"');
+}
+
+function escapeTypstContent(value: string): string {
+  return escapeTypstString(value)
     .replace(/#/g, "\\#")
     .replace(/\$/g, "\\$")
     .replace(/@/g, "\\@")
@@ -24,9 +28,13 @@ function normalizeLinkValue(link: string): string {
   return link.replace(/^https?:\/\//, "").replace(/\/$/, "");
 }
 
+function formatLinkDisplay(link: string): string {
+  return normalizeLinkValue(link).replace(/([/.?&=#_-])/g, "$1\u200B");
+}
+
 function bulletList(items: string[]): string {
   if (items.length === 0) return "";
-  return items.map((item) => `- ${escapeTypst(item)}`).join("\n");
+  return items.map((item) => `- ${escapeTypstContent(item)}`).join("\n");
 }
 
 function buildEducationSection(entries: ResolvedCV["education"]): string {
@@ -40,10 +48,10 @@ function buildEducationSection(entries: ResolvedCV["education"]): string {
       const lines = entry.bullets.length > 0 ? entry.bullets : defaultBullets;
 
       return `#edu(
-  institution: "${escapeTypst(entry.institution)}",
-  dates: "${escapeTypst(dateRange(entry.startDate, entry.endDate))}",
-  degree: "${escapeTypst(`${entry.degree} in ${entry.area}`)}",
-  location: "${escapeTypst(entry.location)}",
+  institution: "${escapeTypstString(entry.institution)}",
+  dates: "${escapeTypstString(dateRange(entry.startDate, entry.endDate))}",
+  degree: "${escapeTypstString(`${entry.degree} in ${entry.area}`)}",
+  location: "${escapeTypstString(entry.location)}",
   consistent: true,
 )
 ${bulletList(lines)}`;
@@ -59,10 +67,10 @@ function buildExperienceSection(entries: ResolvedCV["experience"]): string {
   const content = entries
     .map(
       (entry) => `#work(
-  title: "${escapeTypst(entry.role)}",
-  dates: "${escapeTypst(dateRange(entry.startDate, entry.endDate))}",
-  company: "${escapeTypst(entry.company)}",
-  location: "${escapeTypst(entry.location)}",
+  title: "${escapeTypstString(entry.role)}",
+  dates: "${escapeTypstString(dateRange(entry.startDate, entry.endDate))}",
+  company: "${escapeTypstString(entry.company)}",
+  location: "${escapeTypstString(entry.location)}",
 )
 ${bulletList(entry.bullets)}`,
     )
@@ -77,16 +85,19 @@ function buildProjectsSection(entries: ResolvedCV["projects"]): string {
   const content = entries
     .map((entry) => {
       const roleValue = entry.role
-        ? `  role: "${escapeTypst(entry.role)}",\n`
+        ? `  role: "${escapeTypstString(entry.role)}",\n`
         : "";
       const urlValue = entry.url
-        ? `  url: "${escapeTypst(normalizeLinkValue(entry.url))}",\n`
+        ? `  url: "${escapeTypstString(normalizeLinkValue(entry.url))}",\n`
+        : "";
+      const urlDisplayValue = entry.url
+        ? `  url-display: "${escapeTypstString(formatLinkDisplay(entry.url))}",\n`
         : "";
 
       return `#project(
-${roleValue}  name: "${escapeTypst(entry.name)}",
-${urlValue}  dates: "${escapeTypst(dateRange(entry.startDate, entry.endDate))}",
-)
+${roleValue}  name: "${escapeTypstString(entry.name)}",
+${urlValue}  dates: "${escapeTypstString(dateRange(entry.startDate, entry.endDate))}",
+${urlDisplayValue})
 ${bulletList(entry.bullets)}`;
     })
     .join("\n\n");
@@ -105,7 +116,7 @@ function buildHonorsSection(
       const text =
         item.bullets[0] ??
         `${item.title} - ${item.issuer} (${formatCVDate(item.date)})`;
-      return `- *${escapeTypst(text)}*`;
+      return `- *${escapeTypstContent(text)}*`;
     })
     .join("\n");
 
@@ -114,7 +125,7 @@ function buildHonorsSection(
       ? `- ${certifications
           .map(
             (certification) =>
-              `*${escapeTypst(certification.name)}* (${formatCVDate(certification.issueDate)})`,
+              `*${escapeTypstContent(certification.name)}* (${formatCVDate(certification.issueDate)})`,
           )
           .join("; ")}`
       : "";
@@ -141,9 +152,12 @@ const TEMPLATE = String.raw`#import "@preview/scienceicons:0.1.0": orcid-icon
   location: "",
   email: "",
   github: "",
+  github-display: "",
   linkedin: "",
+  linkedin-display: "",
   phone: "",
   personal-site: "",
+  personal-site-display: "",
   orcid: "",
   accent-color: black,
   font: "New Computer Modern",
@@ -175,10 +189,15 @@ const TEMPLATE = String.raw`#import "@preview/scienceicons:0.1.0": orcid-icon
 
   [= #(author) #h(1fr) #text(weight: 400, size: 14pt, role)]
 
-  let contact-item(value, prefix: "", link-type: "") = {
+  let contact-item(value, prefix: "", link-type: "", display-value: "") = {
     if value != "" {
       if link-type != "" {
-        link(link-type + value)[#(prefix + value)]
+        let label = if display-value != "" {
+          display-value
+        } else {
+          prefix + value
+        }
+        link(link-type + value)[#label]
       } else {
         value
       }
@@ -194,9 +213,9 @@ const TEMPLATE = String.raw`#import "@preview/scienceicons:0.1.0": orcid-icon
           contact-item(phone, link-type: "tel:"),
           contact-item(location),
           contact-item(email, link-type: "mailto:"),
-          contact-item(github, link-type: "https://"),
-          contact-item(linkedin, link-type: "https://"),
-          contact-item(personal-site, link-type: "https://"),
+          contact-item(github, link-type: "https://", display-value: github-display),
+          contact-item(linkedin, link-type: "https://", display-value: linkedin-display),
+          contact-item(personal-site, link-type: "https://", display-value: personal-site-display),
           contact-item(orcid, prefix: [#orcid-icon(color: rgb("AECD54"))orcid.org/], link-type: "https://orcid.org/"),
         )
         items.filter(x => x != none).join("  |  ")
@@ -268,18 +287,20 @@ const TEMPLATE = String.raw`#import "@preview/scienceicons:0.1.0": orcid-icon
   )
 }
 
-#let project(role: "", name: "", url: "", dates: "") = {
+#let project(role: "", name: "", url: "", url-display: "", dates: "") = {
   generic-one-by-two(
     left: {
+      let label = if url-display != "" { url-display } else { url }
       if role == "" {
-        [*#name* #if url != "" and dates != "" [ (#link("https://" + url)[#url])]]
+        [*#name* #if url != "" and dates != "" [ (#link("https://" + url)[#label])]]
       } else {
-        [*#role*, #name #if url != "" and dates != ""  [ (#link("https://" + url)[#url])]]
+        [*#role*, #name #if url != "" and dates != ""  [ (#link("https://" + url)[#label])]]
       }
     },
     right: {
       if dates == "" and url != "" {
-        link("https://" + url)[#url]
+        let label = if url-display != "" { url-display } else { url }
+        link("https://" + url)[#label]
       } else {
         dates
       }
@@ -316,20 +337,23 @@ export function generateTypst(profile: CVProfile, cv: ResolvedCV): string {
   return `${TEMPLATE}
 
 #show: resume.with(
-  author: "${escapeTypst(CV_IDENTITY.author)}",
-  role: "${escapeTypst(profile.headline ?? "")}",
-  pronouns: "${escapeTypst(CV_IDENTITY.pronouns)}",
-  location: "${escapeTypst(CV_IDENTITY.location)}",
-  email: "${escapeTypst(CV_IDENTITY.email)}",
-  github: "${escapeTypst(normalizeLinkValue(CV_IDENTITY.github))}",
-  linkedin: "${escapeTypst(normalizeLinkValue(CV_IDENTITY.linkedin))}",
-  personal-site: "${escapeTypst(normalizeLinkValue(CV_IDENTITY.personalSite))}",
-  accent-color: rgb("${escapeTypst(CV_IDENTITY.accentColor.replace("#", ""))}"),
-  font: "${escapeTypst(CV_IDENTITY.font)}",
-  paper: "${escapeTypst(CV_IDENTITY.paper)}",
+  author: "${escapeTypstString(CV_IDENTITY.author)}",
+  role: "${escapeTypstString(profile.headline ?? "")}",
+  pronouns: "${escapeTypstString(CV_IDENTITY.pronouns)}",
+  location: "${escapeTypstString(CV_IDENTITY.location)}",
+  email: "${escapeTypstString(CV_IDENTITY.email)}",
+  github: "${escapeTypstString(normalizeLinkValue(CV_IDENTITY.github))}",
+  github-display: "${escapeTypstString(formatLinkDisplay(CV_IDENTITY.github))}",
+  linkedin: "${escapeTypstString(normalizeLinkValue(CV_IDENTITY.linkedin))}",
+  linkedin-display: "${escapeTypstString(formatLinkDisplay(CV_IDENTITY.linkedin))}",
+  personal-site: "${escapeTypstString(normalizeLinkValue(CV_IDENTITY.personalSite))}",
+  personal-site-display: "${escapeTypstString(formatLinkDisplay(CV_IDENTITY.personalSite))}",
+  accent-color: rgb("${escapeTypstString(CV_IDENTITY.accentColor.replace("#", ""))}"),
+  font: "${escapeTypstString(CV_IDENTITY.font)}",
+  paper: "${escapeTypstString(CV_IDENTITY.paper)}",
   author-position: left,
   personal-info-position: left,
-  lang: "${escapeTypst(CV_IDENTITY.lang)}",
+  lang: "${escapeTypstString(CV_IDENTITY.lang)}",
 )
 
 ${sections}
