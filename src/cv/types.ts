@@ -143,6 +143,7 @@ export interface CVCertification {
   issuer: string;
   issueDate: string;
   credentialUrl?: string;
+  bullets: string[];
   related?: RelatedItem[];
 }
 
@@ -167,3 +168,10 @@ export interface ResolvedCV {
   certifications: CVCertification[];
   honors: CVHonor[];
 }
+
+export type CVSectionKey =
+  | "education"
+  | "experience"
+  | "projects"
+  | "honors"
+  | "skills";

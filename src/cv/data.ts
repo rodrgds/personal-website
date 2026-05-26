@@ -292,6 +292,7 @@ export function resolveCVProfile(
       issuer: item.issuer,
       issueDate: item.issueDate,
       credentialUrl: item.credentialUrl,
+      bullets: resolveBullets(`certifications/${id}`, item.bullets, overrides),
       related: getCVRelatedItems(data, id, item.related),
     }),
   );
@@ -324,5 +325,5 @@ export function formatCVDate(ym: string): string {
 }
 
 export function formatCVRange(startDate: string, endDate?: string): string {
-  return `${formatCVDate(startDate)} - ${endDate ? formatCVDate(endDate) : "Present"}`;
+  return `${formatCVDate(startDate)}–${endDate ? formatCVDate(endDate) : "Present"}`;
 }

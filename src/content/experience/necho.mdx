@@ -1,6 +1,6 @@
 ---
 company: "NECHO TECHLAW (Cybersecure.pt)"
-role: "Full-stack Developer"
+role: "Full-stack Software Engineer"
 type: "part-time"
 location: "Remote"
 startDate: "2023-08"
@@ -19,8 +19,8 @@ tags:
   ]
 featured: true
 bullets:
-  - "Built a cybersecurity platform for Portuguese SMEs, delivering real-time dashboards, RBAC and multi-tenant access control"
-  - "Used a modern-ish Next.js stack + DrizzleORM + MariaDB + Express.js + Socket.io + shadcn/ui (etc.) stack"
+  - "Built core features for Cybersecure.pt, a cybersecurity SaaS for Portuguese SMEs: real-time dashboards, assessment workflows, PDF reports, email delivery, RBAC, MFA/WebAuthn, and multi-tenant access control"
+  - "Iterated on a modern Next.js, TypeScript, DrizzleORM, MariaDB, Express.js, Socket.io, Stripe, and AWS S3 stack"
 ---
 import Logo from "../../components/common/Logo.astro";
 
@@ -41,6 +41,6 @@ I implemented key features such as:
 - Multi-tenant data architecture with company, division, and user hierarchy
 - Comprehensive API routes for assessments, users, roles, notifications, and webhooks
 - Metadata management (with multilingual support as well)
-- The whole web interface for all types of roles and users which ended up being huge
-- Database at rest encryption + backup flows that actually worked
-- All microservices/services hosted within the same VPS so that as few data as possible left the machine
+- Web interfaces for multiple user roles across customer, admin, and internal workflows
+- Database at-rest encryption and backup flows
+- VPS-hosted services designed to minimize third-party data exposure

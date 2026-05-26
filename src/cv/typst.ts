@@ -1,12 +1,10 @@
 import type { CVProfile } from "./profiles";
-import type { ResolvedCV } from "./types";
+import type { CVSectionKey, ResolvedCV } from "./types";
 import { CV_IDENTITY, CV_SKILLS } from "./constants";
 import { formatCVDate } from "./data";
 
 function escapeTypstString(value: string): string {
-  return value
-    .replace(/\\/g, "\\\\")
-    .replace(/"/g, '\\"');
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }
 
 function escapeTypstContent(value: string): string {
@@ -21,7 +19,7 @@ function escapeTypstContent(value: string): string {
 }
 
 function dateRange(startDate: string, endDate?: string): string {
-  return `${formatCVDate(startDate)} - ${endDate ? formatCVDate(endDate) : "Present"}`;
+  return `${formatCVDate(startDate)}–${endDate ? formatCVDate(endDate) : "Present"}`;
 }
 
 function normalizeLinkValue(link: string): string {
@@ -37,7 +35,10 @@ function bulletList(items: string[]): string {
   return items.map((item) => `- ${escapeTypstContent(item)}`).join("\n");
 }
 
-function buildEducationSection(entries: ResolvedCV["education"]): string {
+function buildEducationSection(
+  entries: ResolvedCV["education"],
+  title = "Education",
+): string {
   if (entries.length === 0) return "";
 
   const content = entries
@@ -58,10 +59,13 @@ ${bulletList(lines)}`;
     })
     .join("\n\n");
 
-  return `== Education\n\n${content}`;
+  return `== ${title}\n\n${content}`;
 }
 
-function buildExperienceSection(entries: ResolvedCV["experience"]): string {
+function buildExperienceSection(
+  entries: ResolvedCV["experience"],
+  title = "Experience",
+): string {
   if (entries.length === 0) return "";
 
   const content = entries
@@ -76,10 +80,13 @@ ${bulletList(entry.bullets)}`,
     )
     .join("\n\n");
 
-  return `== Experience\n\n${content}`;
+  return `== ${title}\n\n${content}`;
 }
 
-function buildProjectsSection(entries: ResolvedCV["projects"]): string {
+function buildProjectsSection(
+  entries: ResolvedCV["projects"],
+  title = "Projects",
+): string {
   if (entries.length === 0) return "";
 
   const content = entries
@@ -102,12 +109,13 @@ ${bulletList(entry.bullets)}`;
     })
     .join("\n\n");
 
-  return `== Projects\n\n${content}`;
+  return `== ${title}\n\n${content}`;
 }
 
 function buildHonorsSection(
   honors: ResolvedCV["honors"],
   certifications: ResolvedCV["certifications"],
+  title = "Honors & Awards",
 ): string {
   if (honors.length === 0 && certifications.length === 0) return "";
 
@@ -123,22 +131,38 @@ function buildHonorsSection(
   const certLine =
     certifications.length > 0
       ? `- ${certifications
-          .map(
-            (certification) =>
-              `*${escapeTypstContent(certification.name)}* (${formatCVDate(certification.issueDate)})`,
-          )
+          .map((certification) => {
+            const text =
+              certification.bullets[0] ??
+              `${certification.name} (${formatCVDate(certification.issueDate)})`;
+            return `*${escapeTypstContent(text)}*`;
+          })
           .join("; ")}`
       : "";
 
-  return `== Honors & Awards\n\n${[honorLines, certLine].filter((line) => line.length > 0).join("\n")}`;
+  return `== ${title}\n\n${[honorLines, certLine].filter((line) => line.length > 0).join("\n")}`;
 }
 
-function buildSkillsSection(): string {
-  return `== Skills
+function buildSkillsSection(profile: CVProfile, title = "Skills"): string {
+  const skills = profile.skills;
+
+  if (!skills) {
+    return `== ${title}
 
 - *Languages*: ${CV_SKILLS.languages.join(", ")}
 - *Frameworks & Tools*: ${CV_SKILLS.frameworks.join(", ")}
 - *Infrastructure*: ${CV_SKILLS.infrastructure.join(", ")}`;
+  }
+
+  const lines = [
+    skills.languages && `- *Languages*: ${skills.languages.join(", ")}`,
+    skills.frontendProduct &&
+      `- *${skills.labels?.frontendProduct ?? "Frontend/Product"}*: ${skills.frontendProduct.join(", ")}`,
+    skills.backendInfrastructure &&
+      `- *${skills.labels?.backendInfrastructure ?? "Backend/Infrastructure"}*: ${skills.backendInfrastructure.join(", ")}`,
+  ].filter((line): line is string => Boolean(line));
+
+  return `== ${title}\n\n${lines.join("\n")}`;
 }
 
 const TEMPLATE = String.raw`#import "@preview/scienceicons:0.1.0": orcid-icon
@@ -324,30 +348,48 @@ const TEMPLATE = String.raw`#import "@preview/scienceicons:0.1.0": orcid-icon
 `;
 
 export function generateTypst(profile: CVProfile, cv: ResolvedCV): string {
-  const sections = [
-    buildEducationSection(cv.education),
-    buildExperienceSection(cv.experience),
-    buildProjectsSection(cv.projects),
-    buildHonorsSection(cv.honors, cv.certifications),
-    buildSkillsSection(),
-  ]
+  const sectionTitles = profile.sectionTitles ?? {};
+  const sectionBuilders: Record<CVSectionKey, () => string> = {
+    education: () =>
+      buildEducationSection(cv.education, sectionTitles.education),
+    experience: () =>
+      buildExperienceSection(cv.experience, sectionTitles.experience),
+    projects: () => buildProjectsSection(cv.projects, sectionTitles.projects),
+    honors: () =>
+      buildHonorsSection(cv.honors, cv.certifications, sectionTitles.honors),
+    skills: () => buildSkillsSection(profile, sectionTitles.skills),
+  };
+
+  const sections = (
+    profile.sectionOrder ??
+    ([
+      "education",
+      "experience",
+      "projects",
+      "honors",
+      "skills",
+    ] satisfies CVSectionKey[])
+  )
+    .map((section) => sectionBuilders[section]())
     .filter((section) => section.length > 0)
     .join("\n\n");
+
+  const identity = profile.identity ?? {};
 
   return `${TEMPLATE}
 
 #show: resume.with(
   author: "${escapeTypstString(CV_IDENTITY.author)}",
   role: "${escapeTypstString(profile.headline ?? "")}",
-  pronouns: "${escapeTypstString(CV_IDENTITY.pronouns)}",
-  location: "${escapeTypstString(CV_IDENTITY.location)}",
+  pronouns: "${escapeTypstString(identity.pronouns ?? CV_IDENTITY.pronouns)}",
+  location: "${escapeTypstString(identity.location ?? CV_IDENTITY.location)}",
   email: "${escapeTypstString(CV_IDENTITY.email)}",
   github: "${escapeTypstString(normalizeLinkValue(CV_IDENTITY.github))}",
-  github-display: "${escapeTypstString(formatLinkDisplay(CV_IDENTITY.github))}",
+  github-display: "${escapeTypstString(identity.githubDisplay ?? formatLinkDisplay(CV_IDENTITY.github))}",
   linkedin: "${escapeTypstString(normalizeLinkValue(CV_IDENTITY.linkedin))}",
-  linkedin-display: "${escapeTypstString(formatLinkDisplay(CV_IDENTITY.linkedin))}",
+  linkedin-display: "${escapeTypstString(identity.linkedinDisplay ?? formatLinkDisplay(CV_IDENTITY.linkedin))}",
   personal-site: "${escapeTypstString(normalizeLinkValue(CV_IDENTITY.personalSite))}",
-  personal-site-display: "${escapeTypstString(formatLinkDisplay(CV_IDENTITY.personalSite))}",
+  personal-site-display: "${escapeTypstString(identity.personalSiteDisplay ?? formatLinkDisplay(CV_IDENTITY.personalSite))}",
   accent-color: rgb("${escapeTypstString(CV_IDENTITY.accentColor.replace("#", ""))}"),
   font: "${escapeTypstString(CV_IDENTITY.font)}",
   paper: "${escapeTypstString(CV_IDENTITY.paper)}",

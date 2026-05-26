@@ -12,17 +12,18 @@ const COLLECTIONS = [
 const EXTENSIONS = new Set([".md", ".mdx"]);
 
 function stripFrontmatter(content) {
-  if (!content.startsWith("---")) {
-    return content.trim();
-  }
+  // if (!content.startsWith("---")) {
+  //   return content.trim();
+  // }
 
-  const match = content.match(/^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/);
+  // const match = content.match(/^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/);
 
-  if (!match) {
-    return content.trim();
-  }
+  // if (!match) {
+  //   return content.trim();
+  // }
 
-  return content.slice(match[0].length).trim();
+  // return content.slice(match[0].length).trim();
+  return content;
 }
 
 const files = [];
