@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro preview",
-    "build": "astro build && jampack ./dist",
+    "build": "astro build # && jampack ./dist",
     "preview": "astro preview",
     "astro": "astro"
   },
