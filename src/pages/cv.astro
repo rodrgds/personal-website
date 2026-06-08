@@ -219,7 +219,6 @@ const [
 
               {entry.data.demoVideo && (
                 <CVYouTubeEmbed
-                  client:load
                   url={entry.data.demoVideo}
                   title={`${entry.data.name} walkthrough`}
                 />
@@ -375,6 +374,69 @@ const [
       </CVSection>
     </main>
     <Footer />
+    <script is:inline data-astro-rerun>
+      (() => {
+        if (window.__cvYouTubeEmbedInitialized) return;
+        window.__cvYouTubeEmbedInitialized = true;
+
+        const YOUTUBE_IFRAME_ALLOW =
+          "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+
+        document.addEventListener("click", (event) => {
+          const target = event.target;
+          if (!(target instanceof Element)) return;
+
+          const poster = target.closest(".video-poster");
+          if (!(poster instanceof HTMLButtonElement)) return;
+
+          const shell = poster.closest("[data-cv-youtube-embed]");
+          if (!(shell instanceof HTMLElement)) return;
+
+          const embedUrl = poster.dataset.embedUrl;
+          const title = poster.dataset.videoTitle;
+          if (!embedUrl || !title) return;
+
+          event.preventDefault();
+
+          const iframe = document.createElement("iframe");
+          iframe.src = embedUrl;
+          iframe.title = title;
+          iframe.loading = "lazy";
+          iframe.allow = YOUTUBE_IFRAME_ALLOW;
+          iframe.allowFullscreen = true;
+          iframe.referrerPolicy = "strict-origin-when-cross-origin";
+
+          shell.replaceChildren(iframe);
+        });
+
+        document.addEventListener(
+          "error",
+          (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLImageElement)) return;
+            if (!target.matches(".video-poster img")) return;
+
+            let urls = [];
+            try {
+              urls = JSON.parse(target.dataset.thumbnailUrls ?? "[]");
+            } catch {
+              return;
+            }
+
+            if (!Array.isArray(urls)) return;
+
+            const currentIndex = Number(target.dataset.thumbnailIndex ?? "0");
+            const nextUrl = urls[currentIndex + 1];
+
+            if (typeof nextUrl !== "string") return;
+
+            target.dataset.thumbnailIndex = String(currentIndex + 1);
+            target.src = nextUrl;
+          },
+          true,
+        );
+      })();
+    </script>
   </body>
 </html>
 

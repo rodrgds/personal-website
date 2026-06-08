@@ -11,9 +11,6 @@
     buttonLabel = "Play walkthrough",
   }: Props = $props();
 
-  let isLoaded = $state(false);
-  let thumbnailIndex = $state(0);
-
   function getVideoId(videoUrl: string): string | null {
     try {
       const parsedUrl = new URL(videoUrl);
@@ -42,51 +39,32 @@
         ]
       : [],
   );
-  const thumbnailUrl = $derived(thumbnailUrls[thumbnailIndex] ?? null);
+  const thumbnailUrl = $derived(thumbnailUrls[0] ?? null);
   const embedUrl = $derived(
     videoId
       ? `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`
       : null,
   );
-
-  function loadVideo(): void {
-    isLoaded = true;
-  }
-
-  function handleThumbnailError(): void {
-    if (thumbnailIndex < thumbnailUrls.length - 1) {
-      thumbnailIndex += 1;
-    }
-  }
 </script>
 
 {#if videoId && embedUrl && thumbnailUrl}
-  <div class="video-shell">
-    {#if isLoaded}
-      <iframe
-        src={embedUrl}
-        title={title}
+  <div class="video-shell" data-cv-youtube-embed>
+    <button
+      type="button"
+      class="video-poster"
+      aria-label={`${buttonLabel}: ${title}`}
+      data-embed-url={embedUrl}
+      data-video-title={title}
+    >
+      <img
+        src={thumbnailUrl}
+        alt=""
         loading="lazy"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        allowfullscreen
-        referrerpolicy="strict-origin-when-cross-origin"
-      ></iframe>
-    {:else}
-      <button
-        type="button"
-        class="video-poster"
-        aria-label={`${buttonLabel}: ${title}`}
-        onclick={loadVideo}
-      >
-        <img
-          src={thumbnailUrl}
-          alt=""
-          loading="lazy"
-          onerror={handleThumbnailError}
-        />
-        <span class="play-badge">{buttonLabel}</span>
-      </button>
-    {/if}
+        data-thumbnail-index="0"
+        data-thumbnail-urls={JSON.stringify(thumbnailUrls)}
+      />
+      <span class="play-badge">{buttonLabel}</span>
+    </button>
   </div>
 {/if}
 
@@ -116,7 +94,7 @@
   }
 
   .video-poster img,
-  iframe {
+  .video-shell :global(iframe) {
     width: 100%;
     height: 100%;
     display: block;
