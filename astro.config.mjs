@@ -30,8 +30,8 @@ export default defineConfig({
     mdx(),
     sitemap(),
     svelte(),
-    compress(),
     whiteLogosIntegration(),
+    compress(),
   ],
   markdown: {
     syntaxHighlight: false,
