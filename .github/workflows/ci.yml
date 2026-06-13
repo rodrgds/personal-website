@@ -1,0 +1,148 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Cancel any in-flight run for the same ref the moment a new commit lands.
+# Same convention as OpenPost.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      app: ${{ steps.filter.outputs.app }}
+      ci: ${{ steps.filter.outputs.ci }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            app:
+              - 'src/**'
+              - 'public/**'
+              - 'astro.config.mjs'
+              - 'svelte.config.js'
+              - 'tsconfig.json'
+              - 'package.json'
+              - 'bun.lock'
+              - 'bun.lockb'
+              - 'devenv.nix'
+              - 'devenv.yaml'
+              - 'devenv.lock'
+            ci:
+              - '.github/workflows/**'
+
+  setup-nix-store:
+    name: Setup Nix Store
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.app == 'true' || needs.changes.outputs.ci == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+
+      - name: Set up devenv cache
+        uses: cachix/cachix-action@v16
+        with:
+          name: devenv
+
+      - name: Restore shared Nix store
+        id: nix-cache-restore
+        uses: nix-community/cache-nix-action/restore@v7
+        with:
+          primary-key: nix-${{ runner.os }}-devenv-${{ hashFiles('devenv.nix', 'devenv.yaml', 'devenv.lock', 'bun.lock', 'bun.lockb') }}
+          restore-prefixes-first-match: |
+            nix-${{ runner.os }}-devenv-
+
+      - name: Install devenv
+        shell: bash
+        run: nix profile add nixpkgs#devenv
+
+      - name: Warm devenv shell
+        shell: bash
+        run: devenv shell -- true
+
+      - name: Save shared Nix store
+        if: steps.nix-cache-restore.outputs.hit-primary-key != 'true'
+        uses: nix-community/cache-nix-action/save@v7
+        with:
+          primary-key: nix-${{ runner.os }}-devenv-${{ hashFiles('devenv.nix', 'devenv.yaml', 'devenv.lock', 'bun.lock', 'bun.lockb') }}
+          gc-max-store-size-linux: 3G
+
+  checks:
+    name: Format and typecheck
+    runs-on: ubuntu-latest
+    needs: [changes, setup-nix-store]
+    if: needs.changes.outputs.app == 'true' || needs.changes.outputs.ci == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+
+      - name: Set up devenv cache
+        uses: cachix/cachix-action@v16
+        with:
+          name: devenv
+
+      - name: Restore shared Nix store
+        uses: nix-community/cache-nix-action/restore@v7
+        with:
+          primary-key: nix-${{ runner.os }}-devenv-${{ hashFiles('devenv.nix', 'devenv.yaml', 'devenv.lock', 'bun.lock', 'bun.lockb') }}
+          restore-prefixes-first-match: |
+            nix-${{ runner.os }}-devenv-
+
+      - name: Install devenv
+        shell: bash
+        run: nix profile add nixpkgs#devenv
+
+      - name: Set up Bun cache
+        if: needs.changes.outputs.app == 'true' || needs.changes.outputs.ci == 'true'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.bun/install/cache
+            node_modules
+          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock', 'bun.lockb') }}
+          restore-keys: |
+            bun-${{ runner.os }}-
+
+      - name: Run relevant checks
+        shell: devenv shell bash -- -e {0}
+        env:
+          APP_CHANGED: ${{ needs.changes.outputs.app }}
+          CI_CHANGED: ${{ needs.changes.outputs.ci }}
+        run: |
+          # App/ci changes -> run everything; ci-only changes also run
+          # the full suite so a workflow tweak never lands without the
+          # checks actually being valid.
+          #
+          # Note: the `build` script (astro build && jampack ./dist)
+          # is intentionally NOT run here. It depends on env vars
+          # (DIRECTUS_URL / DIRECTUS_ACCESS_TOKEN / VERCEL) that are
+          # only set in Vercel's deploy pipeline. The Vercel adapter
+          # handles the production build; this CI only enforces code
+          # quality (format + typecheck).
+          if [[ "$APP_CHANGED" == "true" || "$CI_CHANGED" == "true" ]]; then
+            format-check
+            typecheck
+          fi
