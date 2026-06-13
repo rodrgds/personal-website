@@ -40,8 +40,6 @@ in
     pkgs.bun
   ];
 
-  env.NODE_OPTIONS = "--max-old-space-size=1024";
-
   scripts = {
     dev.exec = "bun install && bun run dev";
     build.exec = "bun install && bun run build";

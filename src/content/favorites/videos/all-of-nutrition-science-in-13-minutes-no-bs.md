@@ -11,5 +11,3 @@ categories:
   - "lifestyle"
 type: "video"
 ---
-
-

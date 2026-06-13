@@ -9,5 +9,3 @@ categories:
   - "education"
 type: "article"
 ---
-
-

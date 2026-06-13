@@ -11,5 +11,3 @@ categories:
   - "tools"
 type: "blog"
 ---
-
-

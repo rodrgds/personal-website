@@ -11,5 +11,3 @@ categories:
   - "remote-work"
 type: "movie"
 ---
-
-

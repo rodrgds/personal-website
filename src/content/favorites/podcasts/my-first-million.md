@@ -12,5 +12,3 @@ categories:
   - "startup"
 type: "podcast"
 ---
-
-

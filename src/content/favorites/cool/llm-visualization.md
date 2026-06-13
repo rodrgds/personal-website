@@ -9,5 +9,3 @@ categories:
   - "visualization"
 type: "cool"
 ---
-
-

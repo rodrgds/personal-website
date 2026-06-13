@@ -11,4 +11,4 @@ categories:
 type: "movie"
 ---
 
-* as well as the rest of the Rocky & Creed movies. The underdog story that never gets old.
+- as well as the rest of the Rocky & Creed movies. The underdog story that never gets old.

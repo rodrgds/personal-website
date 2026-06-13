@@ -11,5 +11,3 @@ categories:
   - "education"
 type: "article"
 ---
-
-

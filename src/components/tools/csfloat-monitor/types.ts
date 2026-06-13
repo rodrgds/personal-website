@@ -35,7 +35,7 @@ export interface ProxyConfig {
 
 export interface MonitorSettings {
   apiKey: string;
-// network
+  // network
   proxies: ProxyConfig[];
 
   // filters

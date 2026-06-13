@@ -10,5 +10,3 @@ categories:
   - "creativity"
 type: "cool"
 ---
-
-

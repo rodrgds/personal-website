@@ -7,7 +7,7 @@ export interface DynamicConstants {
 
 export function calculateDynamicRequiredPercent(
   refPriceUsd: number,
-  constants: DynamicConstants
+  constants: DynamicConstants,
 ): number {
   const {
     DYN_DISCOUNT_BASE_PRICE,
@@ -15,10 +15,10 @@ export function calculateDynamicRequiredPercent(
     DYN_DISCOUNT_MAX_PERCENT,
     DYN_MAX_PRICE = 100000.0,
   } = constants;
-  
+
   const lowLog = Math.log(Math.max(1.0, DYN_DISCOUNT_BASE_PRICE));
   const highLog = Math.log(
-    Math.max(DYN_DISCOUNT_BASE_PRICE + 1.0, DYN_MAX_PRICE)
+    Math.max(DYN_DISCOUNT_BASE_PRICE + 1.0, DYN_MAX_PRICE),
   );
   const curLog = Math.log(Math.max(DYN_DISCOUNT_BASE_PRICE, refPriceUsd));
 

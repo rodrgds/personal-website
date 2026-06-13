@@ -11,5 +11,3 @@ categories:
   - "programming"
 type: "movie"
 ---
-
-

@@ -9,5 +9,3 @@ categories:
   - "minimalism"
 type: "cool"
 ---
-
-

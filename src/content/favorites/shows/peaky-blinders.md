@@ -10,5 +10,3 @@ categories:
   - "thriller"
 type: "show"
 ---
-
-

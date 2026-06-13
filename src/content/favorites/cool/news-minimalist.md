@@ -9,5 +9,3 @@ categories:
   - "tools"
 type: "cool"
 ---
-
-

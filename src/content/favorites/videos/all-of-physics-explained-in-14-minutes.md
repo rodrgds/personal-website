@@ -9,5 +9,3 @@ categories:
   - "physics"
 type: "video"
 ---
-
-

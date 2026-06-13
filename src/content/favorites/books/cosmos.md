@@ -10,5 +10,3 @@ categories:
   - "education"
 type: "book"
 ---
-
-

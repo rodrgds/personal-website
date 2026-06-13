@@ -11,5 +11,3 @@ categories:
   - "cybersecurity"
 type: "cool"
 ---
-
-

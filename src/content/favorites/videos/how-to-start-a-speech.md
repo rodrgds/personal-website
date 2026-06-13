@@ -10,5 +10,3 @@ categories:
   - "storytelling"
 type: "video"
 ---
-
-

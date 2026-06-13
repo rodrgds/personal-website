@@ -12,5 +12,3 @@ categories:
   - "documentary"
 type: "movie"
 ---
-
-

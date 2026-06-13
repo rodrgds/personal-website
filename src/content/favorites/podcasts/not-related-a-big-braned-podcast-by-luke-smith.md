@@ -15,9 +15,7 @@ type: "podcast"
 
 Luke's takes on modern society, religion and tech culture. Don't go into it thinking you're going to agree with everything (even though you might). Good reflection material.
 
-
 ## Favorite episodes
-
 
 - The Economy is Fake, the Jobs Are Fake, the Money Is Fake
 

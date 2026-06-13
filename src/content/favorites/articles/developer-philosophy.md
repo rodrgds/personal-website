@@ -10,5 +10,3 @@ categories:
   - "career"
 type: "article"
 ---
-
-

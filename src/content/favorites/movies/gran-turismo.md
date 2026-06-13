@@ -11,5 +11,3 @@ categories:
   - "sports"
 type: "movie"
 ---
-
-

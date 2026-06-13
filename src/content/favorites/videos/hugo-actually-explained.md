@@ -10,5 +10,3 @@ categories:
   - "tools"
 type: "video"
 ---
-
-

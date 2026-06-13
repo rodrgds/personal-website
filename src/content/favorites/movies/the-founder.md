@@ -12,5 +12,3 @@ categories:
   - "biography"
 type: "movie"
 ---
-
-

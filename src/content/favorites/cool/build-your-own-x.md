@@ -10,5 +10,3 @@ categories:
   - "open-source"
 type: "cool"
 ---
-
-

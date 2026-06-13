@@ -9,5 +9,3 @@ categories:
   - "psychology"
 type: "movie"
 ---
-
-

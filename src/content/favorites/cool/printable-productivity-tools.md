@@ -9,5 +9,3 @@ categories:
   - "design"
 type: "cool"
 ---
-
-

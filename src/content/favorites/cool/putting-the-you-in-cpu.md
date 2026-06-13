@@ -1,5 +1,5 @@
 ---
-title: "Putting the \"You\" in CPU"
+title: 'Putting the "You" in CPU'
 url: "https://cpu.land/"
 icon: "🔧"
 rating: 5
@@ -10,5 +10,3 @@ categories:
   - "science"
 type: "cool"
 ---
-
-

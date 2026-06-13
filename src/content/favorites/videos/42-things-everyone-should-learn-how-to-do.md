@@ -9,5 +9,3 @@ categories:
   - "self-improvement"
 type: "video"
 ---
-
-

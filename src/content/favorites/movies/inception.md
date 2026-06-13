@@ -10,5 +10,3 @@ categories:
   - "science"
 type: "movie"
 ---
-
-

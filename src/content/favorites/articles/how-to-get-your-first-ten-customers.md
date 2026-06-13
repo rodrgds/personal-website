@@ -11,5 +11,3 @@ categories:
   - "startup"
 type: "article"
 ---
-
-
