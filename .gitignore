@@ -26,3 +26,5 @@ pnpm-debug.log*
 .DS_Store
 \n.astro
 .vercel
+.devenv/
+.direnv/
