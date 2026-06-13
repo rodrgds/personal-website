@@ -88,7 +88,7 @@ jobs:
           gc-max-store-size-linux: 3G
 
   checks:
-    name: Format, typecheck, and build
+    name: Format and typecheck
     runs-on: ubuntu-latest
     needs: [changes, setup-nix-store]
     if: needs.changes.outputs.app == 'true' || needs.changes.outputs.ci == 'true'
@@ -135,8 +135,14 @@ jobs:
           # App/ci changes -> run everything; ci-only changes also run
           # the full suite so a workflow tweak never lands without the
           # checks actually being valid.
+          #
+          # Note: the `build` script (astro build && jampack ./dist)
+          # is intentionally NOT run here. It depends on env vars
+          # (DIRECTUS_URL / DIRECTUS_ACCESS_TOKEN / VERCEL) that are
+          # only set in Vercel's deploy pipeline. The Vercel adapter
+          # handles the production build; this CI only enforces code
+          # quality (format + typecheck).
           if [[ "$APP_CHANGED" == "true" || "$CI_CHANGED" == "true" ]]; then
             format-check
             typecheck
-            build
           fi
