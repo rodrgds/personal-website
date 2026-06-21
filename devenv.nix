@@ -45,6 +45,9 @@ in
     build.exec = "bun install && bun run build";
     preview.exec = "bun install && bun run preview";
     format.exec = "bunx prettier --write .";
+    # CI-only: verify formatting without modifying files. Mirrors the
+    # prek prettier-check wrapper so local and CI run the same command.
+    format-check.exec = "${lib.getExe prettier-check-wrapper}";
     typecheck.exec = "bun astro check";
   };
 
