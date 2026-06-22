@@ -1,7 +1,7 @@
 import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { AstroIntegration } from "astro";
+import type { AstroIntegration, AstroIntegrationLogger } from "astro";
 import sharp from "sharp";
 
 interface LogoAnalysis {
@@ -125,13 +125,7 @@ export type BlackLogo = (typeof blackLogos)[number];
 `;
 }
 
-async function syncWhiteLogos(
-  logger: AstroIntegration["hooks"]["astro:server:setup"] extends (
-    ...args: infer T
-  ) => any
-    ? T[0]["logger"]
-    : never,
-): Promise<void> {
+async function syncWhiteLogos(logger: AstroIntegrationLogger): Promise<void> {
   const snapshot = await getLogoSnapshot();
   const cache = await readCache();
 

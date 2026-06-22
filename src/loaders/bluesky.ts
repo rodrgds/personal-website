@@ -1,4 +1,4 @@
-import type { Loader } from "astro:loaders";
+import type { Loader } from "astro/loaders";
 import { z } from "astro/zod";
 
 export function blueskyLoader(options: {
@@ -11,20 +11,7 @@ export function blueskyLoader(options: {
 
   return {
     name: "bluesky-loader",
-    load: async ({
-      store,
-      logger,
-    }: {
-      store: {
-        set: (entry: { id: string; data: any }) => void;
-        clear: () => void;
-      };
-      logger: {
-        info: (message: string) => void;
-        warn: (message: string) => void;
-        error: (message: string) => void;
-      };
-    }) => {
+    load: async ({ store, logger }) => {
       try {
         logger.info(`Fetching Bluesky posts for ${options.repo}`);
 
