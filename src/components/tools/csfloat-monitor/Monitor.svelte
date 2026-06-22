@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
+  import { SvelteSet } from "svelte/reactivity";
   import { get } from "svelte/store";
   import { settings } from "./storage";
   import { fetchListings } from "./api";
@@ -9,9 +10,9 @@
   import Label from "../../ui/Label.svelte";
   import Select from "../../ui/Select.svelte";
   import SearchableSelect from "../../ui/SearchableSelect.svelte";
-  import Tabs from "../../common/Tabs.svelte";
-  import Button from "../../common/Button.svelte";
-  import Checkbox from "../../common/Checkbox.svelte";
+  import Tabs from "../../ui/Tabs.svelte";
+  import Button from "../../ui/Button.svelte";
+  import Checkbox from "../../ui/Checkbox.svelte";
   import { fetchSchemas, rarities, paints, definitions, items } from "./schema";
 
   // -- CONSTANTS --
@@ -31,7 +32,7 @@
   };
 
   let timeoutId: any = null;
-  let lastSeenIds = new Set<string>();
+  let lastSeenIds = new SvelteSet<string>();
   let countdownMs = 0;
   let targetSleep = 0;
   let targetSleepMs = 0;
@@ -335,7 +336,7 @@
       // Trim cache
       if (lastSeenIds.size > 2000) {
         const arr = Array.from(lastSeenIds);
-        lastSeenIds = new Set(arr.slice(arr.length - 1000));
+        lastSeenIds = new SvelteSet(arr.slice(arr.length - 1000));
         stats.distinctSeen = lastSeenIds.size;
       }
 
@@ -559,7 +560,7 @@
                   >
                 </div>
                 <div class="proxies-list">
-                  {#each $settings.proxies as proxy, i}
+                  {#each $settings.proxies as proxy, i (i)}
                     <div class="proxy-row">
                       <div class="proxy-url-input">
                         <Input
@@ -750,10 +751,10 @@
                     { value: -1, label: "Any" },
                     ...(() => {
                       // Filter paints based on selected defIndex if valid
-                      let allowedPaints: Set | null = null;
+                      let allowedPaints: SvelteSet<number> | null = null;
 
                       if ($settings.defIndex !== -1) {
-                        allowedPaints = new Set();
+                        allowedPaints = new SvelteSet();
                         const defIdStr = $settings.defIndex.toString();
                         Object.values($items).forEach((item: any) => {
                           if (item.def === defIdStr && item.paint) {
@@ -1007,7 +1008,6 @@
                           const steps = 4;
                           const minP = ($settings.minPrice || 0) / 100;
                           const maxP = Math.min(($settings.maxPrice || 100000) / 100, 5000);
-                          const range = maxP - minP;
                           const examples = [];
 
                           if (maxP > minP) {
@@ -1029,7 +1029,7 @@
                             }
                           }
                           return examples;
-                        })() as example}
+                        })() as example (example.price)}
                           <div class="example-row">
                             <span class="ex-price"
                               >${example.price.toFixed(2)}</span
@@ -1331,19 +1331,6 @@
     opacity: 0.7;
   }
 
-  .proxy-list {
-    width: 100%;
-    min-height: 120px;
-    padding: 0.5rem;
-    background: var(--background-color);
-    border: 1px solid var(--border-color);
-    border-radius: 0.4rem;
-    color: var(--text-color);
-    font-family: var(--font-family-mono);
-    font-size: 0.8rem;
-    resize: vertical;
-  }
-
   @media (prefers-color-scheme: dark) {
     .log-success {
       color: #4ade80 !important;
@@ -1361,19 +1348,11 @@
     .stat-value-mini.small {
       opacity: 0.5 !important;
     }
-    .proxy-list {
-      background: #2a2a2a !important;
-      border-color: #333 !important;
-    }
     .section-title {
       color: #eee !important;
     }
     .form-section {
       background: transparent !important;
-      border-color: #2a2a2a !important;
-    }
-    .activity-feed {
-      background-color: transparent !important;
       border-color: #2a2a2a !important;
     }
     .log-container {
@@ -1625,17 +1604,6 @@
     flex: 1;
     min-height: 0;
   }
-  .code-bg {
-    background: rgba(0, 0, 0, 0.1);
-    padding: 0 4px;
-    border-radius: 4px;
-    font-family: var(--font-family-mono);
-  }
-
-  :global(.dark) .code-bg {
-    background: rgba(255, 255, 255, 0.15);
-  }
-
   .settings-header {
     margin-bottom: 0.75rem;
   }
@@ -1648,39 +1616,6 @@
     margin-top: 1.5rem;
     padding-top: 1rem;
     border-top: 1px solid var(--border-color);
-  }
-
-  .chart-wrapper {
-    margin-top: 0.5rem;
-    background: rgba(0, 0, 0, 0.03);
-    border-radius: 6px;
-    padding: 10px;
-    border: 1px solid var(--border-color);
-  }
-
-  :global(.dark) .chart-wrapper {
-    background: rgba(0, 0, 0, 0.2);
-  }
-
-  .chart-svg {
-    width: 100%;
-    height: 100px;
-    overflow: visible;
-  }
-
-  .chart-labels {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 4px;
-    font-size: 0.75rem;
-    color: var(--gray-color);
-    font-family: var(--font-family-mono);
-  }
-
-  .center-label {
-    font-size: 0.7rem;
-    opacity: 0.7;
-    text-transform: uppercase;
   }
 
   .examples-list {
@@ -1782,14 +1717,6 @@
   }
   :global(.dark) .logs-header {
     background: rgba(24, 24, 27, 0.5);
-  }
-  .log-subtitle {
-    font-size: 12px;
-    color: #6b7280;
-    font-family: "JetBrains Mono", monospace;
-  }
-  :global(.dark) .log-subtitle {
-    color: #9ca3af;
   }
   .log-container {
     flex: 1;

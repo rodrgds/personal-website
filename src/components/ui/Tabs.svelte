@@ -14,7 +14,7 @@
 
 <div class="tabs-container">
   <div class="tabs-header">
-    {#each items as item}
+    {#each items as item (item.value)}
       <button
         class="tab-btn {activeTab === item.value ? 'active' : ''}"
         on:click={() => selectTab(item.value)}

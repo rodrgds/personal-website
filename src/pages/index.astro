@@ -7,7 +7,7 @@ import { getCollection } from "astro:content";
 import { SOCIALS } from "../data/socials";
 import Logo from "../components/common/Logo.astro";
 import DateOfBirth from "../components/features/home/date-of-birth.svelte";
-import GitHubContributions from "../components/GitHubContributions.svelte";
+import GitHubContributions from "../components/features/home/GitHubContributions.svelte";
 
 // import projects from "../data/projects.json";
 
@@ -225,9 +225,6 @@ const posts = await getCollection("blog").then((posts) =>
           copyDomainToClipboard();
           return;
         }
-
-        const expandButton = target.closest("#expand-socials");
-        if (!expandButton) return;
 
         // Extra socials feature removed
       });

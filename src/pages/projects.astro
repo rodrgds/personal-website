@@ -3,25 +3,17 @@ import BaseHead from "../components/common/BaseHead.astro";
 import Header from "../components/common/Header.astro";
 import Footer from "../components/common/Footer.astro";
 import Card from "../components/Card.astro";
-import { SITE_TITLE, SITE_DESCRIPTION } from "../config";
-
-export interface Props {
-  title: string;
-  img: string;
-  stack: string[];
-  description: string;
-  link: string;
-}
-
-const { title, img, description, stack, link } = Astro.props as Props;
 
 import projects from "../data/projects.json";
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
-    <BaseHead title={"Projects | Rodrigo Dias"} description={"Some of my most notable projects."} />
+    <BaseHead
+      title={"Projects | Rodrigo Dias"}
+      description={"Some of my most notable projects."}
+    />
     <style>
       section {
         display: flex;
@@ -52,7 +44,6 @@ import projects from "../data/projects.json";
         }
         .stack {
           margin: 0 auto;
-          background-color: red;
         }
       }
     </style>
@@ -62,7 +53,25 @@ import projects from "../data/projects.json";
     <main>
       <section>
         <div class="projects-grid">
-          {projects.map((project: { logo?: string; name: string; technologies: string[]; description: string; link?: string }) => <Card title={project.name} img={project.logo || ''} stack={project.technologies} description={project.description} link={project.link || ''} />)}
+          {
+            projects.map(
+              (project: {
+                logo?: string;
+                name: string;
+                technologies: string[];
+                description: string;
+                link?: string;
+              }) => (
+                <Card
+                  title={project.name}
+                  img={project.logo || ""}
+                  stack={project.technologies}
+                  description={project.description}
+                  link={project.link || ""}
+                />
+              ),
+            )
+          }
         </div>
       </section>
     </main>

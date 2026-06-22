@@ -22,10 +22,14 @@
   --font-scale: 1.1em;
 
   --background-color: #fff;
+  --bg-secondary: #f8f9fa;
   --heading-color: #222;
   --text-color: #444;
+  --text-muted: #6b7280;
   --link-color: #3a6eaa;
+  --accent: #3a6eaa;
   --visited-color: #6f4fb9;
+  --error: #dc2626;
   --code-color: #222;
   --blockquote-color: #222;
   --border-color: #e5e7eb;
@@ -36,10 +40,14 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --background-color: #1e1e1e;
+    --bg-secondary: #252525;
     --heading-color: #eee;
     --text-color: #ddd;
+    --text-muted: #9ca3af;
     --link-color: #ff8800;
+    --accent: #ff8800;
     --visited-color: #cc6f00;
+    --error: #f87171;
     --code-color: #ddd;
     --blockquote-color: #ccc;
     --border-color: #374151;

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { actions } from "astro:actions";
+  import { onMount } from "svelte";
 
   interface ContributionDay {
     date: string;
@@ -111,15 +112,12 @@
   }
 
   function filterFutureDays(weeks: ContributionWeek[]): ContributionWeek[] {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = Date.now();
 
     return weeks
       .map((week) => ({
         days: week.days.filter((day) => {
-          const dayDate = new Date(day.date);
-          dayDate.setHours(0, 0, 0, 0);
-          return dayDate <= today;
+          return new Date(day.date).getTime() <= now;
         }),
       }))
       .filter((week) => week.days.length > 0);
@@ -154,8 +152,8 @@
     }
   }
 
-  $effect(() => {
-    fetchContributions();
+  onMount(() => {
+    void fetchContributions();
     const interval = setInterval(fetchContributions, 1000 * 60 * 60);
     return () => clearInterval(interval);
   });
@@ -172,7 +170,7 @@
     <div class="header-right">
       <div class="legend">
         <span class="legend-label">Less</span>
-        {#each colorScale as color}
+        {#each colorScale as color, index (index)}
           <div class="legend-day" style="background-color: {color}"></div>
         {/each}
         <span class="legend-label">More</span>
@@ -211,9 +209,9 @@
           <span></span>
         </div>
         <div class="contributions-grid">
-          {#each contributions as week}
+          {#each contributions as week, index (week.days[0]?.date ?? index)}
             <div class="week">
-              {#each week.days as day}
+              {#each week.days as day (day.date)}
                 <div
                   class="day"
                   class:day-empty={day.level === 0}
@@ -225,7 +223,7 @@
           {/each}
         </div>
         <div class="month-labels">
-          {#each monthLabels as label}
+          {#each monthLabels as label (`${label.month}-${label.index}`)}
             <span
               class="month-label"
               style="left: calc(var(--contrib-cell-size) * {label.index})"
@@ -235,7 +233,7 @@
           {/each}
         </div>
         <div class="year-labels">
-          {#each yearLabels as label}
+          {#each yearLabels as label (label.year)}
             <span
               class="year-label"
               style="left: calc(var(--contrib-cell-size) * {label.startWeek})"

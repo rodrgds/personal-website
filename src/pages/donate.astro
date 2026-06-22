@@ -4,10 +4,10 @@ import Header from "../components/common/Header.astro";
 import Footer from "../components/common/Footer.astro";
 import { SITE_TITLE, SITE_DESCRIPTION } from "../config";
 import Logo from "../components/common/Logo.astro";
-import CryptoWallet from "../components/CryptoWallet.astro";
+import CryptoWallet from "../components/features/donate/CryptoWallet.astro";
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <BaseHead title={"Donate"} description={SITE_DESCRIPTION} />
@@ -42,7 +42,8 @@ import CryptoWallet from "../components/CryptoWallet.astro";
         {" "} Ko-fi
       </h3>
       <p>
-        Buy me a coffee or support me with a one-time or monthly donation on Ko-fi.
+        Buy me a coffee or support me with a one-time or monthly donation on
+        Ko-fi.
       </p>
       <a class="button" href="https://url.rgo.pt/donate" target="_blank"
         >Support me on Ko-fi</a

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { actions } from "astro:actions";
+  import { onMount } from "svelte";
 
   let data: any = $state(null);
   let error: string | null = $state(null);
@@ -10,7 +11,7 @@
     error = null;
 
     try {
-      const result = await actions.getLastfmScrobbles({ limit: 20 });
+      const result = await actions.getLastfmData({ limit: 20 });
 
       if (result.error) {
         error = result.error.message || "Failed to load scrobbles";
@@ -18,7 +19,7 @@
       }
 
       if (result.data) {
-        data = result.data;
+        data = result.data.recenttracks;
       }
     } catch (e) {
       error = e instanceof Error ? e.message : "An unexpected error occurred";
@@ -27,8 +28,8 @@
     }
   }
 
-  $effect(() => {
-    loadScrobbles();
+  onMount(() => {
+    void loadScrobbles();
   });
 
   function formatDate(timestamp: string) {
@@ -64,7 +65,7 @@
     </div>
 
     <div class="tracks-list">
-      {#each data.track as track}
+      {#each data.track as track, index (track.url ?? `${track.artist.name}-${track.name}-${track.date?.uts ?? index}`)}
         {@const isNowPlaying = track["@attr"]?.nowplaying === "true"}
         <div class="track-item" class:now-playing={isNowPlaying}>
           <div class="track-header">
