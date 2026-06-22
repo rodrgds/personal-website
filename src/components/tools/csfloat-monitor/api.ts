@@ -9,7 +9,7 @@ export interface FetchResult {
 }
 
 export async function fetchListings(
-  settings: MonitorSettings
+  settings: MonitorSettings,
 ): Promise<FetchResult> {
   /* eslint-disable @typescript-eslint/naming-convention */
   const params = new URLSearchParams({
@@ -63,12 +63,12 @@ export async function fetchListings(
     const localProxies = settings.proxies.filter(
       (p) =>
         p.isDirect &&
-        (p.url.includes("localhost") || p.url.includes("127.0.0.1"))
+        (p.url.includes("localhost") || p.url.includes("127.0.0.1")),
     );
     const otherProxies = settings.proxies.filter(
       (p) =>
         !p.isDirect ||
-        (!p.url.includes("localhost") && !p.url.includes("127.0.0.1"))
+        (!p.url.includes("localhost") && !p.url.includes("127.0.0.1")),
     );
 
     // Shuffle local proxies
