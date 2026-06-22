@@ -1,36 +1,17 @@
 # Favorites Images
 
-This directory contains cover images for the favorites page.
+This directory contains cover images for favorites that do not have an external
+metadata provider.
 
-## Required Images:
+Movie and TV posters are loaded from TMDB using the IDs in
+`src/data/favorites.ts`; do not add those posters here.
 
-### Movies (2:3 aspect ratio recommended)
-- `interstellar.jpg` - Interstellar movie poster
-- `blade-runner-2049.jpg` - Blade Runner 2049 poster  
-- `the-social-network.jpg` - The Social Network poster
-- `her.jpg` - Her movie poster
+## Image guidelines
 
-### TV Shows (2:3 aspect ratio recommended)
-- `mr-robot.jpg` - Mr. Robot show poster
-- `silicon-valley.jpg` - Silicon Valley show poster
-- `black-mirror.jpg` - Black Mirror show poster
+- Podcast covers should use a 1:1 aspect ratio.
+- Book covers should use a 3:4 aspect ratio.
+- Use high-quality images (at least 300px wide).
+- Optimize images for the web.
+- Ensure you have rights to use the images.
 
-### Podcasts (1:1 aspect ratio recommended)
-- `lex-fridman.jpg` - Lex Fridman Podcast cover
-- `syntax.jpg` - Syntax podcast cover
-- `acquired.jpg` - Acquired podcast cover
-
-### Books (3:4 aspect ratio recommended)
-- `sapiens.jpg` - Sapiens book cover
-- `the-pragmatic-programmer.jpg` - The Pragmatic Programmer book cover
-- `atomic-habits.jpg` - Atomic Habits book cover
-- `zero-to-one.jpg` - Zero to One book cover
-
-## Image Guidelines:
-- Use high-quality images (at least 300px wide)
-- Optimize for web (use tools like ImageOptim or similar)
-- Consider using WebP format for better compression
-- Ensure you have rights to use the images (fair use for covers)
-
-## Fallback:
-If an image is missing, the alt text will be displayed instead.
+If an image is unavailable, the favorite's configured icon is displayed.

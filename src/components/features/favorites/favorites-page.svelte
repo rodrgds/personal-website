@@ -1,131 +1,25 @@
 <script>
   import { onMount } from "svelte";
+  import { SvelteSet } from "svelte/reactivity";
 
-  // The component expects a collection of favorites entries
-  export let favorites;
-
-  // Transform collection entries into the format the component expects
-  const favoritesData = (() => {
-    const grouped = {};
-
-    const typeToSection = {
-      movie: "movies",
-      show: "shows",
-      podcast: "podcasts",
-      book: "books",
-      blog: "blogs",
-      article: "articles",
-      video: "videos",
-      cool: "cool",
-    };
-
-    const sectionOrder = [
-      "movies",
-      "shows",
-      "podcasts",
-      "books",
-      "blogs",
-      "articles",
-      "videos",
-      "cool",
-    ];
-
-    for (const entry of favorites) {
-      const section =
-        typeToSection[(entry.data && entry.data.type) || entry.type] || "cool";
-      if (!grouped[section]) grouped[section] = [];
-
-      const item = {
-        title: entry.data?.title ?? entry.title,
-        rating: entry.data?.rating ?? entry.rating,
-        categories: entry.data?.categories ?? entry.categories ?? [],
-      };
-
-      if (entry.data?.year) item.year = entry.data.year;
-      if (entry.data?.author) item.author = entry.data.author;
-      if (entry.data?.url) item.url = entry.data.url;
-      if (entry.data?.image) item.image = entry.data.image;
-      if (entry.data?.icon) item.icon = entry.data.icon;
-
-      // Comment fallback: prefer frontmatter, otherwise first paragraph of body
-      if (entry.data && entry.data.comment) {
-        item.comment = entry.data.comment;
-      } else if (entry.body) {
-        const body = String(entry.body).trim();
-        const parts = body
-          .split(/\n\n+/)
-          .map((p) => p.trim())
-          .filter(Boolean);
-        if (parts.length > 0) item.comment = parts[0];
-      }
-
-      // Favorite episodes fallback: prefer frontmatter, otherwise parse from body
-      if (entry.data && entry.data.favoriteEpisodes) {
-        item.favoriteEpisodes = entry.data.favoriteEpisodes;
-      } else if (entry.body) {
-        const body = String(entry.body);
-        const match = body.match(/##\s*Favorite episodes\s*\n([\s\S]*)/i);
-        if (match) {
-          const list = match[1]
-            .split(/\n/)
-            .map((l) => l.trim())
-            .filter((l) => l.startsWith("-"))
-            .map((l) => l.replace(/^[-\s]+/, ""));
-
-          const eps = list.map((line) => {
-            const m = line.match(/^(#?\d+)?\s*[-—]?\s*(.*)$/);
-            if (m) return { number: m[1] || undefined, title: m[2].trim() };
-            return { title: line };
-          });
-          if (eps.length) item.favoriteEpisodes = eps;
-        }
-      }
-
-      grouped[section].push(item);
-    }
-
-    return grouped;
-  })();
+  export let sections;
 
   // Reactive state
-  let activeFilters = new Set();
-  let expandedItems = new Set();
+  let activeFilters = new SvelteSet();
+  let expandedItems = new SvelteSet();
   let filterLogic = "AND";
   let isMobile = false;
   let sortBy = "alpha";
   let mounted = false;
-  let collapsedSections = new Set();
-
-  const getDefaultIcon = (section) => {
-    switch (section) {
-      case "movies":
-        return "🎬";
-      case "shows":
-        return "📺";
-      case "podcasts":
-        return "🎧";
-      case "books":
-        return "📚";
-      case "blogs":
-        return "✍️";
-      case "articles":
-        return "📄";
-      case "videos":
-        return "▶️";
-      case "cool":
-        return "⭐";
-      default:
-        return "⭐";
-    }
-  };
+  let collapsedSections = new SvelteSet();
 
   $: showClearButton = activeFilters.size > 0;
 
   // Get all available categories
   $: allCategories = (() => {
-    const categories = new Set();
-    Object.values(favoritesData).forEach((items) => {
-      items.forEach((item) => {
+    const categories = new SvelteSet();
+    sections.forEach((section) => {
+      section.items.forEach((item) => {
         if (item.categories) {
           item.categories.forEach((cat) => categories.add(cat));
         }
@@ -135,28 +29,17 @@
   })();
 
   function toggleSection(section) {
-    const newCollapsed = new Set(collapsedSections);
+    const newCollapsed = new SvelteSet(collapsedSections);
     if (newCollapsed.has(section)) newCollapsed.delete(section);
     else newCollapsed.add(section);
     collapsedSections = newCollapsed;
   }
 
   $: visibleSections = (() => {
-    const order = [
-      "movies",
-      "shows",
-      "podcasts",
-      "books",
-      "blogs",
-      "articles",
-      "videos",
-      "cool",
-    ];
+    const visible = [];
 
-    const sections = [];
-
-    const pushSection = (section, items) => {
-      const visibleItems = items.filter((item) => {
+    for (const section of sections) {
+      const visibleItems = section.items.filter((item) => {
         if (activeFilters.size === 0) return true;
         if (filterLogic === "AND") {
           return Array.from(activeFilters).every((filter) =>
@@ -184,22 +67,12 @@
         }
       });
 
-      if (visibleItems.length > 0) {
-        sections.push({ section, items: sortedItems, visible: true });
+      if (sortedItems.length > 0) {
+        visible.push({ ...section, items: sortedItems });
       }
-    };
-
-    // Add in the preferred order first
-    for (const s of order) {
-      if (favoritesData[s]) pushSection(s, favoritesData[s]);
     }
 
-    // Add any unexpected sections afterward
-    for (const [s, items] of Object.entries(favoritesData)) {
-      if (!order.includes(s)) pushSection(s, items);
-    }
-
-    return sections;
+    return visible;
   })();
 
   // Functions
@@ -207,7 +80,7 @@
     const urlParams = new URLSearchParams(window.location.search);
     const tagsParam = urlParams.get("tags");
     if (tagsParam) {
-      activeFilters = new Set(tagsParam.split(",").filter(Boolean));
+      activeFilters = new SvelteSet(tagsParam.split(",").filter(Boolean));
     }
   }
 
@@ -224,7 +97,7 @@
   function toggleFilter(category) {
     if (!category) return;
 
-    const newFilters = new Set(activeFilters);
+    const newFilters = new SvelteSet(activeFilters);
     if (newFilters.has(category)) {
       newFilters.delete(category);
     } else {
@@ -235,8 +108,8 @@
   }
 
   function clearFilters() {
-    activeFilters = new Set();
-    expandedItems = new Set();
+    activeFilters = new SvelteSet();
+    expandedItems = new SvelteSet();
     updateURL();
   }
 
@@ -244,7 +117,7 @@
     // Only allow expanding on mobile
     if (!isMobile) return;
 
-    const newExpanded = new Set(expandedItems);
+    const newExpanded = new SvelteSet(expandedItems);
     if (newExpanded.has(itemId)) {
       newExpanded.delete(itemId);
     } else {
@@ -276,7 +149,7 @@
       !event.target.closest(".favorite-item") &&
       !event.target.closest(".filter-controls")
     ) {
-      expandedItems = new Set();
+      expandedItems = new SvelteSet();
     }
   }
 
@@ -303,8 +176,8 @@
   }
 
   function goToRandomFavorite() {
-    const itemsWithUrl = Object.values(favoritesData)
-      .flatMap((items) => items)
+    const itemsWithUrl = sections
+      .flatMap((section) => section.items)
       .filter((item) => !!item.url);
 
     if (itemsWithUrl.length === 0) return;
@@ -390,7 +263,7 @@
 
     <div class="filter-tags-container">
       <div class="filter-tags">
-        {#each allCategories as category}
+        {#each allCategories as category (category)}
           <button
             class="filter-chip"
             class:active={activeFilters.has(category)}
@@ -407,9 +280,8 @@
     {/if}
   </div>
 
-  {#each visibleSections as { section, items, visible }}
-    {#if visible}
-      <section class="content-section">
+  {#each visibleSections as { id: section, title: sectionTitle, defaultIcon, items } (section)}
+    <section class="content-section">
         <h2 class="section-title">
           <button
             class:collapsed={collapsedSections.has(section)}
@@ -420,16 +292,14 @@
             <span class="collapse-icon"
               >{collapsedSections.has(section) ? "▶" : "▼"}</span
             >
-            {section === "cool"
-              ? "Cool Stuff"
-              : section.charAt(0).toUpperCase() + section.slice(1)}
+            {sectionTitle}
             <span class="item-count">({items.length})</span>
           </button>
         </h2>
         {#if !collapsedSections.has(section)}
           <div class="items-list">
-            {#each items as item, index}
-              {@const itemId = `${section}-${index}`}
+            {#each items as item (item.id)}
+              {@const itemId = item.id}
               {@const isExpanded = expandedItems.has(itemId)}
               <div
                 class="favorite-item"
@@ -455,7 +325,7 @@
                     />
                   {:else}
                     <div class="item-icon">
-                      {item.icon || getDefaultIcon(section)}
+                      {item.icon || defaultIcon}
                     </div>
                   {/if}
                 </div>
@@ -521,7 +391,7 @@
                     <div class="favorite-episodes">
                       <h4>Favorite Episodes:</h4>
                       <ul>
-                        {#each item.favoriteEpisodes as episode}
+                        {#each item.favoriteEpisodes as episode (episode.number ?? episode.title)}
                           <li>
                             {#if episode.number}
                               <strong
@@ -542,7 +412,7 @@
                   <!-- Tags -->
                   <div class="item-tags">
                     <div class="tags-list">
-                      {#each item.categories || [] as category}
+                      {#each item.categories || [] as category (category)}
                         <button
                           class="tag-pill"
                           class:highlighted={isTagHighlighted(category, itemId)}
@@ -559,9 +429,13 @@
             {/each}
           </div>
         {/if}
-      </section>
-    {/if}
+    </section>
   {/each}
+
+  <div class="tmdb-credit">
+    <img src="/logos/tmdb.svg" alt="TMDB" />
+    <span>This product uses the TMDB API but is not endorsed or certified by TMDB.</span>
+  </div>
 </div>
 
 <style>
@@ -570,6 +444,20 @@
     margin-left: 0;
     margin-right: auto;
     padding: 0;
+  }
+
+  .tmdb-credit {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 2rem;
+    color: var(--gray-color);
+    font-size: 0.75rem;
+  }
+
+  .tmdb-credit img {
+    width: 4rem;
+    height: auto;
   }
 
   .header-section {

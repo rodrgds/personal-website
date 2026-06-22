@@ -3,16 +3,19 @@ import BaseHead from "../components/common/BaseHead.astro";
 import Header from "../components/common/Header.astro";
 import Footer from "../components/common/Footer.astro";
 import { SITE_TITLE } from "../config";
-import { getCollection } from "astro:content";
-import FavoritesPage from "../components/favorites-page.svelte";
+import FavoritesPage from "../components/features/favorites/favorites-page.svelte";
+import { loadFavorites } from "../lib/favorites/load";
 
-const favorites = await getCollection("favorites");
+export const prerender = true;
+
+const sections = await loadFavorites();
 
 const title = "Favorites";
-const description = "My favorite movies, shows, podcasts, books, blogs, articles, videos, and cool stuff.";
+const description =
+  "My favorite movies, shows, podcasts, books, blogs, articles, videos, and cool stuff.";
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <BaseHead {title} {description} />
@@ -20,7 +23,7 @@ const description = "My favorite movies, shows, podcasts, books, blogs, articles
   <body>
     <Header title={SITE_TITLE} />
     <main>
-      <FavoritesPage client:load {favorites} />
+      <FavoritesPage client:load {sections} />
     </main>
     <Footer />
   </body>

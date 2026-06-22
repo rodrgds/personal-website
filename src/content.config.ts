@@ -128,41 +128,6 @@ const toolsCollection = defineCollection({
   }),
 });
 
-const episodeSchema = z.object({
-  number: z.string().optional(),
-  guest: z.string().optional(),
-  title: z.string(),
-});
-
-const favoritesCollection = defineCollection({
-  loader: glob({
-    // Only load markdown/mdx files from the favorites folders to avoid picking
-    // up the archived YAML backups in _yaml-backup which can create duplicates.
-    pattern: "**/*.{md,mdx}",
-    base: "./src/content/favorites",
-  }),
-  schema: z.object({
-    title: z.string(),
-    type: z.enum([
-      "movie",
-      "show",
-      "podcast",
-      "book",
-      "blog",
-      "article",
-      "video",
-      "cool",
-    ]),
-    rating: z.number().min(1).max(5),
-    year: z.string().optional(),
-    author: z.string().optional(),
-    url: z.url().optional(),
-    image: z.string().optional(),
-    icon: z.string().optional(),
-    categories: z.array(z.string()).default([]),
-  }),
-});
-
 export const collections = {
   blog: blogCollection,
   experience: experienceCollection,
@@ -171,7 +136,6 @@ export const collections = {
   certifications: certificationsCollection,
   honors: honorsCollection,
   tools: toolsCollection,
-  favorites: favoritesCollection,
   thoughts: defineCollection({
     loader: blueskyLoader({
       repo: "rgo.pt",
