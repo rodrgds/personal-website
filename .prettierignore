@@ -7,6 +7,9 @@
 lexicons/
 src/lexicons/
 
+# Generated files
+src/data/white-logos.ts
+
 # Build outputs
 dist
 .astro
