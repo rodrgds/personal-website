@@ -1,0 +1,48 @@
+---
+name: "Compiler Register Allocation"
+startDate: "2026-05"
+endDate: "2026-05"
+repo: "AlexDTT/CompilerRegisterAllocationProject"
+logo: "registerallocation"
+tags:
+  [
+    "C++",
+    "Compilers",
+    "Graph Coloring",
+    "DSatur",
+    "Branch and Bound",
+    "Register Allocation",
+  ]
+category: "university"
+featured: false
+status: "archived"
+cvRole: "3-person team · Algorithm Design"
+bullets:
+  - "Built a global register allocator that merges live ranges into webs, constructs an interference graph, and colors it under a bounded register count"
+  - "Implemented baseline coloring, bounded spilling, live-range splitting, DSatur ordering, graph-class fast paths, and guarded branch-and-bound refinement"
+  - "Added a custom free-split recovery mode, marker-preserving output, DOT graph exports, deterministic integration tests, and presentation-ready visualizations"
+related: ["feup"]
+---
+
+import CVImage from "../../components/features/cv/CVImage.astro";
+import CVImageGallery from "../../components/features/cv/CVImageGallery.astro";
+import Logo from "../../components/common/Logo.astro";
+import basicGraph from "../../assets/cv/university/register-allocation/graphs/basic.png";
+import noninterferenceGraph from "../../assets/cv/university/register-allocation/graphs/noninterference-chain.png";
+import spillingGraph from "../../assets/cv/university/register-allocation/graphs/spilling.png";
+import splittingGraph from "../../assets/cv/university/register-allocation/graphs/splitting.png";
+import webFusionGraph from "../../assets/cv/university/register-allocation/graphs/web-fusion.png";
+
+This <Logo fixed src="cpp" /> **C++** compiler back-end tool takes variable live ranges, merges compatible ranges into **webs**, builds an interference graph, and allocates those webs to a limited set of physical registers.
+
+Beyond the supplied greedy baseline, our custom allocator combines graph-class shortcuts, **DSatur** ordering, and a bounded branch-and-bound pass for smaller graphs. When coloring cannot avoid memory, the tool supports explicit spilling and marker-preserving live-range splitting, including a `free_split` recovery strategy that evaluates candidate splits and keeps only measurable improvements.
+
+### Interference graph examples
+
+<CVImageGallery columns={2} mobileColumns={1}>
+  <CVImage src={basicGraph} alt="Basic colored interference graph with register reuse" />
+  <CVImage src={spillingGraph} alt="Three-clique interference graph with one web spilled to memory" />
+  <CVImage src={splittingGraph} alt="Interference graph before and after splitting a live range" />
+  <CVImage src={noninterferenceGraph} alt="Non-interference chain showing when registers can be reused" />
+  <CVImage src={webFusionGraph} alt="Interference graph showing transitive web fusion" />
+</CVImageGallery>

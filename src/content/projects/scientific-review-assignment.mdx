@@ -1,0 +1,33 @@
+---
+name: "Scientific Review Assignment"
+startDate: "2026-03"
+endDate: "2026-05"
+repo: "AlexDTT/MaxflowProject"
+logo: "maxflow"
+tags: ["C++", "Graph Algorithms", "Maximum Flow", "Ford-Fulkerson", "Edmonds-Karp"]
+category: "university"
+featured: false
+status: "archived"
+cvRole: "3-person team · Algorithm Design"
+bullets:
+  - "Modeled reviewer-to-paper assignment as a capacitated bipartite flow network with expertise, review-count, and reviewer-capacity constraints"
+  - "Implemented Ford-Fulkerson and Edmonds-Karp in C++, plus batch/interactive workflows, CSV parsing, assignment exports, and reviewer-absence risk analysis"
+  - "Documented graph construction, complexity, and algorithm tradeoffs with generated Doxygen and Graphviz visualizations"
+related: ["feup"]
+---
+
+import CVImage from "../../components/features/cv/CVImage.astro";
+import Logo from "../../components/common/Logo.astro";
+import architecture from "../../assets/cv/university/maxflow/architecture.png";
+import exampleGraph from "../../assets/cv/university/maxflow/example-graph.png";
+
+This <Logo fixed src="cpp" /> **C++** tool turns scientific-paper review assignment into a maximum-flow problem. Submissions and reviewers form the two sides of a bipartite network; capacities encode minimum reviews per paper, maximum workload per reviewer, and primary/secondary expertise rules.
+
+Both **Ford-Fulkerson** and **Edmonds-Karp** are available so their behavior and complexity can be compared on the same datasets. The application supports an interactive terminal UI and deterministic batch mode, writes assignments to CSV, and can test how removing a reviewer affects coverage.
+
+### Flow-network model
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
+  <CVImage src={architecture} alt="Architecture of the scientific review assignment maximum-flow pipeline" />
+  <CVImage src={exampleGraph} alt="Example maximum-flow assignment from submissions to reviewers" />
+</div>
