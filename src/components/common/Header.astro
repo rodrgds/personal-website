@@ -50,7 +50,7 @@ import { Moon, Sun } from "lucide-astro";
         target="_blank"
         title="My X account"
       >
-        𝕏
+        <span class="x-icon" aria-hidden="true">𝕏</span>
       </HeaderLink>
       <HeaderLink
         class="hide-sometimes"
@@ -103,7 +103,7 @@ import { Moon, Sun } from "lucide-astro";
   .flex {
     display: flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: 0.2rem;
     color: var(--link-color);
   }
 
@@ -114,6 +114,10 @@ import { Moon, Sun } from "lucide-astro";
   }
 
   .flex :global(a) {
+    display: inline-grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
     color: var(--link-color);
     font-family: var(--font-family);
     font-size: 1rem;
@@ -127,6 +131,11 @@ import { Moon, Sun } from "lucide-astro";
 
   .hide-sometimes {
     display: none;
+  }
+
+  .x-icon {
+    font-size: 1.28rem;
+    line-height: 1;
   }
 
   .theme-toggle {
