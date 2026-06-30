@@ -243,7 +243,9 @@ const posts = await getCollection("blog").then((posts) =>
 
   h1 {
     margin: 0 0 1rem;
-    max-width: 12ch;
+    max-width: 24ch;
+    font-size: clamp(1.9rem, 3vw, 2.2rem);
+    line-height: 1.08;
     letter-spacing: 0;
   }
 
@@ -319,6 +321,7 @@ const posts = await getCollection("blog").then((posts) =>
     display: inline-flex;
     align-items: baseline;
     gap: 0.12em;
+    white-space: nowrap;
   }
 
   .name-toggle {
@@ -581,7 +584,8 @@ const posts = await getCollection("blog").then((posts) =>
   @media (max-width: 560px) {
     h1 {
       max-width: none;
-      font-size: 2.35rem;
+      font-size: clamp(1.45rem, 6vw, 1.7rem);
+      line-height: 1.12;
     }
 
     .writings li {
