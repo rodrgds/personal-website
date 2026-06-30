@@ -1,39 +1,41 @@
 ---
 export interface Props {
   title: string;
-  img: string;
+  img?: string;
   stack: string[];
   description: string;
-  link: string;
+  link?: string;
 }
 
 const { title, img, stack, description, link } = Astro.props as Props;
+const Tag = link ? "a" : "article";
 ---
 
-<a href={link} class="project">
+<Tag href={link} class:list={["project", !link && "project-static"]}>
   <div class="card-container">
-    <div class="img-container">
-      <img src={img} alt={title} />
+    <div class:list={["img-container", !img && "text-preview"]}>
+      {img && <img src={img} alt={title} />}
       <p>{description}</p>
     </div>
-    <h1>{title}</h1>
+    <h2>{title}</h2>
     <ul class="stack">
       {stack.map((item: string) => <li>{item}</li>)}
     </ul>
   </div>
-</a>
+</Tag>
 <style>
-  a {
+  .project {
+    display: block;
     text-decoration: none;
     color: inherit;
   }
 
-  a:hover::before {
-    width: 0;
+  .project:hover {
+    text-decoration: none;
   }
 
-  a:hover {
-    text-decoration: none;
+  .project-static {
+    cursor: default;
   }
 
   p {
@@ -50,6 +52,18 @@ const { title, img, stack, description, link } = Astro.props as Props;
     aspect-ratio: 16 / 10;
     overflow: hidden;
     border-bottom: 1px solid var(--border-color);
+  }
+
+  .text-preview {
+    display: flex;
+    align-items: center;
+    min-height: 8.5rem;
+    aspect-ratio: auto;
+    background: color-mix(in srgb, var(--bg-secondary) 72%, transparent);
+  }
+
+  .text-preview p {
+    padding: 1rem;
   }
 
   .card-container {
@@ -85,7 +99,7 @@ const { title, img, stack, description, link } = Astro.props as Props;
     opacity: 0.92;
   }
 
-  h1 {
+  h2 {
     font-size: 1.05rem;
     padding: 0.9rem 1rem 0.35rem;
     margin: 0;

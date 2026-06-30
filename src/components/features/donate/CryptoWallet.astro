@@ -18,6 +18,8 @@ const canvasId = `qr-canvas-${safeCryptoId}`;
 const componentId = `crypto-component-${safeCryptoId}`;
 const modalId = `qr-modal-${componentId}`; // Unique modal ID per component instance
 const modalTitleId = `qr-modal-title-${componentId}`;
+const emptyQrImageSrc =
+  "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
 ---
 
 <div class="crypto-component-wrapper" id={componentId}>
@@ -77,7 +79,8 @@ const modalTitleId = `qr-modal-title-${componentId}`;
           <img
             class="modal-qr-image"
             alt="Enlarged QR Code"
-            src=""
+            src={emptyQrImageSrc}
+            data-empty-src={emptyQrImageSrc}
             style="display: block; margin: 0 auto; image-rendering: pixelated;"
           />
           <p
@@ -135,7 +138,7 @@ const modalTitleId = `qr-modal-title-${componentId}`;
       modalElement.dataset.triggeredBy = canvasElement.id;
     } catch (err: unknown) {
       console.error("Error generating QR code data URL for modal:", err);
-      modalQrImage.src = "";
+      modalQrImage.src = modalQrImage.dataset.emptySrc || "";
       modalQrImage.alt = "Error loading QR Code";
       modalQrAddress.textContent = "Could not load QR Code.";
       modalElement.style.display = "flex";
@@ -155,7 +158,7 @@ const modalTitleId = `qr-modal-title-${componentId}`;
     const modalQrAddress = modalElement.querySelector(
       ".modal-qr-address",
     ) as HTMLElement;
-    if (modalQrImage) modalQrImage.src = "";
+    if (modalQrImage) modalQrImage.src = modalQrImage.dataset.emptySrc || "";
     if (modalQrAddress) modalQrAddress.textContent = "";
 
     // Return focus to the element that opened the modal (optional but good practice)

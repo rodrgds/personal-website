@@ -318,7 +318,7 @@ const TEMPLATE = String.raw`#import "@preview/scienceicons:0.1.0": orcid-icon
       if role == "" {
         [*#name* #if url != "" and dates != "" [ (#link("https://" + url)[#label])]]
       } else {
-        [*#role*, #name #if url != "" and dates != ""  [ (#link("https://" + url)[#label])]]
+        [*#name* #text(fill: rgb("6F6E69"), size: 8.6pt)[(#role)] #if url != "" and dates != "" [ (#link("https://" + url)[#label])]]
       }
     },
     right: {

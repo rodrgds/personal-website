@@ -57,7 +57,16 @@ const { title, description, image = "" } = Astro.props;
       if (!(anchor instanceof HTMLAnchorElement)) return false;
       if (!anchor.href) return false;
       if (anchor.closest("nav, button, .socials")) return false;
-      if (anchor.classList.contains("download-pill")) return false;
+      if (
+        anchor.classList.contains("download-pill") ||
+        anchor.classList.contains("button") ||
+        anchor.classList.contains("project")
+      ) {
+        return false;
+      }
+      if (anchor.querySelector(".card-container, div, p, ul, ol, h1, h2, h3")) {
+        return false;
+      }
       if (anchor.querySelector("img, svg, video, picture, iframe"))
         return false;
 

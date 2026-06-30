@@ -260,27 +260,14 @@ a[data-animated-link="true"] .animated-link-line {
   text-underline-offset: 0.16em;
 }
 
-a[data-animated-link="true"] .animated-link-line::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: 0.02em;
-  width: 0;
-  height: 1px;
-  border-radius: 999px;
-  background-color: var(--link-color);
-  opacity: 0.86;
-  transition: width 0.24s ease;
-}
-
 a[data-animated-link="true"]:hover,
 a[data-animated-link="true"]:focus-visible {
   color: var(--link-color);
 }
 
-a[data-animated-link="true"]:hover .animated-link-line::before,
-a[data-animated-link="true"]:focus-visible .animated-link-line::before {
-  width: 100%;
+a[data-animated-link="true"]:hover .animated-link-line,
+a[data-animated-link="true"]:focus-visible .animated-link-line {
+  text-decoration-color: currentColor;
 }
 
 a .animated-link-token {

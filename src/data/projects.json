@@ -1,6 +1,5 @@
 [
   {
-    "logo": "/logos/damesadaaomilhao.webp",
     "name": "From Allowance to Million",
     "description": "The Complete Guide to Your Personal Finances - a Portuguese book for young beginners in personal finance, investments, savings, and taxes.",
     "technologies": ["Markdown", "Git", "Gumroad"],
@@ -17,7 +16,6 @@
     "is_maintained": true
   },
   {
-    "logo": "/logos/youtube.webp",
     "name": "Educational YouTube Channel",
     "description": "A Portuguese YouTube channel with educational videos about computer science, mathematics, and programming, among other topics.",
     "technologies": ["YouTube", "OBS Studio", "DaVinci Resolve"],
@@ -40,7 +38,6 @@
     "is_maintained": true
   },
   {
-    "logo": "/logos/taw.webp",
     "name": "The Actual World",
     "description": "A complete social network platform focused on privacy and authentic connections.",
     "technologies": [
