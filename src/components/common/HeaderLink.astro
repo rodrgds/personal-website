@@ -20,7 +20,9 @@ const target = external ? "_blank" : undefined;
   class:list={[className, { active: isActive }]}
   {...props}
 >
-  <slot />
+  <span class="label">
+    <slot />
+  </span>
   {
     external && (
       <span class="external-mark" aria-hidden="true">
@@ -28,35 +30,63 @@ const target = external ? "_blank" : undefined;
       </span>
     )
   }
+  {
+    isActive && (
+      <span
+        class="active-line"
+        transition:name="active-nav"
+        aria-hidden="true"
+      />
+    )
+  }
 </a>
 
 <style>
   a {
-    display: inline-block;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25em;
+    padding-bottom: 0.22rem;
     color: var(--text-muted);
     font-size: 0.95rem;
     line-height: 1.2;
     text-decoration: none;
-    border-bottom: 1px solid transparent;
     transition:
       color 0.16s ease,
-      border-color 0.16s ease;
+      opacity 0.16s ease,
+      transform 0.16s ease;
   }
 
   a:hover,
   a:focus-visible {
     color: var(--heading-color);
     text-decoration: none;
-    border-color: var(--border-color);
+    transform: translateY(-1px);
   }
 
   a.active {
     color: var(--heading-color);
-    border-color: var(--link-color);
+    font-weight: 600;
+  }
+
+  .label {
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
   }
 
   .external-mark {
-    margin-left: 0.25em;
     color: var(--gray-color);
+  }
+
+  .active-line {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    border-radius: 999px;
+    background: var(--link-color);
   }
 </style>

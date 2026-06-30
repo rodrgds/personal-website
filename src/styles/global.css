@@ -60,8 +60,13 @@
   --heading-color: var(--flexoki-black);
   --text-color: var(--flexoki-base-900);
   --text-muted: var(--flexoki-base-600);
-  --link-color: var(--flexoki-cyan);
-  --accent: var(--flexoki-orange);
+  --link-color: var(--flexoki-orange);
+  --accent: color-mix(in srgb, var(--flexoki-orange) 84%, var(--flexoki-black));
+  --link-underline-color: color-mix(
+    in srgb,
+    var(--link-color) 52%,
+    transparent
+  );
   --visited-color: var(--flexoki-purple);
   --error: var(--flexoki-red);
   --code-color: var(--flexoki-base-900);
@@ -89,8 +94,17 @@
     --heading-color: var(--flexoki-base-50);
     --text-color: var(--flexoki-base-200);
     --text-muted: var(--flexoki-base-500);
-    --link-color: var(--flexoki-cyan);
-    --accent: var(--flexoki-orange);
+    --link-color: var(--flexoki-orange);
+    --accent: color-mix(
+      in srgb,
+      var(--flexoki-orange) 82%,
+      var(--flexoki-paper)
+    );
+    --link-underline-color: color-mix(
+      in srgb,
+      var(--link-color) 58%,
+      transparent
+    );
     --visited-color: var(--flexoki-purple);
     --error: var(--flexoki-red);
     --code-color: var(--flexoki-base-100);
@@ -213,10 +227,11 @@ h6 {
 }
 
 a {
-  color: var(--link-color);
+  color: var(--text-color);
   cursor: pointer;
   text-decoration-line: underline;
   text-decoration-thickness: 0.06em;
+  text-decoration-color: var(--link-underline-color);
   text-underline-offset: 0.16em;
   transition:
     color 0.16s ease,
@@ -226,28 +241,46 @@ a {
 
 a:hover,
 a:focus-visible {
-  color: var(--accent);
+  color: var(--link-color);
+  text-decoration-color: currentColor;
 }
 
 a[data-animated-link="true"] {
   position: relative;
+  color: var(--text-color);
+  text-decoration: none;
 }
 
 a[data-animated-link="true"] .animated-link-line {
   position: relative;
   display: inline-block;
   text-decoration-line: underline;
+  text-decoration-color: var(--link-underline-color);
   text-decoration-thickness: 0.06em;
   text-underline-offset: 0.16em;
 }
 
 a[data-animated-link="true"] .animated-link-line::before {
-  display: none;
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0.02em;
+  width: 0;
+  height: 1px;
+  border-radius: 999px;
+  background-color: var(--link-color);
+  opacity: 0.86;
+  transition: width 0.24s ease;
+}
+
+a[data-animated-link="true"]:hover,
+a[data-animated-link="true"]:focus-visible {
+  color: var(--link-color);
 }
 
 a[data-animated-link="true"]:hover .animated-link-line::before,
 a[data-animated-link="true"]:focus-visible .animated-link-line::before {
-  display: none;
+  width: 100%;
 }
 
 a .animated-link-token {

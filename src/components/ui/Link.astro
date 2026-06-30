@@ -52,12 +52,15 @@ const rel = external ? "noopener noreferrer" : undefined;
 
 <style>
   .link-base {
-    color: var(--link-color);
-    text-decoration: none;
+    color: var(--text-color);
+    text-decoration-line: underline;
+    text-decoration-color: var(--link-underline-color);
+    text-decoration-thickness: 0.06em;
+    text-underline-offset: 0.16em;
     transition: color 0.2s;
   }
   .link-base:hover {
-    color: var(--visited-color);
-    text-decoration: underline;
+    color: var(--link-color);
+    text-decoration-color: currentColor;
   }
 </style>

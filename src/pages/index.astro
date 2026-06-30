@@ -336,7 +336,7 @@ const posts = await getCollection("blog").then((posts) =>
   }
 
   .name-toggle:not(:hover):not(:focus-visible) .rodrigo-morph {
-    animation: none;
+    animation: rodrigo-hint-glow 2.8s ease-in-out infinite;
   }
 
   .rodrigo-morph {
@@ -476,6 +476,7 @@ const posts = await getCollection("blog").then((posts) =>
 
   .name-toggle:hover .pt-suffix,
   .name-toggle:focus-visible .pt-suffix {
+    color: var(--link-color);
     opacity: 1;
     transform: translate3d(0, 0, 0) scale(1);
     transition-delay: 360ms;
@@ -488,11 +489,43 @@ const posts = await getCollection("blog").then((posts) =>
   }
 
   .rodrigo-morph::after {
-    display: none;
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: -0.14em;
+    left: 0;
+    height: 1px;
+    border-radius: 999px;
+    background: var(--link-color);
+    opacity: 0;
+    pointer-events: none;
   }
 
   .name-toggle:not(:hover):not(:focus-visible) .rodrigo-morph::after {
-    animation: none;
+    animation: rodrigo-hint-underline 2.8s ease-in-out infinite;
+  }
+
+  @keyframes rodrigo-hint-glow {
+    0%,
+    100% {
+      text-shadow: 0 0 0 transparent;
+    }
+    50% {
+      text-shadow: 0 0 0.28rem
+        color-mix(in srgb, var(--link-color) 26%, transparent);
+    }
+  }
+
+  @keyframes rodrigo-hint-underline {
+    0%,
+    100% {
+      opacity: 0;
+      transform: scaleX(0.82);
+    }
+    50% {
+      opacity: 0.28;
+      transform: scaleX(1);
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -516,7 +549,33 @@ const posts = await getCollection("blog").then((posts) =>
   }
 
   .writings li > a {
+    position: relative;
+    width: fit-content;
     text-decoration-thickness: 0.05em;
+  }
+
+  .writings li > a:hover::before,
+  .writings li > a:focus-visible::before {
+    content: "->";
+    position: absolute;
+    left: -1.35rem;
+    top: 50%;
+    color: var(--link-color);
+    opacity: 0.7;
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .writings li > a:hover::after,
+  .writings li > a:focus-visible::after {
+    content: "<-";
+    position: absolute;
+    right: -1.35rem;
+    top: 50%;
+    color: var(--link-color);
+    opacity: 0.7;
+    transform: translateY(-50%);
+    pointer-events: none;
   }
 
   @media (max-width: 560px) {
@@ -529,6 +588,13 @@ const posts = await getCollection("blog").then((posts) =>
       grid-template-columns: 1fr;
       gap: 0;
       padding: 0.45rem 0;
+    }
+
+    .writings li > a:hover::before,
+    .writings li > a:focus-visible::before,
+    .writings li > a:hover::after,
+    .writings li > a:focus-visible::after {
+      display: none;
     }
   }
 </style>
