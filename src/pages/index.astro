@@ -31,53 +31,47 @@ const posts = await getCollection("blog").then((posts) =>
   <body>
     <Header title={SITE_TITLE} />
     <main>
-      <section class="intro">
-        <h1>
-          Hey, I'm
-          <span class="name-wrap">
-            <button class="name-toggle" type="button" aria-label="Copy rgo.pt">
-              <span class="rodrigo-morph" aria-hidden="true">
-                <span class="glyph r-upper">R</span>
-                <span class="glyph r-lower">r</span>
-                <span class="glyph o-1">o</span>
-                <span class="glyph d">d</span>
-                <span class="glyph r-2">r</span>
-                <span class="glyph i">i</span>
-                <span class="glyph g">g</span>
-                <span class="glyph o-2">o</span>
-                <span class="pt-suffix" aria-hidden="true">.🇵🇹</span>
-              </span>
-            </button>
-            <span class="dias">Dias</span>
-          </span>
-        </h1>
+      <h2>
+        Hey! I'm
+        <span class="name-wrap">
+          <button class="name-toggle" type="button" aria-label="Copy rgo.pt">
+            <span class="rodrigo-morph" aria-hidden="true">
+              <span class="glyph r-upper">R</span>
+              <span class="glyph r-lower">r</span>
+              <span class="glyph o-1">o</span>
+              <span class="glyph d">d</span>
+              <span class="glyph r-2">r</span>
+              <span class="glyph i">i</span>
+              <span class="glyph g">g</span>
+              <span class="glyph o-2">o</span>
+              <span class="pt-suffix" aria-hidden="true">.🇵🇹</span>
+            </span>
+          </button>
+          <span class="dias">Dias</span>
+        </span>
+        👋
+      </h2>
 
-        <div class="intro-copy">
-          <p>
-            Self-taught programmer since 14. I am <b
-              ><DateOfBirth client:load /></b
-            >
-            years old and studying Computer Engineering at the Faculty of Engineering
-            of the University of Porto.
-          </p>
-          <p>
-            I care about teaching, learning, <Logo src="firefox" />
-            web development, <Logo src="linux" /> Linux, FOSS, self-hosting, and minimalism.
-            Away from computers, I spend time biking, photographing, lifting, and
-            playing table tennis.
-          </p>
-        </div>
-
-        <p class="quick-links">
-          See <a href="/now">what I'm up to</a>, read my <a href="/cv"
-            >professional CV</a
-          >, check <a href="/uses">what I use</a>, browse <a href="/faves"
-            >favorite media</a
-          >, <a href="mailto:hey@rgo.pt">email me</a>, or <a href="/donate"
-            >support me</a
-          >.
-        </p>
-      </section>
+      <p>
+        Self-taught programmer since 14. I am <b><DateOfBirth client:load /></b>
+        years old and studying Computer Engineering at the Faculty of Engineering
+        of the University of Porto.
+      </p>
+      <p>
+        I care about teaching, learning, <Logo src="firefox" />
+        web development, <Logo src="linux" /> Linux, FOSS, self-hosting, and minimalism.
+        Away from computers, I spend time biking, photographing, lifting, and
+        playing table tennis.
+      </p>
+      <p>
+        See <a href="/now">what I'm up to</a>, read my <a href="/cv"
+          >professional CV</a
+        >, check <a href="/uses">what I use</a>, browse <a href="/faves"
+          >favorite media</a
+        >, <a href="mailto:hey@rgo.pt">email me</a>, or <a href="/donate"
+          >support me</a
+        >.
+      </p>
 
       <ul class="socials">
         {
@@ -237,27 +231,6 @@ const posts = await getCollection("blog").then((posts) =>
 </html>
 
 <style>
-  .intro {
-    margin-bottom: 1.5rem;
-  }
-
-  h1 {
-    margin: 0 0 1rem;
-    max-width: 24ch;
-    font-size: clamp(1.9rem, 3vw, 2.2rem);
-    line-height: 1.08;
-    letter-spacing: 0;
-  }
-
-  .intro-copy {
-    max-width: 42rem;
-  }
-
-  .quick-links {
-    margin-top: 1.15rem;
-    color: var(--text-muted);
-  }
-
   .home-section {
     margin-top: 2.6rem;
   }

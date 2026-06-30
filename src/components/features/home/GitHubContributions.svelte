@@ -318,9 +318,27 @@
   }
 
   .github-link {
+    position: relative;
+    display: inline-block;
     font-size: 0.75rem;
     color: var(--link-color);
     text-decoration: none;
+  }
+
+  .github-link::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 1px;
+    background-color: currentColor;
+    transition: width 0.25s ease;
+  }
+
+  .github-link:hover::before,
+  .github-link:focus-visible::before {
+    width: 100%;
   }
 
   .contributions-scroll-container {

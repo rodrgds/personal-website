@@ -3,6 +3,7 @@ import { render } from "astro:content";
 import BaseHead from "../components/common/BaseHead.astro";
 import Footer from "../components/common/Footer.astro";
 import Header from "../components/common/Header.astro";
+import { Download, FileText } from "lucide-astro";
 import CVEntryCard from "../components/features/cv/CVEntryCard.astro";
 import CVNavigation from "../components/features/cv/CVNavigation.svelte";
 import CVProjectCard from "../components/features/cv/CVProjectCard.astro";
@@ -26,8 +27,6 @@ const profileDownloads = Object.entries(cvProfiles).map(([slug, profile]) => ({
 
 const getDownloadLabel = (label: string) =>
   `Download ${label.replace("Rodrigo Dias - ", "")}`;
-
-const getDownloadSymbol = (slug: string) => (slug === "compact" ? "▤" : "⇩");
 
 const getEntryVisual = (logo?: string, image?: string): string | undefined =>
   image ?? logo;
@@ -121,9 +120,11 @@ const universityProjects = renderedProjects.filter(
                 title={getDownloadLabel(profile.label)}
                 aria-label={getDownloadLabel(profile.label)}
               >
-                <span aria-hidden="true">
-                  {getDownloadSymbol(profile.slug)}
-                </span>
+                {profile.slug === "compact" ? (
+                  <FileText size={17} strokeWidth={1.8} aria-hidden="true" />
+                ) : (
+                  <Download size={17} strokeWidth={1.8} aria-hidden="true" />
+                )}
                 <span class="sr-only">{getDownloadLabel(profile.label)}</span>
               </a>
             ))
@@ -489,7 +490,6 @@ const universityProjects = renderedProjects.filter(
     border-radius: 0.28rem;
     padding: 0;
     font-size: 1rem;
-    font-family: var(--font-family-mono);
     background: var(--bg-secondary);
     color: var(--link-color);
     text-decoration: none;
@@ -497,6 +497,10 @@ const universityProjects = renderedProjects.filter(
       background-color 0.16s ease,
       border-color 0.16s ease,
       color 0.16s ease;
+  }
+
+  .download-pill :global(svg) {
+    stroke: currentColor;
   }
 
   .download-pill:hover {

@@ -32,6 +32,62 @@ const {
       </article>
     </main>
     <Footer />
+    <script>
+      function groupUsesLayout() {
+        const article = document.querySelector(".two-col");
+        if (!(article instanceof HTMLElement)) return;
+        if (article.dataset.usesGrouped === "true") return;
+
+        const fragment = document.createDocumentFragment();
+        let currentCard: HTMLDivElement | null = null;
+
+        for (const node of Array.from(article.childNodes)) {
+          if (!(node instanceof HTMLElement)) {
+            if (currentCard && node.textContent?.trim()) {
+              currentCard.appendChild(node);
+            }
+            continue;
+          }
+
+          if (node.matches("details")) {
+            node.classList.add("uses-wide");
+            fragment.appendChild(node);
+            currentCard = null;
+            continue;
+          }
+
+          if (node.matches("h2")) {
+            node.classList.add("uses-section-title");
+            fragment.appendChild(node);
+            currentCard = null;
+            continue;
+          }
+
+          if (node.matches("h3, h4")) {
+            currentCard = document.createElement("section");
+            currentCard.className = "uses-card";
+            currentCard.appendChild(node);
+            fragment.appendChild(currentCard);
+            continue;
+          }
+
+          if (!currentCard) {
+            currentCard = document.createElement("section");
+            currentCard.className = "uses-card";
+            fragment.appendChild(currentCard);
+          }
+
+          currentCard.appendChild(node);
+        }
+
+        article.replaceChildren(fragment);
+        article.dataset.usesGrouped = "true";
+      }
+
+      document.addEventListener("astro:page-load", groupUsesLayout);
+      document.addEventListener("astro:after-swap", groupUsesLayout);
+      groupUsesLayout();
+    </script>
   </body>
 </html>
 
@@ -42,25 +98,38 @@ const {
   }
 
   .two-col {
-    column-gap: 1.35rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
-  .two-col :global(details),
-  .two-col :global(h2),
-  .two-col :global(h3),
-  .two-col :global(ul) {
-    break-inside: avoid;
+  .two-col :global(.uses-wide),
+  .two-col :global(.uses-section-title) {
+    grid-column: 1 / -1;
+  }
+
+  .two-col :global(.uses-section-title) {
+    margin-top: 1.35rem;
+  }
+
+  .two-col :global(.uses-card) {
+    min-width: 0;
+  }
+
+  .two-col :global(.uses-card h3),
+  .two-col :global(.uses-card h4) {
+    margin-top: 0;
   }
 
   @media (min-width: 768px) {
     .two-col {
-      column-count: 2;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
   @media (min-width: 1100px) {
     .two-col {
-      column-count: 3;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 </style>

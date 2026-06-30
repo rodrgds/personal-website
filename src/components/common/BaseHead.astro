@@ -42,8 +42,8 @@ const { title, description, image = "" } = Astro.props;
         button.setAttribute("title", `Switch to ${nextTheme} mode`);
       });
 
-      document.querySelectorAll("[data-theme-toggle-icon]").forEach((icon) => {
-        icon.textContent = theme === "dark" ? "☀" : "◐";
+      document.querySelectorAll("[data-theme-toggle]").forEach((button) => {
+        button.dataset.themeState = theme;
       });
     }
 

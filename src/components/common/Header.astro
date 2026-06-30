@@ -1,6 +1,7 @@
 ---
 import HeaderLink from "./HeaderLink.astro";
 import { SITE_TITLE } from "../../config";
+import { Moon, Sun } from "lucide-astro";
 ---
 
 <header>
@@ -20,7 +21,12 @@ import { SITE_TITLE } from "../../config";
         aria-label="Switch color theme"
         title="Switch color theme"
       >
-        <span data-theme-toggle-icon aria-hidden="true">◐</span>
+        <span class="theme-icon theme-icon-light" aria-hidden="true">
+          <Sun size={18} strokeWidth={1.8} />
+        </span>
+        <span class="theme-icon theme-icon-dark" aria-hidden="true">
+          <Moon size={18} strokeWidth={1.8} />
+        </span>
       </button>
       <HeaderLink
         class="hide-sometimes"
@@ -133,11 +139,34 @@ import { SITE_TITLE } from "../../config";
     background: transparent;
     color: var(--link-color);
     font-family: var(--font-family-mono);
-    font-size: 1.05rem;
     line-height: 1;
     transition:
       opacity 0.2s ease-out,
       transform 0.2s ease-out;
+  }
+
+  .theme-icon {
+    display: none;
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+
+  .theme-icon :global(svg) {
+    width: 100%;
+    height: 100%;
+    stroke: currentColor;
+    fill: none;
+  }
+
+  .theme-toggle[data-theme-state="light"] .theme-icon-dark,
+  .theme-toggle:not([data-theme-state]) .theme-icon-dark {
+    display: inline-grid;
+    place-items: center;
+  }
+
+  .theme-toggle[data-theme-state="dark"] .theme-icon-light {
+    display: inline-grid;
+    place-items: center;
   }
 
   .theme-toggle:hover,
