@@ -156,7 +156,7 @@
   .expandable-card {
     display: flex;
     flex-direction: column;
-    padding: 0.95rem 0;
+    padding: 0.95rem 0.75rem;
     background: transparent;
     border: 0;
     border-bottom: 1px solid var(--border-color);

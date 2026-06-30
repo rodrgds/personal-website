@@ -1,50 +1,66 @@
 ---
-import BaseHead from '../components/common/BaseHead.astro';
-import Header from '../components/common/Header.astro';
-import Footer from '../components/common/Footer.astro';
+import BaseHead from "../components/common/BaseHead.astro";
+import Header from "../components/common/Header.astro";
+import Footer from "../components/common/Footer.astro";
 
 export interface Props {
-	content: {
-		title: string;
-		description: string;
-		pubDate?: string;
-		updatedDate?: string;
-		heroImage?: string;
-		katex?: boolean;
-	};
+  content: {
+    title: string;
+    description: string;
+    pubDate?: string;
+    updatedDate?: string;
+    heroImage?: string;
+    katex?: boolean;
+  };
 }
 
 const {
-	content: { title, description, pubDate, updatedDate, heroImage, katex },
+  content: { title, description, pubDate, updatedDate, heroImage, katex },
 } = Astro.props;
 ---
 
 <html lang="en">
-	<head>
-		<BaseHead title={title} description={description} />
-	</head>
+  <head>
+    <BaseHead title={title} description={description} />
+  </head>
 
-	<body>
-		<Header />
-		<main>
-			<article class="two-col">
-				<slot />
-			</article>
-		</main>
-		<Footer />
-	</body>
+  <body>
+    <Header />
+    <main>
+      <article class="two-col">
+        <slot />
+      </article>
+    </main>
+    <Footer />
+  </body>
 </html>
 
 <style>
-	.two-col :global(img[class*="logo"]) {
-		width: 24px !important;
-		max-width: 24px;
-	}
+  .two-col :global(img[class*="logo"]) {
+    width: 24px !important;
+    max-width: 24px;
+  }
 
-	@media (min-width: 768px) {
-		.two-col {
-			column-count: 2;
-			column-gap: 1rem;
-		}
-	}
+  .two-col {
+    column-gap: 1.35rem;
+  }
+
+  .two-col :global(details),
+  .two-col :global(h2),
+  .two-col :global(h3),
+  .two-col :global(ul) {
+    break-inside: avoid;
+  }
+
+  @media (min-width: 768px) {
+    .two-col {
+      column-count: 2;
+    }
+  }
+
+  @media (min-width: 1100px) {
+    .two-col {
+      column-count: 3;
+    }
+  }
 </style>

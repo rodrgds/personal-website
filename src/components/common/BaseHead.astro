@@ -14,6 +14,91 @@ const { title, description, image = "" } = Astro.props;
 
 <!-- Global Metadata -->
 <meta charset="utf-8" />
+
+<script is:inline>
+  (() => {
+    const STORAGE_KEY = "rgo-theme";
+    const root = document.documentElement;
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+    function getStoredTheme() {
+      try {
+        const value = window.localStorage.getItem(STORAGE_KEY);
+        return value === "dark" || value === "light" ? value : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function getSystemTheme() {
+      return mediaQuery.matches ? "dark" : "light";
+    }
+
+    function updateThemeButtons(theme) {
+      const nextTheme = theme === "dark" ? "light" : "dark";
+
+      document.querySelectorAll("[data-theme-toggle]").forEach((button) => {
+        button.setAttribute("aria-label", `Switch to ${nextTheme} mode`);
+        button.setAttribute("title", `Switch to ${nextTheme} mode`);
+      });
+
+      document.querySelectorAll("[data-theme-toggle-icon]").forEach((icon) => {
+        icon.textContent = theme === "dark" ? "☀" : "◐";
+      });
+    }
+
+    function applyTheme(theme) {
+      root.dataset.theme = theme;
+      root.style.colorScheme = theme;
+      updateThemeButtons(theme);
+    }
+
+    applyTheme(getStoredTheme() ?? getSystemTheme());
+
+    if (window.__rgoThemeToggleInitialized) return;
+    window.__rgoThemeToggleInitialized = true;
+
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+
+      const button = target.closest("[data-theme-toggle]");
+      if (!(button instanceof HTMLButtonElement)) return;
+
+      const currentTheme =
+        root.dataset.theme === "dark" || root.dataset.theme === "light"
+          ? root.dataset.theme
+          : getSystemTheme();
+      const nextTheme = currentTheme === "dark" ? "light" : "dark";
+
+      try {
+        window.localStorage.setItem(STORAGE_KEY, nextTheme);
+      } catch {
+        // The visible toggle should still work if storage is unavailable.
+      }
+
+      applyTheme(nextTheme);
+    });
+
+    mediaQuery.addEventListener("change", () => {
+      if (getStoredTheme()) return;
+      applyTheme(getSystemTheme());
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      applyTheme(getStoredTheme() ?? getSystemTheme());
+    });
+
+    document.addEventListener("astro:page-load", () => {
+      applyTheme(getStoredTheme() ?? getSystemTheme());
+    });
+
+    document.addEventListener("astro:after-swap", () => {
+      applyTheme(getStoredTheme() ?? getSystemTheme());
+    });
+  })();
+</script>
+
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <link rel="icon" type="image/webp" sizes="32x32" href="/favicon.webp" />
 <link rel="alternate" type="application/rss+xml" href="/rss.xml" />

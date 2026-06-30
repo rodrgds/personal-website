@@ -714,12 +714,6 @@
     }
   }
 
-  @media (min-width: 1260px) {
-    .items-list {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-  }
-
   .favorite-item {
     display: flex;
     align-items: flex-start;

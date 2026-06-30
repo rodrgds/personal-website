@@ -24,6 +24,11 @@ const profileDownloads = Object.entries(cvProfiles).map(([slug, profile]) => ({
   label: profile.label,
 }));
 
+const getDownloadLabel = (label: string) =>
+  `Download ${label.replace("Rodrigo Dias - ", "")}`;
+
+const getDownloadSymbol = (slug: string) => (slug === "compact" ? "▤" : "⇩");
+
 const getEntryVisual = (logo?: string, image?: string): string | undefined =>
   image ?? logo;
 
@@ -95,12 +100,6 @@ const universityProjects = renderedProjects.filter(
     <Header />
     <main>
       <section class="hero">
-        <p class="kicker">Curriculum Vitae</p>
-        <h1>Rodrigo Dias</h1>
-        <p class="lede">
-          Software engineer focused on product execution, clear communication,
-          fast iteration, and always going the extra mile.
-        </p>
         <div class="contact-row">
           <a href="mailto:hey@rgo.pt">hey@rgo.pt</a>
           <span>Vila Nova de Gaia, Porto, Portugal</span>
@@ -116,8 +115,16 @@ const universityProjects = renderedProjects.filter(
         <div class="downloads">
           {
             profileDownloads.map((profile) => (
-              <a href={`/cv/${profile.slug}.pdf`} class="download-pill">
-                Download {profile.label.replace("Rodrigo Dias - ", "")}
+              <a
+                href={`/cv/${profile.slug}.pdf`}
+                class="download-pill"
+                title={getDownloadLabel(profile.label)}
+                aria-label={getDownloadLabel(profile.label)}
+              >
+                <span aria-hidden="true">
+                  {getDownloadSymbol(profile.slug)}
+                </span>
+                <span class="sr-only">{getDownloadLabel(profile.label)}</span>
               </a>
             ))
           }
@@ -445,32 +452,18 @@ const universityProjects = renderedProjects.filter(
   .hero {
     --cv-accent: var(--link-color);
 
-    padding: 0 0 1.6rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0 0 1rem;
     border-bottom: 1px solid var(--border-color);
-    margin-bottom: 2.1rem;
-  }
-
-  .kicker {
-    margin: 0;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: var(--gray-color);
-  }
-
-  h1 {
-    margin-top: 0.25rem;
-    margin-bottom: 0.45rem;
-  }
-
-  .lede {
-    margin: 0;
-    max-width: 56ch;
-    color: var(--text-muted);
+    margin-bottom: 1.55rem;
   }
 
   .contact-row {
-    margin-top: 1rem;
+    flex: 1;
+    margin: 0;
     display: flex;
     flex-wrap: wrap;
     gap: 0.35rem 0.8rem;
@@ -479,19 +472,23 @@ const universityProjects = renderedProjects.filter(
   }
 
   .downloads {
-    margin-top: 1.1rem;
+    margin: 0;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.55rem;
+    justify-content: flex-end;
+    gap: 0.4rem;
   }
 
   .download-pill {
     --cv-accent: var(--link-color);
-    display: inline-block;
+    display: inline-grid;
+    place-items: center;
+    width: 1.9rem;
+    height: 1.9rem;
     border: 1px solid var(--border-color);
     border-radius: 0.28rem;
-    padding: 0.32rem 0.65rem;
-    font-size: 0.84rem;
+    padding: 0;
+    font-size: 1rem;
     font-family: var(--font-family-mono);
     background: var(--bg-secondary);
     color: var(--link-color);
@@ -510,5 +507,28 @@ const universityProjects = renderedProjects.filter(
 
   .download-pill::before {
     display: none;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  @media (max-width: 640px) {
+    .hero {
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    .downloads {
+      justify-content: flex-start;
+    }
   }
 </style>

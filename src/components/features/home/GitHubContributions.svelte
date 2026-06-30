@@ -249,40 +249,48 @@
 
 <style>
   :global(:root) {
-    --contrib-level-0: var(--flexoki-base-100);
-    --contrib-level-1: #dde2b2;
-    --contrib-level-2: #bec97e;
-    --contrib-level-3: #879a39;
-    --contrib-level-4: #66800b;
+    --contrib-level-0: #ebedf0;
+    --contrib-level-1: #b3d4f5;
+    --contrib-level-2: #6ba3d6;
+    --contrib-level-3: #3a6eaa;
+    --contrib-level-4: #1a4a7a;
     --contrib-cell-size: 13px;
   }
 
   @media (prefers-color-scheme: dark) {
-    :global(:root) {
-      --contrib-level-0: var(--flexoki-base-900);
-      --contrib-level-1: #313d07;
-      --contrib-level-2: #536907;
-      --contrib-level-3: #66800b;
-      --contrib-level-4: #879a39;
+    :global(:root:not([data-theme="light"])) {
+      --contrib-level-0: #2d1f00;
+      --contrib-level-1: #5c3d00;
+      --contrib-level-2: #8b5a00;
+      --contrib-level-3: #b37500;
+      --contrib-level-4: #ff9500;
     }
   }
 
+  :global(:root[data-theme="dark"]) {
+    --contrib-level-0: #2d1f00;
+    --contrib-level-1: #5c3d00;
+    --contrib-level-2: #8b5a00;
+    --contrib-level-3: #b37500;
+    --contrib-level-4: #ff9500;
+  }
+
   .github-contributions {
-    margin: 0;
+    margin: 1.5rem 0;
   }
 
   .contributions-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 0.65rem;
+    margin-bottom: 0.75rem;
     flex-wrap: wrap;
-    gap: 0.65rem;
+    gap: 0.5rem;
   }
 
   .contributions-count {
     font-size: 0.875rem;
-    color: var(--text-muted);
+    color: var(--text-color);
   }
 
   .header-right {
@@ -312,13 +320,14 @@
   .github-link {
     font-size: 0.75rem;
     color: var(--link-color);
+    text-decoration: none;
   }
 
   .contributions-scroll-container {
     overflow-x: auto;
     overflow-y: hidden;
     padding-bottom: 0.5rem;
-    margin: 0;
+    margin: 0 -0.5rem;
     scrollbar-width: thin;
     scrollbar-color: var(--border-color) transparent;
   }
@@ -375,13 +384,15 @@
     width: 10px;
     height: 10px;
     border-radius: 2px;
-    border: 1px solid color-mix(in srgb, var(--background-color) 35%, transparent);
-    transition: outline-color 0.1s;
+    transition:
+      transform 0.1s,
+      outline 0.1s;
     cursor: pointer;
   }
 
   .day:hover {
-    outline: 1px solid var(--link-color);
+    transform: scale(1.2);
+    outline: 2px solid var(--link-color);
     outline-offset: 1px;
     z-index: 10;
     position: relative;

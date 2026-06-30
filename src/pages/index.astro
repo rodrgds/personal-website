@@ -45,7 +45,7 @@ const posts = await getCollection("blog").then((posts) =>
                 <span class="glyph i">i</span>
                 <span class="glyph g">g</span>
                 <span class="glyph o-2">o</span>
-                <span class="pt-suffix" aria-hidden="true">.pt</span>
+                <span class="pt-suffix" aria-hidden="true">.🇵🇹</span>
               </span>
             </button>
             <span class="dias">Dias</span>
@@ -320,7 +320,7 @@ const posts = await getCollection("blog").then((posts) =>
   .name-wrap {
     display: inline-flex;
     align-items: baseline;
-    gap: 0.12em;
+    gap: 0.24rem;
     white-space: nowrap;
   }
 
@@ -479,14 +479,13 @@ const posts = await getCollection("blog").then((posts) =>
 
   .name-toggle:hover .pt-suffix,
   .name-toggle:focus-visible .pt-suffix {
-    color: var(--link-color);
     opacity: 1;
     transform: translate3d(0, 0, 0) scale(1);
     transition-delay: 360ms;
   }
 
   .name-toggle:focus-visible {
-    outline: 2px solid var(--link-color);
+    outline: 2px dashed var(--text-color);
     outline-offset: 0.15rem;
     border-radius: 0.2rem;
   }
@@ -499,7 +498,7 @@ const posts = await getCollection("blog").then((posts) =>
     left: 0;
     height: 1px;
     border-radius: 999px;
-    background: var(--link-color);
+    background: currentColor;
     opacity: 0;
     pointer-events: none;
   }
@@ -514,8 +513,8 @@ const posts = await getCollection("blog").then((posts) =>
       text-shadow: 0 0 0 transparent;
     }
     50% {
-      text-shadow: 0 0 0.28rem
-        color-mix(in srgb, var(--link-color) 26%, transparent);
+      text-shadow: 0 0 0.34rem
+        color-mix(in srgb, currentColor 72%, transparent 28%);
     }
   }
 
@@ -526,7 +525,7 @@ const posts = await getCollection("blog").then((posts) =>
       transform: scaleX(0.82);
     }
     50% {
-      opacity: 0.28;
+      opacity: 0.36;
       transform: scaleX(1);
     }
   }
@@ -559,24 +558,20 @@ const posts = await getCollection("blog").then((posts) =>
 
   .writings li > a:hover::before,
   .writings li > a:focus-visible::before {
-    content: "->";
+    content: "→";
     position: absolute;
-    left: -1.35rem;
+    left: -1.1rem;
     top: 50%;
-    color: var(--link-color);
-    opacity: 0.7;
     transform: translateY(-50%);
     pointer-events: none;
   }
 
   .writings li > a:hover::after,
   .writings li > a:focus-visible::after {
-    content: "<-";
+    content: "←";
     position: absolute;
-    right: -1.35rem;
+    right: -1.1rem;
     top: 50%;
-    color: var(--link-color);
-    opacity: 0.7;
     transform: translateY(-50%);
     pointer-events: none;
   }

@@ -48,25 +48,23 @@ const target = external ? "_blank" : undefined;
     align-items: center;
     gap: 0.25em;
     padding-bottom: 0.22rem;
-    color: var(--text-muted);
+    color: var(--link-color);
     font-size: 0.95rem;
     line-height: 1.2;
     text-decoration: none;
     transition:
-      color 0.16s ease,
-      opacity 0.16s ease,
-      transform 0.16s ease;
+      opacity 0.2s ease-out,
+      transform 0.2s ease-out;
   }
 
   a:hover,
   a:focus-visible {
-    color: var(--heading-color);
     text-decoration: none;
-    transform: translateY(-1px);
+    opacity: 0.8;
+    transform: scale(1.1);
   }
 
   a.active {
-    color: var(--heading-color);
     font-weight: 600;
   }
 

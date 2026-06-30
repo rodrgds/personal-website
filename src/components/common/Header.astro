@@ -13,6 +13,15 @@ import { SITE_TITLE } from "../../config";
       <HeaderLink href="/faves">Faves</HeaderLink>
     </div>
     <div class="flex">
+      <button
+        class="theme-toggle"
+        type="button"
+        data-theme-toggle
+        aria-label="Switch color theme"
+        title="Switch color theme"
+      >
+        <span data-theme-toggle-icon aria-hidden="true">◐</span>
+      </button>
       <HeaderLink
         class="hide-sometimes"
         href="https://url.rgo.pt/mastodon"
@@ -86,10 +95,10 @@ import { SITE_TITLE } from "../../config";
   }
 
   .flex {
-    display: none;
+    display: flex;
     align-items: center;
-    gap: 0.7rem;
-    color: var(--gray-color);
+    gap: 0.35rem;
+    color: var(--link-color);
   }
 
   svg {
@@ -99,7 +108,7 @@ import { SITE_TITLE } from "../../config";
   }
 
   .flex :global(a) {
-    color: var(--gray-color);
+    color: var(--link-color);
     font-family: var(--font-family);
     font-size: 1rem;
     line-height: 1;
@@ -107,22 +116,39 @@ import { SITE_TITLE } from "../../config";
 
   .flex :global(a:hover),
   .flex :global(a:focus-visible) {
-    color: var(--heading-color);
+    color: var(--link-color);
   }
 
   .hide-sometimes {
     display: none;
   }
 
+  .theme-toggle {
+    display: inline-grid;
+    place-items: center;
+    width: 1.55rem;
+    height: 1.55rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--link-color);
+    font-family: var(--font-family-mono);
+    font-size: 1.05rem;
+    line-height: 1;
+    transition:
+      opacity 0.2s ease-out,
+      transform 0.2s ease-out;
+  }
+
+  .theme-toggle:hover,
+  .theme-toggle:focus-visible {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+
   @media (min-width: 400px) {
     .hide-sometimes {
       display: inline;
-    }
-  }
-
-  @media (min-width: 520px) {
-    .flex {
-      display: flex;
     }
   }
 
