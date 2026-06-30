@@ -110,19 +110,18 @@
 <style>
   .modal {
     border: none;
-    border-radius: 1rem;
+    border-radius: 0.45rem;
     padding: 0;
     max-width: 90vw;
     max-height: 85vh;
     background: var(--background-color);
     color: var(--text-color);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
     animation: modalFadeIn 0.2s ease-out;
   }
 
   .modal::backdrop {
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(4px);
+    background: color-mix(in srgb, var(--background-color) 74%, transparent);
     animation: backdropFadeIn 0.2s ease-out;
   }
 
@@ -174,7 +173,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 1.5rem;
-    border-bottom: 1px solid var(--border-color, #e5e5e5);
+    border-bottom: 1px solid var(--border-color);
   }
 
   .modal-header h2 {
@@ -192,7 +191,6 @@
   .header-link {
     font-size: 0.875rem;
     color: var(--link-color);
-    text-decoration: none;
     transition: opacity 0.2s;
     white-space: nowrap;
   }
@@ -210,14 +208,16 @@
     cursor: pointer;
     color: var(--text-color);
     padding: 0.25rem 0.5rem;
-    transition: all 0.2s;
-    border-radius: 0.5rem;
+    transition:
+      background-color 0.16s ease,
+      color 0.16s ease;
+    border-radius: 0.28rem;
   }
 
   .close-button:hover,
   .close-button-absolute:hover {
-    background: rgba(0, 0, 0, 0.05);
-    transform: scale(1.1);
+    background: var(--bg-secondary);
+    color: var(--heading-color);
   }
 
   .close-button-absolute {
@@ -239,17 +239,17 @@
   }
 
   .modal-body::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--bg-secondary);
     border-radius: 4px;
   }
 
   .modal-body::-webkit-scrollbar-thumb {
-    background: var(--link-color, #0066cc);
+    background: var(--border-color);
     border-radius: 4px;
   }
 
   .modal-body::-webkit-scrollbar-thumb:hover {
-    background: var(--link-color-hover, #0052a3);
+    background: var(--gray-color);
   }
 
   @media (max-width: 768px) {
@@ -276,14 +276,4 @@
     }
   }
 
-  @media (prefers-color-scheme: dark) {
-    .modal {
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-    }
-
-    .close-button:hover,
-    .close-button-absolute:hover {
-      background: rgba(255, 255, 255, 0.1);
-    }
-  }
 </style>

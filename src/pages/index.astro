@@ -31,63 +31,63 @@ const posts = await getCollection("blog").then((posts) =>
   <body>
     <Header title={SITE_TITLE} />
     <main>
-      <h2>
-        Hey! I'm
-        <span class="name-wrap">
-          <button
-            class="name-toggle"
-            type="button"
-            aria-label="Animate Rodrigo to rgo.pt"
-          >
-            <span class="rodrigo-morph" aria-hidden="true">
-              <span class="glyph r-upper">R</span>
-              <span class="glyph r-lower">r</span>
-              <span class="glyph o-1">o</span>
-              <span class="glyph d">d</span>
-              <span class="glyph r-2">r</span>
-              <span class="glyph i">i</span>
-              <span class="glyph g">g</span>
-              <span class="glyph o-2">o</span>
-              <span class="pt-suffix" aria-hidden="true">.🇵🇹</span>
-            </span>
-          </button>
-          <span class="dias">Dias</span>
-        </span>
-        👋
-      </h2>
+      <section class="intro">
+        <h1>
+          Hey, I'm
+          <span class="name-wrap">
+            <button class="name-toggle" type="button" aria-label="Copy rgo.pt">
+              <span class="rodrigo-morph" aria-hidden="true">
+                <span class="glyph r-upper">R</span>
+                <span class="glyph r-lower">r</span>
+                <span class="glyph o-1">o</span>
+                <span class="glyph d">d</span>
+                <span class="glyph r-2">r</span>
+                <span class="glyph i">i</span>
+                <span class="glyph g">g</span>
+                <span class="glyph o-2">o</span>
+                <span class="pt-suffix" aria-hidden="true">.pt</span>
+              </span>
+            </button>
+            <span class="dias">Dias</span>
+          </span>
+        </h1>
 
-      <p>
-        Self-taught programmer since the age of 14. Currently, I am <b
-          ><DateOfBirth client:load /></b
-        ><span style="margin-left: 0.4rem"></span>years old and a Computer
-        Engineering student at the Faculty of Engineering of the University of
-        Porto.
-      </p>
-      <p>
-        I love <b><i>teaching</i></b> and <b>learning</b>. I have a special
-        interest in <Logo src="firefox" />
-        <b>web dev</b>, <Logo src="linux" />
-        <b>Linux</b>, <b>FOSS</b>, <b>self-hosting</b>, and <i>minimalism</i>.
-      </p>
-      <p>
-        Outside tech, I enjoy 🚴‍♂️ <b>biking</b>, 📷 <b>photography</b>, 🏋️‍♂️ <b
-          >weight lifting</b
-        >, and playing 🏓 <b>table tennis</b>.
-      </p>
+        <div class="intro-copy">
+          <p>
+            Self-taught programmer since 14. I am <b
+              ><DateOfBirth client:load /></b
+            >
+            years old and studying Computer Engineering at the Faculty of Engineering
+            of the University of Porto.
+          </p>
+          <p>
+            I care about teaching, learning, <Logo src="firefox" />
+            web development, <Logo src="linux" /> Linux, FOSS, self-hosting, and minimalism.
+            Away from computers, I spend time biking, photographing, lifting, and
+            playing table tennis.
+          </p>
+        </div>
 
-      See <a href="/now">what I'm up to</a>, check my <a href="/cv"
-        >professional CV</a
-      >, look at <a href="/uses">what I use</a>, browse <a href="/faves"
-        >my favorite media</a
-      >, <a href="mailto:hey@rgo.pt">email me</a> or <a href="/donate"
-        >support me</a
-      >.
+        <p class="quick-links">
+          See <a href="/now">what I'm up to</a>, read my <a href="/cv"
+            >professional CV</a
+          >, check <a href="/uses">what I use</a>, browse <a href="/faves"
+            >favorite media</a
+          >, <a href="mailto:hey@rgo.pt">email me</a>, or <a href="/donate"
+            >support me</a
+          >.
+        </p>
+      </section>
 
       <ul class="socials">
         {
           SOCIALS.map((social) => (
             <li>
-              <a href={social.url} target="_blank">
+              <a
+                href={social.url}
+                target="_blank"
+                aria-label={`${social.icon_name} profile`}
+              >
                 <Logo src={social.icon_name} size={36} fixed />
               </a>
             </li>
@@ -134,33 +134,37 @@ const posts = await getCollection("blog").then((posts) =>
         ))}
       </ul> -->
 
-      <GitHubContributions client:load />
+      <section class="home-section">
+        <GitHubContributions client:load />
+      </section>
 
-      <h3>Writings</h3>
-      <ul class="writings">
-        {
-          posts.map((post) => (
-            <li>
-              <time
-                datetime={post.data.pubDate}
-                transition:name={`blogpost-pubdate-${post.id}`}
-              >
-                {new Date(post.data.pubDate).toLocaleDateString("en-us", {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                })}
-              </time>
-              <a
-                href={"/posts/" + post.id}
-                transition:name={`blogpost-name-${post.id}`}
-              >
-                {post.data.title}
-              </a>
-            </li>
-          ))
-        }
-      </ul>
+      <section class="home-section">
+        <h2>Writings</h2>
+        <ul class="writings">
+          {
+            posts.map((post) => (
+              <li>
+                <time
+                  datetime={post.data.pubDate}
+                  transition:name={`blogpost-pubdate-${post.id}`}
+                >
+                  {new Date(post.data.pubDate).toLocaleDateString("en-us", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </time>
+                <a
+                  href={"/posts/" + post.id}
+                  transition:name={`blogpost-name-${post.id}`}
+                >
+                  {post.data.title}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
     </main>
     <Footer />
 
@@ -233,15 +237,44 @@ const posts = await getCollection("blog").then((posts) =>
 </html>
 
 <style>
+  .intro {
+    margin-bottom: 1.5rem;
+  }
+
+  h1 {
+    margin: 0 0 1rem;
+    max-width: 12ch;
+    letter-spacing: 0;
+  }
+
+  .intro-copy {
+    max-width: 42rem;
+  }
+
+  .quick-links {
+    margin-top: 1.15rem;
+    color: var(--text-muted);
+  }
+
+  .home-section {
+    margin-top: 2.6rem;
+  }
+
+  .home-section h2 {
+    margin-bottom: 0.9rem;
+    color: var(--gray-color);
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
   .socials {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: 0.75rem;
     padding: 0;
     list-style-type: none;
-    padding: unset;
-    margin: 1rem 0 0 0;
+    margin: 1.35rem 0 0 0;
   }
 
   .socials li {
@@ -249,31 +282,43 @@ const posts = await getCollection("blog").then((posts) =>
   }
 
   .socials li a {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.72;
+    text-decoration: none;
+    transition:
+      opacity 0.16s ease,
+      transform 0.16s ease;
   }
 
   .socials li > a:hover::before {
     width: 0;
   }
 
-  .socials li > a:hover {
-    transform: scale(1.15);
-    transition: transform 0.1s;
+  .socials li > a:hover,
+  .socials li > a:focus-visible {
+    opacity: 1;
   }
 
   .writings {
     list-style-type: none;
-    padding: unset;
+    padding: 0;
     margin: 0;
   }
+
   .writings li {
-    display: flex;
+    display: grid;
+    grid-template-columns: 8.2rem minmax(0, 1fr);
+    gap: 1rem;
+    align-items: baseline;
+    padding: 0.18rem 0;
   }
 
   .name-wrap {
     display: inline-flex;
     align-items: baseline;
-    gap: 0.24rem;
+    gap: 0.12em;
   }
 
   .name-toggle {
@@ -291,7 +336,7 @@ const posts = await getCollection("blog").then((posts) =>
   }
 
   .name-toggle:not(:hover):not(:focus-visible) .rodrigo-morph {
-    animation: rodrigo-hint-glow 2.8s ease-in-out infinite;
+    animation: none;
   }
 
   .rodrigo-morph {
@@ -437,49 +482,17 @@ const posts = await getCollection("blog").then((posts) =>
   }
 
   .name-toggle:focus-visible {
-    outline: 2px dashed var(--text-color);
+    outline: 2px solid var(--link-color);
     outline-offset: 0.15rem;
     border-radius: 0.2rem;
   }
 
   .rodrigo-morph::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -0.14em;
-    height: 1px;
-    border-radius: 999px;
-    background: currentColor;
-    opacity: 0;
-    pointer-events: none;
+    display: none;
   }
 
   .name-toggle:not(:hover):not(:focus-visible) .rodrigo-morph::after {
-    animation: rodrigo-hint-underline 2.8s ease-in-out infinite;
-  }
-
-  @keyframes rodrigo-hint-glow {
-    0%,
-    100% {
-      text-shadow: 0 0 0 transparent;
-    }
-    50% {
-      text-shadow: 0 0 0.34rem
-        color-mix(in srgb, currentColor 72%, transparent 28%);
-    }
-  }
-
-  @keyframes rodrigo-hint-underline {
-    0%,
-    100% {
-      opacity: 0;
-      transform: scaleX(0.82);
-    }
-    50% {
-      opacity: 0.36;
-      transform: scaleX(1);
-    }
+    animation: none;
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -493,9 +506,9 @@ const posts = await getCollection("blog").then((posts) =>
   }
 
   .writings li time {
-    flex: 0 0 9.4rem;
     font-family: var(--font-family-mono);
-    color: #656565;
+    color: var(--gray-color);
+    font-size: 0.86rem;
   }
 
   .writings li a:visited {
@@ -503,91 +516,19 @@ const posts = await getCollection("blog").then((posts) =>
   }
 
   .writings li > a {
-    position: relative;
+    text-decoration-thickness: 0.05em;
   }
 
-  .writings li > a:hover::before,
-  .writings li > a:focus-visible::before {
-    content: "→";
-    position: absolute;
-    left: -1.1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
-  }
+  @media (max-width: 560px) {
+    h1 {
+      max-width: none;
+      font-size: 2.35rem;
+    }
 
-  .writings li > a:hover::after,
-  .writings li > a:focus-visible::after {
-    content: "←";
-    position: absolute;
-    right: -1.1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
-  }
-
-  .popover__wrapper {
-    position: relative;
-    margin-top: 0;
-    display: inline-block;
-  }
-  .popover__content {
-    opacity: 0;
-    visibility: hidden;
-    position: absolute;
-    top: 4.2rem;
-    left: -7rem;
-    right: -7rem;
-    background-color: var(--background-color);
-    border-radius: 0.5rem;
-    padding: 1.2rem;
-    border: 1px solid #bfbfbf;
-    box-shadow: 0 1px 4px 0 var(--text-color);
-    width: auto;
-  }
-  .popover__content:before {
-    position: absolute;
-    z-index: -1;
-    content: "";
-    right: calc(50% - 10px);
-    top: -1rem;
-    border-style: solid;
-    border-width: 0 10px 10px 10px;
-    border-color: transparent transparent #bfbfbf transparent;
-    box-shadow: var(--background-color) 1px 1px 1px;
-    transition-duration: 0.3s;
-    transition-property: transform;
-  }
-  .popover__wrapper:hover .popover__content {
-    z-index: 10;
-    opacity: 1;
-    visibility: visible;
-    transform: translate(0, -20px);
-    transition: all 0.5s cubic-bezier(0.75, -0.02, 0.2, 0.97);
-  }
-  .stack {
-    margin: 0;
-    font-family: var(--font-family-mono);
-    display: flex;
-    flex-wrap: wrap;
-    padding: 0;
-    margin: 0;
-    list-style: none;
-    gap: 0.5rem;
-  }
-  .stack li {
-    padding: 0.3rem 0.5rem;
-    border-radius: 0.5rem;
-    border: 2px solid var(--text-color);
-    color: var(--text-color);
-    opacity: 0.8;
-  }
-  .popover__content h2 {
-    margin: 0;
-  }
-  .popover__content img {
-    margin-top: 1.2rem;
-    width: 100%;
-    border-radius: 0.5rem;
+    .writings li {
+      grid-template-columns: 1fr;
+      gap: 0;
+      padding: 0.45rem 0;
+    }
   }
 </style>

@@ -1172,11 +1172,9 @@
 
 <style>
   :global(.panel) {
-    background-color: var(--background-color);
-    border-color: var(--border-color);
+    background-color: var(--surface-color);
     border: 1px solid var(--border-color);
-    border-radius: 10px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+    border-radius: 0.35rem;
     padding: 16px;
   }
 
@@ -1201,63 +1199,45 @@
     display: flex;
     flex-direction: column;
     padding: 0.6rem 0.75rem;
-    background: rgba(240, 240, 240, 0.4);
-    border-radius: 0.6rem;
+    background: var(--bg-secondary);
+    border-radius: 0.28rem;
     border: 1px solid var(--border-color);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
   }
 
   .log-info {
-    background-color: rgba(240, 240, 240, 0.5);
-    border-color: #e5e7eb;
-    border-left-color: #9ca3af;
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+    border-left-color: var(--gray-color);
     color: var(--text-color);
   }
 
   .log-check {
-    background-color: rgba(0, 0, 0, 0.08);
-    border-color: rgba(0, 0, 0, 0.1);
-    border-left-color: #ccc;
-    color: #777;
+    background-color: var(--surface-color);
+    border-color: var(--border-color);
+    border-left-color: var(--border-color);
+    color: var(--gray-color);
     opacity: 0.9;
   }
 
-  @media (prefers-color-scheme: dark) {
-    .log-info {
-      background-color: #2a2a2a !important;
-      border-color: #333 !important;
-      border-left-color: #444 !important;
-    }
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .log-check {
-      background-color: #222222 !important;
-      border-color: #2a2a2a !important;
-      border-left-color: #333 !important;
-      color: #999 !important;
-    }
-  }
-
   .log-success {
-    background-color: rgba(34, 197, 94, 0.1);
-    border-color: rgba(34, 197, 94, 0.2);
-    border-left-color: #22c55e;
-    color: #15803d;
+    background-color: color-mix(in srgb, var(--flexoki-green) 12%, transparent);
+    border-color: color-mix(in srgb, var(--flexoki-green) 24%, transparent);
+    border-left-color: var(--flexoki-green);
+    color: var(--flexoki-green);
   }
 
   .log-warning {
-    background-color: rgba(234, 179, 8, 0.1);
-    border-color: rgba(234, 179, 8, 0.2);
-    border-left-color: #eab308;
-    color: #a16207;
+    background-color: color-mix(in srgb, var(--flexoki-yellow) 12%, transparent);
+    border-color: color-mix(in srgb, var(--flexoki-yellow) 24%, transparent);
+    border-left-color: var(--flexoki-yellow);
+    color: var(--flexoki-yellow);
   }
 
   .log-error {
-    background-color: rgba(239, 68, 68, 0.1);
-    border-color: rgba(239, 68, 68, 0.2);
-    border-left-color: #ef4444;
-    color: #b91c1c;
+    background-color: color-mix(in srgb, var(--error) 12%, transparent);
+    border-color: color-mix(in srgb, var(--error) 24%, transparent);
+    border-left-color: var(--error);
+    color: var(--error);
   }
 
   .link-btn {
@@ -1266,7 +1246,7 @@
     padding: 0.1rem 0.4rem;
     border-radius: 0.25rem;
     background-color: var(--link-color);
-    color: white;
+    color: var(--background-color);
     align-self: flex-start;
     margin-top: 0.1rem;
     text-decoration: none;
@@ -1286,24 +1266,18 @@
     }
   }
 
-  @media (prefers-color-scheme: dark) {
-    .stat-card-compact {
-      background-color: #2a2a2a !important;
-      border-color: #333 !important;
-    }
-  }
-
   .stat--requests {
-    border-left: 4px solid rgba(59, 130, 246, 0.3);
+    border-left: 4px solid color-mix(in srgb, var(--link-color) 45%, transparent);
   }
   .stat--deals {
-    border-left: 4px solid rgba(34, 197, 94, 0.4);
+    border-left: 4px solid
+      color-mix(in srgb, var(--flexoki-green) 48%, transparent);
   }
   .stat--seen {
-    border-left: 4px solid rgba(107, 114, 128, 0.3);
+    border-left: 4px solid color-mix(in srgb, var(--gray-color) 38%, transparent);
   }
   .stat--lastcheck {
-    border-left: 4px solid rgba(107, 114, 128, 0.3);
+    border-left: 4px solid color-mix(in srgb, var(--gray-color) 38%, transparent);
   }
 
   .stat-label-mini {
@@ -1349,11 +1323,11 @@
       opacity: 0.5 !important;
     }
     .section-title {
-      color: #eee !important;
+      color: var(--heading-color) !important;
     }
     .form-section {
       background: transparent !important;
-      border-color: #2a2a2a !important;
+      border-color: var(--border-color) !important;
     }
     .log-container {
       background: transparent !important;
@@ -1417,16 +1391,16 @@
     background: #9ca3af;
   }
   .status-dot.active {
-    background: #22c55e;
+    background: var(--flexoki-green);
     animation: pulse 1.5s infinite ease-in-out;
   }
   .status-label {
     font-size: 12px;
     font-weight: 600;
-    color: #6b7280;
+    color: var(--gray-color);
   }
   :global(.dark) .status-label.active {
-    color: #34d399;
+    color: var(--flexoki-green);
   }
 
   @keyframes pulse {
@@ -1444,14 +1418,14 @@
   .countdown-card {
     margin-bottom: 20px;
     padding: 12px;
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--link-color) 24%, transparent);
+    border-radius: 0.35rem;
     position: relative;
-    background: rgba(37, 99, 235, 0.08);
+    background: color-mix(in srgb, var(--link-color) 8%, transparent);
   }
   :global(.dark) .countdown-card {
-    background: rgba(30, 64, 175, 0.12);
-    border-color: rgba(30, 64, 175, 0.25);
+    background: color-mix(in srgb, var(--link-color) 10%, transparent);
+    border-color: color-mix(in srgb, var(--link-color) 28%, transparent);
   }
   .countdown-header {
     margin-bottom: 8px;
@@ -1461,11 +1435,11 @@
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.12em;
-    color: rgba(37, 99, 235, 0.8);
+    color: var(--link-color);
     margin-bottom: 4px;
   }
   :global(.dark) .countdown-title {
-    color: rgba(96, 165, 250, 0.8);
+    color: var(--link-color);
   }
   .countdown-row {
     display: flex;
@@ -1476,29 +1450,29 @@
     font-size: 32px;
     font-weight: 900;
     font-family: "JetBrains Mono", monospace;
-    color: #2563eb;
+    color: var(--link-color);
   }
   :global(.dark) .countdown-number {
-    color: #60a5fa;
+    color: var(--link-color);
   }
   .countdown-subtext {
     font-size: 10px;
     font-weight: 700;
-    color: #60a5fa;
+    color: var(--link-color);
     text-transform: uppercase;
   }
   .countdown-hint {
     font-size: 10px;
-    color: #9aa0a6;
+    color: var(--gray-color);
     opacity: 0.7;
   }
   .syncing {
     font-size: 18px;
     font-weight: 700;
-    color: #2563eb;
+    color: var(--link-color);
   }
   :global(.dark) .syncing {
-    color: #60a5fa;
+    color: var(--link-color);
     animation: pulse 1.2s infinite;
   }
   .proxy-header-row {
@@ -1528,15 +1502,15 @@
   .tip-box {
     margin-top: 0.75rem;
     padding: 0.75rem;
-    background: rgba(37, 99, 235, 0.05); /* Blue tint */
-    border: 1px solid rgba(37, 99, 235, 0.1);
-    border-radius: 6px;
+    background: color-mix(in srgb, var(--link-color) 6%, transparent);
+    border: 1px solid color-mix(in srgb, var(--link-color) 14%, transparent);
+    border-radius: 0.28rem;
     font-size: 0.8rem;
     color: var(--text-color);
   }
   :global(.dark) .tip-box {
-    background: rgba(37, 99, 235, 0.1);
-    border-color: rgba(37, 99, 235, 0.2);
+    background: color-mix(in srgb, var(--link-color) 10%, transparent);
+    border-color: color-mix(in srgb, var(--link-color) 20%, transparent);
   }
   .tip-box ol {
     margin: 0.5rem 0 0 1.2rem;
@@ -1560,20 +1534,19 @@
     height: 4px;
     border-radius: 999px;
     overflow: hidden;
-    background: rgba(59, 130, 246, 0.2);
+    background: color-mix(in srgb, var(--link-color) 20%, transparent);
   }
   :global(.dark) .progress {
-    background: rgba(24, 24, 27, 0.6);
+    background: var(--bg-secondary);
   }
   .progress-fill {
     height: 100%;
     border-radius: 999px;
-    background: #2563eb;
+    background: var(--link-color);
     transition: width 100ms linear;
-    box-shadow: 0 0 8px rgba(37, 99, 235, 0.3);
   }
   :global(.dark) .progress-fill {
-    background: #60a5fa;
+    background: var(--link-color);
   }
   .proxies-list {
     display: flex;
@@ -1664,12 +1637,12 @@
   }
   .help-text {
     font-size: 10px;
-    color: #9aa0a6;
+    color: var(--gray-color);
     margin-top: 4px;
     display: block;
   }
   :global(.dark) .help-text {
-    color: #9ca3af;
+    color: var(--gray-color);
   }
   .two-col-grid {
     display: grid;
@@ -1689,7 +1662,7 @@
     border-left: 2px solid var(--border-color);
   }
   :global(.dark) .nested-config {
-    border-left-color: #374151;
+    border-left-color: var(--border-color);
   }
   .nested-actions {
     padding-top: 8px;

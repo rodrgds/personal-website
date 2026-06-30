@@ -34,7 +34,7 @@ const Tag = href ? "a" : "button";
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 0.5rem;
+    border-radius: 0.28rem;
     font-weight: 500;
     transition:
       background-color 0.2s,
@@ -60,28 +60,30 @@ const Tag = href ? "a" : "button";
   /* Variants */
   .variant-primary {
     background-color: var(--link-color);
-    color: white;
+    color: var(--background-color);
   }
   .variant-primary:hover {
-    opacity: 0.9;
+    background-color: var(--accent);
   }
 
   .variant-secondary {
-    background-color: var(--border-color);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
     color: var(--heading-color);
   }
   .variant-secondary:hover {
-    opacity: 0.8;
+    background-color: var(--surface-hover);
   }
 
   .variant-outline {
     background-color: transparent;
-    border: 2px solid var(--link-color);
+    border: 1px solid var(--border-color);
     color: var(--link-color);
   }
   .variant-outline:hover {
-    background-color: var(--link-color);
-    color: white;
+    background-color: var(--bg-secondary);
+    border-color: var(--link-color);
+    color: var(--accent);
   }
 
   .variant-ghost {
@@ -89,7 +91,7 @@ const Tag = href ? "a" : "button";
     color: var(--link-color);
   }
   .variant-ghost:hover {
-    background-color: rgba(125, 125, 125, 0.1);
+    background-color: var(--bg-secondary);
   }
 
   /* Sizes */

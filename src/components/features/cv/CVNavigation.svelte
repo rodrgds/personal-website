@@ -157,21 +157,26 @@
     width: 44px;
     height: 44px;
     padding: 0;
-    background: var(--background-color);
+    background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: 50%;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    color: var(--gray-color);
+    transition:
+      background-color 0.16s ease,
+      color 0.16s ease,
+      border-color 0.16s ease,
+      opacity 0.16s ease;
     opacity: 0;
     pointer-events: none;
   }
 
   .nav-button:hover:not(:disabled) {
-    background: var(--link-color);
-    color: var(--background-color);
+    background: var(--surface-hover);
+    color: var(--heading-color);
     border-color: var(--link-color);
   }
 
@@ -209,18 +214,4 @@
     }
   }
 
-  /* Dark mode */
-  @media (prefers-color-scheme: dark) {
-    .nav-button {
-      background: var(--background-color);
-      border-color: rgba(255, 255, 255, 0.2);
-      color: var(--text-color);
-    }
-
-    .nav-button:hover:not(:disabled) {
-      background: var(--link-color);
-      border-color: var(--link-color);
-      color: var(--background-color);
-    }
-  }
 </style>

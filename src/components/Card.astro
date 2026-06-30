@@ -25,72 +25,72 @@ const { title, img, stack, description, link } = Astro.props as Props;
 <style>
   a {
     text-decoration: none;
+    color: inherit;
   }
+
   a:hover::before {
     width: 0;
   }
+
   a:hover {
     text-decoration: none;
   }
+
   p {
-    font-size: 1rem;
-    color: #000;
-    line-height: 1.5rem;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 90%;
-    text-align: center;
-    opacity: 0;
-    transition: opacity 0.25s ease;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    line-height: 1.45;
     margin: 0;
+    padding: 0 1rem 0.9rem;
   }
+
   .img-container {
     position: relative;
     width: 100%;
-    height: 100%;
+    aspect-ratio: 16 / 10;
     overflow: hidden;
+    border-bottom: 1px solid var(--border-color);
   }
+
   .card-container {
     display: flex;
     flex-direction: column;
     width: 100%;
     height: 100%;
-    border-radius: 0.9rem;
-    border: 2px solid #aaa;
-    transition: all 0.1s ease-in-out;
+    border-radius: 0.35rem;
+    border: 1px solid var(--border-color);
+    background: var(--surface-color);
     overflow: hidden;
+    transition:
+      border-color 0.16s ease,
+      background-color 0.16s ease;
   }
+
   .card-container:hover {
-    transform: scale(1.02);
-    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
+    border-color: var(--link-color);
+    background: var(--bg-secondary);
   }
+
   @media (min-width: 768px) {
     .card-container {
       width: 100%;
       height: 100%;
     }
   }
-  .card-container:hover img {
-    opacity: 40%;
-    filter: blur(5px);
-  }
-  .card-container:hover p {
-    opacity: 100%;
-  }
+
   .card-container img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: all 0.1s ease-in;
-    opacity: 100%;
+    opacity: 0.92;
   }
+
   h1 {
-    font-size: 1.3rem;
-    padding: 0.7rem 1rem;
+    font-size: 1.05rem;
+    padding: 0.9rem 1rem 0.35rem;
     margin: 0;
   }
+
   .stack {
     font-family: var(--font-family-mono);
     display: flex;
@@ -98,35 +98,21 @@ const { title, img, stack, description, link } = Astro.props as Props;
     padding: 0;
     margin: 0;
     list-style: none;
-    gap: 0.5rem;
+    gap: 0.35rem;
     padding: 0 1rem 1rem 1rem;
   }
+
   ul li {
-    padding: 0.3rem 0.5rem;
-    border-radius: 0.5rem;
-    border: 2px solid #aaa;
-    color: #333;
-  }
-  /* dark theme */
-  @media (prefers-color-scheme: dark) {
-    p {
-      color: #fff;
-    }
-    .card-container {
-      border: 2px solid #666;
-    }
-    .card-container:hover {
-      box-shadow: 0 0 10px 0 rgba(255, 255, 255, 0.2);
-    }
-    ul li {
-      border: 2px solid #666;
-      color: #eee;
-    }
+    padding: 0.18rem 0.42rem;
+    border-radius: 0.25rem;
+    border: 1px solid var(--border-color);
+    color: var(--gray-color);
+    font-size: 0.72rem;
   }
 
   @media (max-width: 620px) {
     .stack {
-      justify-content: center;
+      justify-content: flex-start;
     }
   }
 </style>

@@ -5,7 +5,7 @@ import { SITE_TITLE } from "../../config";
 
 <header>
   <nav>
-    <div style="display: flex;">
+    <div class="primary-links">
       <HeaderLink href="/">Me</HeaderLink>
       <HeaderLink href="/cv">CV</HeaderLink>
       <HeaderLink href="/now">Now</HeaderLink>
@@ -34,9 +34,8 @@ import { SITE_TITLE } from "../../config";
         href="https://url.rgo.pt/x"
         target="_blank"
         title="My X account"
-        style={{ fontSize: "2.1rem", lineHeight: "1.4rem" }}
       >
-      𝕏
+        𝕏
       </HeaderLink>
       <HeaderLink
         class="hide-sometimes"
@@ -70,29 +69,70 @@ import { SITE_TITLE } from "../../config";
 </header>
 <style>
   header {
-    margin: 3em 0;
+    padding: 2rem 0 3.5rem;
   }
+
   nav {
     display: flex;
-    flex-direction: row;
     justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
   }
-  .flex {
+
+  .primary-links {
     display: flex;
-    gap: 0.1rem;
+    flex-wrap: wrap;
+    gap: 0.95rem;
   }
-  h2 {
-    margin: 0.5em 0;
+
+  .flex {
+    display: none;
+    align-items: center;
+    gap: 0.7rem;
+    color: var(--gray-color);
   }
+
   svg {
-    fill: var(--link-color);
+    width: 1.05rem;
+    height: 1.05rem;
+    fill: currentColor;
   }
+
+  .flex :global(a) {
+    color: var(--gray-color);
+    font-family: var(--font-family);
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  .flex :global(a:hover),
+  .flex :global(a:focus-visible) {
+    color: var(--heading-color);
+  }
+
   .hide-sometimes {
     display: none;
   }
+
   @media (min-width: 400px) {
     .hide-sometimes {
       display: inline;
+    }
+  }
+
+  @media (min-width: 520px) {
+    .flex {
+      display: flex;
+    }
+  }
+
+  @media (max-width: 520px) {
+    header {
+      padding: 1.4rem 0 2.5rem;
+    }
+
+    nav {
+      align-items: flex-start;
     }
   }
 </style>

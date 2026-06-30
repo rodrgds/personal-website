@@ -156,11 +156,14 @@
   .expandable-card {
     display: flex;
     flex-direction: column;
-    padding: 0.75rem;
-    background: var(--background-color);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 0.5rem;
-    transition: all 0.2s ease;
+    padding: 0.95rem 0;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 0;
+    transition:
+      background-color 0.16s ease,
+      border-color 0.16s ease;
     cursor: pointer;
     text-align: left;
   }
@@ -168,9 +171,11 @@
   .expandable-card:hover,
   .expandable-card.expanded {
     border-color: var(--link-color);
-    box-shadow:
-      0 4px 6px -1px rgba(0, 0, 0, 0.1),
-      0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    background: color-mix(
+      in srgb,
+      var(--bg-secondary) 42%,
+      transparent 58%
+    );
   }
 
   .expandable-summary {
@@ -179,22 +184,11 @@
 
   .expandable-details {
     width: 100%;
-    margin-top: 0.5rem;
+    margin-top: 0.7rem;
   }
 
   .details-inner {
     overflow: visible;
-  }
-
-  /* Dark mode */
-  @media (prefers-color-scheme: dark) {
-    .expandable-card {
-      border-color: rgba(255, 255, 255, 0.1);
-    }
-
-    .expandable-card:hover,
-    .expandable-card.expanded {
-      border-color: var(--link-color);
-    }
+    color: var(--text-color);
   }
 </style>

@@ -29,9 +29,12 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 0.5rem;
-    font-weight: 600;
-    transition: all 0.2s ease-in-out;
+    border-radius: 0.28rem;
+    font-weight: 500;
+    transition:
+      background-color 0.16s ease,
+      border-color 0.16s ease,
+      color 0.16s ease;
     cursor: pointer;
     border: 1px solid transparent;
     line-height: 1;
@@ -62,31 +65,32 @@
   /* Variants */
   .btn-primary {
     background-color: var(--link-color);
-    color: white;
+    color: var(--background-color);
   }
   .btn-primary:hover:not(:disabled) {
-    opacity: 0.9;
+    background-color: var(--accent);
   }
 
   .btn-secondary {
-    background-color: var(--gray-color);
-    color: white;
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+    color: var(--text-color);
   }
 
   .btn-danger {
-    background-color: #ef4444;
-    color: white;
+    background-color: var(--error);
+    color: var(--background-color);
   }
   .btn-danger:hover:not(:disabled) {
-    background-color: #dc2626;
+    opacity: 0.9;
   }
 
   .btn-success {
-    background-color: #10b981;
-    color: white;
+    background-color: var(--flexoki-green);
+    color: var(--background-color);
   }
   .btn-success:hover:not(:disabled) {
-    background-color: #059669;
+    opacity: 0.9;
   }
 
   .btn-outline {
@@ -95,6 +99,6 @@
     color: var(--text-color);
   }
   .btn-outline:hover:not(:disabled) {
-    background-color: var(--border-color);
+    background-color: var(--bg-secondary);
   }
 </style>

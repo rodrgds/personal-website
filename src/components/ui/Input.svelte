@@ -31,26 +31,20 @@
     font-size: 0.95rem;
     line-height: 1.5;
     color: var(--text-color);
-    background-color: var(--background-color);
+    background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
-    border-radius: 0.5rem;
-    transition: all 0.2s ease-in-out;
+    border-radius: 0.28rem;
+    transition:
+      border-color 0.16s ease,
+      background-color 0.16s ease;
     font-family: inherit;
   }
 
   .input-base:focus {
     border-color: var(--link-color);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(58, 110, 170, 0.1);
+    background-color: var(--background-color);
   }
-
-  :global(.dark) .input-base {
-    background-color: rgba(30, 30, 30, 0.5);
-  }
-
-  /* :global(.dark) .input-base:focus {
-     box-shadow: 0 0 0 3px rgba(255, 136, 0, 0.1);
-  } */
 
   .input-base::placeholder {
     color: var(--gray-color);

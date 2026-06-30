@@ -109,10 +109,10 @@
   .trigger {
     width: 100%;
     padding: 0.5rem;
-    border-radius: 6px;
-    border: 1px solid var(--border-color, #e5e7eb);
-    background-color: var(--input-bg, #ffffff);
-    color: var(--text-color, #374151);
+    border-radius: 0.28rem;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    color: var(--text-color);
     font-size: 0.875rem;
     display: flex;
     justify-content: space-between;
@@ -124,7 +124,7 @@
   .trigger.disabled {
     opacity: 0.6;
     cursor: not-allowed;
-    background-color: var(--disabled-bg, #f3f4f6);
+    background-color: var(--surface-hover);
   }
 
   .chevron {
@@ -138,24 +138,23 @@
     left: 0;
     right: 0;
     margin-top: 4px;
-    background: var(--input-bg, #ffffff);
-    border: 1px solid var(--border-color, #e5e7eb);
-    border-radius: 6px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    background: var(--background-color);
+    border: 1px solid var(--border-color);
+    border-radius: 0.28rem;
     z-index: 50;
     overflow: hidden;
   }
 
   .search-box {
     padding: 0.5rem;
-    border-bottom: 1px solid var(--border-color, #e5e7eb);
+    border-bottom: 1px solid var(--border-color);
   }
 
   .search-box input {
     width: 100%;
     padding: 0.25rem 0.5rem;
-    border: 1px solid var(--border-color, #e5e7eb);
-    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    border-radius: 0.22rem;
     font-size: 0.875rem;
     background: transparent;
     color: var(--text-color);
@@ -163,7 +162,7 @@
 
   .search-box input:focus {
     outline: none;
-    border-color: var(--primary-color, #3b82f6);
+    border-color: var(--link-color);
   }
 
   .options-list {
@@ -179,37 +178,20 @@
   }
 
   .option:hover {
-    background-color: rgba(0, 0, 0, 0.05);
+    background-color: var(--bg-secondary);
   }
 
   .option.selected {
-    background-color: rgba(59, 130, 246, 0.1);
-    color: var(--primary-color, #3b82f6);
+    background-color: var(--bg-secondary);
+    color: var(--link-color);
     font-weight: 500;
   }
 
   .no-results {
     padding: 0.75rem;
     text-align: center;
-    color: #9ca3af;
+    color: var(--gray-color);
     font-size: 0.875rem;
   }
 
-  @media (prefers-color-scheme: dark) {
-    .trigger,
-    .dropdown,
-    .search-box input {
-      background-color: #2a2a2a;
-      border-color: #444;
-      color: #eee;
-    }
-
-    .trigger.disabled {
-      background-color: #333;
-    }
-
-    .option:hover {
-      background-color: rgba(255, 255, 255, 0.1);
-    }
-  }
 </style>

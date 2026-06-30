@@ -30,36 +30,26 @@
   .select-input {
     width: 100%;
     padding: 0.5rem;
-    border-radius: 6px;
-    border: 1px solid var(--border-color, #e5e7eb);
-    background-color: var(--input-bg, #ffffff);
-    color: var(--text-color, #374151);
+    border-radius: 0.28rem;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    color: var(--text-color);
     font-size: 0.875rem;
     line-height: 1.25rem;
-    transition: all 0.2s;
+    transition:
+      border-color 0.16s ease,
+      background-color 0.16s ease;
   }
 
   .select-input:focus {
     outline: none;
-    border-color: var(--primary-color, #3b82f6);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    border-color: var(--link-color);
+    background-color: var(--background-color);
   }
 
   .select-input:disabled {
     opacity: 0.6;
     cursor: not-allowed;
-    background-color: var(--disabled-bg, #f3f4f6);
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .select-input {
-      background-color: #2a2a2a;
-      border-color: #444;
-      color: #eee;
-    }
-
-    .select-input:disabled {
-      background-color: #333;
-    }
+    background-color: var(--surface-hover);
   }
 </style>

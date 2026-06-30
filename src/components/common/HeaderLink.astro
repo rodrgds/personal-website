@@ -13,48 +13,50 @@ const anchorRel = external ? "me noopener noreferrer" : "me";
 const target = external ? "_blank" : undefined;
 ---
 
-{
-  isActive ? (
-    <div style="display: flex; flex-direction: column;">
-      <a
-        rel={anchorRel}
-        href={href}
-        target={target}
-        class:list={[className, { active: isActive }]}
-        {...props}
-      >
-        <slot />
-        {external && <span style="margin-left: 0.25em;">↗</span>}
-        <div
-          style="width: 100%; height: 2px; background: var(--link-color);"
-          transition:name="active-nav"
-        />
-      </a>
-    </div>
-  ) : (
-    <a
-      rel={anchorRel}
-      href={href}
-      target={target}
-      class:list={[className, { active: isActive }]}
-      {...props}
-    >
-      <slot />
-      {external && <span style="margin-left: 0.25em;">↗</span>}
-    </a>
-  )
-}
+<a
+  rel={anchorRel}
+  href={href}
+  target={target}
+  class:list={[className, { active: isActive }]}
+  {...props}
+>
+  <slot />
+  {
+    external && (
+      <span class="external-mark" aria-hidden="true">
+        ↗
+      </span>
+    )
+  }
+</a>
+
 <style>
   a {
     display: inline-block;
-    transition: transform 0.2s ease-out;
-  }
-  a:hover {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.2;
     text-decoration: none;
-    transform: scale(1.1);
-    opacity: 0.8;
+    border-bottom: 1px solid transparent;
+    transition:
+      color 0.16s ease,
+      border-color 0.16s ease;
   }
+
+  a:hover,
+  a:focus-visible {
+    color: var(--heading-color);
+    text-decoration: none;
+    border-color: var(--border-color);
+  }
+
   a.active {
-    font-weight: 600;
+    color: var(--heading-color);
+    border-color: var(--link-color);
+  }
+
+  .external-mark {
+    margin-left: 0.25em;
+    color: var(--gray-color);
   }
 </style>
