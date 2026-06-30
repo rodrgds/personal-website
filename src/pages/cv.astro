@@ -3,7 +3,7 @@ import { render } from "astro:content";
 import BaseHead from "../components/common/BaseHead.astro";
 import Footer from "../components/common/Footer.astro";
 import Header from "../components/common/Header.astro";
-import { Download, FileText } from "lucide-astro";
+import { FileText, Plus } from "lucide-astro";
 import CVEntryCard from "../components/features/cv/CVEntryCard.astro";
 import CVNavigation from "../components/features/cv/CVNavigation.svelte";
 import CVProjectCard from "../components/features/cv/CVProjectCard.astro";
@@ -117,13 +117,18 @@ const universityProjects = renderedProjects.filter(
               <a
                 href={`/cv/${profile.slug}.pdf`}
                 class="download-pill"
+                data-tooltip={getDownloadLabel(profile.label)}
                 title={getDownloadLabel(profile.label)}
                 aria-label={getDownloadLabel(profile.label)}
               >
-                {profile.slug === "compact" ? (
-                  <FileText size={17} strokeWidth={1.8} aria-hidden="true" />
-                ) : (
-                  <Download size={17} strokeWidth={1.8} aria-hidden="true" />
+                <FileText size={17} strokeWidth={1.8} aria-hidden="true" />
+                {profile.slug !== "compact" && (
+                  <Plus
+                    class="download-extra-icon"
+                    size={10}
+                    strokeWidth={2.2}
+                    aria-hidden="true"
+                  />
                 )}
                 <span class="sr-only">{getDownloadLabel(profile.label)}</span>
               </a>
@@ -482,6 +487,7 @@ const universityProjects = renderedProjects.filter(
 
   .download-pill {
     --cv-accent: var(--link-color);
+    position: relative;
     display: inline-grid;
     place-items: center;
     width: 1.9rem;
@@ -501,6 +507,44 @@ const universityProjects = renderedProjects.filter(
 
   .download-pill :global(svg) {
     stroke: currentColor;
+  }
+
+  .download-pill :global(.download-extra-icon) {
+    position: absolute;
+    top: 0.18rem;
+    right: 0.18rem;
+    width: 0.52rem;
+    height: 0.52rem;
+  }
+
+  .download-pill[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 0.45rem);
+    z-index: 2;
+    width: max-content;
+    max-width: 14rem;
+    padding: 0.28rem 0.45rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
+    background: var(--surface-color);
+    color: var(--text-color);
+    box-shadow: 0 0.25rem 0.8rem rgba(0, 0, 0, 0.12);
+    font-size: 0.74rem;
+    line-height: 1.2;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(0.2rem);
+    transition:
+      opacity 0.16s ease,
+      transform 0.16s ease;
+  }
+
+  .download-pill[data-tooltip]:hover::after,
+  .download-pill[data-tooltip]:focus-visible::after {
+    opacity: 1;
+    transform: translateY(0);
   }
 
   .download-pill:hover {

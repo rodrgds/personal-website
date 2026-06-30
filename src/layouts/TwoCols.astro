@@ -39,7 +39,34 @@ const {
         if (article.dataset.usesGrouped === "true") return;
 
         const fragment = document.createDocumentFragment();
+        let currentSection: HTMLElement | null = null;
+        let currentGrid: HTMLElement | null = null;
         let currentCard: HTMLDivElement | null = null;
+
+        function startSection(heading: HTMLElement) {
+          currentSection = document.createElement("section");
+          currentSection.className = "uses-section";
+
+          currentGrid = document.createElement("div");
+          currentGrid.className = "uses-section-grid";
+
+          currentSection.appendChild(heading);
+          currentSection.appendChild(currentGrid);
+          fragment.appendChild(currentSection);
+          currentCard = null;
+        }
+
+        function ensureGrid() {
+          if (currentGrid) return currentGrid;
+
+          currentSection = document.createElement("section");
+          currentSection.className = "uses-section";
+          currentGrid = document.createElement("div");
+          currentGrid.className = "uses-section-grid";
+          currentSection.appendChild(currentGrid);
+          fragment.appendChild(currentSection);
+          return currentGrid;
+        }
 
         for (const node of Array.from(article.childNodes)) {
           if (!(node instanceof HTMLElement)) {
@@ -52,14 +79,15 @@ const {
           if (node.matches("details")) {
             node.classList.add("uses-wide");
             fragment.appendChild(node);
+            currentSection = null;
+            currentGrid = null;
             currentCard = null;
             continue;
           }
 
           if (node.matches("h2")) {
             node.classList.add("uses-section-title");
-            fragment.appendChild(node);
-            currentCard = null;
+            startSection(node);
             continue;
           }
 
@@ -67,14 +95,14 @@ const {
             currentCard = document.createElement("section");
             currentCard.className = "uses-card";
             currentCard.appendChild(node);
-            fragment.appendChild(currentCard);
+            ensureGrid().appendChild(currentCard);
             continue;
           }
 
           if (!currentCard) {
             currentCard = document.createElement("section");
             currentCard.className = "uses-card";
-            fragment.appendChild(currentCard);
+            ensureGrid().appendChild(currentCard);
           }
 
           currentCard.appendChild(node);
@@ -98,18 +126,29 @@ const {
   }
 
   .two-col {
+    display: block;
+  }
+
+  .two-col :global(.uses-section) {
+    margin-top: 1.35rem;
+  }
+
+  .two-col :global(.uses-section:first-of-type) {
+    margin-top: 0;
+  }
+
+  .two-col :global(.uses-section-grid) {
     display: grid;
     grid-template-columns: 1fr;
     gap: 1rem;
   }
 
-  .two-col :global(.uses-wide),
-  .two-col :global(.uses-section-title) {
-    grid-column: 1 / -1;
+  .two-col :global(.uses-wide) {
+    margin-bottom: 1.35rem;
   }
 
   .two-col :global(.uses-section-title) {
-    margin-top: 1.35rem;
+    margin-top: 0;
   }
 
   .two-col :global(.uses-card) {
@@ -122,13 +161,13 @@ const {
   }
 
   @media (min-width: 768px) {
-    .two-col {
+    .two-col :global(.uses-section-grid) {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
 
   @media (min-width: 1100px) {
-    .two-col {
+    .two-col :global(.uses-section-grid) {
       grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
