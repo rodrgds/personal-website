@@ -5,9 +5,9 @@ import Footer from "../components/common/Footer.astro";
 import Header from "../components/common/Header.astro";
 import CVEntryCard from "../components/features/cv/CVEntryCard.astro";
 import CVNavigation from "../components/features/cv/CVNavigation.svelte";
+import CVProjectCard from "../components/features/cv/CVProjectCard.astro";
 import CVRelatedLinks from "../components/features/cv/CVRelatedLinks.astro";
 import CVSection from "../components/features/cv/CVSection.astro";
-import CVYouTubeEmbed from "../components/features/cv/CVYouTubeEmbed.svelte";
 import {
   formatCVDate,
   formatCVRange,
@@ -73,6 +73,13 @@ const [
   renderedHonors,
   renderedCertifications,
 ] = renderedCollections;
+
+const personalProjects = renderedProjects.filter(
+  (entry) => entry.data.category === "personal",
+);
+const universityProjects = renderedProjects.filter(
+  (entry) => entry.data.category === "university",
+);
 ---
 
 <!doctype html>
@@ -162,70 +169,64 @@ const [
         }
       </CVSection>
 
-      <CVSection id="projects" title="Projects">
+      <CVSection
+        id="projects"
+        title="Projects"
+        collapsible
+        defaultOpen
+        count={personalProjects.length}
+      >
         {
-          renderedProjects.map((entry) => (
-            <CVEntryCard
-              id={`project-${entry.id}`}
-              title={entry.data.name}
+          personalProjects.map((entry) => (
+            <CVProjectCard
+              id={entry.id}
+              name={entry.data.name}
               timeLabel={formatCVRange(
                 entry.data.startDate,
                 entry.data.endDate,
               )}
               visual={getEntryVisual(entry.data.logo, entry.data.image)}
-              visualAlt={`${entry.data.name} logo`}
+              logoSize={entry.data.logoSize}
+              cvRole={entry.data.cvRole}
+              url={entry.data.url}
+              repo={entry.data.repo}
+              bullets={entry.data.bullets}
+              relatedLinks={getRelatedLinks(entry.id, entry.data.related)}
+              demoVideo={entry.data.demoVideo}
             >
-              <Fragment slot="meta">
-                <p class="meta">
-                  {entry.data.cvRole ? (
-                    <span>{entry.data.cvRole}</span>
-                  ) : (
-                    <span>Project</span>
-                  )}
-                  {entry.data.url && (
-                    <>
-                      <span> · </span>
-                      <a href={entry.data.url} target="_blank" rel="noreferrer">
-                        Link
-                      </a>
-                    </>
-                  )}
-                  {entry.data.repo && (
-                    <>
-                      <span> · </span>
-                      <a
-                        href={`https://github.com/${entry.data.repo}`}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        {entry.data.repo}
-                      </a>
-                    </>
-                  )}
-                </p>
-              </Fragment>
-
-              {entry.data.bullets && entry.data.bullets.length > 0 && (
-                <ul>
-                  {entry.data.bullets.map((bullet) => (
-                    <li>{bullet}</li>
-                  ))}
-                </ul>
-              )}
-
-              <CVRelatedLinks
-                items={getRelatedLinks(entry.id, entry.data.related)}
-              />
-
-              {entry.data.demoVideo && (
-                <CVYouTubeEmbed
-                  url={entry.data.demoVideo}
-                  title={`${entry.data.name} walkthrough`}
-                />
-              )}
-
               <entry.rendered.Content />
-            </CVEntryCard>
+            </CVProjectCard>
+          ))
+        }
+      </CVSection>
+
+      <CVSection
+        id="university-projects"
+        title="University Projects"
+        collapsible
+        defaultOpen={false}
+        count={universityProjects.length}
+      >
+        {
+          universityProjects.map((entry) => (
+            <CVProjectCard
+              id={entry.id}
+              name={entry.data.name}
+              timeLabel={formatCVRange(
+                entry.data.startDate,
+                entry.data.endDate,
+              )}
+              visual={getEntryVisual(entry.data.logo, entry.data.image)}
+              logoSize={entry.data.logoSize}
+              cvRole={entry.data.cvRole}
+              url={entry.data.url}
+              repo={entry.data.repo}
+              bullets={entry.data.bullets}
+              relatedLinks={getRelatedLinks(entry.id, entry.data.related)}
+              demoVideo={entry.data.demoVideo}
+            >
+              <entry.rendered.Content />
+            </CVProjectCard>
           ))
         }
       </CVSection>

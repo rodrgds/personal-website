@@ -2,17 +2,49 @@
 interface Props {
   id: string;
   title: string;
+  collapsible?: boolean;
+  defaultOpen?: boolean;
+  count?: number;
 }
 
-const { id, title } = Astro.props;
+const {
+  id,
+  title,
+  collapsible = false,
+  defaultOpen = true,
+  count,
+}: Props = Astro.props;
 ---
 
-<section class="section">
-  <h2 id={id}>{title}</h2>
-  <div class="list">
-    <slot />
-  </div>
-</section>
+{
+  collapsible ? (
+    <details
+      class="section section-collapsible"
+      open={defaultOpen}
+      data-cv-section
+    >
+      <summary>
+        <span class="collapse-icon" aria-hidden="true">
+          ▶
+        </span>
+        <span class="section-title" id={id} role="heading" aria-level="2">
+          {title}
+        </span>
+        {typeof count === "number" && <span class="item-count">({count})</span>}
+      </summary>
+      <div class="list">
+        <slot />
+      </div>
+    </details>
+  ) : (
+    <section class="section">
+      <h2 id={id}>{title}</h2>
+      <div class="list">
+        <slot />
+      </div>
+    </section>
+  )
+}
 
 <style>
   .section {
@@ -22,6 +54,49 @@ const { id, title } = Astro.props;
   .section h2 {
     margin-bottom: 0.9rem;
     font-size: 1.35rem;
+  }
+
+  summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: fit-content;
+    margin-bottom: 0.9rem;
+    color: var(--heading-color);
+    cursor: pointer;
+    user-select: none;
+    transition: opacity 0.2s ease;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+
+  summary:hover {
+    opacity: 0.8;
+  }
+
+  .section-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .collapse-icon {
+    font-size: 0.72rem;
+    color: var(--gray-color);
+    transition: transform 0.18s ease;
+  }
+
+  details[open] .collapse-icon {
+    transform: rotate(90deg);
+  }
+
+  .item-count {
+    color: var(--gray-color);
+    font-family: var(--font-family-mono);
+    font-size: 0.82rem;
+    font-weight: 400;
   }
 
   .list {

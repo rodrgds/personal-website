@@ -8,9 +8,10 @@ interface Props {
   timeLabel: string;
   visual?: string;
   visualAlt: string;
+  visualSize?: number;
 }
 
-const { id, title, timeLabel, visual, visualAlt } = Astro.props;
+const { id, title, timeLabel, visual, visualAlt, visualSize } = Astro.props;
 ---
 
 <CVExpandable client:load id={id}>
@@ -20,7 +21,7 @@ const { id, title, timeLabel, visual, visualAlt } = Astro.props;
         {
           visual && (
             <p class="entry-logo">
-              <CVEntryVisual src={visual} alt={visualAlt} />
+              <CVEntryVisual src={visual} alt={visualAlt} size={visualSize} />
             </p>
           )
         }

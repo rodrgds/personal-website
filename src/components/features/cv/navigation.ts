@@ -23,6 +23,17 @@ function getExpandableSelector(id: string): string {
   return `[${CV_EXPANDABLE_ATTRIBUTE}="${id}"]`;
 }
 
+function openContainingSection(id: string): void {
+  const element = document.querySelector<HTMLElement>(
+    getExpandableSelector(id),
+  );
+  const section = element?.closest("details[data-cv-section]");
+
+  if (section instanceof HTMLDetailsElement) {
+    section.open = true;
+  }
+}
+
 export function getAllExpandableIds(): string[] {
   return Array.from(document.querySelectorAll(`[${CV_EXPANDABLE_ATTRIBUTE}]`))
     .map((element) => element.getAttribute(CV_EXPANDABLE_ATTRIBUTE) ?? "")
@@ -40,6 +51,8 @@ export function scrollExpandableIntoView(
   block: ScrollLogicalPosition = "start",
   delay = CV_EXPANDABLE_SCROLL_DELAY_MS,
 ): void {
+  openContainingSection(id);
+
   if (pendingScrollTimeout !== null) {
     window.clearTimeout(pendingScrollTimeout);
     pendingScrollTimeout = null;
@@ -95,6 +108,8 @@ export function requestExpandableOpen({
   behavior = "smooth",
   block = "start",
 }: CVExpandableRequestDetail): void {
+  openContainingSection(id);
+
   if (history !== "none") {
     updateHash(id, history);
   }

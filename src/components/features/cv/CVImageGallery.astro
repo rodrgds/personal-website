@@ -1,0 +1,45 @@
+---
+interface Props {
+  columns?: number;
+  mobileColumns?: number;
+  class?: string;
+}
+
+const { columns = 2, mobileColumns = 1, class: className }: Props = Astro.props;
+---
+
+<div
+  class:list={["cv-image-gallery", className]}
+  style={`--gallery-columns: ${columns}; --gallery-mobile-columns: ${mobileColumns};`}
+>
+  <slot />
+</div>
+
+<style>
+  .cv-image-gallery {
+    display: grid;
+    grid-template-columns: repeat(var(--gallery-columns), minmax(0, 1fr));
+    align-items: start;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .cv-image-gallery > :global(*) {
+    min-width: 0;
+    margin: 0;
+  }
+
+  .cv-image-gallery :global(img) {
+    width: 100%;
+  }
+
+  @media (max-width: 600px) {
+    .cv-image-gallery {
+      grid-template-columns: repeat(
+        var(--gallery-mobile-columns),
+        minmax(0, 1fr)
+      );
+      gap: 0.7rem;
+    }
+  }
+</style>

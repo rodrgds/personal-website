@@ -28,8 +28,10 @@ export interface ProjectData {
   repo?: string;
   demoVideo?: string;
   logo?: string;
+  logoSize?: number;
   image?: string;
   tags: string[];
+  category: "personal" | "university";
   featured: boolean;
   status: "active" | "archived" | "wip";
   cvRole?: string;

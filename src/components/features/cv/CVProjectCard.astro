@@ -1,0 +1,97 @@
+---
+import CVEntryCard from "./CVEntryCard.astro";
+import CVRelatedLinks from "./CVRelatedLinks.astro";
+import CVYouTubeEmbed from "./CVYouTubeEmbed.svelte";
+
+interface RelatedLink {
+  href: string;
+  title: string;
+}
+
+interface Props {
+  id: string;
+  name: string;
+  timeLabel: string;
+  visual?: string;
+  logoSize?: number;
+  cvRole?: string;
+  url?: string;
+  repo?: string;
+  bullets?: string[];
+  relatedLinks: RelatedLink[];
+  demoVideo?: string;
+}
+
+const {
+  id,
+  name,
+  timeLabel,
+  visual,
+  logoSize,
+  cvRole,
+  url,
+  repo,
+  bullets,
+  relatedLinks,
+  demoVideo,
+}: Props = Astro.props;
+---
+
+<CVEntryCard
+  id={`project-${id}`}
+  title={name}
+  timeLabel={timeLabel}
+  visual={visual}
+  visualAlt={`${name} logo`}
+  visualSize={logoSize}
+>
+  <Fragment slot="meta">
+    <p class="meta">
+      <span>{cvRole ?? "Project"}</span>
+      {
+        url && (
+          <>
+            <span> · </span>
+            <a href={url} target="_blank" rel="noreferrer">
+              Link
+            </a>
+          </>
+        )
+      }
+      {
+        repo && (
+          <>
+            <span> · </span>
+            <a
+              href={`https://github.com/${repo}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {repo}
+            </a>
+          </>
+        )
+      }
+    </p>
+  </Fragment>
+
+  {
+    bullets && bullets.length > 0 && (
+      <ul>
+        {bullets.map((bullet) => (
+          <li>{bullet}</li>
+        ))}
+      </ul>
+    )
+  }
+
+  <CVRelatedLinks items={relatedLinks} />
+
+  {
+    demoVideo && (
+      <CVYouTubeEmbed url={demoVideo} title={`${name} walkthrough`} />
+    )
+  }
+
+  <slot />
+</CVEntryCard>
