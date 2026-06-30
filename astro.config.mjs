@@ -31,7 +31,11 @@ export default defineConfig({
     sitemap(),
     svelte(),
     whiteLogosIntegration(),
-    compress(),
+    compress({
+      // Svelte's SSR hydration relies on whitespace text nodes inside islands.
+      // HTML whitespace minification can remove those nodes and break hydration.
+      HTML: false,
+    }),
   ],
   markdown: {
     syntaxHighlight: false,

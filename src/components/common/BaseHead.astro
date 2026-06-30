@@ -56,6 +56,7 @@ const { title, description, image = "" } = Astro.props;
     function shouldEnhanceLink(anchor) {
       if (!(anchor instanceof HTMLAnchorElement)) return false;
       if (!anchor.href) return false;
+      if (anchor.closest("astro-island")) return false;
       if (anchor.closest("nav, button, .socials")) return false;
       if (
         anchor.classList.contains("download-pill") ||
@@ -147,6 +148,8 @@ const { title, description, image = "" } = Astro.props;
     }
 
     function enhanceAnchor(anchor) {
+      if (anchor.closest("astro-island")) return;
+
       if (!shouldEnhanceLink(anchor)) {
         delete anchor.dataset.animatedLink;
         return;
@@ -161,6 +164,8 @@ const { title, description, image = "" } = Astro.props;
     }
 
     function enhanceAnchorsIn(root) {
+      if (root instanceof Element && root.closest("astro-island")) return;
+
       if (root instanceof HTMLAnchorElement) {
         enhanceAnchor(root);
         return;
