@@ -1,0 +1,57 @@
+---
+name: "Clutch"
+startDate: "2026-02"
+endDate: "2026-06"
+demoVideo: "https://youtu.be/JZyJXNlv0VE"
+logo: "clutch"
+tags:
+  [
+    "Expo",
+    "React Native",
+    "TypeScript",
+    "Convex",
+    "Maps",
+    "Real-time",
+    "E2E Testing",
+  ]
+category: "university"
+featured: true
+status: "archived"
+cvRole: "3-person team · Software Engineering"
+bullets:
+  - "Co-built a campus peer-help app that matches nearby FEUP students by subject, coordinates live help sessions, and rewards helpers with a karma economy"
+  - "Shipped SOS requests, indoor campus maps, real-time offers and chat, QR session verification, reviews, badges, streaks, leaderboards, moderation, and offline-aware flows"
+  - "Worked across Expo/React Native, TypeScript, Convex, CI/CD, unit/integration tests, automated Android E2E recordings, release management, and project documentation"
+related: ["feup"]
+---
+
+import CVImage from "../../components/features/cv/CVImage.astro";
+import CVImageGallery from "../../components/features/cv/CVImageGallery.astro";
+import Logo from "../../components/common/Logo.astro";
+import leaderboard from "../../assets/cv/university/clutch/leaderboard.png";
+import requestHelp from "../../assets/cv/university/clutch/request-help.png";
+import sessionChat from "../../assets/cv/university/clutch/session-chat.png";
+
+**Clutch** connects FEUP students who are stuck with nearby peers who can help in person. A student chooses a course unit and broadcasts an SOS; available helpers can respond, meet on campus, verify the session by QR code, chat, and review one another afterward.
+
+We built the mobile app with <Logo fixed src="expo" /> **Expo**, <Logo fixed src="react" /> **React Native**, <Logo fixed src="typescript" /> **TypeScript**, and <Logo fixed src="convex" /> **Convex**. The product also includes a karma economy, badges and streaks, course/global leaderboards, user blocking, quiet hours, multiple FEUP buildings, capacity information, offline behavior, and a separate privacy-conscious admin analytics dashboard.
+
+### App walkthrough
+
+<CVImageGallery columns={3} mobileColumns={2}>
+  <CVImage
+    src={requestHelp}
+    alt="Clutch searching for a nearby peer for a selected FEUP course unit"
+    sizes="(max-width: 600px) 45vw, 220px"
+  />
+  <CVImage
+    src={sessionChat}
+    alt="Clutch live help session with elapsed time, QR verification, and chat"
+    sizes="(max-width: 600px) 45vw, 220px"
+  />
+  <CVImage
+    src={leaderboard}
+    alt="Clutch weekly course and individual karma leaderboard"
+    sizes="(max-width: 600px) 45vw, 220px"
+  />
+</CVImageGallery>

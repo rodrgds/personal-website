@@ -1,0 +1,27 @@
+---
+name: "Ninjix"
+startDate: "2026-02"
+endDate: "2026-06"
+demoVideo: "https://www.youtube.com/watch?v=v18kjteAinA"
+logo: "ninjix"
+tags: ["C", "MINIX", "VBE", "UART", "Game Development", "Systems Programming"]
+category: "university"
+featured: true
+status: "archived"
+cvRole: "4-person team · LCOM"
+bullets:
+  - "Co-built a pixel-art tower-defense game and small game engine in C for MINIX, driven by timer, keyboard, mouse, graphics, and serial-port interrupts"
+  - "Implemented a 60 Hz simulation/render loop with levels, waves, tower upgrades, enemy abilities, projectile pools, menus, profiling, and custom PNG-to-XPM tooling"
+  - "Added two-player UART multiplayer with attacker/defender roles, a binary synchronization protocol, handshakes, retransmission, and shared game-state events"
+related: ["feup"]
+---
+
+import Logo from "../../components/common/Logo.astro";
+
+**Ninjix** was our final Computer Laboratory project: a complete tower-defense game written in <Logo fixed src="c" /> **C** for **MINIX 3**, without a game framework. The codebase acts as a small event-driven engine layered over the course's hardware work.
+
+The game normalizes hardware interrupts into app events, runs gameplay at 60 Hz, renders through a back buffer, and manages towers, eight enemy types, projectiles, waves, upgrades, targeting modes, menus, overlays, and reusable sprite resources. We also built developer tooling for PNG-to-XPM conversion, Doxygen/Graphviz documentation, and section-level profiling with FlameGraph output.
+
+### Serial multiplayer
+
+The multiplayer mode links two machines over **COM1 at 115200 bps**. One player attacks by spending elixir to spawn enemies; the other defends by placing and upgrading towers. A custom binary protocol handles discovery, role negotiation, gameplay events, pause synchronization, and restart decisions.
