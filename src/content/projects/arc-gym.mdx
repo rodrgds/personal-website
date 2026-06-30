@@ -1,0 +1,60 @@
+---
+name: "ARC Gym"
+startDate: "2026-03"
+endDate: "2026-06"
+logo: "arcgym"
+logoSize: 18
+tags: ["PHP", "SQLite", "JavaScript", "CSS", "REST API", "Security", "QR Codes"]
+category: "university"
+featured: false
+status: "archived"
+cvRole: "3-person team · Web Languages and Technologies"
+bullets:
+  - "Co-built a framework-free gym management platform in strict PHP, SQLite, semantic HTML, layered CSS, and vanilla JavaScript/AJAX"
+  - "Implemented class enrollment and waitlists, trainer/member/admin workflows, personal training, equipment reservations, memberships, notifications, and analytics"
+  - "Added QR membership check-in, physical cards, a Bearer-authenticated JSON/XML REST API, migrations, audit logs, backups, session controls, and security hardening"
+related: ["feup"]
+---
+
+import CVImage from "../../components/features/cv/CVImage.astro";
+import CVImageGallery from "../../components/features/cv/CVImageGallery.astro";
+import Logo from "../../components/common/Logo.astro";
+import adminDashboard from "../../assets/cv/university/arc-gym/admin-dashboard.png";
+import adminEquipment from "../../assets/cv/university/arc-gym/admin-equipment.png";
+import adminPlans from "../../assets/cv/university/arc-gym/admin-plans.png";
+import dashboard from "../../assets/cv/university/arc-gym/dashboard.png";
+import landing from "../../assets/cv/university/arc-gym/landing.png";
+import login from "../../assets/cv/university/arc-gym/login.png";
+import passPage from "../../assets/cv/university/arc-gym/pass-page.png";
+import profile from "../../assets/cv/university/arc-gym/profile.png";
+import publicTrainerPage from "../../assets/cv/university/arc-gym/public-trainer-page.png";
+import trainerDashboard1 from "../../assets/cv/university/arc-gym/trainer-dashboard-1.png";
+import trainerDashboard2 from "../../assets/cv/university/arc-gym/trainer-dashboard-2.png";
+
+**ARC Gym** is a full gym-management platform built without application or CSS frameworks: <Logo fixed src="php" /> **strict PHP**, <Logo fixed src="sqlite" /> **SQLite** through PDO, semantic HTML, layered CSS, and vanilla JavaScript/AJAX.
+
+Members can manage memberships, browse and join classes, enter waitlists, reserve equipment, book personal training, review sessions, receive notifications, and present a QR gym pass. Trainers manage availability, rosters, profiles, and analytics; administrators manage the full catalog, users, equipment, promotions, landing content, audit logs, backups, API clients, and check-ins.
+
+The security layer includes prepared statements, output escaping, CSRF tokens, password hashing, session rotation, role guards, upload validation, hashed API tokens, and rate limits. A public REST API supports JSON and XML, while a numbered SQL/PHP migration system keeps schema and seed data reproducible.
+
+### Public and member experience
+
+<CVImage src={landing} alt="ARC Gym public landing page" />
+
+<CVImageGallery columns={2} mobileColumns={1}>
+  <CVImage src={login} alt="ARC Gym login and registration page" />
+  <CVImage src={dashboard} alt="ARC Gym member dashboard and weekly class schedule" />
+  <CVImage src={profile} alt="ARC Gym member profile and account controls" />
+  <CVImage src={publicTrainerPage} alt="ARC Gym public trainer profile" />
+  <CVImage src={passPage} alt="ARC Gym digital QR membership pass" />
+</CVImageGallery>
+
+### Trainer and admin tools
+
+<CVImageGallery columns={2} mobileColumns={1}>
+  <CVImage src={trainerDashboard1} alt="ARC Gym trainer schedule dashboard" />
+  <CVImage src={trainerDashboard2} alt="ARC Gym trainer analytics dashboard" />
+  <CVImage src={adminDashboard} alt="ARC Gym landing-page administration interface" />
+  <CVImage src={adminEquipment} alt="ARC Gym equipment administration interface" />
+  <CVImage src={adminPlans} alt="ARC Gym membership plan administration interface" />
+</CVImageGallery>
