@@ -1,0 +1,448 @@
+---
+import BaseHead from "../../components/common/BaseHead.astro";
+import Header from "../../components/common/Header.astro";
+import Footer from "../../components/common/Footer.astro";
+
+const title = "App Review Intelligence Audit | Rodrigo Dias";
+const description =
+  "A fixed-scope audit of up to 500 recent public App Store or Google Play reviews, delivered within 48 hours for €150.";
+
+const emailSubject = "App Review Intelligence Audit";
+const emailBody = `Hi Rodrigo,
+
+I want to order the App Review Intelligence Audit.
+
+App URL or package:
+Target countries/languages:
+Current concern:
+
+Payment reference:`;
+
+const emailHref = `mailto:me@rgo.pt?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead title={title} description={description} />
+  </head>
+  <body class="service-page">
+    <Header />
+    <main>
+      <article class="audit-page">
+        <section class="hero" aria-labelledby="audit-title">
+          <div class="hero-copy">
+            <p class="eyebrow">Fixed-scope service</p>
+            <h1 id="audit-title">App Review Intelligence Audit</h1>
+            <p class="lede">
+              I turn recent public app reviews into a practical product brief:
+              what users keep complaining about, what might make them churn,
+              what they are asking for, and what to fix first.
+            </p>
+          </div>
+
+          <aside class="order-panel" aria-label="Audit order summary">
+            <p class="price">€150</p>
+            <p class="price-note">one-time, one app</p>
+            <a
+              class="button primary"
+              href="https://www.paypal.com/paypalme/kraktoos/150EUR"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Order the €150 audit
+            </a>
+            <a class="button secondary" href={emailHref}>Ask before ordering</a>
+            <p class="microcopy">
+              After payment, email the app URL/package and payment reference to
+              <a href="mailto:me@rgo.pt">me@rgo.pt</a>.
+            </p>
+          </aside>
+        </section>
+
+        <p class="privacy-note">
+          Public reviews only. No App Store Connect, Play Console, analytics, or
+          customer account access needed.
+        </p>
+
+        <section class="section scope" aria-labelledby="scope-title">
+          <div>
+            <h2 id="scope-title">What you get</h2>
+            <p>
+              This is a small, bounded audit for founders, indie developers, and
+              product teams who know their reviews contain useful signals but do
+              not want another vague dashboard.
+            </p>
+          </div>
+          <ul class="check-list">
+            <li>Analysis of up to 500 recent public reviews</li>
+            <li>Complaint clusters with representative wording</li>
+            <li>Churn risks and repeated friction points</li>
+            <li>Feature requests separated from general frustration</li>
+            <li>ASO and listing opportunities visible in review language</li>
+            <li>Prioritized product actions, not just summaries</li>
+          </ul>
+        </section>
+
+        <section class="section split" aria-labelledby="delivery-title">
+          <div>
+            <h2 id="delivery-title">Delivery</h2>
+            <p>
+              I deliver the audit within 48 hours after I have the app details
+              and payment reference. The scope includes one follow-up
+              revision/question round, so you can sanity-check an assumption or
+              ask me to go deeper on one part of the findings.
+            </p>
+          </div>
+          <div class="compact-box">
+            <dl>
+              <div>
+                <dt>Store</dt>
+                <dd>iOS App Store or Google Play</dd>
+              </div>
+              <div>
+                <dt>Reviews</dt>
+                <dd>Up to 500 recent public reviews</dd>
+              </div>
+              <div>
+                <dt>Turnaround</dt>
+                <dd>Within 48 hours</dd>
+              </div>
+              <div>
+                <dt>Follow-up</dt>
+                <dd>One revision/question round</dd>
+              </div>
+            </dl>
+          </div>
+        </section>
+
+        <section class="section proof" aria-labelledby="proof-title">
+          <h2 id="proof-title">Technical proof</h2>
+          <p>
+            The audit runs on top of my public
+            <a
+              href="https://apify.com/rodrgds/app-review-intelligence-agent"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              App Review Intelligence Agent on Apify</a
+            >. I have used the workflow on public review samples for apps such
+            as Pokémon GO, Headspace, TrailLink, GuideAlong, and Photo Transfer.
+          </p>
+        </section>
+
+        <section class="section process" aria-labelledby="process-title">
+          <h2 id="process-title">How to order</h2>
+          <ol>
+            <li>Pay the fixed €150 fee through the order button above.</li>
+            <li>
+              Email <a href="mailto:me@rgo.pt">me@rgo.pt</a> with the app URL or package,
+              target countries/languages, current concern, and payment reference.
+            </li>
+            <li>
+              I fetch the public reviews, run the analysis, and send the audit
+              within 48 hours.
+            </li>
+          </ol>
+        </section>
+
+        <section class="section faq" aria-labelledby="faq-title">
+          <h2 id="faq-title">FAQ</h2>
+          <details>
+            <summary>What do you need from me?</summary>
+            <p>
+              The app URL or package name, target countries/languages if you
+              care about specific markets, your current concern, and the payment
+              reference.
+            </p>
+          </details>
+          <details>
+            <summary>What format is the deliverable?</summary>
+            <p>
+              A written audit in a practical product-note format: clusters,
+              risks, requested features, listing opportunities, and prioritized
+              actions.
+            </p>
+          </details>
+          <details>
+            <summary>Is 500 reviews always the number analyzed?</summary>
+            <p>
+              No. I analyze up to 500 recent public reviews. If the store
+              exposes fewer useful recent reviews, I work with what is available
+              and make that clear in the audit.
+            </p>
+          </details>
+          <details>
+            <summary>Which stores do you support?</summary>
+            <p>One iOS App Store app or one Google Play app per audit.</p>
+          </details>
+          <details>
+            <summary>What if you cannot fetch enough reviews?</summary>
+            <p>
+              If I cannot fetch enough public reviews to produce a useful audit,
+              I will refund the order instead of forcing a weak deliverable.
+            </p>
+          </details>
+        </section>
+      </article>
+    </main>
+    <Footer />
+  </body>
+</html>
+
+<style>
+  :global(body.service-page > main) {
+    width: min(100%, 58rem);
+  }
+
+  .audit-page {
+    display: grid;
+    gap: 2.2rem;
+  }
+
+  .hero {
+    display: grid;
+    gap: 1.4rem;
+    align-items: start;
+  }
+
+  .eyebrow {
+    margin: 0 0 0.45rem;
+    color: var(--gray-color);
+    font-family: var(--font-family-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    max-width: 12ch;
+    margin: 0;
+    font-size: clamp(2.05rem, 9vw, 3.7rem);
+    line-height: 0.98;
+  }
+
+  .lede {
+    max-width: 36rem;
+    margin-top: 1rem;
+    color: var(--text-color);
+    font-size: 1.12rem;
+    line-height: 1.55;
+  }
+
+  .order-panel,
+  .compact-box {
+    border: 1px solid var(--border-color);
+    border-radius: 0.45rem;
+    background: var(--surface-color);
+  }
+
+  .order-panel {
+    padding: 1rem;
+  }
+
+  .price {
+    margin: 0;
+    color: var(--heading-color);
+    font-family: var(--font-family-mono);
+    font-size: 2.4rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .price-note {
+    margin: 0.25rem 0 1rem;
+    color: var(--gray-color);
+    font-size: 0.92rem;
+  }
+
+  .button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 2.55rem;
+    padding: 0.55rem 0.8rem;
+    border: 1px solid var(--link-color);
+    border-radius: 0.3rem;
+    font-size: 0.98rem;
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: none;
+    transition:
+      background-color 0.15s ease-out,
+      border-color 0.15s ease-out,
+      color 0.15s ease-out;
+  }
+
+  .button::before {
+    display: none;
+  }
+
+  .button + .button {
+    margin-top: 0.55rem;
+  }
+
+  .primary {
+    background: var(--link-color);
+    color: #fff;
+  }
+
+  .primary:hover,
+  .primary:focus-visible {
+    border-color: var(--visited-color);
+    background: var(--visited-color);
+    color: #fff;
+  }
+
+  .secondary {
+    background: transparent;
+    color: var(--link-color);
+  }
+
+  .secondary:hover,
+  .secondary:focus-visible {
+    background: var(--bg-secondary);
+  }
+
+  .microcopy,
+  .privacy-note {
+    color: var(--gray-color);
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
+  .microcopy {
+    margin: 0.9rem 0 0;
+  }
+
+  .privacy-note {
+    margin: -1.2rem 0 0;
+    padding-top: 0.9rem;
+    border-top: 1px dashed var(--border-color);
+  }
+
+  .section {
+    padding-top: 1.5rem;
+    border-top: 1px dashed var(--border-color);
+  }
+
+  .section h2 {
+    margin-top: 0;
+  }
+
+  .scope,
+  .split {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .check-list {
+    display: grid;
+    gap: 0.55rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .check-list li {
+    position: relative;
+    padding-left: 1.2rem;
+    line-height: 1.45;
+  }
+
+  .check-list li::before {
+    content: "";
+    position: absolute;
+    top: 0.72em;
+    left: 0;
+    width: 0.42rem;
+    height: 0.42rem;
+    border-radius: 50%;
+    background: var(--link-color);
+  }
+
+  .compact-box {
+    padding: 0.9rem 1rem;
+  }
+
+  dl {
+    display: grid;
+    gap: 0.75rem;
+    margin: 0;
+  }
+
+  dl div {
+    display: grid;
+    gap: 0.05rem;
+  }
+
+  dt {
+    color: var(--gray-color);
+    font-family: var(--font-family-mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--heading-color);
+    line-height: 1.35;
+  }
+
+  .process ol {
+    margin: 0;
+    padding-left: 1.35rem;
+  }
+
+  .process li + li {
+    margin-top: 0.65rem;
+  }
+
+  details {
+    border-top: 1px solid var(--border-color);
+  }
+
+  details:last-child {
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  summary {
+    padding: 0.75rem 0;
+    color: var(--heading-color);
+    cursor: pointer;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  details p {
+    margin: 0 0 0.9rem;
+    color: var(--text-color);
+  }
+
+  @media (min-width: 760px) {
+    .audit-page {
+      gap: 2.7rem;
+    }
+
+    .hero {
+      grid-template-columns: minmax(0, 1fr) 18rem;
+      gap: 2rem;
+    }
+
+    .order-panel {
+      position: sticky;
+      top: 1rem;
+    }
+
+    .scope,
+    .split {
+      grid-template-columns: minmax(0, 0.95fr) minmax(18rem, 1fr);
+      gap: 2rem;
+    }
+
+    .compact-box {
+      align-self: start;
+    }
+  }
+</style>
