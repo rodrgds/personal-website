@@ -1,0 +1,53 @@
+---
+name: "TankTussle"
+startDate: "2025-09"
+endDate: "2026-01"
+logo: "java"
+tags:
+  [
+    "Java",
+    "Lanterna",
+    "Gradle",
+    "JUnit",
+    "jqwik",
+    "Mockito",
+    "JaCoCo",
+    "Pitest",
+    "Spotless",
+  ]
+category: "university"
+featured: false
+status: "archived"
+cvRole: "3-person team · Software Design and Testing"
+bullets:
+  - "Co-built a TankTrouble-inspired 2D local tank combat game in Java with Lanterna, including local 1v1 multiplayer and single-player AI"
+  - "Implemented bouncing projectile physics, ricochets, destructible and indestructible walls, multiple maps, a map editor, menus, settings, sound, music, and particles"
+  - "Structured the game around MVC, state and event-driven architecture, design patterns, Gradle automation, JUnit/jqwik/Mockito tests, JaCoCo, Pitest, and Spotless"
+related: ["feup"]
+---
+
+import CVImage from "../../components/features/cv/CVImage.astro";
+import CVImageGallery from "../../components/features/cv/CVImageGallery.astro";
+import Logo from "../../components/common/Logo.astro";
+import aiWinsRound from "../../assets/cv/university/tanktussle/ai-wins-round.png";
+import mapEditor from "../../assets/cv/university/tanktussle/map-editor.png";
+import pauseMenu from "../../assets/cv/university/tanktussle/pause-menu.png";
+import playerWinsRound from "../../assets/cv/university/tanktussle/player-wins-round.png";
+import splashscreen from "../../assets/cv/university/tanktussle/splashscreen.png";
+
+**TankTussle** is a TankTrouble-inspired local tank combat game built with <Logo fixed src="java" /> **Java** and **Lanterna** for LDTS 2025/26.
+
+The game supports local 1v1 multiplayer and single-player matches against AI opponents with three difficulty levels. Combat centers on bouncing projectiles, ricochets, destructible and indestructible walls, multiple arena layouts, particle effects, sound, music, pause and victory flows, customizable controls, and a built-in map editor.
+
+Internally, the project uses MVC, explicit game states, an event-driven loop, and patterns such as factory method, observer, singleton, facade, state, and template method. The Gradle toolchain includes JUnit, jqwik, Mockito, JaCoCo, Pitest, and Spotless for testing, mutation analysis, coverage, and formatting.
+
+### Game screenshots
+
+<CVImage src={splashscreen} alt="TankTussle splash screen with ASCII tank logo" loading="eager" />
+
+<CVImageGallery columns={2} mobileColumns={1}>
+  <CVImage src={playerWinsRound} alt="TankTussle local multiplayer round with a player victory" />
+  <CVImage src={aiWinsRound} alt="TankTussle single-player match against AI with projectiles and particles" />
+  <CVImage src={pauseMenu} alt="TankTussle pause menu" />
+  <CVImage src={mapEditor} alt="TankTussle built-in map editor for walls and player positions" />
+</CVImageGallery>
