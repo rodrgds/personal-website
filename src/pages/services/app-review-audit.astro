@@ -117,17 +117,56 @@ const emailHref = `mailto:me@rgo.pt?subject=${encodeURIComponent(emailSubject)}&
         </section>
 
         <section class="section proof" aria-labelledby="proof-title">
-          <h2 id="proof-title">Technical proof</h2>
-          <p>
-            The audit runs on top of my public
+          <div class="proof-intro">
+            <h2 id="proof-title">Real sample findings</h2>
+            <p>
+              These are findings from live runs on recent public reviews. Each
+              audit keeps the source review rows beside the report so its claims
+              can be checked against what users actually wrote.
+            </p>
+          </div>
+
+          <div class="sample-grid">
+            <article class="sample-card">
+              <p class="sample-meta">Photo Transfer · 30 iOS reviews</p>
+              <h3>Subscription trust and paid-user transfer failures</h3>
+              <p>
+                The sample found repeated cancellation friction, payment and
+                transfer errors, and requests for bidirectional transfer and
+                original creation-date retention.
+              </p>
+            </article>
+
+            <article class="sample-card">
+              <p class="sample-meta">Headspace · 20 Google Play reviews</p>
+              <h3>Billing, cancellation, privacy, and login objections</h3>
+              <p>
+                The report separated billing and subscription complaints from
+                privacy concerns around wellness check-ins, authentication
+                failures, and sleep-story reliability issues.
+              </p>
+            </article>
+
+            <article class="sample-card">
+              <p class="sample-meta">TrailLink · 25 iOS reviews</p>
+              <h3>A healthy rating without fake crisis language</h3>
+              <p>
+                At 4.44 average rating and 8% negative reviews, the report kept
+                the overall picture positive while isolating map-detail,
+                coverage, competitor-value, and account-deletion friction.
+              </p>
+            </article>
+          </div>
+
+          <p class="proof-note">
+            The workflow runs on my public
             <a
               href="https://apify.com/rodrgds/app-review-intelligence-agent"
               target="_blank"
               rel="noopener noreferrer"
-            >
-              App Review Intelligence Agent on Apify</a
-            >. I have used the workflow on public review samples for apps such
-            as Pokémon GO, Headspace, TrailLink, GuideAlong, and Photo Transfer.
+              >App Review Intelligence Agent on Apify</a
+            >. The finished audit adds manual QA, prioritization, and a written
+            brief tailored to your app and current concern.
           </p>
         </section>
 
@@ -390,6 +429,50 @@ const emailHref = `mailto:me@rgo.pt?subject=${encodeURIComponent(emailSubject)}&
     line-height: 1.35;
   }
 
+  .proof-intro {
+    max-width: 42rem;
+  }
+
+  .sample-grid {
+    display: grid;
+    gap: 0.8rem;
+    margin-top: 1rem;
+  }
+
+  .sample-card {
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.45rem;
+    background: var(--surface-color);
+  }
+
+  .sample-meta {
+    margin: 0 0 0.45rem;
+    color: var(--gray-color);
+    font-family: var(--font-family-mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+  }
+
+  .sample-card h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.3;
+  }
+
+  .sample-card p:not(.sample-meta) {
+    margin: 0.65rem 0;
+    font-size: 0.94rem;
+    line-height: 1.5;
+  }
+
+  .proof-note {
+    margin: 1rem 0 0;
+    color: var(--gray-color);
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+
   .process ol {
     margin: 0;
     padding-left: 1.35rem;
@@ -439,6 +522,10 @@ const emailHref = `mailto:me@rgo.pt?subject=${encodeURIComponent(emailSubject)}&
     .split {
       grid-template-columns: minmax(0, 0.95fr) minmax(18rem, 1fr);
       gap: 2rem;
+    }
+
+    .sample-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .compact-box {
