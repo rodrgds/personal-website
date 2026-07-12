@@ -25,6 +25,7 @@ function isEmoji(str: string) {
 // Determine if logo needs inversion
 const isWhiteLogo = whiteLogos.includes(normalizedSrc as any);
 const isBlackLogo = blackLogos.includes(normalizedSrc as any);
+const isExactMonochrome = normalizedSrc === "diassolutions";
 ---
 
 {
@@ -49,6 +50,7 @@ const isBlackLogo = blackLogos.includes(normalizedSrc as any);
       class:list={[
         isWhiteLogo && "logo-needs-invert",
         isBlackLogo && "logo-needs-dark-invert",
+        isExactMonochrome && "logo-exact-monochrome",
       ]}
       style={{
         height: size + "px",

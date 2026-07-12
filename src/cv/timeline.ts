@@ -207,29 +207,46 @@ export function buildTimelineLayout(
   const endMonth = latestMonth + 1;
   const monthCount = endMonth - startMonth + 1;
 
-  const rowEnds: number[] = [];
-  const positionedEntries = [...entries]
-    .sort(
-      (a, b) =>
-        parseMonth(a.startDate) - parseMonth(b.startDate) ||
-        a.title.localeCompare(b.title),
-    )
-    .map((entry) => {
-      const startMonth = parseMonth(entry.startDate);
-      const endMonth = entry.endDate ? parseMonth(entry.endDate) : currentMonth;
-      const occupiedUntil = Math.max(endMonth, startMonth + 10);
-      let row = rowEnds.findIndex((rowEnd) => rowEnd < startMonth);
+  const sortedEntries = [...entries].sort(
+    (a, b) =>
+      parseMonth(a.startDate) - parseMonth(b.startDate) ||
+      a.title.localeCompare(b.title),
+  );
+  const rowIntervals: Array<Array<{ start: number; end: number }>> = [];
+  const rowById = new Map<string, number>();
+  const placementOrder = [...sortedEntries].sort(
+    (a, b) =>
+      Number(a.kind === "point") - Number(b.kind === "point") ||
+      parseMonth(a.startDate) - parseMonth(b.startDate) ||
+      a.title.localeCompare(b.title),
+  );
 
-      if (row === -1) row = rowEnds.length;
-      rowEnds[row] = occupiedUntil;
+  for (const entry of placementOrder) {
+    const startMonth = parseMonth(entry.startDate);
+    const endMonth = entry.endDate ? parseMonth(entry.endDate) : currentMonth;
+    const occupiedUntil = Math.max(endMonth, startMonth + 10);
+    let row = rowIntervals.findIndex((intervals) =>
+      intervals.every(
+        (interval) =>
+          occupiedUntil < interval.start || startMonth > interval.end,
+      ),
+    );
 
-      return {
-        ...entry,
-        row,
-        startMonth,
-        endMonth,
-      };
-    });
+    if (row === -1) {
+      row = rowIntervals.length;
+      rowIntervals.push([]);
+    }
+
+    rowIntervals[row].push({ start: startMonth, end: occupiedUntil });
+    rowById.set(entry.id, row);
+  }
+
+  const positionedEntries = sortedEntries.map((entry) => ({
+    ...entry,
+    row: rowById.get(entry.id) ?? 0,
+    startMonth: parseMonth(entry.startDate),
+    endMonth: entry.endDate ? parseMonth(entry.endDate) : currentMonth,
+  }));
 
   const density = Array.from({ length: monthCount }, (_, offset) => {
     const month = startMonth + offset;
@@ -254,7 +271,7 @@ export function buildTimelineLayout(
     endMonth,
     monthCount,
     entries: positionedEntries,
-    rowCount: Math.max(1, rowEnds.length),
+    rowCount: Math.max(1, rowIntervals.length),
     density,
     maxDensity: Math.max(...density, 1),
     ticks,
