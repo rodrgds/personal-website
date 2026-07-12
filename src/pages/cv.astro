@@ -103,22 +103,49 @@ const universityProjects = renderedProjects.filter(
     {activeView === "list" && <CVNavigation client:load />}
     <Header />
     <main>
-      <nav class="view-toggle" aria-label="CV page view">
-        <a
-          href="/cv?view=timeline"
-          class:list={[activeView === "timeline" && "active"]}
-          aria-current={activeView === "timeline" ? "page" : undefined}
-        >
-          Timeline
-        </a>
-        <a
-          href="/cv?view=list"
-          class:list={[activeView === "list" && "active"]}
-          aria-current={activeView === "list" ? "page" : undefined}
-        >
-          List
-        </a>
-      </nav>
+      <div class="cv-toolbar">
+        <nav class="view-toggle" aria-label="CV page view">
+          <a
+            href="/cv?view=timeline"
+            class:list={[activeView === "timeline" && "active"]}
+            aria-current={activeView === "timeline" ? "page" : undefined}
+          >
+            Timeline
+          </a>
+          <a
+            href="/cv?view=list"
+            class:list={[activeView === "list" && "active"]}
+            aria-current={activeView === "list" ? "page" : undefined}
+          >
+            List
+          </a>
+        </nav>
+
+        <div class="downloads">
+          {
+            profileDownloads.map((profile) => (
+              <a
+                href={`/cv/${profile.slug}.pdf`}
+                class="download-pill"
+                data-tooltip={getDownloadLabel(profile.label)}
+                title={getDownloadLabel(profile.label)}
+                aria-label={getDownloadLabel(profile.label)}
+              >
+                <FileText size={17} strokeWidth={1.8} aria-hidden="true" />
+                {profile.slug !== "compact" && (
+                  <Plus
+                    class="download-extra-icon"
+                    size={10}
+                    strokeWidth={2.2}
+                    aria-hidden="true"
+                  />
+                )}
+                <span class="sr-only">{getDownloadLabel(profile.label)}</span>
+              </a>
+            ))
+          }
+        </div>
+      </div>
 
       {activeView === "timeline" && <CVTimeline entries={timelineEntries} />}
 
@@ -138,33 +165,14 @@ const universityProjects = renderedProjects.filter(
               rel="noreferrer">LinkedIn</a
             >
           </div>
-          <div class="downloads">
-            {
-              profileDownloads.map((profile) => (
-                <a
-                  href={`/cv/${profile.slug}.pdf`}
-                  class="download-pill"
-                  data-tooltip={getDownloadLabel(profile.label)}
-                  title={getDownloadLabel(profile.label)}
-                  aria-label={getDownloadLabel(profile.label)}
-                >
-                  <FileText size={17} strokeWidth={1.8} aria-hidden="true" />
-                  {profile.slug !== "compact" && (
-                    <Plus
-                      class="download-extra-icon"
-                      size={10}
-                      strokeWidth={2.2}
-                      aria-hidden="true"
-                    />
-                  )}
-                  <span class="sr-only">{getDownloadLabel(profile.label)}</span>
-                </a>
-              ))
-            }
-          </div>
         </section>
 
-        <CVSection id="experience" title="Experience">
+        <CVSection
+          id="experience"
+          title="Experience"
+          collapsible
+          count={renderedExperience.length}
+        >
           {
             renderedExperience.map((entry) => (
               <CVEntryCard
@@ -271,7 +279,12 @@ const universityProjects = renderedProjects.filter(
           }
         </CVSection>
 
-        <CVSection id="education" title="Education">
+        <CVSection
+          id="education"
+          title="Education"
+          collapsible
+          count={renderedEducation.length}
+        >
           {
             renderedEducation.map((entry) => (
               <CVEntryCard
@@ -329,7 +342,12 @@ const universityProjects = renderedProjects.filter(
           }
         </CVSection>
 
-        <CVSection id="honors" title="Honors">
+        <CVSection
+          id="honors"
+          title="Honors"
+          collapsible
+          count={renderedHonors.length}
+        >
           {
             renderedHonors.map((entry) => (
               <CVEntryCard
@@ -366,7 +384,12 @@ const universityProjects = renderedProjects.filter(
           }
         </CVSection>
 
-        <CVSection id="certifications" title="Certifications/Courses">
+        <CVSection
+          id="certifications"
+          title="Certifications/Courses"
+          collapsible
+          count={renderedCertifications.length}
+        >
           {
             renderedCertifications.map((entry) => (
               <CVEntryCard
@@ -425,6 +448,20 @@ const universityProjects = renderedProjects.filter(
 
         url.searchParams.set("view", "list");
         window.location.replace(url);
+      })();
+    </script>
+    <script is:inline data-astro-rerun>
+      (() => {
+        const targetId = decodeURIComponent(window.location.hash.slice(1));
+        if (!targetId) return;
+
+        const target = Array.from(
+          document.querySelectorAll("[data-expandable-id]"),
+        ).find(
+          (element) => element.getAttribute("data-expandable-id") === targetId,
+        );
+        const section = target?.closest("details[data-cv-section]");
+        if (section instanceof HTMLDetailsElement) section.open = true;
       })();
     </script>
     <script is:inline data-astro-rerun>
@@ -494,10 +531,18 @@ const universityProjects = renderedProjects.filter(
 </html>
 
 <style>
+  .cv-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
   .view-toggle {
     display: inline-flex;
     gap: 0.25rem;
-    margin-bottom: 1.25rem;
+    margin: 0;
     padding: 0.25rem;
     border: 1px solid var(--border-color);
     border-radius: 0.35rem;
@@ -532,10 +577,6 @@ const universityProjects = renderedProjects.filter(
   .hero {
     --cv-accent: var(--link-color);
 
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 1rem;
     padding: 0 0 1rem;
     border-bottom: 1px solid var(--border-color);
     margin-bottom: 1.55rem;
@@ -554,7 +595,7 @@ const universityProjects = renderedProjects.filter(
   .downloads {
     margin: 0;
     display: flex;
-    flex-wrap: wrap;
+    flex: 0 0 auto;
     justify-content: flex-end;
     gap: 0.4rem;
   }
@@ -644,13 +685,12 @@ const universityProjects = renderedProjects.filter(
   }
 
   @media (max-width: 640px) {
-    .hero {
-      flex-direction: column;
-      gap: 0.7rem;
+    .cv-toolbar {
+      gap: 0.65rem;
     }
 
-    .downloads {
-      justify-content: flex-start;
+    .view-toggle a {
+      padding-inline: 0.65rem;
     }
   }
 </style>
