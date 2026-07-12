@@ -1,0 +1,534 @@
+---
+import CVEntryVisual from "./CVEntryVisual.astro";
+import {
+  TIMELINE_CATEGORY_LABELS,
+  buildTimelineLayout,
+  getTimelineDateLabel,
+  type TimelineEntry,
+  type TimelineCategory,
+} from "../../../cv/timeline";
+
+interface Props {
+  entries: TimelineEntry[];
+}
+
+const { entries }: Props = Astro.props;
+const layout = buildTimelineLayout(entries);
+const monthWidth = 20;
+const contentInset = 34;
+const timelineWidth = layout.monthCount * monthWidth + contentInset * 2;
+const nowOffset =
+  (layout.endMonth - layout.startMonth - 1) * monthWidth + contentInset;
+
+const categoryColors: Record<TimelineCategory, string> = {
+  experience: "var(--flexoki-orange)",
+  projects: "var(--flexoki-cyan)",
+  education: "var(--flexoki-blue)",
+  honors: "var(--flexoki-yellow)",
+  certifications: "var(--flexoki-purple)",
+};
+---
+
+<section class="timeline-shell" aria-labelledby="timeline-title">
+  <div class="timeline-heading">
+    <div>
+      <h1 id="timeline-title">Things I’ve done</h1>
+      <p>Work, projects, education, awards, and courses — all on one line.</p>
+    </div>
+    <p class="scroll-note" aria-hidden="true">Scroll through time →</p>
+  </div>
+
+  <div
+    class="timeline-scroller"
+    data-timeline-scroller
+    tabindex="0"
+    role="region"
+    aria-label="Horizontal life timeline. Scroll left to explore earlier years."
+  >
+    <div
+      class="timeline-canvas"
+      style={`--timeline-width:${timelineWidth}px;--month-width:${monthWidth}px;--content-inset:${contentInset}px`}
+    >
+      <div class="axis" aria-hidden="true">
+        <div class="axis-line"></div>
+        {
+          layout.ticks.map((tick) => {
+            const left =
+              (tick.month - layout.startMonth) * monthWidth + contentInset;
+            return (
+              <span
+                class:list={["axis-tick", tick.label && "axis-tick-year"]}
+                style={`left:${left}px`}
+              >
+                {tick.label && <span>{tick.label}</span>}
+              </span>
+            );
+          })
+        }
+        <span class="now-marker" style={`left:${nowOffset}px`}>
+          <span>Now</span>
+        </span>
+      </div>
+
+      <div class="activity" aria-label="Monthly activity density">
+        <span class="activity-label">Busy</span>
+        <div class="activity-bars" aria-hidden="true">
+          {
+            layout.density.map((count, index) => (
+              <span
+                title={`${count} active ${count === 1 ? "thing" : "things"}`}
+                style={`height:${Math.max(2, (count / layout.maxDensity) * 28)}px;left:${index * monthWidth + contentInset}px`}
+              />
+            ))
+          }
+        </div>
+      </div>
+
+      <div class="branches">
+        {
+          layout.groups.map((group) => {
+            const color = categoryColors[group.category];
+            const groupHeight = group.laneCount * 64 + 38;
+            return (
+              <section
+                class="branch"
+                style={`--branch-color:${color};--branch-height:${groupHeight}px`}
+                aria-labelledby={`branch-${group.category}`}
+              >
+                <h2 id={`branch-${group.category}`}>
+                  <span class="branch-dot" aria-hidden="true" />
+                  {TIMELINE_CATEGORY_LABELS[group.category]}
+                </h2>
+                <div class="branch-track" aria-hidden="true" />
+                <div class="branch-items">
+                  {group.entries.map((entry) => {
+                    const start =
+                      (entry.startMonth - layout.startMonth) * monthWidth +
+                      contentInset;
+                    const duration = Math.max(
+                      entry.kind === "point" ? 12 : 28,
+                      (entry.endMonth - entry.startMonth + 1) * monthWidth,
+                    );
+                    return (
+                      <a
+                        class:list={[
+                          "timeline-entry",
+                          `timeline-entry-${entry.kind}`,
+                          entry.isCurrent && "timeline-entry-current",
+                        ]}
+                        href={entry.href}
+                        style={`left:${start}px;top:${entry.lane * 64 + 32}px;--entry-duration:${duration}px`}
+                        aria-label={`${entry.title}, ${entry.subtitle}, ${getTimelineDateLabel(entry)}`}
+                      >
+                        <span class="entry-connector" aria-hidden="true" />
+                        <span class="entry-node" aria-hidden="true" />
+                        <span class="entry-duration" aria-hidden="true" />
+                        <span class="entry-card">
+                          <span class="entry-visual">
+                            {entry.visual ? (
+                              <CVEntryVisual
+                                src={entry.visual}
+                                alt={`${entry.title} logo`}
+                                size={20}
+                              />
+                            ) : (
+                              <span class="entry-fallback" aria-hidden="true">
+                                {entry.title.slice(0, 1).toUpperCase()}
+                              </span>
+                            )}
+                          </span>
+                          <span class="entry-copy">
+                            <strong>{entry.title}</strong>
+                            <span>{entry.subtitle}</span>
+                            <time>{getTimelineDateLabel(entry)}</time>
+                          </span>
+                        </span>
+                      </a>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<script is:inline data-astro-rerun>
+  requestAnimationFrame(() => {
+    const scroller = document.querySelector("[data-timeline-scroller]");
+    if (!(scroller instanceof HTMLElement)) return;
+    if (scroller.dataset.timelinePositioned === "true") return;
+
+    scroller.scrollLeft = scroller.scrollWidth - scroller.clientWidth;
+    scroller.dataset.timelinePositioned = "true";
+  });
+</script>
+
+<style>
+  .timeline-shell {
+    width: min(var(--wide-width), calc(100vw - (var(--page-padding) * 2)));
+    margin-left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .timeline-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 1.75rem;
+  }
+
+  .timeline-heading p {
+    margin: 0.2rem 0 0;
+    color: var(--gray-color);
+    font-size: 0.9rem;
+  }
+
+  .scroll-note {
+    flex: 0 0 auto;
+    font-family: var(--font-family-mono);
+    font-size: 0.72rem !important;
+  }
+
+  .timeline-scroller {
+    position: relative;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-inline: contain;
+    scrollbar-color: var(--gray-color) var(--bg-secondary);
+    scrollbar-width: thin;
+    border: 1px solid var(--border-color);
+    border-radius: 0.65rem;
+    background:
+      linear-gradient(90deg, var(--background-color), transparent 1.4rem) left /
+        2.5rem 100% no-repeat local,
+      linear-gradient(-90deg, var(--background-color), transparent 1.4rem)
+        right / 2.5rem 100% no-repeat local,
+      var(--bg-secondary);
+    box-shadow: inset 0 1px color-mix(in srgb, white 20%, transparent);
+  }
+
+  .timeline-scroller:focus-visible {
+    outline: 2px solid var(--link-color);
+    outline-offset: 3px;
+  }
+
+  .timeline-canvas {
+    position: relative;
+    width: var(--timeline-width);
+    min-width: 100%;
+    padding: 0.9rem 0 1rem;
+  }
+
+  .axis {
+    position: relative;
+    height: 44px;
+    margin-bottom: 0.25rem;
+    font-family: var(--font-family-mono);
+  }
+
+  .axis-line {
+    position: absolute;
+    top: 25px;
+    left: var(--content-inset);
+    right: var(--content-inset);
+    height: 1px;
+    background: var(--border-color);
+  }
+
+  .axis-tick {
+    position: absolute;
+    top: 21px;
+    width: 1px;
+    height: 9px;
+    background: var(--border-color);
+  }
+
+  .axis-tick-year {
+    top: 17px;
+    height: 17px;
+    background: var(--gray-color);
+  }
+
+  .axis-tick span {
+    position: absolute;
+    top: -18px;
+    left: 0;
+    color: var(--gray-color);
+    font-size: 0.68rem;
+    transform: translateX(-50%);
+  }
+
+  .now-marker {
+    position: absolute;
+    top: 8px;
+    bottom: -2000px;
+    z-index: 0;
+    width: 1px;
+    border-left: 1px dashed
+      color-mix(in srgb, var(--link-color) 60%, transparent);
+    pointer-events: none;
+  }
+
+  .now-marker span {
+    position: absolute;
+    top: -1px;
+    left: 0.35rem;
+    color: var(--link-color);
+    font-size: 0.68rem;
+  }
+
+  .activity {
+    position: relative;
+    height: 38px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .activity-label {
+    position: sticky;
+    left: 0.55rem;
+    z-index: 2;
+    color: var(--gray-color);
+    font-family: var(--font-family-mono);
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .activity-bars span {
+    position: absolute;
+    bottom: 0;
+    width: calc(var(--month-width) - 2px);
+    border-radius: 2px 2px 0 0;
+    background: color-mix(in srgb, var(--link-color) 55%, transparent);
+  }
+
+  .branch {
+    position: relative;
+    height: var(--branch-height);
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--border-color) 70%, transparent);
+  }
+
+  .branch:last-child {
+    border-bottom: 0;
+  }
+
+  .branch h2 {
+    position: sticky;
+    left: 0;
+    z-index: 5;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: max-content;
+    margin: 0;
+    padding: 0.45rem 0.65rem;
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    border-radius: 0 0 0.4rem 0;
+    background: color-mix(in srgb, var(--bg-secondary) 94%, transparent);
+    color: var(--heading-color);
+    font-family: var(--font-family-mono);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+
+  .branch-dot {
+    width: 0.48rem;
+    height: 0.48rem;
+    border: 2px solid var(--branch-color);
+    border-radius: 50%;
+    background: var(--bg-secondary);
+  }
+
+  .branch-track {
+    position: absolute;
+    top: 23px;
+    left: var(--content-inset);
+    right: var(--content-inset);
+    height: 2px;
+    background: color-mix(in srgb, var(--branch-color) 65%, transparent);
+  }
+
+  .timeline-entry {
+    position: absolute;
+    z-index: 2;
+    width: 10.5rem;
+    min-height: 54px;
+    color: var(--text-color);
+    text-decoration: none;
+  }
+
+  .entry-connector {
+    position: absolute;
+    top: -9px;
+    left: 0;
+    width: 1px;
+    height: 15px;
+    background: var(--branch-color);
+  }
+
+  .entry-node {
+    position: absolute;
+    top: -13px;
+    left: -4px;
+    z-index: 2;
+    width: 9px;
+    height: 9px;
+    border: 2px solid var(--branch-color);
+    border-radius: 50%;
+    background: var(--bg-secondary);
+  }
+
+  .timeline-entry-current .entry-node {
+    background: var(--branch-color);
+    box-shadow: 0 0 0 4px
+      color-mix(in srgb, var(--branch-color) 18%, transparent);
+  }
+
+  .entry-duration {
+    position: absolute;
+    top: -10px;
+    left: 0;
+    width: var(--entry-duration);
+    height: 3px;
+    border-radius: 99px;
+    background: var(--branch-color);
+  }
+
+  .timeline-entry-point .entry-duration {
+    width: 0;
+  }
+
+  .entry-card {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 0;
+    padding: 0.35rem 0.45rem;
+    border: 1px solid transparent;
+    border-radius: 0.35rem;
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  .timeline-entry:hover .entry-card,
+  .timeline-entry:focus-visible .entry-card {
+    border-color: color-mix(
+      in srgb,
+      var(--branch-color) 48%,
+      var(--border-color)
+    );
+    background: var(--surface-color);
+    transform: translateY(-1px);
+  }
+
+  .timeline-entry:focus-visible {
+    outline: none;
+  }
+
+  .entry-visual {
+    display: grid;
+    flex: 0 0 25px;
+    width: 25px;
+    height: 25px;
+    place-items: center;
+  }
+
+  .entry-visual :global(img) {
+    max-width: 25px;
+    max-height: 25px;
+  }
+
+  .entry-fallback {
+    display: grid;
+    width: 23px;
+    height: 23px;
+    place-items: center;
+    border: 1px solid var(--branch-color);
+    border-radius: 50%;
+    color: var(--branch-color);
+    font-family: var(--font-family-mono);
+    font-size: 0.65rem;
+  }
+
+  .entry-copy {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    line-height: 1.15;
+  }
+
+  .entry-copy strong,
+  .entry-copy > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .entry-copy strong {
+    color: var(--heading-color);
+    font-size: 0.76rem;
+    font-weight: 600;
+  }
+
+  .entry-copy > span {
+    margin-top: 0.12rem;
+    color: var(--gray-color);
+    font-size: 0.65rem;
+  }
+
+  .entry-copy time {
+    margin-top: 0.18rem;
+    color: color-mix(in srgb, var(--branch-color) 82%, var(--text-color));
+    font-family: var(--font-family-mono);
+    font-size: 0.59rem;
+  }
+
+  @media (max-width: 640px) {
+    .timeline-shell {
+      width: calc(100vw - 1rem);
+    }
+
+    .timeline-heading {
+      align-items: flex-start;
+      padding-inline: 1.25rem;
+    }
+
+    h1 {
+      font-size: 1.45rem;
+    }
+
+    .timeline-heading p {
+      font-size: 0.82rem;
+    }
+
+    .scroll-note {
+      display: none;
+    }
+
+    .timeline-scroller {
+      border-radius: 0.5rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .entry-card {
+      transition: none;
+    }
+  }
+</style>

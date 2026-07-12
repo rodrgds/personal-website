@@ -1,0 +1,237 @@
+---
+import CVEntryVisual from "../cv/CVEntryVisual.astro";
+import { getCVCollectionsData } from "../../../cv/data";
+import {
+  TIMELINE_CATEGORY_LABELS,
+  getCurrentTimelineEntries,
+  getTimelineDateLabel,
+  type TimelineEntry,
+} from "../../../cv/timeline";
+
+interface Props {
+  entries?: TimelineEntry[];
+}
+
+const { entries: providedEntries }: Props = Astro.props;
+const entries =
+  providedEntries ?? getCurrentTimelineEntries(await getCVCollectionsData());
+---
+
+<div class="current-timeline">
+  <p class="current-intro">
+    These are the longer-running things active in my structured timeline.
+  </p>
+  <ul>
+    {
+      entries.map((entry) => (
+        <li class={`current-${entry.category}`}>
+          <a href={entry.href}>
+            <span class="current-node" aria-hidden="true" />
+            <span class="current-visual">
+              {entry.visual ? (
+                <CVEntryVisual
+                  src={entry.visual}
+                  alt={`${entry.title} logo`}
+                  size={22}
+                />
+              ) : (
+                <span class="current-fallback" aria-hidden="true">
+                  {entry.title.slice(0, 1).toUpperCase()}
+                </span>
+              )}
+            </span>
+            <span class="current-copy">
+              <strong>{entry.title}</strong>
+              <span>{entry.subtitle}</span>
+            </span>
+            <span class="current-meta">
+              <span>{TIMELINE_CATEGORY_LABELS[entry.category]}</span>
+              <time>{getTimelineDateLabel(entry)}</time>
+            </span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+  <p class="current-link"><a href="/done">Explore the full timeline →</a></p>
+</div>
+
+<style>
+  .current-timeline {
+    margin: 0.45rem 0 1.6rem;
+  }
+
+  .current-intro {
+    color: var(--gray-color);
+    font-size: 0.9rem;
+  }
+
+  ul {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin: 0.8rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    --current-color: var(--flexoki-orange);
+    min-width: 0;
+  }
+
+  .current-projects {
+    --current-color: var(--flexoki-cyan);
+  }
+
+  .current-education {
+    --current-color: var(--flexoki-blue);
+  }
+
+  a {
+    position: relative;
+    display: flex;
+    min-height: 4rem;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.55rem 0.6rem 0.55rem 0.8rem;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: 0.42rem;
+    background: color-mix(in srgb, var(--bg-secondary) 60%, transparent);
+    color: var(--text-color);
+    text-decoration: none;
+    transition:
+      border-color 0.15s ease,
+      background-color 0.15s ease;
+  }
+
+  a::before {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 3px;
+    background: var(--current-color);
+    content: "";
+  }
+
+  a:hover,
+  a:focus-visible {
+    border-color: color-mix(
+      in srgb,
+      var(--current-color) 55%,
+      var(--border-color)
+    );
+    background: var(--surface-hover);
+  }
+
+  .current-node {
+    position: absolute;
+    top: 0.62rem;
+    left: -0.22rem;
+    width: 0.48rem;
+    height: 0.48rem;
+    border: 2px solid var(--current-color);
+    border-radius: 50%;
+    background: var(--surface-color);
+  }
+
+  .current-visual {
+    display: grid;
+    flex: 0 0 30px;
+    width: 30px;
+    height: 30px;
+    place-items: center;
+  }
+
+  .current-visual :global(img) {
+    max-width: 30px;
+    max-height: 30px;
+  }
+
+  .current-fallback {
+    display: grid;
+    width: 26px;
+    height: 26px;
+    place-items: center;
+    border: 1px solid var(--current-color);
+    border-radius: 50%;
+    color: var(--current-color);
+    font-family: var(--font-family-mono);
+    font-size: 0.7rem;
+  }
+
+  .current-copy {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+
+  .current-copy strong,
+  .current-copy span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .current-copy strong {
+    color: var(--heading-color);
+    font-size: 0.88rem;
+  }
+
+  .current-copy span {
+    margin-top: 0.18rem;
+    color: var(--gray-color);
+    font-size: 0.72rem;
+  }
+
+  .current-meta {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: end;
+    flex-direction: column;
+    color: var(--gray-color);
+    font-family: var(--font-family-mono);
+    font-size: 0.58rem;
+    line-height: 1.4;
+  }
+
+  .current-meta > span {
+    color: var(--current-color);
+  }
+
+  .current-link {
+    margin: 0.55rem 0 0;
+    text-align: right;
+    font-size: 0.82rem;
+  }
+
+  .current-link a {
+    display: inline;
+    min-height: 0;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--link-color);
+    text-decoration: underline;
+  }
+
+  .current-link a::before {
+    display: none;
+  }
+
+  @media (max-width: 700px) {
+    ul {
+      grid-template-columns: 1fr;
+    }
+
+    .current-meta {
+      display: none;
+    }
+  }
+</style>
