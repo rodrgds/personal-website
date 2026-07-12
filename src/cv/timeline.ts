@@ -38,6 +38,10 @@ export interface TimelineLayout {
   ticks: Array<{ month: number; label?: string }>;
 }
 
+export interface TimelineLayoutOptions {
+  minimumSpanMonths?: number;
+}
+
 export const TIMELINE_CATEGORIES: TimelineCategory[] = [
   "experience",
   "personal-projects",
@@ -82,7 +86,7 @@ function getCurrentMonth(now: Date): number {
 }
 
 function getVisual(logo?: string, image?: string): string | undefined {
-  return image ?? logo;
+  return logo ?? image;
 }
 
 export function getTimelineEntries(
@@ -194,6 +198,7 @@ export function getCurrentTimelineEntries(
 export function buildTimelineLayout(
   entries: TimelineEntry[],
   now = new Date(),
+  options: TimelineLayoutOptions = {},
 ): TimelineLayout {
   if (entries.length === 0) {
     throw new Error("Cannot build an empty timeline");
@@ -226,11 +231,12 @@ export function buildTimelineLayout(
       parseMonth(a.startDate) - parseMonth(b.startDate) ||
       a.title.localeCompare(b.title),
   );
+  const minimumSpanMonths = options.minimumSpanMonths ?? 10;
 
   for (const entry of placementOrder) {
     const startMonth = parseMonth(entry.startDate);
     const endMonth = entry.endDate ? parseMonth(entry.endDate) : currentMonth;
-    const occupiedUntil = Math.max(endMonth, startMonth + 10);
+    const occupiedUntil = Math.max(endMonth, startMonth + minimumSpanMonths);
     let row = rowIntervals.findIndex((intervals) =>
       intervals.every(
         (interval) =>

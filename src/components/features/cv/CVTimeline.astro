@@ -11,17 +11,22 @@ import {
 
 interface Props {
   entries: TimelineEntry[];
+  variant?: "detailed" | "icons";
 }
 
-const { entries }: Props = Astro.props;
-const layout = buildTimelineLayout(entries);
+const { entries, variant = "detailed" }: Props = Astro.props;
+const compact = variant === "icons";
+const layout = buildTimelineLayout(entries, new Date(), {
+  minimumSpanMonths: compact ? 1 : 10,
+});
 const monthWidth = 20;
 const contentInset = 34;
-const labelSpace = 220;
-const rowHeight = 66;
+const labelSpace = compact ? 34 : 220;
+const rowHeight = compact ? 38 : 66;
 const timeWidth = layout.monthCount * monthWidth + contentInset * 2;
 const timelineWidth = timeWidth + labelSpace;
-const graphHeight = layout.rowCount * rowHeight + 34;
+const graphHeight = layout.rowCount * rowHeight + (compact ? 18 : 34);
+const nodeCenter = compact ? 17 : 22;
 const nowOffset =
   (layout.endMonth - layout.startMonth - 1) * monthWidth + contentInset;
 
@@ -38,15 +43,26 @@ const getStartOffset = (entry: (typeof layout.entries)[number]) =>
   (entry.startMonth - layout.startMonth) * monthWidth + contentInset;
 
 const spinePoints = layout.entries
-  .map((entry) => `${getStartOffset(entry)},${entry.row * rowHeight + 22}`)
+  .map(
+    (entry) => `${getStartOffset(entry)},${entry.row * rowHeight + nodeCenter}`,
+  )
   .join(" ");
 ---
 
-<section class="timeline-shell" aria-labelledby="timeline-title">
+<section
+  class:list={["timeline-shell", compact && "timeline-shell-icons"]}
+  aria-labelledby="timeline-title"
+>
   <div class="timeline-heading">
     <div>
       <h1 id="timeline-title">Things I’ve done</h1>
-      <p>Everything together, from the earliest start to what is active now.</p>
+      <p>
+        {
+          compact
+            ? "A compact, logo-only view of everything across time."
+            : "Everything together, from the earliest start to what is active now."
+        }
+      </p>
     </div>
     <p class="scroll-note" aria-hidden="true">Scroll through time →</p>
   </div>
@@ -71,7 +87,7 @@ const spinePoints = layout.entries
   >
     <div
       class="timeline-canvas"
-      style={`--timeline-width:${timelineWidth}px;--time-width:${timeWidth}px;--month-width:${monthWidth}px;--content-inset:${contentInset}px`}
+      style={`--timeline-width:${timelineWidth}px;--time-width:${timeWidth}px;--month-width:${monthWidth}px;--content-inset:${contentInset}px;--row-height:${rowHeight}px`}
     >
       <div class="axis" aria-hidden="true">
         <div class="axis-line"></div>
@@ -134,6 +150,7 @@ const spinePoints = layout.entries
               (entry.endMonth - entry.startMonth + 1) * monthWidth,
             );
             const top = entry.row * rowHeight;
+            const label = `${entry.title}, ${TIMELINE_CATEGORY_LABELS[entry.category]}, ${entry.subtitle}, ${getTimelineDateLabel(entry)}`;
 
             return (
               <div class="graph-row" style={`top:${top}px`}>
@@ -146,29 +163,45 @@ const spinePoints = layout.entries
                   ]}
                   href={entry.href}
                   data-start-date={entry.startDate}
-                  style={`left:${start}px;--entry-color:${color};--entry-duration:${duration}px`}
-                  aria-label={`${entry.title}, ${TIMELINE_CATEGORY_LABELS[entry.category]}, ${entry.subtitle}, ${getTimelineDateLabel(entry)}`}
+                  style={`left:${start}px;--entry-color:${color};--entry-duration:${duration}px;--entry-hit-width:${Math.max(duration, 30)}px`}
+                  aria-label={label}
+                  title={compact ? label : undefined}
                 >
                   <span class="entry-duration" aria-hidden="true" />
-                  <span class="entry-node" aria-hidden="true" />
-                  <div class="entry-card">
-                    <CVEntryAvatar
-                      title={entry.title}
-                      visual={entry.visual}
-                      alt={`${entry.title} logo`}
-                      size={25}
-                      visualSize={21}
-                      accent="var(--entry-color)"
-                    />
-                    <span class="entry-copy">
-                      <span class="entry-category">
-                        {TIMELINE_CATEGORY_LABELS[entry.category]}
+                  <span class="entry-node" aria-hidden="true">
+                    {compact && (
+                      <span class="compact-node-avatar">
+                        <CVEntryAvatar
+                          title={entry.title}
+                          visual={entry.visual}
+                          alt=""
+                          size={22}
+                          visualSize={19}
+                          accent="var(--text-color)"
+                        />
                       </span>
-                      <strong>{entry.title}</strong>
-                      <span>{entry.subtitle}</span>
-                      <time>{getTimelineDateLabel(entry)}</time>
-                    </span>
-                  </div>
+                    )}
+                  </span>
+                  {!compact && (
+                    <div class="entry-card">
+                      <CVEntryAvatar
+                        title={entry.title}
+                        visual={entry.visual}
+                        alt={`${entry.title} logo`}
+                        size={25}
+                        visualSize={21}
+                        accent="var(--entry-color)"
+                      />
+                      <span class="entry-copy">
+                        <span class="entry-category">
+                          {TIMELINE_CATEGORY_LABELS[entry.category]}
+                        </span>
+                        <strong>{entry.title}</strong>
+                        <span>{entry.subtitle}</span>
+                        <time>{getTimelineDateLabel(entry)}</time>
+                      </span>
+                    </div>
+                  )}
                 </a>
               </div>
             );
@@ -393,7 +426,7 @@ const spinePoints = layout.entries
     position: absolute;
     left: 0;
     width: var(--timeline-width);
-    height: 66px;
+    height: var(--row-height);
   }
 
   .row-guide {
@@ -528,6 +561,59 @@ const spinePoints = layout.entries
     color: var(--gray-color);
     font-family: var(--font-family-mono);
     font-size: 0.5rem;
+  }
+
+  .timeline-shell-icons .timeline-entry {
+    width: var(--entry-hit-width);
+    height: var(--row-height);
+  }
+
+  .timeline-shell-icons .entry-duration {
+    top: 15px;
+    height: 3px;
+  }
+
+  .timeline-shell-icons .entry-node {
+    top: 3px;
+    left: -13px;
+    display: grid;
+    width: 28px;
+    height: 28px;
+    place-items: center;
+    overflow: hidden;
+    border-width: 1.5px;
+    background: var(--bg-secondary);
+    box-shadow: 0 0 0 3px var(--bg-secondary);
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  .timeline-shell-icons .timeline-entry-current .entry-node {
+    background: var(--bg-secondary);
+    box-shadow:
+      0 0 0 3px var(--bg-secondary),
+      0 0 0 6px color-mix(in srgb, var(--entry-color) 12%, transparent);
+  }
+
+  .timeline-shell-icons .timeline-entry:hover .entry-node,
+  .timeline-shell-icons .timeline-entry:focus-visible .entry-node {
+    box-shadow:
+      0 0 0 3px var(--bg-secondary),
+      0 0 0 6px color-mix(in srgb, var(--entry-color) 24%, transparent);
+    transform: scale(1.08);
+  }
+
+  .compact-node-avatar {
+    display: grid;
+    place-items: center;
+  }
+
+  .compact-node-avatar :global(.entry-avatar) {
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
   }
 
   @media (max-width: 640px) {
