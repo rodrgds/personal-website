@@ -146,7 +146,8 @@ const { title, description, image = "" } = Astro.props;
       if (
         anchor.classList.contains("download-pill") ||
         anchor.classList.contains("button") ||
-        anchor.classList.contains("project")
+        anchor.classList.contains("project") ||
+        anchor.classList.contains("timeline-entry")
       ) {
         return false;
       }
