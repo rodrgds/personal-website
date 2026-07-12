@@ -1,6 +1,7 @@
 ---
 import CVEntryVisual from "./CVEntryVisual.astro";
 import {
+  TIMELINE_CATEGORIES,
   TIMELINE_CATEGORY_LABELS,
   buildTimelineLayout,
   getTimelineDateLabel,
@@ -16,7 +17,11 @@ const { entries }: Props = Astro.props;
 const layout = buildTimelineLayout(entries);
 const monthWidth = 20;
 const contentInset = 34;
-const timelineWidth = layout.monthCount * monthWidth + contentInset * 2;
+const labelSpace = 220;
+const rowHeight = 66;
+const timeWidth = layout.monthCount * monthWidth + contentInset * 2;
+const timelineWidth = timeWidth + labelSpace;
+const graphHeight = layout.entries.length * rowHeight + 34;
 const nowOffset =
   (layout.endMonth - layout.startMonth - 1) * monthWidth + contentInset;
 
@@ -27,15 +32,33 @@ const categoryColors: Record<TimelineCategory, string> = {
   honors: "var(--flexoki-yellow)",
   certifications: "var(--flexoki-purple)",
 };
+
+const getStartOffset = (entry: (typeof layout.entries)[number]) =>
+  (entry.startMonth - layout.startMonth) * monthWidth + contentInset;
+
+const spinePoints = layout.entries
+  .map((entry) => `${getStartOffset(entry)},${entry.row * rowHeight + 22}`)
+  .join(" ");
 ---
 
 <section class="timeline-shell" aria-labelledby="timeline-title">
   <div class="timeline-heading">
     <div>
       <h1 id="timeline-title">Things I’ve done</h1>
-      <p>Work, projects, education, awards, and courses — all on one line.</p>
+      <p>Everything together, from the earliest start to what is active now.</p>
     </div>
     <p class="scroll-note" aria-hidden="true">Scroll through time →</p>
+  </div>
+
+  <div class="category-legend" aria-label="Timeline categories">
+    {
+      TIMELINE_CATEGORIES.map((category) => (
+        <span style={`--category-color:${categoryColors[category]}`}>
+          <span class="legend-dot" aria-hidden="true" />
+          {TIMELINE_CATEGORY_LABELS[category]}
+        </span>
+      ))
+    }
   </div>
 
   <div
@@ -43,11 +66,11 @@ const categoryColors: Record<TimelineCategory, string> = {
     data-timeline-scroller
     tabindex="0"
     role="region"
-    aria-label="Horizontal life timeline. Scroll left to explore earlier years."
+    aria-label="Horizontal life timeline, ordered from oldest at the top to newest at the bottom. Scroll left to explore earlier years."
   >
     <div
       class="timeline-canvas"
-      style={`--timeline-width:${timelineWidth}px;--month-width:${monthWidth}px;--content-inset:${contentInset}px`}
+      style={`--timeline-width:${timelineWidth}px;--time-width:${timeWidth}px;--month-width:${monthWidth}px;--content-inset:${contentInset}px`}
     >
       <div class="axis" aria-hidden="true">
         <div class="axis-line"></div>
@@ -65,7 +88,7 @@ const categoryColors: Record<TimelineCategory, string> = {
             );
           })
         }
-        <span class="now-marker" style={`left:${nowOffset}px`}>
+        <span class="now-axis" style={`left:${nowOffset}px`}>
           <span>Now</span>
         </span>
       </div>
@@ -84,70 +107,74 @@ const categoryColors: Record<TimelineCategory, string> = {
         </div>
       </div>
 
-      <div class="branches">
+      <div class="unified-graph" style={`height:${graphHeight}px`}>
+        <span
+          class="now-marker"
+          style={`left:${nowOffset}px`}
+          aria-hidden="true"></span>
+
+        <svg
+          class="history-spine"
+          width={timelineWidth}
+          height={graphHeight}
+          viewBox={`0 0 ${timelineWidth} ${graphHeight}`}
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <polyline points={spinePoints}></polyline>
+        </svg>
+
         {
-          layout.groups.map((group) => {
-            const color = categoryColors[group.category];
-            const groupHeight = group.laneCount * 64 + 38;
+          layout.entries.map((entry) => {
+            const color = categoryColors[entry.category];
+            const start = getStartOffset(entry);
+            const duration = Math.max(
+              entry.kind === "point" ? 0 : 22,
+              (entry.endMonth - entry.startMonth + 1) * monthWidth,
+            );
+            const top = entry.row * rowHeight;
+
             return (
-              <section
-                class="branch"
-                style={`--branch-color:${color};--branch-height:${groupHeight}px`}
-                aria-labelledby={`branch-${group.category}`}
-              >
-                <h2 id={`branch-${group.category}`}>
-                  <span class="branch-dot" aria-hidden="true" />
-                  {TIMELINE_CATEGORY_LABELS[group.category]}
-                </h2>
-                <div class="branch-track" aria-hidden="true" />
-                <div class="branch-items">
-                  {group.entries.map((entry) => {
-                    const start =
-                      (entry.startMonth - layout.startMonth) * monthWidth +
-                      contentInset;
-                    const duration = Math.max(
-                      entry.kind === "point" ? 12 : 28,
-                      (entry.endMonth - entry.startMonth + 1) * monthWidth,
-                    );
-                    return (
-                      <a
-                        class:list={[
-                          "timeline-entry",
-                          `timeline-entry-${entry.kind}`,
-                          entry.isCurrent && "timeline-entry-current",
-                        ]}
-                        href={entry.href}
-                        style={`left:${start}px;top:${entry.lane * 64 + 32}px;--entry-duration:${duration}px`}
-                        aria-label={`${entry.title}, ${entry.subtitle}, ${getTimelineDateLabel(entry)}`}
-                      >
-                        <span class="entry-connector" aria-hidden="true" />
-                        <span class="entry-node" aria-hidden="true" />
-                        <span class="entry-duration" aria-hidden="true" />
-                        <span class="entry-card">
-                          <span class="entry-visual">
-                            {entry.visual ? (
-                              <CVEntryVisual
-                                src={entry.visual}
-                                alt={`${entry.title} logo`}
-                                size={20}
-                              />
-                            ) : (
-                              <span class="entry-fallback" aria-hidden="true">
-                                {entry.title.slice(0, 1).toUpperCase()}
-                              </span>
-                            )}
-                          </span>
-                          <span class="entry-copy">
-                            <strong>{entry.title}</strong>
-                            <span>{entry.subtitle}</span>
-                            <time>{getTimelineDateLabel(entry)}</time>
-                          </span>
+              <div class="graph-row" style={`top:${top}px`}>
+                <span class="row-guide" aria-hidden="true" />
+                <a
+                  class:list={[
+                    "timeline-entry",
+                    `timeline-entry-${entry.kind}`,
+                    entry.isCurrent && "timeline-entry-current",
+                  ]}
+                  href={entry.href}
+                  data-start-date={entry.startDate}
+                  style={`left:${start}px;--entry-color:${color};--entry-duration:${duration}px`}
+                  aria-label={`${entry.title}, ${TIMELINE_CATEGORY_LABELS[entry.category]}, ${entry.subtitle}, ${getTimelineDateLabel(entry)}`}
+                >
+                  <span class="entry-duration" aria-hidden="true" />
+                  <span class="entry-node" aria-hidden="true" />
+                  <div class="entry-card">
+                    <span class="entry-visual">
+                      {entry.visual ? (
+                        <CVEntryVisual
+                          src={entry.visual}
+                          alt={`${entry.title} logo`}
+                          size={21}
+                        />
+                      ) : (
+                        <span class="entry-fallback" aria-hidden="true">
+                          {entry.title.slice(0, 1).toUpperCase()}
                         </span>
-                      </a>
-                    );
-                  })}
-                </div>
-              </section>
+                      )}
+                    </span>
+                    <span class="entry-copy">
+                      <span class="entry-category">
+                        {TIMELINE_CATEGORY_LABELS[entry.category]}
+                      </span>
+                      <strong>{entry.title}</strong>
+                      <span>{entry.subtitle}</span>
+                      <time>{getTimelineDateLabel(entry)}</time>
+                    </span>
+                  </div>
+                </a>
+              </div>
             );
           })
         }
@@ -162,7 +189,7 @@ const categoryColors: Record<TimelineCategory, string> = {
     if (!(scroller instanceof HTMLElement)) return;
     if (scroller.dataset.timelinePositioned === "true") return;
 
-    scroller.scrollLeft = scroller.scrollWidth - scroller.clientWidth;
+    scroller.scrollLeft = 0;
     scroller.dataset.timelinePositioned = "true";
   });
 </script>
@@ -179,7 +206,6 @@ const categoryColors: Record<TimelineCategory, string> = {
     align-items: end;
     justify-content: space-between;
     gap: 1rem;
-    margin-bottom: 1rem;
   }
 
   h1 {
@@ -197,6 +223,29 @@ const categoryColors: Record<TimelineCategory, string> = {
     flex: 0 0 auto;
     font-family: var(--font-family-mono);
     font-size: 0.72rem !important;
+  }
+
+  .category-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.85rem;
+    margin: 0.85rem 0 0.9rem;
+    color: var(--gray-color);
+    font-family: var(--font-family-mono);
+    font-size: 0.65rem;
+  }
+
+  .category-legend > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .legend-dot {
+    width: 0.48rem;
+    height: 0.48rem;
+    border: 2px solid var(--category-color);
+    border-radius: 50%;
   }
 
   .timeline-scroller {
@@ -227,11 +276,12 @@ const categoryColors: Record<TimelineCategory, string> = {
     position: relative;
     width: var(--timeline-width);
     min-width: 100%;
-    padding: 0.9rem 0 1rem;
+    padding-top: 0.9rem;
   }
 
   .axis {
     position: relative;
+    width: var(--time-width);
     height: 44px;
     margin-bottom: 0.25rem;
     font-family: var(--font-family-mono);
@@ -269,20 +319,17 @@ const categoryColors: Record<TimelineCategory, string> = {
     transform: translateX(-50%);
   }
 
-  .now-marker {
+  .now-axis {
     position: absolute;
-    top: 8px;
-    bottom: -2000px;
-    z-index: 0;
+    top: 17px;
     width: 1px;
-    border-left: 1px dashed
-      color-mix(in srgb, var(--link-color) 60%, transparent);
-    pointer-events: none;
+    height: 17px;
+    background: var(--link-color);
   }
 
-  .now-marker span {
+  .now-axis span {
     position: absolute;
-    top: -1px;
+    top: -18px;
     left: 0.35rem;
     color: var(--link-color);
     font-size: 0.68rem;
@@ -290,6 +337,7 @@ const categoryColors: Record<TimelineCategory, string> = {
 
   .activity {
     position: relative;
+    width: var(--time-width);
     height: 38px;
     border-bottom: 1px solid var(--border-color);
   }
@@ -313,111 +361,110 @@ const categoryColors: Record<TimelineCategory, string> = {
     background: color-mix(in srgb, var(--link-color) 55%, transparent);
   }
 
-  .branch {
+  .unified-graph {
     position: relative;
-    height: var(--branch-height);
-    border-bottom: 1px solid
-      color-mix(in srgb, var(--border-color) 70%, transparent);
+    width: var(--timeline-width);
   }
 
-  .branch:last-child {
-    border-bottom: 0;
-  }
-
-  .branch h2 {
-    position: sticky;
-    left: 0;
-    z-index: 5;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    width: max-content;
-    margin: 0;
-    padding: 0.45rem 0.65rem;
-    border-right: 1px solid var(--border-color);
-    border-bottom: 1px solid var(--border-color);
-    border-radius: 0 0 0.4rem 0;
-    background: color-mix(in srgb, var(--bg-secondary) 94%, transparent);
-    color: var(--heading-color);
-    font-family: var(--font-family-mono);
-    font-size: 0.7rem;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-  }
-
-  .branch-dot {
-    width: 0.48rem;
-    height: 0.48rem;
-    border: 2px solid var(--branch-color);
-    border-radius: 50%;
-    background: var(--bg-secondary);
-  }
-
-  .branch-track {
+  .now-marker {
     position: absolute;
-    top: 23px;
-    left: var(--content-inset);
-    right: var(--content-inset);
-    height: 2px;
-    background: color-mix(in srgb, var(--branch-color) 65%, transparent);
+    top: 0;
+    bottom: 0;
+    z-index: 0;
+    width: 1px;
+    border-left: 1px dashed
+      color-mix(in srgb, var(--link-color) 45%, transparent);
+  }
+
+  .history-spine {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .history-spine polyline {
+    fill: none;
+    stroke: color-mix(in srgb, var(--gray-color) 52%, transparent);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .graph-row {
+    position: absolute;
+    left: 0;
+    width: var(--timeline-width);
+    height: 66px;
+  }
+
+  .row-guide {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 1px;
+    background: color-mix(in srgb, var(--border-color) 45%, transparent);
   }
 
   .timeline-entry {
     position: absolute;
+    top: 0;
     z-index: 2;
-    width: 10.5rem;
-    min-height: 54px;
+    display: block;
+    width: 12rem;
+    height: 64px;
     color: var(--text-color);
     text-decoration: none;
   }
 
-  .entry-connector {
+  .entry-duration {
     position: absolute;
-    top: -9px;
+    top: 20px;
     left: 0;
-    width: 1px;
-    height: 15px;
-    background: var(--branch-color);
+    width: var(--entry-duration);
+    height: 4px;
+    border-radius: 99px;
+    background: var(--entry-color);
+    box-shadow: 0 0 0 1px
+      color-mix(in srgb, var(--entry-color) 16%, transparent);
+  }
+
+  .timeline-entry-point .entry-duration {
+    display: none;
   }
 
   .entry-node {
     position: absolute;
-    top: -13px;
-    left: -4px;
-    z-index: 2;
-    width: 9px;
-    height: 9px;
-    border: 2px solid var(--branch-color);
+    top: 15px;
+    left: -5px;
+    z-index: 3;
+    width: 14px;
+    height: 14px;
+    border: 3px solid var(--entry-color);
     border-radius: 50%;
     background: var(--bg-secondary);
+    box-shadow: 0 0 0 3px var(--bg-secondary);
   }
 
   .timeline-entry-current .entry-node {
-    background: var(--branch-color);
-    box-shadow: 0 0 0 4px
-      color-mix(in srgb, var(--branch-color) 18%, transparent);
-  }
-
-  .entry-duration {
-    position: absolute;
-    top: -10px;
-    left: 0;
-    width: var(--entry-duration);
-    height: 3px;
-    border-radius: 99px;
-    background: var(--branch-color);
-  }
-
-  .timeline-entry-point .entry-duration {
-    width: 0;
+    background: var(--entry-color);
+    box-shadow:
+      0 0 0 3px var(--bg-secondary),
+      0 0 0 7px color-mix(in srgb, var(--entry-color) 16%, transparent);
   }
 
   .entry-card {
+    position: absolute;
+    top: 27px;
+    left: 10px;
     display: flex;
+    width: 11.5rem;
     align-items: center;
     gap: 0.45rem;
-    min-width: 0;
-    padding: 0.35rem 0.45rem;
+    padding: 0.22rem 0.35rem;
     border: 1px solid transparent;
     border-radius: 0.35rem;
     transition:
@@ -430,7 +477,7 @@ const categoryColors: Record<TimelineCategory, string> = {
   .timeline-entry:focus-visible .entry-card {
     border-color: color-mix(
       in srgb,
-      var(--branch-color) 48%,
+      var(--entry-color) 48%,
       var(--border-color)
     );
     background: var(--surface-color);
@@ -443,38 +490,49 @@ const categoryColors: Record<TimelineCategory, string> = {
 
   .entry-visual {
     display: grid;
-    flex: 0 0 25px;
-    width: 25px;
-    height: 25px;
+    flex: 0 0 27px;
+    width: 27px;
+    height: 27px;
     place-items: center;
   }
 
   .entry-visual :global(img) {
-    max-width: 25px;
-    max-height: 25px;
+    max-width: 27px;
+    max-height: 27px;
   }
 
   .entry-fallback {
     display: grid;
-    width: 23px;
-    height: 23px;
+    width: 24px;
+    height: 24px;
     place-items: center;
-    border: 1px solid var(--branch-color);
+    border: 1px solid var(--entry-color);
     border-radius: 50%;
-    color: var(--branch-color);
+    color: var(--entry-color);
     font-family: var(--font-family-mono);
-    font-size: 0.65rem;
+    font-size: 0.66rem;
   }
 
   .entry-copy {
-    display: flex;
+    display: grid;
     min-width: 0;
-    flex-direction: column;
-    line-height: 1.15;
+    flex: 1;
+    grid-template-columns: 1fr auto;
+    line-height: 1.08;
+  }
+
+  .entry-category {
+    grid-column: 1;
+    color: var(--entry-color) !important;
+    font-family: var(--font-family-mono);
+    font-size: 0.52rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
   }
 
   .entry-copy strong,
-  .entry-copy > span {
+  .entry-copy > span:not(.entry-category) {
+    grid-column: 1 / -1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -482,21 +540,23 @@ const categoryColors: Record<TimelineCategory, string> = {
 
   .entry-copy strong {
     color: var(--heading-color);
-    font-size: 0.76rem;
+    font-size: 0.75rem;
     font-weight: 600;
   }
 
-  .entry-copy > span {
-    margin-top: 0.12rem;
+  .entry-copy > span:not(.entry-category) {
+    margin-top: 0.1rem;
     color: var(--gray-color);
-    font-size: 0.65rem;
+    font-size: 0.62rem;
   }
 
   .entry-copy time {
-    margin-top: 0.18rem;
-    color: color-mix(in srgb, var(--branch-color) 82%, var(--text-color));
+    grid-column: 2;
+    grid-row: 1;
+    margin-left: 0.35rem;
+    color: var(--gray-color);
     font-family: var(--font-family-mono);
-    font-size: 0.59rem;
+    font-size: 0.5rem;
   }
 
   @media (max-width: 640px) {
@@ -506,6 +566,8 @@ const categoryColors: Record<TimelineCategory, string> = {
 
     .timeline-heading {
       align-items: flex-start;
+      flex-direction: column;
+      gap: 0.35rem;
       padding-inline: 1.25rem;
     }
 
@@ -518,7 +580,12 @@ const categoryColors: Record<TimelineCategory, string> = {
     }
 
     .scroll-note {
-      display: none;
+      display: block;
+      align-self: flex-end;
+    }
+
+    .category-legend {
+      padding-inline: 1.25rem;
     }
 
     .timeline-scroller {

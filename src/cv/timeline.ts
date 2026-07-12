@@ -21,22 +21,16 @@ export interface TimelineEntry {
 }
 
 export interface TimelinePositionedEntry extends TimelineEntry {
-  lane: number;
+  row: number;
   startMonth: number;
   endMonth: number;
-}
-
-export interface TimelineGroup {
-  category: TimelineCategory;
-  entries: TimelinePositionedEntry[];
-  laneCount: number;
 }
 
 export interface TimelineLayout {
   startMonth: number;
   endMonth: number;
   monthCount: number;
-  groups: TimelineGroup[];
+  entries: TimelinePositionedEntry[];
   density: number[];
   maxDensity: number;
   ticks: Array<{ month: number; label?: string }>;
@@ -212,35 +206,18 @@ export function buildTimelineLayout(
   const endMonth = latestMonth + 1;
   const monthCount = endMonth - startMonth + 1;
 
-  const groups = TIMELINE_CATEGORIES.map((category): TimelineGroup => {
-    const laneEnds: number[] = [];
-    const positioned = entries
-      .filter((entry) => entry.category === category)
-      .map((entry) => {
-        const start = parseMonth(entry.startDate);
-        const end = entry.endDate ? parseMonth(entry.endDate) : currentMonth;
-        const visualEnd = Math.max(
-          end,
-          start + (entry.kind === "point" ? 8 : 6),
-        );
-        let lane = laneEnds.findIndex((laneEnd) => laneEnd < start);
-        if (lane === -1) lane = laneEnds.length;
-        laneEnds[lane] = visualEnd;
-
-        return {
-          ...entry,
-          lane,
-          startMonth: start,
-          endMonth: end,
-        };
-      });
-
-    return {
-      category,
-      entries: positioned,
-      laneCount: Math.max(1, laneEnds.length),
-    };
-  });
+  const positionedEntries = [...entries]
+    .sort(
+      (a, b) =>
+        parseMonth(a.startDate) - parseMonth(b.startDate) ||
+        a.title.localeCompare(b.title),
+    )
+    .map((entry, row) => ({
+      ...entry,
+      row,
+      startMonth: parseMonth(entry.startDate),
+      endMonth: entry.endDate ? parseMonth(entry.endDate) : currentMonth,
+    }));
 
   const density = Array.from({ length: monthCount }, (_, offset) => {
     const month = startMonth + offset;
@@ -264,7 +241,7 @@ export function buildTimelineLayout(
     startMonth,
     endMonth,
     monthCount,
-    groups,
+    entries: positionedEntries,
     density,
     maxDensity: Math.max(...density, 1),
     ticks,
