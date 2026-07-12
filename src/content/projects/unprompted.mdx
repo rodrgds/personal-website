@@ -2,7 +2,8 @@
 name: "Unprompted"
 startDate: "2026-06"
 url: "https://unprompted.to"
-tags: ["TypeScript", "SvelteKit", "React Native", "PostgreSQL", "AI"]
+logo: "unprompted"
+tags: ["TypeScript", "Next.js", "React Native", "PostgreSQL", "AI"]
 category: "personal"
 featured: true
 status: "wip"
@@ -10,3 +11,23 @@ bullets:
   - "Building a daily reasoning workout around one shared problem, one considered answer, and a structured mirror of how each person reasoned"
   - "Developing the web, native, API, evaluation, and content platform as a production-minded TypeScript monorepo"
 ---
+
+import CVImage from "../../components/features/cv/CVImage.astro";
+import CVImageGallery from "../../components/features/cv/CVImageGallery.astro";
+import Logo from "../../components/common/Logo.astro";
+import share from "../../assets/cv/unprompted/share.png";
+import today from "../../assets/cv/unprompted/today.png";
+
+**Unprompted** is a daily workout for reasoning: one shared problem each day, one considered answer, and a structured mirror of how you reached it. The result surfaces the crux of the answer, reasoning quality, common traps, calibration, and a solution to study after committing to your own approach.
+
+The platform combines a <Logo fixed src="nextjs" /> **Next.js** / React web app, an <Logo fixed src="expo" /> **Expo** / React Native client, a Hono API, <Logo fixed src="postgresql" /> **PostgreSQL** with Drizzle, and separate content, extraction, evaluation, email, and API-contract packages. It also includes accounts, streaks, history, an archive, spoiler-safe public sharing, accessibility checks, and data-rights controls.
+
+### Daily problem and feedback
+
+<CVImage src={today} alt="Unprompted daily reasoning problem and structured feedback result" />
+
+### Shareable result
+
+<CVImageGallery columns={1} mobileColumns={1}>
+  <CVImage src={share} alt="Unprompted public result card with reasoning and trap scores" />
+</CVImageGallery>

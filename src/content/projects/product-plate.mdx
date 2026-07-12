@@ -3,6 +3,7 @@ name: "Product Plate"
 startDate: "2026-05"
 url: "https://productplate.pages.dev"
 repo: "rodrgds/productplate"
+logo: "productplate"
 tags: ["SvelteKit", "Svelte", "Convex", "Better Auth", "AI", "Cloudflare"]
 category: "personal"
 featured: true
@@ -11,3 +12,23 @@ bullets:
   - "Built a production-minded SvelteKit starter with connected auth, billing, realtime data, AI, product UI, tests, and deployment"
   - "Added a guided kickstart workflow that helps coding agents turn the foundation into a smaller, coherent product instead of a renamed template"
 ---
+
+import CVImage from "../../components/features/cv/CVImage.astro";
+import CVImageGallery from "../../components/features/cv/CVImageGallery.astro";
+import Logo from "../../components/common/Logo.astro";
+import assistant from "../../assets/cv/product-plate/assistant.png";
+import dashboard from "../../assets/cv/product-plate/dashboard.png";
+import flow from "../../assets/cv/product-plate/flow.png";
+
+**Product Plate** is a public <Logo fixed src="svelte" /> **SvelteKit** starter designed to become a real product rather than remain a showcase template. It connects authentication, billing, realtime data, AI, teams, notifications, developer tooling, product UI, tests, and deployment in one coherent foundation.
+
+The default stack uses Svelte 5, Convex, Better Auth, Autumn, Tailwind CSS, shadcn-svelte, Bun, and Cloudflare Pages. A guided `START_HERE.md` kickstart helps a coding agent select the relevant surfaces, remove unused options, establish the new product identity, and verify the smallest complete product loop.
+
+### Connected product foundation
+
+<CVImage src={dashboard} alt="Product Plate dashboard with metrics and connected AI workbench" />
+
+<CVImageGallery columns={2} mobileColumns={1}>
+  <CVImage src={assistant} alt="Product Plate streaming AI assistant workspace" />
+  <CVImage src={flow} alt="Product Plate visual workflow editor" />
+</CVImageGallery>

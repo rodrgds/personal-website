@@ -3,6 +3,7 @@ name: "Ark"
 startDate: "2026-05"
 url: "https://ark.rgo.pt"
 repo: "rodrgds/ark"
+logo: "ark"
 tags: ["Expo", "React Native", "TypeScript", "SQLite", "Offline-first", "On-device AI"]
 category: "personal"
 featured: true
@@ -11,3 +12,24 @@ bullets:
   - "Building an offline-first survival computer for maps, emergency knowledge, secure notes, local search, cached feeds and weather, and practical sensor tools"
   - "Integrated downloadable knowledge packs, on-device AI/RAG, full-text search, offline maps, private storage, and resumable downloads in one mobile app"
 ---
+
+import CVImage from "../../components/features/cv/CVImage.astro";
+import CVImageGallery from "../../components/features/cv/CVImageGallery.astro";
+import Logo from "../../components/common/Logo.astro";
+import chat from "../../assets/cv/ark/chat.png";
+import library from "../../assets/cv/ark/library.png";
+import map from "../../assets/cv/ark/map.png";
+import notes from "../../assets/cv/ark/notes.png";
+
+**Ark** started as our third-place CodeSpring 2026 project and grew into an open-source, offline-first survival computer for iOS and Android. It brings maps, emergency knowledge, secure notes and documents, local search, cached feeds and weather, and practical sensor tools into one app that remains useful when the internet disappears.
+
+The app is built with <Logo fixed src="expo" /> **Expo**, <Logo fixed src="react" /> **React Native**, TypeScript, and <Logo fixed src="sqlite" /> **SQLite**. It supports downloadable map and knowledge packs, PDF/ZIM/HTML content, full-text search, on-device AI/RAG, encrypted backups, resumable downloads, saved places, route drafts, and phone-sensor utilities.
+
+### Offline toolkit
+
+<CVImageGallery columns={4} mobileColumns={2}>
+  <CVImage src={map} alt="Ark offline map with saved data and navigation controls" sizes="(max-width: 600px) 45vw, 170px" />
+  <CVImage src={library} alt="Ark downloadable offline knowledge library" sizes="(max-width: 600px) 45vw, 170px" />
+  <CVImage src={chat} alt="Ask Arky on-device assistant answering from offline sources" sizes="(max-width: 600px) 45vw, 170px" />
+  <CVImage src={notes} alt="Ark private notes and document workspace" sizes="(max-width: 600px) 45vw, 170px" />
+</CVImageGallery>

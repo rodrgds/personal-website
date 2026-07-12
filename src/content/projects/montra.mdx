@@ -2,6 +2,7 @@
 name: "Montra"
 startDate: "2026-07"
 url: "https://getmontra.com"
+logo: "montra"
 tags: ["TypeScript", "React", "Expo", "PostgreSQL", "Meilisearch", "Computer Vision"]
 category: "personal"
 featured: true
@@ -10,3 +11,20 @@ bullets:
   - "Building regional fashion search across stores from natural-language queries, product links, and images"
   - "Developing a web and mobile catalog platform with Postgres, Meilisearch, pgvector/CLIP similarity, source ingestion, and deterministic ranking"
 ---
+
+import CVImage from "../../components/features/cv/CVImage.astro";
+import CVImageGallery from "../../components/features/cv/CVImageGallery.astro";
+import Logo from "../../components/common/Logo.astro";
+import imageSearch from "../../assets/cv/montra/image-search.png";
+import linkSearch from "../../assets/cv/montra/link-search.png";
+
+**Montra** is fashion search across stores available in a shopper's region. It supports normal and AI-assisted queries, pasted product links, and image-based discovery, then returns filterable results with sizes, materials, colors, prices, availability, and retailer links.
+
+The web marketplace uses TanStack Start and <Logo fixed src="react" /> **React**, backed by a Hono API and <Logo fixed src="postgresql" /> **PostgreSQL** catalog. Meilisearch handles fast lexical retrieval, while pgvector and CLIP power visual similarity. The ingestion pipeline normalizes products and images from many retailers without making checkout or exact stock promises Montra cannot support.
+
+### Search by image and product link
+
+<CVImageGallery columns={1} mobileColumns={1}>
+  <CVImage src={imageSearch} alt="Montra image search with suggested attributes, filters, and matching fashion products" />
+  <CVImage src={linkSearch} alt="Montra product-link search with interpreted attributes and matching products across retailers" />
+</CVImageGallery>
