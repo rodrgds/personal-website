@@ -26,34 +26,36 @@ const entries =
       entries.map((entry) => (
         <li class={`current-${entry.category}`}>
           <a href={entry.href}>
-            <span class="current-node" aria-hidden="true" />
-            <span class="current-visual">
-              {entry.visual ? (
-                <CVEntryVisual
-                  src={entry.visual}
-                  alt={`${entry.title} logo`}
-                  size={22}
-                />
-              ) : (
-                <span class="current-fallback" aria-hidden="true">
-                  {entry.title.slice(0, 1).toUpperCase()}
-                </span>
-              )}
-            </span>
-            <span class="current-copy">
-              <strong>{entry.title}</strong>
-              <span>{entry.subtitle}</span>
-            </span>
-            <span class="current-meta">
-              <span>{TIMELINE_CATEGORY_LABELS[entry.category]}</span>
-              <time>{getTimelineDateLabel(entry)}</time>
-            </span>
+            <div class="current-card-inner">
+              <span class="current-node" aria-hidden="true" />
+              <span class="current-visual">
+                {entry.visual ? (
+                  <CVEntryVisual
+                    src={entry.visual}
+                    alt={`${entry.title} logo`}
+                    size={22}
+                  />
+                ) : (
+                  <span class="current-fallback" aria-hidden="true">
+                    {entry.title.slice(0, 1).toUpperCase()}
+                  </span>
+                )}
+              </span>
+              <span class="current-copy">
+                <strong>{entry.title}</strong>
+                <span>{entry.subtitle}</span>
+              </span>
+              <span class="current-meta">
+                <span>{TIMELINE_CATEGORY_LABELS[entry.category]}</span>
+                <time>{getTimelineDateLabel(entry)}</time>
+              </span>
+            </div>
           </a>
         </li>
       ))
     }
   </ul>
-  <p class="current-link"><a href="/done">Explore the full timeline →</a></p>
+  <p class="current-link"><a href="/cv">Explore the full timeline →</a></p>
 </div>
 
 <style>
@@ -114,6 +116,10 @@ const entries =
     width: 3px;
     background: var(--current-color);
     content: "";
+  }
+
+  .current-card-inner {
+    display: contents;
   }
 
   a:hover,

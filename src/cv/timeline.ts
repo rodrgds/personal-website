@@ -31,6 +31,7 @@ export interface TimelineLayout {
   endMonth: number;
   monthCount: number;
   entries: TimelinePositionedEntry[];
+  rowCount: number;
   density: number[];
   maxDensity: number;
   ticks: Array<{ month: number; label?: string }>;
@@ -97,7 +98,7 @@ export function getTimelineEntries(
       endDate: item.endDate,
       kind: "span" as const,
       visual: getVisual(item.logo, item.image),
-      href: `/done?view=list#experience-${id}`,
+      href: `/cv?view=list#experience-${id}`,
       isCurrent: !item.endDate,
     })),
     ...data.projects.map(({ id, data: item }) => ({
@@ -112,7 +113,7 @@ export function getTimelineEntries(
       endDate: item.endDate,
       kind: "span" as const,
       visual: getVisual(item.logo, item.image),
-      href: `/done?view=list#project-${id}`,
+      href: `/cv?view=list#project-${id}`,
       isCurrent:
         !item.endDate && (item.status === "active" || item.status === "wip"),
     })),
@@ -125,7 +126,7 @@ export function getTimelineEntries(
       endDate: item.endDate,
       kind: "span" as const,
       visual: getVisual(item.logo, item.image),
-      href: `/done?view=list#education-${id}`,
+      href: `/cv?view=list#education-${id}`,
       isCurrent: !item.endDate,
     })),
     ...data.honors.map(({ id, data: item }) => ({
@@ -137,7 +138,7 @@ export function getTimelineEntries(
       endDate: item.date,
       kind: "point" as const,
       visual: getVisual(item.logo, item.image),
-      href: `/done?view=list#honor-${id}`,
+      href: `/cv?view=list#honor-${id}`,
       isCurrent: false,
     })),
     ...data.certifications.map(({ id, data: item }) => ({
@@ -149,7 +150,7 @@ export function getTimelineEntries(
       endDate: item.issueDate,
       kind: "point" as const,
       visual: getVisual(item.logo, item.image),
-      href: `/done?view=list#certification-${id}`,
+      href: `/cv?view=list#certification-${id}`,
       isCurrent: false,
     })),
   ];
@@ -206,18 +207,29 @@ export function buildTimelineLayout(
   const endMonth = latestMonth + 1;
   const monthCount = endMonth - startMonth + 1;
 
+  const rowEnds: number[] = [];
   const positionedEntries = [...entries]
     .sort(
       (a, b) =>
         parseMonth(a.startDate) - parseMonth(b.startDate) ||
         a.title.localeCompare(b.title),
     )
-    .map((entry, row) => ({
-      ...entry,
-      row,
-      startMonth: parseMonth(entry.startDate),
-      endMonth: entry.endDate ? parseMonth(entry.endDate) : currentMonth,
-    }));
+    .map((entry) => {
+      const startMonth = parseMonth(entry.startDate);
+      const endMonth = entry.endDate ? parseMonth(entry.endDate) : currentMonth;
+      const occupiedUntil = Math.max(endMonth, startMonth + 10);
+      let row = rowEnds.findIndex((rowEnd) => rowEnd < startMonth);
+
+      if (row === -1) row = rowEnds.length;
+      rowEnds[row] = occupiedUntil;
+
+      return {
+        ...entry,
+        row,
+        startMonth,
+        endMonth,
+      };
+    });
 
   const density = Array.from({ length: monthCount }, (_, offset) => {
     const month = startMonth + offset;
@@ -242,6 +254,7 @@ export function buildTimelineLayout(
     endMonth,
     monthCount,
     entries: positionedEntries,
+    rowCount: Math.max(1, rowEnds.length),
     density,
     maxDensity: Math.max(...density, 1),
     ticks,
