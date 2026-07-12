@@ -1,6 +1,6 @@
 ---
 import CVExpandable from "./CVExpandable.svelte";
-import CVEntryVisual from "./CVEntryVisual.astro";
+import CVEntryAvatar from "./CVEntryAvatar.astro";
 
 interface Props {
   id: string;
@@ -18,13 +18,15 @@ const { id, title, timeLabel, visual, visualAlt, visualSize } = Astro.props;
   <Fragment slot="summary">
     <div class="entry-head">
       <div>
-        {
-          visual && (
-            <p class="entry-logo">
-              <CVEntryVisual src={visual} alt={visualAlt} size={visualSize} />
-            </p>
-          )
-        }
+        <p class="entry-logo">
+          <CVEntryAvatar
+            title={title}
+            visual={visual}
+            alt={visualAlt}
+            size={30}
+            visualSize={visualSize}
+          />
+        </p>
         <h3>{title}</h3>
         <slot name="meta" />
       </div>

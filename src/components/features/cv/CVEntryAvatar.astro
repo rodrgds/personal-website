@@ -1,0 +1,79 @@
+---
+import CVEntryVisual from "./CVEntryVisual.astro";
+
+interface Props {
+  title: string;
+  visual?: string;
+  alt?: string;
+  size?: number;
+  visualSize?: number;
+  accent?: string;
+}
+
+const {
+  title,
+  visual,
+  alt = `${title} logo`,
+  size = 28,
+  visualSize,
+  accent = "var(--link-color)",
+}: Props = Astro.props;
+
+const ignoredWords = new Set(["a", "an", "and", "for", "in", "of", "the"]);
+const words = title
+  .replace(/[^\p{L}\p{N}]+/gu, " ")
+  .trim()
+  .split(/\s+/)
+  .filter((word) => word && !ignoredWords.has(word.toLowerCase()));
+const initials =
+  words.length > 1
+    ? words
+        .slice(0, 2)
+        .map((word) => word[0])
+        .join("")
+        .toUpperCase()
+    : (words[0] ?? title).slice(0, 2).toUpperCase();
+---
+
+<span
+  class:list={["entry-avatar", visual && "entry-avatar-image"]}
+  style={`--avatar-size:${size}px;--avatar-accent:${accent}`}
+  aria-hidden={visual ? undefined : "true"}
+>
+  {
+    visual ? (
+      <CVEntryVisual src={visual} alt={alt} size={visualSize ?? size} />
+    ) : (
+      <span>{initials}</span>
+    )
+  }
+</span>
+
+<style>
+  .entry-avatar {
+    display: grid;
+    width: var(--avatar-size);
+    height: var(--avatar-size);
+    flex: 0 0 var(--avatar-size);
+    place-items: center;
+    border: 1px solid color-mix(in srgb, var(--avatar-accent) 72%, transparent);
+    border-radius: 0.38rem;
+    background: color-mix(in srgb, var(--avatar-accent) 9%, transparent);
+    color: var(--avatar-accent);
+    font-family: var(--font-family-mono);
+    font-size: calc(var(--avatar-size) * 0.34);
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+
+  .entry-avatar-image {
+    border-color: transparent;
+    background: transparent;
+  }
+
+  .entry-avatar :global(img) {
+    max-width: var(--avatar-size);
+    max-height: var(--avatar-size);
+  }
+</style>

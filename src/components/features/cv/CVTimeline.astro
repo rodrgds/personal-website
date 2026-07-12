@@ -1,5 +1,5 @@
 ---
-import CVEntryVisual from "./CVEntryVisual.astro";
+import CVEntryAvatar from "./CVEntryAvatar.astro";
 import {
   TIMELINE_CATEGORIES,
   TIMELINE_CATEGORY_LABELS,
@@ -27,7 +27,8 @@ const nowOffset =
 
 const categoryColors: Record<TimelineCategory, string> = {
   experience: "var(--flexoki-orange)",
-  projects: "var(--flexoki-cyan)",
+  "personal-projects": "var(--flexoki-cyan)",
+  "university-projects": "var(--flexoki-green)",
   education: "var(--flexoki-blue)",
   honors: "var(--flexoki-yellow)",
   certifications: "var(--flexoki-purple)",
@@ -151,19 +152,14 @@ const spinePoints = layout.entries
                   <span class="entry-duration" aria-hidden="true" />
                   <span class="entry-node" aria-hidden="true" />
                   <div class="entry-card">
-                    <span class="entry-visual">
-                      {entry.visual ? (
-                        <CVEntryVisual
-                          src={entry.visual}
-                          alt={`${entry.title} logo`}
-                          size={21}
-                        />
-                      ) : (
-                        <span class="entry-fallback" aria-hidden="true">
-                          {entry.title.slice(0, 1).toUpperCase()}
-                        </span>
-                      )}
-                    </span>
+                    <CVEntryAvatar
+                      title={entry.title}
+                      visual={entry.visual}
+                      alt={`${entry.title} logo`}
+                      size={25}
+                      visualSize={21}
+                      accent="var(--entry-color)"
+                    />
                     <span class="entry-copy">
                       <span class="entry-category">
                         {TIMELINE_CATEGORY_LABELS[entry.category]}
@@ -486,31 +482,6 @@ const spinePoints = layout.entries
 
   .timeline-entry:focus-visible {
     outline: none;
-  }
-
-  .entry-visual {
-    display: grid;
-    flex: 0 0 27px;
-    width: 27px;
-    height: 27px;
-    place-items: center;
-  }
-
-  .entry-visual :global(img) {
-    max-width: 27px;
-    max-height: 27px;
-  }
-
-  .entry-fallback {
-    display: grid;
-    width: 24px;
-    height: 24px;
-    place-items: center;
-    border: 1px solid var(--entry-color);
-    border-radius: 50%;
-    color: var(--entry-color);
-    font-family: var(--font-family-mono);
-    font-size: 0.66rem;
   }
 
   .entry-copy {

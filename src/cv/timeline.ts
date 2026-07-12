@@ -2,7 +2,8 @@ import type { CVCollectionsData } from "./types";
 
 export type TimelineCategory =
   | "experience"
-  | "projects"
+  | "personal-projects"
+  | "university-projects"
   | "education"
   | "honors"
   | "certifications";
@@ -39,7 +40,8 @@ export interface TimelineLayout {
 
 export const TIMELINE_CATEGORIES: TimelineCategory[] = [
   "experience",
-  "projects",
+  "personal-projects",
+  "university-projects",
   "education",
   "honors",
   "certifications",
@@ -47,7 +49,8 @@ export const TIMELINE_CATEGORIES: TimelineCategory[] = [
 
 export const TIMELINE_CATEGORY_LABELS: Record<TimelineCategory, string> = {
   experience: "Experience",
-  projects: "Projects",
+  "personal-projects": "Personal projects",
+  "university-projects": "University projects",
   education: "Education",
   honors: "Honors",
   certifications: "Certifications",
@@ -103,7 +106,10 @@ export function getTimelineEntries(
     })),
     ...data.projects.map(({ id, data: item }) => ({
       id: `project-${id}`,
-      category: "projects" as const,
+      category:
+        item.category === "university"
+          ? ("university-projects" as const)
+          : ("personal-projects" as const),
       title: item.name,
       subtitle:
         item.category === "university"
