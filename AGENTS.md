@@ -4,25 +4,42 @@
 
 Astro 6 + Svelte 5 personal website with SSR (Vercel adapter). Package manager: **bun**. Node 22.
 
-## Commands
+## Development Environment
 
 ```bash
-bun run dev        # Start dev server
-bun run build      # Build for production (astro build + jampack optimization)
-bun run start      # Preview production build
-bun run preview    # Astro preview
-bun run astro ...  # Run any Astro CLI command
+direnv allow                    # Enter automatically when cd'ing into the repo
+setup                           # Reconcile dependencies from the frozen lockfile
+devenv shell -- setup           # Same operation without entering a shell
+devenv shell -- verify          # Run a command directly from outside direnv
 ```
 
-**No test framework or linter is configured.** If adding tests, follow the project's existing patterns and ask before introducing new tooling.
+The shell pins official Bun 1.3.3 `linux-x64-baseline`, Node 22, and Typst. Bun's
+cache, Typst packages, and `node_modules` persist beneath `/workspace`, including
+across Hermes/NAS reboots. Frozen installs stage beside the checkout and use Bun's `copyfile` backend because
+nested staging is detected as part of the parent package and the Synology filesystem
+rejects the default hardlink path. Dotenv files are parsed as data and are never sourced,
+evaluated, or copied into the Nix store.
+
+Available commands are `install`, `setup`, `dev`, `check`, `typecheck`,
+`format-check`, `lint`, `build`, `verify`, and `verify-full`. `install` and
+`setup` reconcile `node_modules` from `bun.lock`. `verify` matches the universally
+available CI gate; `verify-full` additionally runs the secret-dependent production
+build.
+
+There is no test framework or code linter configured. Here, `lint` means the
+existing formatting and Astro diagnostics; do not claim or add a fake test suite.
+The production build prerenders CV PDFs and therefore genuinely requires Typst.
 
 ## Formatting
 
 ```bash
-bunx prettier --write .     # Format all files
+bunx prettier --write .
+format-check
 ```
 
 Prettier config is in `package.json`. `.prettierignore` excludes `**/*.mdx`.
+Use `verify` for the normal local/CI gate. Run `verify-full` only when build
+environment variables and Typst's package cache are available.
 
 ## Architecture
 

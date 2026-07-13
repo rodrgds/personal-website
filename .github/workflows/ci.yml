@@ -143,6 +143,7 @@ jobs:
           # handles the production build; this CI only enforces code
           # quality (format + typecheck).
           if [[ "$APP_CHANGED" == "true" || "$CI_CHANGED" == "true" ]]; then
+            install
             format-check
             typecheck
           fi
