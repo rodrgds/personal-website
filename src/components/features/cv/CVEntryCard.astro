@@ -1,18 +1,6 @@
 ---
-import type { JSX } from "astro/jsx-runtime";
 import CVExpandable from "./CVExpandable.svelte";
 import CVEntryAvatar from "./CVEntryAvatar.astro";
-
-type CVExpandableProps = Omit<
-  Parameters<typeof CVExpandable>[0],
-  "children"
-> & {
-  children?: JSX.Element | JSX.Element[];
-};
-
-const CVExpandableWithChildren = CVExpandable as (
-  props: CVExpandableProps,
-) => ReturnType<typeof CVExpandable>;
 
 interface Props {
   id: string;
@@ -26,7 +14,7 @@ interface Props {
 const { id, title, timeLabel, visual, visualAlt, visualSize } = Astro.props;
 ---
 
-<CVExpandableWithChildren client:load id={id}>
+<CVExpandable client:load id={id}>
   <Fragment slot="summary">
     <div class="entry-head">
       <div>
@@ -51,7 +39,7 @@ const { id, title, timeLabel, visual, visualAlt, visualSize } = Astro.props;
       <slot />
     </div>
   </Fragment>
-</CVExpandableWithChildren>
+</CVExpandable>
 
 <style>
   .entry-head {

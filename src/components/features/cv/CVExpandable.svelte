@@ -15,6 +15,7 @@
   interface Props {
     summary: Snippet;
     details: Snippet;
+    children?: Snippet;
     class?: string;
     id?: string;
   }
