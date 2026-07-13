@@ -51,31 +51,31 @@ const renderedCollections = await Promise.all([
   Promise.all(
     cvData.experience.map(async (entry) => ({
       ...entry,
-      rendered: await render(entry),
+      rendered: await render({ ...entry, collection: "experience" }),
     })),
   ),
   Promise.all(
     cvData.projects.map(async (entry) => ({
       ...entry,
-      rendered: await render(entry),
+      rendered: await render({ ...entry, collection: "projects" }),
     })),
   ),
   Promise.all(
     cvData.education.map(async (entry) => ({
       ...entry,
-      rendered: await render(entry),
+      rendered: await render({ ...entry, collection: "education" }),
     })),
   ),
   Promise.all(
     cvData.honors.map(async (entry) => ({
       ...entry,
-      rendered: await render(entry),
+      rendered: await render({ ...entry, collection: "honors" }),
     })),
   ),
   Promise.all(
     cvData.certifications.map(async (entry) => ({
       ...entry,
-      rendered: await render(entry),
+      rendered: await render({ ...entry, collection: "certifications" }),
     })),
   ),
 ]);
