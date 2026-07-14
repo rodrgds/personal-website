@@ -1,20 +1,22 @@
 ---
+import Logo from "./common/Logo.astro";
+
 export interface Props {
   title: string;
-  img?: string;
+  logo?: string;
   stack: string[];
   description: string;
   link?: string;
 }
 
-const { title, img, stack, description, link } = Astro.props as Props;
+const { title, logo, stack, description, link } = Astro.props as Props;
 const Tag = link ? "a" : "article";
 ---
 
 <Tag href={link} class:list={["project", !link && "project-static"]}>
   <div class="card-container">
-    <div class:list={["img-container", !img && "text-preview"]}>
-      {img && <img src={img} alt={title} />}
+    <div class:list={["img-container", !logo && "text-preview"]}>
+      {logo && <Logo src={logo} alt={`${title} logo`} size={64} />}
       <p>{description}</p>
     </div>
     <h2>{title}</h2>
@@ -92,11 +94,9 @@ const Tag = link ? "a" : "article";
     }
   }
 
-  .card-container img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0.92;
+  .img-container :global(img) {
+    max-width: 45%;
+    max-height: 45%;
   }
 
   h2 {

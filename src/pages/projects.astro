@@ -3,8 +3,11 @@ import BaseHead from "../components/common/BaseHead.astro";
 import Header from "../components/common/Header.astro";
 import Footer from "../components/common/Footer.astro";
 import Card from "../components/Card.astro";
+import { getCollection } from "astro:content";
 
-import projects from "../data/projects.json";
+const projects = (await getCollection("projects")).sort((a, b) =>
+  b.data.startDate.localeCompare(a.data.startDate),
+);
 ---
 
 <!doctype html>
@@ -32,23 +35,20 @@ import projects from "../data/projects.json";
       <section>
         <div class="projects-grid">
           {
-            projects.map(
-              (project: {
-                logo?: string;
-                name: string;
-                technologies: string[];
-                description: string;
-                link?: string;
-              }) => (
+            projects.map((project) => (
                 <Card
-                  title={project.name}
-                  img={project.logo || ""}
-                  stack={project.technologies}
-                  description={project.description}
-                  link={project.link || ""}
+                  title={project.data.name}
+                  logo={project.data.logo}
+                  stack={project.data.tags}
+                  description={project.data.bullets?.[0] ?? "View project details."}
+                  link={
+                    project.data.url ??
+                    (project.data.repo
+                      ? `https://github.com/${project.data.repo}`
+                      : `/cv?view=list#project-${project.id}`)
+                  }
                 />
-              ),
-            )
+              ))
           }
         </div>
       </section>
