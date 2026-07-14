@@ -6,7 +6,6 @@ import svelte from "@astrojs/svelte";
 import vercel from "@astrojs/vercel";
 import rehypePrettyCode from "rehype-pretty-code";
 import { transformerCopyButton } from "@rehype-pretty/transformers";
-import compress from "astro-compress";
 import { whiteLogosIntegration } from "./src/integrations/white-logos";
 
 function raiseWatcherListenerLimit() {
@@ -26,17 +25,7 @@ export default defineConfig({
   site: "https://rgo.pt",
   output: "server",
   adapter: process.env.VERCEL === "1" ? vercel() : node({ mode: "standalone" }),
-  integrations: [
-    mdx(),
-    sitemap(),
-    svelte(),
-    whiteLogosIntegration(),
-    compress({
-      // Svelte's SSR hydration relies on whitespace text nodes inside islands.
-      // HTML whitespace minification can remove those nodes and break hydration.
-      HTML: false,
-    }),
-  ],
+  integrations: [mdx(), sitemap(), svelte(), whiteLogosIntegration()],
   markdown: {
     syntaxHighlight: false,
     rehypePlugins: [
