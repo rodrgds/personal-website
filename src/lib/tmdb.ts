@@ -1,4 +1,7 @@
+import { z } from "astro/zod";
+
 import { SimpleCache } from "./cache";
+import { fetchUpstream, parseUpstreamJson } from "./upstream";
 
 const TMDB_API_BASE_URL = "https://api.themoviedb.org/3";
 const TMDB_IMAGE_BASE_URL = "https://image.tmdb.org/t/p";
@@ -14,20 +17,20 @@ export interface TmdbMediaDetails {
   posterUrl?: string;
 }
 
-interface TmdbMediaResponse {
-  id: number;
-  title?: string;
-  name?: string;
-  release_date?: string;
-  first_air_date?: string;
-  last_air_date?: string;
-  in_production?: boolean;
-  poster_path?: string | null;
-}
-
-interface TmdbSeasonResponse {
-  poster_path?: string | null;
-}
+const tmdbMediaSchema = z.object({
+  id: z.number(),
+  title: z.string().optional(),
+  name: z.string().optional(),
+  release_date: z.string().optional(),
+  first_air_date: z.string().optional(),
+  last_air_date: z.string().optional(),
+  in_production: z.boolean().optional(),
+  poster_path: z.string().nullable().optional(),
+});
+const tmdbSeasonSchema = z.object({
+  poster_path: z.string().nullable().optional(),
+});
+type TmdbMediaResponse = z.infer<typeof tmdbMediaSchema>;
 
 const tmdbMediaCache = new SimpleCache<TmdbMediaDetails>(TMDB_CACHE_DURATION);
 const tmdbPosterCache = new SimpleCache<string>(TMDB_CACHE_DURATION);
@@ -43,7 +46,10 @@ export function getTmdbPosterUrl(
   return `${TMDB_IMAGE_BASE_URL}/${size}${posterPath}`;
 }
 
-async function requestTmdb<T>(path: string): Promise<T> {
+async function requestTmdb<TSchema extends z.ZodType>(
+  path: string,
+  schema: TSchema,
+): Promise<z.infer<TSchema>> {
   const apiKey = import.meta.env.TMDB_API_KEY;
   if (!apiKey) {
     throw new Error("TMDB_API_KEY is not configured");
@@ -52,14 +58,14 @@ async function requestTmdb<T>(path: string): Promise<T> {
   const url = new URL(`${TMDB_API_BASE_URL}${path}`);
   url.searchParams.set("api_key", apiKey);
 
-  const response = await fetch(url);
+  const response = await fetchUpstream(url);
   if (!response.ok) {
     throw new Error(
       `TMDB API request failed (${response.status} ${response.statusText})`,
     );
   }
 
-  return response.json() as Promise<T>;
+  return parseUpstreamJson(response, schema, "TMDB");
 }
 
 function getYearLabel(
@@ -84,22 +90,18 @@ export async function getTmdbMediaDetails(
   tmdbId: number,
 ): Promise<TmdbMediaDetails> {
   const cacheKey = `${mediaType}-${tmdbId}`;
-  const cached = tmdbMediaCache.get(cacheKey);
-  if (cached) return cached;
-
-  const data = await requestTmdb<TmdbMediaResponse>(`/${mediaType}/${tmdbId}`);
-  const year = getYearLabel(mediaType, data);
-  const details: TmdbMediaDetails = {
-    id: data.id,
-    title: data.title ?? data.name ?? `TMDB ${tmdbId}`,
-    ...(year ? { year } : {}),
-    ...(data.poster_path
-      ? { posterUrl: getTmdbPosterUrl(data.poster_path) }
-      : {}),
-  };
-
-  tmdbMediaCache.set(cacheKey, details);
-  return details;
+  return tmdbMediaCache.getOrSet(cacheKey, async () => {
+    const data = await requestTmdb(`/${mediaType}/${tmdbId}`, tmdbMediaSchema);
+    const year = getYearLabel(mediaType, data);
+    return {
+      id: data.id,
+      title: data.title ?? data.name ?? `TMDB ${tmdbId}`,
+      ...(year ? { year } : {}),
+      ...(data.poster_path
+        ? { posterUrl: getTmdbPosterUrl(data.poster_path) }
+        : {}),
+    };
+  });
 }
 
 export async function getTmdbSeasonPoster(
@@ -110,8 +112,9 @@ export async function getTmdbSeasonPoster(
   const cached = tmdbPosterCache.get(cacheKey);
   if (cached) return cached;
 
-  const data = await requestTmdb<TmdbSeasonResponse>(
+  const data = await requestTmdb(
     `/tv/${showId}/season/${seasonNumber}`,
+    tmdbSeasonSchema,
   );
   if (!data.poster_path) return null;
 

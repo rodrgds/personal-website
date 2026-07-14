@@ -1,6 +1,9 @@
 import { defineAction, ActionError } from "astro:actions";
 import { z } from "astro/zod";
 
+import { SimpleCache } from "../lib/cache";
+import { fetchUpstream, parseUpstreamJson } from "../lib/upstream";
+
 interface GitHubContributionDay {
   date: string;
   count: number;
@@ -11,16 +14,51 @@ interface GitHubContributionWeek {
   days: GitHubContributionDay[];
 }
 
-interface GitHubContributionsCache {
+interface GitHubContributionsData {
   contributions: GitHubContributionWeek[];
   totalContributions: number;
   startYear: number;
-  cachedAt: number;
 }
 
-const githubContributionsCache = new Map<string, GitHubContributionsCache>();
 const GITHUB_CACHE_DURATION = 60 * 60 * 1000;
 const GITHUB_GRAPHQL_ENDPOINT = "https://api.github.com/graphql";
+const GITHUB_USERNAME = "rodrgds";
+const githubContributionsCache = new SimpleCache<GitHubContributionsData>(
+  GITHUB_CACHE_DURATION,
+  1,
+);
+
+const githubUserResponseSchema = z.object({
+  data: z.object({
+    user: z.object({ createdAt: z.iso.datetime() }).nullable(),
+  }),
+  errors: z.array(z.object({ message: z.string() })).optional(),
+});
+
+const githubContributionsResponseSchema = z.object({
+  data: z.object({
+    user: z
+      .object({
+        contributionsCollection: z.object({
+          contributionCalendar: z.object({
+            totalContributions: z.number().int().nonnegative(),
+            weeks: z.array(
+              z.object({
+                contributionDays: z.array(
+                  z.object({
+                    date: z.string(),
+                    contributionCount: z.number().int().nonnegative(),
+                  }),
+                ),
+              }),
+            ),
+          }),
+        }),
+      })
+      .nullable(),
+  }),
+  errors: z.array(z.object({ message: z.string() })).optional(),
+});
 
 function getGitHubContributionLevel(count: number): 0 | 1 | 2 | 3 | 4 {
   if (count === 0) return 0;
@@ -42,7 +80,7 @@ async function fetchGitHubUserCreatedAt(
     }
   `;
 
-  const response = await fetch(GITHUB_GRAPHQL_ENDPOINT, {
+  const response = await fetchUpstream(GITHUB_GRAPHQL_ENDPOINT, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -59,7 +97,11 @@ async function fetchGitHubUserCreatedAt(
     });
   }
 
-  const data = await response.json();
+  const data = await parseUpstreamJson(
+    response,
+    githubUserResponseSchema,
+    "GitHub",
+  );
 
   if (data.errors) {
     throw new ActionError({
@@ -68,7 +110,14 @@ async function fetchGitHubUserCreatedAt(
     });
   }
 
-  return data.data.user?.createdAt;
+  const createdAt = data.data.user?.createdAt;
+  if (!createdAt) {
+    throw new ActionError({
+      code: "NOT_FOUND",
+      message: "Configured GitHub user was not found",
+    });
+  }
+  return createdAt;
 }
 
 async function fetchGitHubYearContributions(
@@ -97,7 +146,7 @@ async function fetchGitHubYearContributions(
     }
   `;
 
-  const response = await fetch(GITHUB_GRAPHQL_ENDPOINT, {
+  const response = await fetchUpstream(GITHUB_GRAPHQL_ENDPOINT, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -117,7 +166,11 @@ async function fetchGitHubYearContributions(
     });
   }
 
-  const data = await response.json();
+  const data = await parseUpstreamJson(
+    response,
+    githubContributionsResponseSchema,
+    "GitHub",
+  );
 
   if (data.errors) {
     throw new ActionError({
@@ -133,8 +186,8 @@ async function fetchGitHubYearContributions(
     return { weeks: [], total: 0 };
   }
 
-  const weeks: GitHubContributionWeek[] = calendar.weeks.map((week: any) => ({
-    days: week.contributionDays.map((day: any) => ({
+  const weeks: GitHubContributionWeek[] = calendar.weeks.map((week) => ({
+    days: week.contributionDays.map((day) => ({
       date: day.date,
       count: day.contributionCount,
       level: getGitHubContributionLevel(day.contributionCount),
@@ -161,9 +214,17 @@ async function fetchGitHubAllTimeContributions(
     years.push(year);
   }
 
-  const results = await Promise.all(
-    years.map((year) => fetchGitHubYearContributions(username, token, year)),
-  );
+  const results: Awaited<ReturnType<typeof fetchGitHubYearContributions>>[] =
+    [];
+  for (let offset = 0; offset < years.length; offset += 3) {
+    results.push(
+      ...(await Promise.all(
+        years
+          .slice(offset, offset + 3)
+          .map((year) => fetchGitHubYearContributions(username, token, year)),
+      )),
+    );
+  }
 
   const allWeeks: GitHubContributionWeek[] = [];
   let totalContributions = 0;
@@ -182,10 +243,11 @@ async function fetchGitHubAllTimeContributions(
 
 export const getGitHubContributions = defineAction({
   input: z.object({
-    username: z.string().optional().default("rodrgds"),
+    username: z.literal(GITHUB_USERNAME).optional().default(GITHUB_USERNAME),
+    // Retained for wire compatibility; public callers cannot bypass the cache.
     forceRefresh: z.boolean().optional(),
   }),
-  handler: async (input) => {
+  handler: async (_input) => {
     const token = import.meta.env.GITHUB_ACCESS_TOKEN;
 
     if (!token) {
@@ -195,32 +257,23 @@ export const getGitHubContributions = defineAction({
       });
     }
 
-    const cacheKey = `github-contributions-${input.username}`;
+    const cacheKey = `github-contributions-${GITHUB_USERNAME}`;
     const cached = githubContributionsCache.get(cacheKey);
 
-    if (
-      !input.forceRefresh &&
-      cached &&
-      Date.now() - cached.cachedAt < GITHUB_CACHE_DURATION
-    ) {
+    if (cached) {
       return {
         contributions: cached.contributions,
         totalContributions: cached.totalContributions,
         startYear: cached.startYear,
         fromCache: true,
-        cachedAt: new Date(cached.cachedAt).toISOString(),
+        cachedAt: new Date().toISOString(),
       };
     }
 
     const { contributions, totalContributions, startYear } =
-      await fetchGitHubAllTimeContributions(input.username, token);
-
-    githubContributionsCache.set(cacheKey, {
-      contributions,
-      totalContributions,
-      startYear,
-      cachedAt: Date.now(),
-    });
+      await githubContributionsCache.getOrSet(cacheKey, () =>
+        fetchGitHubAllTimeContributions(GITHUB_USERNAME, token),
+      );
 
     return {
       contributions,
