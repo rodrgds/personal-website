@@ -166,12 +166,10 @@
     );
   }
 
-  $: groupedLogs = logs.reduce((acc, log) => {
-    if (log.isCheck) {
-      const allChecks = logs.filter((l) => l.isCheck);
-      const checkIndex = allChecks.findIndex((l) => l.id === log.id);
-
-      if (checkIndex >= 5) {
+  $: groupedLogs = (() => {
+    let checkCount = 0;
+    return logs.reduce((acc, log) => {
+      if (log.isCheck && checkCount++ >= 5) {
         const prevGroup = acc[acc.length - 1];
         if (prevGroup && prevGroup.type === "check-summary") {
           prevGroup.count++;
@@ -186,10 +184,10 @@
           return acc;
         }
       }
-    }
-    acc.push(log);
-    return acc;
-  }, [] as any[]);
+      acc.push(log);
+      return acc;
+    }, [] as any[]);
+  })();
 
   function startMonitor() {
     if (isRunning) return;
@@ -413,7 +411,7 @@
           clearInterval(countdownInterval);
           countdownInterval = null;
         }
-      }, 10);
+      }, 100);
 
       if (isRunning) {
         timeoutId = setTimeout(loop, finalSleep * 1000);
@@ -551,10 +549,13 @@
                   placeholder="Public API (Limited)"
                   bind:value={$settings.apiKey}
                 />
+                <span class="help-text"
+                  >Kept in memory for this tab only; never saved to local storage.</span
+                >
               </div>
               <div>
                 <div class="proxy-header-row">
-                  <Label>CORS Proxies</Label>
+                  <Label>Local Proxies</Label>
                   <span class="help-text-header"
                     >Check "Direct" for local proxies (e.g. lcp)</span
                   >
@@ -565,9 +566,7 @@
                       <div class="proxy-url-input">
                         <Input
                           id={`proxy-${i}`}
-                          placeholder={proxy.isDirect
-                            ? "http://localhost:8010/proxy"
-                            : "https://corsproxy.io/?"}
+                          placeholder="http://localhost:8010/proxy"
                           bind:value={proxy.url}
                         />
                       </div>
@@ -601,7 +600,7 @@
                     on:click={() => {
                       $settings.proxies = [
                         ...$settings.proxies,
-                        { url: "", isDirect: false },
+                        { url: "", isDirect: true },
                       ];
                     }}
                   >
@@ -634,21 +633,12 @@
                     click!
                   </p>
 
-                  <hr class="tip-divider" />
-
-                  <strong>Option 2: Cloud Proxy (Easiest)</strong>
-                  <p class="tip-text">
-                    Use <code>https://corsproxy.io/?</code> (Uncheck "Direct"). No
-                    setup required, but may encounter rate limits.
-                  </p>
-
                   <p
                     class="tip-text"
                     style="margin-top: 0.5rem; opacity: 0.8; font-style: italic;"
                   >
-                    <strong>Pro Tip:</strong> Keep both in the list for maximum resilience.
-                    The monitor will automatically retry with backup proxies if one
-                    fails.
+                    For security, authenticated requests are only sent directly to
+                    CSFloat or through a proxy running on this device.
                   </p>
                 </div>
               </div>

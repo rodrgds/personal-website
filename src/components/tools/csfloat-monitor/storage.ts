@@ -3,6 +3,15 @@ import { type MonitorSettings, DEFAULT_SETTINGS } from "./types";
 import { getStoredJSON, setStoredJSON } from "../../../lib/client-storage";
 
 const STORAGE_KEY = "csfloat_monitor_settings";
+const STORAGE_VERSION_KEY = `${STORAGE_KEY}_version`;
+const STORAGE_VERSION = "2";
+type StoredSettings = Omit<MonitorSettings, "apiKey">;
+
+function persistSettings(value: MonitorSettings): void {
+  const { apiKey: _apiKey, ...safeSettings } = value;
+  setStoredJSON<StoredSettings>(STORAGE_KEY, safeSettings);
+  localStorage.setItem(STORAGE_VERSION_KEY, STORAGE_VERSION);
+}
 
 function createSettingsStore() {
   const { subscribe, set, update } =
@@ -11,18 +20,29 @@ function createSettingsStore() {
   return {
     subscribe,
     set: (value: MonitorSettings) => {
-      setStoredJSON(STORAGE_KEY, value);
+      persistSettings(value);
       set(value);
     },
-    update,
+    update: (updater: (value: MonitorSettings) => MonitorSettings) => {
+      update((current) => {
+        const next = updater(current);
+        persistSettings(next);
+        return next;
+      });
+    },
     load: () => {
-      const stored = getStoredJSON(STORAGE_KEY, DEFAULT_SETTINGS);
-      set({ ...DEFAULT_SETTINGS, ...stored });
+      if (localStorage.getItem(STORAGE_VERSION_KEY) !== STORAGE_VERSION) {
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.setItem(STORAGE_VERSION_KEY, STORAGE_VERSION);
+      }
+      const stored = getStoredJSON<Partial<StoredSettings>>(STORAGE_KEY, {});
+      set({ ...DEFAULT_SETTINGS, ...stored, apiKey: "" });
     },
     reset: () => {
       set(DEFAULT_SETTINGS);
       if (typeof localStorage !== "undefined") {
         localStorage.removeItem(STORAGE_KEY);
+        localStorage.setItem(STORAGE_VERSION_KEY, STORAGE_VERSION);
       }
     },
   };

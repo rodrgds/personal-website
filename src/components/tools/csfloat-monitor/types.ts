@@ -82,10 +82,7 @@ export interface MonitorSettings {
 
 export const DEFAULT_SETTINGS: MonitorSettings = {
   apiKey: "",
-  proxies: [
-    { url: "http://localhost:8010/proxy", isDirect: true },
-    { url: "https://corsproxy.io/?", isDirect: false },
-  ],
+  proxies: [{ url: "http://localhost:8010/proxy", isDirect: true }],
 
   minPrice: 500,
   maxPrice: 100000,

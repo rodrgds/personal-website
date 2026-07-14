@@ -8,6 +8,28 @@ export interface FetchResult {
   error?: string;
 }
 
+function canReceiveCredential(requestUrl: string): boolean {
+  const url = new URL(requestUrl);
+  return (
+    url.origin === "https://csfloat.com" ||
+    ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname)
+  );
+}
+
+function isListing(value: unknown): value is Listing {
+  if (!value || typeof value !== "object") return false;
+  const listing = value as Record<string, unknown>;
+  const item = listing.item as Record<string, unknown> | undefined;
+  return (
+    typeof listing.id === "string" &&
+    typeof listing.created_at === "string" &&
+    typeof listing.price === "number" &&
+    (listing.type === "buy_now" || listing.type === "auction") &&
+    Boolean(item) &&
+    typeof item?.market_hash_name === "string"
+  );
+}
+
 export async function fetchListings(
   settings: MonitorSettings,
 ): Promise<FetchResult> {
@@ -112,6 +134,11 @@ export async function fetchListings(
       };
 
       // CSFloat REQUIRES Authorization.
+      if (settings.apiKey && !canReceiveCredential(url)) {
+        lastError = `Refusing to send credentials to ${new URL(url).origin}`;
+        continue;
+      }
+
       if (settings.apiKey) {
         headers["Authorization"] = settings.apiKey;
       }
@@ -144,8 +171,14 @@ export async function fetchListings(
         continue; // Try next proxy
       }
 
-      const data = await response.json();
-      const listings: Listing[] = data.data || data.listings || [];
+      const data: unknown = await response.json();
+      const payload = data as { data?: unknown; listings?: unknown };
+      const rawListings = payload.data ?? payload.listings;
+      if (!Array.isArray(rawListings) || !rawListings.every(isListing)) {
+        lastError = `Proxy ${proxyUrl || "Direct"} returned an invalid response`;
+        continue;
+      }
+      const listings = rawListings;
 
       return { listings, status: 200, proxyUsed: proxyUrl || "Direct" };
     } catch (e: any) {
