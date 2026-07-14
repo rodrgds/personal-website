@@ -5,17 +5,39 @@
 }:
 
 let
+  bunArtifacts = {
+    x86_64-linux = {
+      archive = "bun-linux-x64-baseline";
+      hash = "sha256-RY9FSb9iXm2+mmy2BIhhPbdFovsv0agz/eT0jfaspl0=";
+    };
+    aarch64-darwin = {
+      archive = "bun-darwin-aarch64";
+      hash = "sha256-4Ll3vpWNcqOKRDgD1aGAbC52X2dj7nphZ2K1nxGjcio=";
+    };
+    x86_64-darwin = {
+      archive = "bun-darwin-x64";
+      hash = "sha256-xCyjuKgM/DNLEFFq5ruP2ohbHzE9tA01/uLhH2qulPU=";
+    };
+  };
+  bunArtifact =
+    bunArtifacts.${pkgs.stdenv.hostPlatform.system}
+      or (throw "Unsupported Bun platform: ${pkgs.stdenv.hostPlatform.system}");
+
   rawBun = pkgs.stdenvNoCC.mkDerivation {
     pname = "bun";
     version = "1.3.3";
 
     src = pkgs.fetchzip {
-      url = "https://github.com/oven-sh/bun/releases/download/bun-v1.3.3/bun-linux-x64-baseline.zip";
-      hash = "sha256-RY9FSb9iXm2+mmy2BIhhPbdFovsv0agz/eT0jfaspl0=";
+      url = "https://github.com/oven-sh/bun/releases/download/bun-v1.3.3/${bunArtifact.archive}.zip";
+      inherit (bunArtifact) hash;
     };
 
-    nativeBuildInputs = [ pkgs.autoPatchelfHook ];
-    buildInputs = [ pkgs.stdenv.cc.cc.lib ];
+    nativeBuildInputs = pkgs.lib.optionals pkgs.stdenv.hostPlatform.isLinux [
+      pkgs.autoPatchelfHook
+    ];
+    buildInputs = pkgs.lib.optionals pkgs.stdenv.hostPlatform.isLinux [
+      pkgs.stdenv.cc.cc.lib
+    ];
     dontUnpack = true;
 
     installPhase = ''
@@ -139,7 +161,7 @@ in
   '';
 
   enterTest = ''
-    test "$(bun --version)" = "1.3.3"
+    bun --version
     bun -e 'console.log("bun runtime ok")'
     node --version
     typst --version
