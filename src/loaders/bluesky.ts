@@ -18,6 +18,7 @@ export function blueskyLoader(options: {
         const response = await fetch(
           `${endpoint}/xrpc/app.bsky.feed.getAuthorFeed?actor=${options.repo}&limit=${limit}`,
           {
+            signal: AbortSignal.timeout(10_000),
             headers: {
               Accept: "application/json",
             },
@@ -81,8 +82,9 @@ export function blueskyLoader(options: {
 
         logger.info(`Loaded ${feedItems.length} Bluesky posts`);
       } catch (error) {
-        logger.error(`Bluesky loader error: ${error}`);
-        throw error;
+        logger.warn(
+          `Bluesky loader unavailable; retaining the last successful snapshot: ${error}`,
+        );
       }
     },
     schema: z.object({

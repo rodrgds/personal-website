@@ -260,13 +260,24 @@ export function buildTimelineLayout(
     endMonth: entry.endDate ? parseMonth(entry.endDate) : currentMonth,
   }));
 
+  const densityDelta = new Int32Array(monthCount + 1);
+  for (const entry of entries) {
+    const entryStart = Math.max(0, parseMonth(entry.startDate) - startMonth);
+    const entryEnd = Math.min(
+      monthCount - 1,
+      (entry.endDate ? parseMonth(entry.endDate) : currentMonth) - startMonth,
+    );
+
+    if (entryStart <= entryEnd) {
+      densityDelta[entryStart] += 1;
+      densityDelta[entryEnd + 1] -= 1;
+    }
+  }
+
+  let activeEntries = 0;
   const density = Array.from({ length: monthCount }, (_, offset) => {
-    const month = startMonth + offset;
-    return entries.reduce((count, entry) => {
-      const start = parseMonth(entry.startDate);
-      const end = entry.endDate ? parseMonth(entry.endDate) : currentMonth;
-      return count + (month >= start && month <= end ? 1 : 0);
-    }, 0);
+    activeEntries += densityDelta[offset];
+    return activeEntries;
   });
 
   const ticks = Array.from({ length: monthCount }, (_, offset) => {
