@@ -30,6 +30,12 @@ There is no test framework or code linter configured. Here, `lint` means the
 existing formatting and Astro diagnostics; do not claim or add a fake test suite.
 The production build prerenders CV PDFs and therefore genuinely requires Typst.
 
+## Push-to-deploy maintenance
+
+Pushes to `main` are deployed by `.github/workflows/ci.yml`. The workflow path-filters application and CI changes, warms/restores the Nix/Devenv environment, caches Bun dependencies, runs the portable formatting/typecheck gate, and then signs a request to `https://webhooks.rgo.pt/hooks/deploy-personal-website`. Production is a VPS source build rather than a Docker image: the NixOS deploy service fetches the verified revision, runs the secret-dependent Astro build with declarative Typst, atomically updates the served site, and verifies the public URL. The server-side source of truth is `~/.config/home/modules/hosting/sites/personal.nix` and `~/.config/home/modules/hosting/deployments/default.nix`.
+
+When adding build inputs, update the workflow `app` path filter and cache keys so changes cannot skip verification or reuse stale dependencies. Preserve the shared Nix-store, Devenv/Cachix, `.devenv` evaluation, Bun download/`node_modules`, and Typst package caches; never put production secrets in GitHub caches or the Nix store. Validate workflow edits with `actionlint`, and treat the deploy as complete only after the workflow hook succeeds and `https://rgo.pt/` serves the new revision.
+
 ## Formatting
 
 ```bash
