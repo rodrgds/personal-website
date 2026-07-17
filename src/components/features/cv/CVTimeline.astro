@@ -16,16 +16,17 @@ interface Props {
 
 const { entries, variant = "detailed" }: Props = Astro.props;
 const compact = variant === "icons";
-const layout = buildTimelineLayout(entries, new Date(), {
-  minimumSpanMonths: compact ? 1 : 10,
-});
+const layout = buildTimelineLayout(entries);
 const monthWidth = 20;
 const contentInset = 34;
 const labelSpace = compact ? 34 : 220;
 const rowHeight = compact ? 38 : 66;
 const timeWidth = layout.monthCount * monthWidth + contentInset * 2;
 const timelineWidth = timeWidth + labelSpace;
-const graphHeight = layout.rowCount * rowHeight + (compact ? 18 : 34);
+const graphRowCount = compact
+  ? layout.rowCount
+  : Math.max(layout.rowCount, layout.labelRowCount);
+const graphHeight = graphRowCount * rowHeight + (compact ? 18 : 34);
 const nodeCenter = compact ? 17 : 22;
 const nowOffset =
   (layout.endMonth - layout.startMonth - 1) * monthWidth + contentInset;
@@ -42,11 +43,31 @@ const categoryColors: Record<TimelineCategory, string> = {
 const getStartOffset = (entry: (typeof layout.entries)[number]) =>
   (entry.startMonth - layout.startMonth) * monthWidth + contentInset;
 
-const spinePoints = layout.entries
-  .map(
-    (entry) => `${getStartOffset(entry)},${entry.row * rowHeight + nodeCenter}`,
-  )
-  .join(" ");
+const getMonthOffset = (month: number) =>
+  (month - layout.startMonth) * monthWidth + contentInset;
+
+const getLaneCenter = (row: number) => row * rowHeight + nodeCenter;
+
+const getTrackPath = (entry: (typeof layout.entries)[number]) => {
+  const points = entry.lanePoints;
+  const end = getMonthOffset(entry.endMonth + 1);
+  let currentRow = points[0]?.row ?? entry.row;
+  let path = `M ${getStartOffset(entry)} ${getLaneCenter(currentRow)}`;
+
+  for (const point of points.slice(1)) {
+    const transition = getMonthOffset(point.month);
+    const transitionStart = Math.max(getStartOffset(entry), transition - 5);
+    const transitionEnd = Math.min(end, transition + 5);
+    const currentY = getLaneCenter(currentRow);
+    const nextY = getLaneCenter(point.row);
+
+    path += ` L ${transitionStart} ${currentY}`;
+    path += ` C ${transition} ${currentY}, ${transition} ${nextY}, ${transitionEnd} ${nextY}`;
+    currentRow = point.row;
+  }
+
+  return `${path} L ${end} ${getLaneCenter(currentRow)}`;
+};
 ---
 
 <section
@@ -131,25 +152,32 @@ const spinePoints = layout.entries
           aria-hidden="true"></span>
 
         <svg
-          class="history-spine"
+          class="entry-tracks"
           width={timelineWidth}
           height={graphHeight}
           viewBox={`0 0 ${timelineWidth} ${graphHeight}`}
           preserveAspectRatio="none"
           aria-hidden="true"
         >
-          <polyline points={spinePoints}></polyline>
+          {
+            layout.entries
+              .filter((entry) => entry.kind === "span")
+              .map((entry) => (
+                <path
+                  d={getTrackPath(entry)}
+                  style={`--entry-color:${categoryColors[entry.category]}`}
+                />
+              ))
+          }
         </svg>
 
         {
           layout.entries.map((entry) => {
             const color = categoryColors[entry.category];
             const start = getStartOffset(entry);
-            const duration = Math.max(
-              entry.kind === "point" ? 0 : 22,
-              (entry.endMonth - entry.startMonth + 1) * monthWidth,
-            );
             const top = entry.row * rowHeight;
+            const labelOffset = (entry.labelRow - entry.row) * rowHeight;
+            const connectorTop = nodeCenter + Math.min(0, labelOffset);
             const label = `${entry.title}, ${TIMELINE_CATEGORY_LABELS[entry.category]}, ${entry.subtitle}, ${getTimelineDateLabel(entry)}`;
 
             return (
@@ -163,11 +191,10 @@ const spinePoints = layout.entries
                   ]}
                   href={entry.href}
                   data-start-date={entry.startDate}
-                  style={`left:${start}px;--entry-color:${color};--entry-duration:${duration}px;--entry-hit-width:${Math.max(duration, 30)}px`}
+                  style={`left:${start}px;--entry-color:${color};--entry-label-offset:${labelOffset}px;--entry-connector-top:${connectorTop}px;--entry-connector-height:${Math.abs(labelOffset)}px`}
                   aria-label={label}
                   title={compact ? label : undefined}
                 >
-                  <span class="entry-duration" aria-hidden="true" />
                   <span class="entry-node" aria-hidden="true">
                     {compact && (
                       <span class="compact-node-avatar">
@@ -183,24 +210,29 @@ const spinePoints = layout.entries
                     )}
                   </span>
                   {!compact && (
-                    <div class="entry-card">
-                      <CVEntryAvatar
-                        title={entry.title}
-                        visual={entry.visual}
-                        alt={`${entry.title} logo`}
-                        size={25}
-                        visualSize={21}
-                        accent="var(--entry-color)"
-                      />
-                      <span class="entry-copy">
-                        <span class="entry-category">
-                          {TIMELINE_CATEGORY_LABELS[entry.category]}
+                    <>
+                      {labelOffset !== 0 && (
+                        <span class="entry-card-connector" aria-hidden="true" />
+                      )}
+                      <div class="entry-card">
+                        <CVEntryAvatar
+                          title={entry.title}
+                          visual={entry.visual}
+                          alt={`${entry.title} logo`}
+                          size={25}
+                          visualSize={21}
+                          accent="var(--entry-color)"
+                        />
+                        <span class="entry-copy">
+                          <span class="entry-category">
+                            {TIMELINE_CATEGORY_LABELS[entry.category]}
+                          </span>
+                          <strong>{entry.title}</strong>
+                          <span>{entry.subtitle}</span>
+                          <time>{getTimelineDateLabel(entry)}</time>
                         </span>
-                        <strong>{entry.title}</strong>
-                        <span>{entry.subtitle}</span>
-                        <time>{getTimelineDateLabel(entry)}</time>
-                      </span>
-                    </div>
+                      </div>
+                    </>
                   )}
                 </a>
               </div>
@@ -405,26 +437,27 @@ const spinePoints = layout.entries
       color-mix(in srgb, var(--link-color) 45%, transparent);
   }
 
-  .history-spine {
+  .entry-tracks {
     position: absolute;
     inset: 0;
-    z-index: 1;
+    z-index: 2;
     overflow: visible;
     pointer-events: none;
   }
 
-  .history-spine polyline {
+  .entry-tracks path {
     fill: none;
-    stroke: color-mix(in srgb, var(--gray-color) 52%, transparent);
+    stroke: var(--entry-color);
     stroke-linecap: round;
     stroke-linejoin: round;
-    stroke-width: 2;
+    stroke-width: 4;
     vector-effect: non-scaling-stroke;
   }
 
   .graph-row {
     position: absolute;
     left: 0;
+    z-index: 3;
     width: var(--timeline-width);
     height: var(--row-height);
   }
@@ -449,22 +482,6 @@ const spinePoints = layout.entries
     text-decoration: none;
   }
 
-  .entry-duration {
-    position: absolute;
-    top: 20px;
-    left: 0;
-    width: var(--entry-duration);
-    height: 4px;
-    border-radius: 99px;
-    background: var(--entry-color);
-    box-shadow: 0 0 0 1px
-      color-mix(in srgb, var(--entry-color) 16%, transparent);
-  }
-
-  .timeline-entry-point .entry-duration {
-    display: none;
-  }
-
   .entry-node {
     position: absolute;
     top: 15px;
@@ -487,7 +504,7 @@ const spinePoints = layout.entries
 
   .entry-card {
     position: absolute;
-    top: 27px;
+    top: calc(27px + var(--entry-label-offset));
     left: 10px;
     display: flex;
     width: 11.5rem;
@@ -500,6 +517,17 @@ const spinePoints = layout.entries
       background-color 0.15s ease,
       border-color 0.15s ease,
       transform 0.15s ease;
+  }
+
+  .entry-card-connector {
+    position: absolute;
+    top: var(--entry-connector-top);
+    left: 1px;
+    width: 1px;
+    height: var(--entry-connector-height);
+    border-left: 1px dashed
+      color-mix(in srgb, var(--entry-color) 55%, transparent);
+    pointer-events: none;
   }
 
   .timeline-entry:hover .entry-card,
@@ -564,13 +592,8 @@ const spinePoints = layout.entries
   }
 
   .timeline-shell-icons .timeline-entry {
-    width: var(--entry-hit-width);
+    width: 30px;
     height: var(--row-height);
-  }
-
-  .timeline-shell-icons .entry-duration {
-    top: 15px;
-    height: 3px;
   }
 
   .timeline-shell-icons .entry-node {
@@ -603,6 +626,10 @@ const spinePoints = layout.entries
       0 0 0 3px var(--bg-secondary),
       0 0 0 6px color-mix(in srgb, var(--entry-color) 24%, transparent);
     transform: scale(1.08);
+  }
+
+  .timeline-shell-icons .entry-tracks path {
+    stroke-width: 3;
   }
 
   .compact-node-avatar {

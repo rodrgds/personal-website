@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from "svelte";
+  import { afterUpdate, onMount } from "svelte";
   import { SvelteSet } from "svelte/reactivity";
 
   export let sections;
@@ -12,6 +12,7 @@
   let sortBy = "alpha";
   let mounted = false;
   let collapsedSections = new SvelteSet();
+  let slotMeasureFrame;
 
   $: showClearButton = activeFilters.size > 0;
 
@@ -157,6 +158,32 @@
     isMobile = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
   }
 
+  function syncFavoriteSlotHeights() {
+    if (isMobile) return;
+
+    const slots = document.querySelectorAll(".favorite-item-slot");
+    slots.forEach((slot) => slot.classList.add("measuring"));
+
+    slots.forEach((slot) => {
+      const card = slot.querySelector(".favorite-item");
+      if (!(card instanceof HTMLElement) || !(slot instanceof HTMLElement)) {
+        return;
+      }
+
+      slot.style.setProperty(
+        "--favorite-slot-height",
+        `${card.getBoundingClientRect().height}px`,
+      );
+    });
+
+    slots.forEach((slot) => slot.classList.remove("measuring"));
+  }
+
+  function scheduleFavoriteSlotSync() {
+    cancelAnimationFrame(slotMeasureFrame);
+    slotMeasureFrame = requestAnimationFrame(syncFavoriteSlotHeights);
+  }
+
   function formatCategoryName(category) {
     return category
       .split("-")
@@ -189,16 +216,24 @@
   }
 
   // Lifecycle
+  afterUpdate(scheduleFavoriteSlotSync);
+
   onMount(() => {
     mounted = true;
     initFromURL();
     detectMobile();
+    syncFavoriteSlotHeights();
     document.addEventListener("click", handleOutsideClick);
-    window.addEventListener("resize", detectMobile);
+    const handleResize = () => {
+      detectMobile();
+      scheduleFavoriteSlotSync();
+    };
+    window.addEventListener("resize", handleResize);
 
     return () => {
+      cancelAnimationFrame(slotMeasureFrame);
       document.removeEventListener("click", handleOutsideClick);
-      window.removeEventListener("resize", detectMobile);
+      window.removeEventListener("resize", handleResize);
     };
   });
 
@@ -282,25 +317,26 @@
 
   {#each visibleSections as { id: section, title: sectionTitle, defaultIcon, items } (section)}
     <section class="content-section">
-        <h2 class="section-title">
-          <button
-            class:collapsed={collapsedSections.has(section)}
-            class="section-toggle"
-            on:click={() => toggleSection(section)}
-            aria-expanded={!collapsedSections.has(section)}
+      <h2 class="section-title">
+        <button
+          class:collapsed={collapsedSections.has(section)}
+          class="section-toggle"
+          on:click={() => toggleSection(section)}
+          aria-expanded={!collapsedSections.has(section)}
+        >
+          <span class="collapse-icon"
+            >{collapsedSections.has(section) ? "▶" : "▼"}</span
           >
-            <span class="collapse-icon"
-              >{collapsedSections.has(section) ? "▶" : "▼"}</span
-            >
-            {sectionTitle}
-            <span class="item-count">({items.length})</span>
-          </button>
-        </h2>
-        {#if !collapsedSections.has(section)}
-          <div class="items-list">
-            {#each items as item (item.id)}
-              {@const itemId = item.id}
-              {@const isExpanded = expandedItems.has(itemId)}
+          {sectionTitle}
+          <span class="item-count">({items.length})</span>
+        </button>
+      </h2>
+      {#if !collapsedSections.has(section)}
+        <div class="items-list">
+          {#each items as item (item.id)}
+            {@const itemId = item.id}
+            {@const isExpanded = expandedItems.has(itemId)}
+            <div class="favorite-item-slot">
               <div
                 class="favorite-item"
                 class:expanded={isExpanded}
@@ -426,15 +462,18 @@
                   </div>
                 </div>
               </div>
-            {/each}
-          </div>
-        {/if}
+            </div>
+          {/each}
+        </div>
+      {/if}
     </section>
   {/each}
 
   <div class="tmdb-credit">
     <img src="/logos/tmdb.svg" alt="TMDB" />
-    <span>This product uses the TMDB API but is not endorsed or certified by TMDB.</span>
+    <span
+      >This product uses the TMDB API but is not endorsed or certified by TMDB.</span
+    >
   </div>
 </div>
 
@@ -724,8 +763,16 @@
     border-radius: 0.35rem;
     transition:
       background-color 0.16s ease,
-      border-color 0.16s ease;
+      border-color 0.16s ease,
+      box-shadow 0.2s ease,
+      transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+      width 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
     cursor: pointer;
+  }
+
+  .favorite-item-slot {
+    position: relative;
+    min-width: 0;
   }
 
   .favorite-item:hover,
@@ -862,7 +909,41 @@
   }
 
   @media (hover: hover) and (pointer: fine) {
-    .favorite-item:hover .item-comment {
+    .favorite-item-slot {
+      height: var(--favorite-slot-height, 5.75rem);
+    }
+
+    .favorite-item {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      z-index: 1;
+      box-sizing: border-box;
+      width: 100%;
+      max-height: min(34rem, calc(100vh - 3rem));
+      transform: translate(-50%, -50%);
+    }
+
+    .favorite-item-slot:hover,
+    .favorite-item-slot:focus-within {
+      z-index: 20;
+    }
+
+    .favorite-item:hover,
+    .favorite-item:focus-visible,
+    .favorite-item:focus-within {
+      width: calc(100% + 1.25rem);
+      overflow-y: auto;
+      border-color: var(--link-color);
+      box-shadow:
+        0 1rem 2.5rem rgb(0 0 0 / 0.28),
+        0 0 0 1px color-mix(in srgb, var(--link-color) 24%, transparent);
+      transform: translate(-50%, -50%) scale(1.015);
+    }
+
+    .favorite-item:hover .item-comment,
+    .favorite-item:focus-visible .item-comment,
+    .favorite-item:focus-within .item-comment {
       opacity: 1;
       visibility: visible;
       max-height: 10rem;
@@ -895,7 +976,9 @@
   }
 
   @media (hover: hover) and (pointer: fine) {
-    .favorite-item:hover .favorite-episodes {
+    .favorite-item:hover .favorite-episodes,
+    .favorite-item:focus-visible .favorite-episodes,
+    .favorite-item:focus-within .favorite-episodes {
       opacity: 1;
       visibility: visible;
       max-height: 20rem;
@@ -953,7 +1036,9 @@
   }
 
   @media (hover: hover) and (pointer: fine) {
-    .favorite-item:hover .item-tags {
+    .favorite-item:hover .item-tags,
+    .favorite-item:focus-visible .item-tags,
+    .favorite-item:focus-within .item-tags {
       opacity: 1;
       visibility: visible;
       height: auto;
@@ -998,10 +1083,40 @@
     border-color: var(--link-color);
   }
 
+  .favorite-item-slot:global(.measuring) .favorite-item {
+    width: 100% !important;
+    overflow: visible !important;
+    transform: translate(-50%, -50%) !important;
+  }
+
+  .favorite-item-slot:global(.measuring) .item-comment,
+  .favorite-item-slot:global(.measuring) .favorite-episodes {
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+
+  .favorite-item-slot:global(.measuring) .item-tags {
+    height: 0 !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+
   @media (prefers-color-scheme: dark) {
     .favorite-item:hover .favorite-episodes,
     .favorite-item.expanded .favorite-episodes {
       border-top-color: var(--border-color);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .favorite-item,
+    .item-comment,
+    .favorite-episodes,
+    .item-tags {
+      transition: none;
     }
   }
 
@@ -1010,7 +1125,26 @@
       padding: 0 1rem;
     }
     .favorite-item {
+      position: relative;
+      top: auto;
+      left: auto;
+      width: auto;
+      max-height: none;
+      overflow: visible;
+      transform: none;
       gap: 0.75rem;
+    }
+    .favorite-item:hover,
+    .favorite-item:focus-visible,
+    .favorite-item:focus-within {
+      width: auto;
+      max-height: none;
+      overflow: visible;
+      box-shadow: none;
+      transform: none;
+    }
+    .favorite-item-slot {
+      height: auto;
     }
     .item-img,
     .item-icon {

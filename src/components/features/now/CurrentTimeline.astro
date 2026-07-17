@@ -18,9 +18,6 @@ const entries =
 ---
 
 <div class="current-timeline">
-  <p class="current-intro">
-    These are the longer-running things active in my structured timeline.
-  </p>
   <ul>
     {
       entries.map((entry) => (
@@ -58,16 +55,11 @@ const entries =
     margin: 0.45rem 0 1.6rem;
   }
 
-  .current-intro {
-    color: var(--gray-color);
-    font-size: 0.9rem;
-  }
-
   ul {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.5rem;
-    margin: 0.8rem 0 0;
+    margin: 0;
     padding: 0;
     list-style: none;
   }

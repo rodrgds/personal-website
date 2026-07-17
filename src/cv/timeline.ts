@@ -23,8 +23,10 @@ export interface TimelineEntry {
 
 export interface TimelinePositionedEntry extends TimelineEntry {
   row: number;
+  labelRow: number;
   startMonth: number;
   endMonth: number;
+  lanePoints: Array<{ month: number; row: number }>;
 }
 
 export interface TimelineLayout {
@@ -33,13 +35,10 @@ export interface TimelineLayout {
   monthCount: number;
   entries: TimelinePositionedEntry[];
   rowCount: number;
+  labelRowCount: number;
   density: number[];
   maxDensity: number;
   ticks: Array<{ month: number; label?: string }>;
-}
-
-export interface TimelineLayoutOptions {
-  minimumSpanMonths?: number;
 }
 
 export const TIMELINE_CATEGORIES: TimelineCategory[] = [
@@ -198,7 +197,6 @@ export function getCurrentTimelineEntries(
 export function buildTimelineLayout(
   entries: TimelineEntry[],
   now = new Date(),
-  options: TimelineLayoutOptions = {},
 ): TimelineLayout {
   if (entries.length === 0) {
     throw new Error("Cannot build an empty timeline");
@@ -223,42 +221,72 @@ export function buildTimelineLayout(
       parseMonth(a.startDate) - parseMonth(b.startDate) ||
       a.title.localeCompare(b.title),
   );
-  const rowIntervals: Array<Array<{ start: number; end: number }>> = [];
-  const rowById = new Map<string, number>();
-  const placementOrder = [...sortedEntries].sort(
-    (a, b) =>
-      Number(a.kind === "point") - Number(b.kind === "point") ||
-      parseMonth(a.startDate) - parseMonth(b.startDate) ||
-      a.title.localeCompare(b.title),
+  const positionedEntries: TimelinePositionedEntry[] = sortedEntries.map(
+    (entry) => ({
+      ...entry,
+      row: 0,
+      labelRow: 0,
+      startMonth: parseMonth(entry.startDate),
+      endMonth: entry.endDate ? parseMonth(entry.endDate) : currentMonth,
+      lanePoints: [],
+    }),
   );
-  const minimumSpanMonths = options.minimumSpanMonths ?? 10;
+  const startsByMonth = new Map<number, TimelinePositionedEntry[]>();
+  const eventMonths = new Set<number>();
 
-  for (const entry of placementOrder) {
-    const startMonth = parseMonth(entry.startDate);
-    const endMonth = entry.endDate ? parseMonth(entry.endDate) : currentMonth;
-    const occupiedUntil = Math.max(endMonth, startMonth + minimumSpanMonths);
-    let row = rowIntervals.findIndex((intervals) =>
+  for (const entry of positionedEntries) {
+    const startingEntries = startsByMonth.get(entry.startMonth) ?? [];
+    startingEntries.push(entry);
+    startsByMonth.set(entry.startMonth, startingEntries);
+    eventMonths.add(entry.startMonth);
+    eventMonths.add(entry.endMonth + 1);
+  }
+
+  let activeEntries: TimelinePositionedEntry[] = [];
+  let rowCount = 0;
+
+  for (const month of [...eventMonths].sort((a, b) => a - b)) {
+    activeEntries = activeEntries.filter((entry) => entry.endMonth >= month);
+
+    activeEntries.forEach((entry, row) => {
+      const previousPoint = entry.lanePoints.at(-1);
+      if (previousPoint?.row !== row) {
+        entry.lanePoints.push({ month, row });
+      }
+    });
+
+    for (const entry of startsByMonth.get(month) ?? []) {
+      entry.row = activeEntries.length;
+      entry.lanePoints.push({ month, row: entry.row });
+      activeEntries.push(entry);
+    }
+
+    rowCount = Math.max(rowCount, activeEntries.length);
+  }
+
+  const labelRows: Array<Array<{ start: number; end: number }>> = [];
+  const minimumLabelSpanMonths = 10;
+
+  for (const entry of positionedEntries) {
+    const occupiedUntil = entry.startMonth + minimumLabelSpanMonths;
+    let labelRow = labelRows.findIndex((intervals) =>
       intervals.every(
         (interval) =>
-          occupiedUntil < interval.start || startMonth > interval.end,
+          occupiedUntil < interval.start || entry.startMonth > interval.end,
       ),
     );
 
-    if (row === -1) {
-      row = rowIntervals.length;
-      rowIntervals.push([]);
+    if (labelRow === -1) {
+      labelRow = labelRows.length;
+      labelRows.push([]);
     }
 
-    rowIntervals[row].push({ start: startMonth, end: occupiedUntil });
-    rowById.set(entry.id, row);
+    entry.labelRow = labelRow;
+    labelRows[labelRow].push({
+      start: entry.startMonth,
+      end: occupiedUntil,
+    });
   }
-
-  const positionedEntries = sortedEntries.map((entry) => ({
-    ...entry,
-    row: rowById.get(entry.id) ?? 0,
-    startMonth: parseMonth(entry.startDate),
-    endMonth: entry.endDate ? parseMonth(entry.endDate) : currentMonth,
-  }));
 
   const densityDelta = new Int32Array(monthCount + 1);
   for (const entry of entries) {
@@ -274,10 +302,10 @@ export function buildTimelineLayout(
     }
   }
 
-  let activeEntries = 0;
+  let activeEntryCount = 0;
   const density = Array.from({ length: monthCount }, (_, offset) => {
-    activeEntries += densityDelta[offset];
-    return activeEntries;
+    activeEntryCount += densityDelta[offset];
+    return activeEntryCount;
   });
 
   const ticks = Array.from({ length: monthCount }, (_, offset) => {
@@ -294,7 +322,8 @@ export function buildTimelineLayout(
     endMonth,
     monthCount,
     entries: positionedEntries,
-    rowCount: Math.max(1, rowIntervals.length),
+    rowCount: Math.max(1, rowCount),
+    labelRowCount: Math.max(1, labelRows.length),
     density,
     maxDensity: Math.max(...density, 1),
     ticks,
