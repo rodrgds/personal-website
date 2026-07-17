@@ -53,16 +53,22 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
   const end = getMonthOffset(entry.endMonth + 1);
   let currentRow = points[0]?.row ?? entry.row;
   let path = `M ${getStartOffset(entry)} ${getLaneCenter(currentRow)}`;
+  const laneChanges = points.slice(1);
 
-  for (const point of points.slice(1)) {
+  for (const [index, point] of laneChanges.entries()) {
     const transition = getMonthOffset(point.month);
-    const transitionStart = Math.max(getStartOffset(entry), transition - 5);
-    const transitionEnd = Math.min(end, transition + 5);
+    const nextTransition = laneChanges[index + 1]
+      ? getMonthOffset(laneChanges[index + 1].month)
+      : end;
+    const transitionEnd = Math.min(end, nextTransition, transition + 36);
+    const transitionWidth = transitionEnd - transition;
+    const firstControl = transition + transitionWidth * 0.42;
+    const secondControl = transition + transitionWidth * 0.58;
     const currentY = getLaneCenter(currentRow);
     const nextY = getLaneCenter(point.row);
 
-    path += ` L ${transitionStart} ${currentY}`;
-    path += ` C ${transition} ${currentY}, ${transition} ${nextY}, ${transitionEnd} ${nextY}`;
+    path += ` L ${transition} ${currentY}`;
+    path += ` C ${firstControl} ${currentY}, ${secondControl} ${nextY}, ${transitionEnd} ${nextY}`;
     currentRow = point.row;
   }
 
@@ -80,7 +86,7 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
       <p>
         {
           compact
-            ? "A compact, logo-only view of everything across time."
+            ? "Everything together, from the earliest start to what is active now."
             : "Everything together, from the earliest start to what is active now."
         }
       </p>
@@ -104,7 +110,7 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
     data-timeline-scroller
     tabindex="0"
     role="region"
-    aria-label="Horizontal life timeline, ordered from oldest at the top to newest at the bottom. Scroll left to explore earlier years."
+    aria-label="Horizontal life timeline, ordered from oldest at the top to newest at the bottom. Scroll horizontally to explore the years."
   >
     <div
       class="timeline-canvas"

@@ -23,12 +23,7 @@ import { getTimelineEntries } from "../cv/timeline";
 const cvData = await getCVCollectionsData();
 const timelineEntries = getTimelineEntries(cvData);
 const requestedView = Astro.url.searchParams.get("view");
-const activeView =
-  requestedView === "list"
-    ? "list"
-    : requestedView === "icons"
-      ? "icons"
-      : "timeline";
+const activeView = requestedView === "list" ? "list" : "timeline";
 
 const profileDownloads = Object.entries(cvProfiles).map(([slug, profile]) => ({
   slug,
@@ -118,13 +113,6 @@ const universityProjects = renderedProjects.filter(
             Timeline
           </a>
           <a
-            href="/cv?view=icons"
-            class:list={[activeView === "icons" && "active"]}
-            aria-current={activeView === "icons" ? "page" : undefined}
-          >
-            Icons
-          </a>
-          <a
             href="/cv?view=list"
             class:list={[activeView === "list" && "active"]}
             aria-current={activeView === "list" ? "page" : undefined}
@@ -159,9 +147,8 @@ const universityProjects = renderedProjects.filter(
         </div>
       </div>
 
-      {activeView === "timeline" && <CVTimeline entries={timelineEntries} />}
       {
-        activeView === "icons" && (
+        activeView === "timeline" && (
           <CVTimeline entries={timelineEntries} variant="icons" />
         )
       }
