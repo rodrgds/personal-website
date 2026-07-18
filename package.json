@@ -27,6 +27,7 @@
     "@directus/sdk": "^21.3.0",
     "@rehype-pretty/transformers": "^0.13.2",
     "astro": "7.0.9",
+    "cuelume": "0.1.2",
     "lucide-astro": "^0.556.0",
     "markdown-it": "^14.3.0",
     "qrcode": "^1.5.4",

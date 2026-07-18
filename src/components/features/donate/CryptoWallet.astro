@@ -94,6 +94,7 @@ const emptyQrImageSrc =
 </div>
 
 <script>
+  import { play } from "cuelume";
   import QRCode from "qrcode";
 
   // --- Modal Functions (Now operate on specific modal instance) ---
@@ -271,6 +272,7 @@ const emptyQrImageSrc =
           navigator.clipboard
             .writeText(addressText)
             .then(() => {
+              play("success");
               copyButton.textContent = "Copied!";
               copyButton.classList.add("green");
               setTimeout(() => {
@@ -279,6 +281,7 @@ const emptyQrImageSrc =
               }, 900);
             })
             .catch((err) => {
+              play("error");
               console.error("Failed to copy: ", err);
               copyButton.textContent = "Copy Failed";
               setTimeout(() => {

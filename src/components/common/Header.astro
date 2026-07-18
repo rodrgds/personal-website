@@ -1,7 +1,7 @@
 ---
 import HeaderLink from "./HeaderLink.astro";
 import { SITE_TITLE } from "../../config";
-import { Moon, Sun } from "lucide-astro";
+import { Moon, Sun, Volume2, VolumeX } from "lucide-astro";
 ---
 
 <header>
@@ -15,9 +15,10 @@ import { Moon, Sun } from "lucide-astro";
     </div>
     <div class="flex">
       <button
-        class="theme-toggle"
+        class="header-toggle theme-toggle"
         type="button"
         data-theme-toggle
+        data-cuelume-toggle
         aria-label="Switch color theme"
         title="Switch color theme"
       >
@@ -26,6 +27,21 @@ import { Moon, Sun } from "lucide-astro";
         </span>
         <span class="theme-icon theme-icon-dark" aria-hidden="true">
           <Moon size={18} strokeWidth={1.8} />
+        </span>
+      </button>
+      <button
+        class="header-toggle sound-toggle"
+        type="button"
+        data-sound-toggle
+        aria-label="Mute interface sounds"
+        aria-pressed="true"
+        title="Mute interface sounds"
+      >
+        <span class="sound-icon sound-icon-on" aria-hidden="true">
+          <Volume2 size={18} strokeWidth={1.8} />
+        </span>
+        <span class="sound-icon sound-icon-off" aria-hidden="true">
+          <VolumeX size={18} strokeWidth={1.8} />
         </span>
       </button>
       <HeaderLink
@@ -138,7 +154,7 @@ import { Moon, Sun } from "lucide-astro";
     line-height: 1;
   }
 
-  .theme-toggle {
+  .header-toggle {
     display: inline-grid;
     place-items: center;
     width: 1.75rem;
@@ -178,8 +194,28 @@ import { Moon, Sun } from "lucide-astro";
     place-items: center;
   }
 
-  .theme-toggle:hover,
-  .theme-toggle:focus-visible {
+  .sound-icon {
+    display: none;
+    width: 1.18rem;
+    height: 1.18rem;
+  }
+
+  .sound-icon :global(svg) {
+    width: 100%;
+    height: 100%;
+    stroke: currentColor;
+    fill: none;
+  }
+
+  .sound-toggle[data-sound-state="on"] .sound-icon-on,
+  .sound-toggle:not([data-sound-state]) .sound-icon-on,
+  .sound-toggle[data-sound-state="off"] .sound-icon-off {
+    display: inline-grid;
+    place-items: center;
+  }
+
+  .header-toggle:hover,
+  .header-toggle:focus-visible {
     opacity: 0.8;
     transform: scale(1.1);
   }

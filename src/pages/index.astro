@@ -163,7 +163,10 @@ const posts = await getCollection("blog").then((posts) =>
     <Footer />
 
     <script>
+      import { play } from "cuelume";
+
       function showCopiedToast() {
+        play("success");
         window.dispatchEvent(
           new CustomEvent("app:toast", {
             detail: {
@@ -175,6 +178,7 @@ const posts = await getCollection("blog").then((posts) =>
       }
 
       function showCopyFailedToast() {
+        play("error");
         window.dispatchEvent(
           new CustomEvent("app:toast", {
             detail: {

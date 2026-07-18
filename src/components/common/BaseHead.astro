@@ -99,6 +99,87 @@ const { title, description, image = "" } = Astro.props;
   })();
 </script>
 
+<script>
+  import { bind, play, setEnabled } from "cuelume";
+
+  const SOUND_STORAGE_KEY = "rgo-sound-enabled";
+  const root = document.documentElement;
+
+  function getSoundPreference(): boolean {
+    try {
+      return window.localStorage.getItem(SOUND_STORAGE_KEY) !== "false";
+    } catch {
+      return true;
+    }
+  }
+
+  function updateSoundButtons(enabled: boolean): void {
+    const label = enabled
+      ? "Mute interface sounds"
+      : "Enable interface sounds";
+
+    document.querySelectorAll("[data-sound-toggle]").forEach((button) => {
+      button.setAttribute("aria-label", label);
+      button.setAttribute("aria-pressed", String(enabled));
+      button.setAttribute("title", label);
+
+      if (button instanceof HTMLElement) {
+        button.dataset.soundState = enabled ? "on" : "off";
+      }
+    });
+  }
+
+  function applySoundPreference(enabled: boolean): void {
+    root.dataset.soundEnabled = enabled ? "true" : "false";
+    setEnabled(enabled);
+    updateSoundButtons(enabled);
+  }
+
+  function toggleSound(): void {
+    const wasEnabled = root.dataset.soundEnabled !== "false";
+    const isEnabled = !wasEnabled;
+
+    // Let the cue finish before muting; when enabling, unmute first.
+    if (wasEnabled) play("toggle");
+    applySoundPreference(isEnabled);
+    if (isEnabled) play("toggle");
+
+    try {
+      window.localStorage.setItem(SOUND_STORAGE_KEY, String(isEnabled));
+    } catch {
+      // The visible control should still work if storage is unavailable.
+    }
+  }
+
+  bind();
+  applySoundPreference(getSoundPreference());
+
+  if (root.dataset.soundControlsInitialized !== "true") {
+    root.dataset.soundControlsInitialized = "true";
+
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      if (!target.closest("[data-sound-toggle]")) return;
+
+      toggleSound();
+    });
+
+    window.addEventListener("storage", (event) => {
+      if (event.key !== SOUND_STORAGE_KEY) return;
+      applySoundPreference(event.newValue !== "false");
+    });
+
+    document.addEventListener("astro:page-load", () => {
+      applySoundPreference(getSoundPreference());
+    });
+
+    document.addEventListener("astro:after-swap", () => {
+      applySoundPreference(getSoundPreference());
+    });
+  }
+</script>
+
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <link rel="icon" type="image/webp" sizes="32x32" href="/favicon.webp" />
 <link rel="alternate" type="application/rss+xml" href="/rss.xml" />

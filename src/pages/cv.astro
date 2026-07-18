@@ -107,6 +107,7 @@ const universityProjects = renderedProjects.filter(
         <nav class="view-toggle" aria-label="CV page view">
           <a
             href="/cv?view=timeline"
+            data-cuelume-toggle={activeView === "list" ? "" : undefined}
             class:list={[activeView === "timeline" && "active"]}
             aria-current={activeView === "timeline" ? "page" : undefined}
           >
@@ -114,6 +115,7 @@ const universityProjects = renderedProjects.filter(
           </a>
           <a
             href="/cv?view=list"
+            data-cuelume-toggle={activeView === "timeline" ? "" : undefined}
             class:list={[activeView === "list" && "active"]}
             aria-current={activeView === "list" ? "page" : undefined}
           >
