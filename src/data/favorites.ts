@@ -103,7 +103,7 @@ export const FAVORITES = {
         "biography",
       ],
       comment:
-        "Not THE movie that got me into programming, but definitely one that kept me in it.",
+        "Not the movie that got me into programming, but definitely one that kept me interested.",
     },
     {
       tmdbId: 106646,
@@ -123,8 +123,7 @@ export const FAVORITES = {
       icon: "✈️",
       rating: 5,
       categories: ["entertainment", "tech", "sports"],
-      comment:
-        "Really shows what modern filmmaking is capable of when done right.",
+      comment: "A showcase for what modern filmmaking can do.",
     },
     {
       tmdbId: 10681,
@@ -142,7 +141,7 @@ export const FAVORITES = {
       rating: 4,
       categories: ["entertainment", "tech", "psychology", "thriller"],
       comment:
-        "The distopian future we'll probably end up in. Some episodes suck though...",
+        "A dystopian future we could plausibly end up in. Some episodes are poor, though.",
     },
     {
       tmdbId: 1100,
@@ -150,8 +149,7 @@ export const FAVORITES = {
       icon: "☂️",
       rating: 4,
       categories: ["entertainment", "lifestyle"],
-      comment:
-        "Actually a pretty fun and entertaining sitcom, even if it has its ups and downs.",
+      comment: "A fun sitcom, even if the quality varies.",
     },
     {
       tmdbId: 111141,
@@ -191,7 +189,7 @@ export const FAVORITES = {
       rating: 5,
       categories: ["entertainment", "thriller", "psychology", "storytelling"],
       comment:
-        "The first two seasons are exceptional. Like actually the best seasons of any TV show I've ever watched.",
+        "The first two seasons are exceptional—the best seasons of any TV show I've watched.",
     },
     {
       tmdbId: 37680,
@@ -222,7 +220,7 @@ export const FAVORITES = {
       rating: 5,
       categories: ["entertainment", "education", "psychology", "lifestyle"],
       comment:
-        "Chess as character study. Anya Taylor-Joy is phenomenal (here and in other TV Shows and Movies).",
+        "A character study built around chess. Anya Taylor-Joy is phenomenal here and elsewhere.",
     },
   ],
   podcasts: [
@@ -241,7 +239,7 @@ export const FAVORITES = {
         "storytelling",
       ],
       comment:
-        "True cybercrime stories told like Netflix documentaries by Jack Rhysider (a master storyteller).",
+        "Jack Rhysider tells true cybercrime stories with exceptional pacing and detail.",
     },
     {
       title: "LINUX Unplugged",
@@ -279,7 +277,7 @@ export const FAVORITES = {
         "open-source",
       ],
       comment:
-        "Luke's takes on modern society, religion and tech culture. Don't go into it thinking you're going to agree with everything (even though you might). Good reflection material.",
+        "Luke's views on modern society, religion, and tech culture. I don't agree with everything, but the episodes give me plenty to think about.",
       favoriteEpisodes: [
         {
           title: "The Economy is Fake, the Jobs Are Fake, the Money Is Fake",
@@ -314,7 +312,7 @@ export const FAVORITES = {
       rating: 4,
       categories: ["programming", "web-dev", "tech", "education"],
       comment:
-        "Wes Bos and Scott Tolinski keep me updated on the latest web dev trends. This is more of a picky podcast - I don't listen to everything they put out, but when I do it's usually worth it and I want to learn about it.",
+        "Wes Bos and Scott Tolinski keep me current on web development. I pick episodes by topic rather than listening to every one.",
     },
     {
       title: "The Game with Alex Hormozi",
@@ -329,8 +327,7 @@ export const FAVORITES = {
         "finance",
         "startup",
       ],
-      comment:
-        "Alex is like the best guru that ACTUALLY has a clue what he's talking about. Plus he can explain stuff in a way that makes sense.",
+      comment: "Alex gives practical business advice and explains it clearly.",
       favoriteEpisodes: [
         {
           number: "#841",
@@ -502,7 +499,7 @@ export const FAVORITES = {
       rating: 5,
       categories: ["education", "career", "productivity", "self-improvement"],
       comment:
-        "Andrej Karpathy's guide on how to actually study and do well in uni.",
+        "Andrej Karpathy's guide to studying and doing well at university.",
     },
     {
       title: "Game design is simple, actually",
@@ -511,7 +508,7 @@ export const FAVORITES = {
       rating: 5,
       categories: ["game-design", "design", "education", "creativity"],
       comment:
-        "Raph Koster condenses decades of game design theory into 12 super-dense, practical points. One of those essays you can revisit every few years and keep pulling new insight from.",
+        "Raph Koster condenses decades of game design theory into 12 dense, practical points. It is worth revisiting every few years.",
     },
     {
       title: "How to (and how not to) design REST APIs",
@@ -547,7 +544,7 @@ export const FAVORITES = {
       rating: 5,
       categories: ["data", "design", "education", "visualization", "web-dev"],
       comment:
-        "Really cool articles, mostly to do with data analysis (as in the result of it, not the actual process of gathering the data and analysing it), also it's built on SvelteKit and the articles are interactive and really animated!",
+        "Interactive, animated articles that often present the results of data analysis. The site is also built with SvelteKit.",
     },
     {
       title: "What I look for in a resume",
@@ -634,7 +631,7 @@ export const FAVORITES = {
       icon: "🗣️",
       rating: 5,
       categories: ["communication", "education", "career", "storytelling"],
-      comment: "Public speaking fundamentals that actually work.",
+      comment: "Public-speaking fundamentals that work.",
     },
     {
       title: "How to Start a Speech",
@@ -706,7 +703,7 @@ export const FAVORITES = {
       rating: 4,
       categories: ["business", "productivity", "philosophy", "tech"],
       comment:
-        "Company that actually practices what they preach about remote work and simple software. Cool principles as well.",
+        "A company that follows its own principles on remote work and simple software.",
     },
     {
       title: "A system to organise your life",
@@ -809,7 +806,7 @@ export const FAVORITES = {
         "entrepreneurship",
       ],
       comment:
-        "Comprehensive guide to technical leadership in startups. Open-source wisdom covering people management, hiring, architecture, DevOps, and everything in between.",
+        "A broad guide to technical leadership in startups, covering people management, hiring, architecture, and DevOps.",
     },
     {
       title: "VPN Comparison",

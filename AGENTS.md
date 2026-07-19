@@ -47,6 +47,21 @@ Prettier config is in `package.json`. `.prettierignore` excludes `**/*.mdx`.
 Use `verify` for the normal local/CI gate. Run `verify-full` only when build
 environment variables and Typst's package cache are available.
 
+## Writing and product copy
+
+- Avoid stock metaphors, similes, idioms, and figures of speech.
+- Prefer short, familiar words when they keep the exact meaning. Cut every word
+  or section that adds no meaning.
+- Prefer active voice when it makes the actor and action clearer.
+- Replace jargon, foreign phrases, and needless scientific or academic terms
+  with everyday English.
+- Break any of these rules when accuracy, natural phrasing, tone, legal meaning,
+  accessibility, or readability requires it.
+- Apply this standard in context. It is not a blind word-replacement rule. Keep
+  code, commands, API fields, proper nouns, citations, quotes, legal wording, and
+  exact technical terms intact unless they are themselves copy being improved.
+- Finish every copy change with a line-by-line prose review.
+
 ## Architecture
 
 ```

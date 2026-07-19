@@ -7,10 +7,7 @@ import Link from "../../components/ui/Link.astro";
 const tools = await getCollection("tools");
 ---
 
-<ToolLayout
-  title="Personal Tools"
-  description="A collection of small utilities and tools I've built."
->
+<ToolLayout title="Personal Tools" description="Small tools I've built.">
   <div class="tools-grid">
     {
       tools.map((tool) => (

@@ -1,3 +1,3 @@
 # rgo.pt
 
-Personal website built with Astro.
+Rodrigo Dias's personal website, built with Astro and Svelte.

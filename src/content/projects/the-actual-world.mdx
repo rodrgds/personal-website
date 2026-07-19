@@ -45,7 +45,7 @@ import summaries from "../../assets/cv/the-actual-world/summaries.png";
 
 The mobile product was built with <Logo fixed src="expo" /> **Expo** / **Expo Router** + <Logo fixed src="react" /> **React Native**, <Logo fixed src="supabase" /> **Supabase**, <Logo fixed src="postgresql" /> **PostgreSQL**, <Logo fixed src="stripe" /> **Stripe**, maps, QR codes, and push-notification tooling. The landing site and backoffice were built separately in <Logo fixed src="php" /> **PHP** / <Logo fixed src="mysql" /> **MySQL**, with multilingual content, download/waitlist/contact flows, and admin analytics.
 
-The technical setup involved push notifications, QR code generation for secure connections, and a custom backoffice in PHP for analytics.
+The system used push notifications, QR codes for secure connections, and a custom PHP admin panel for analytics.
 
 ### Onboarding and account creation
 
@@ -75,7 +75,7 @@ Posts supported text, images (automatically captioned), locations, tagged users,
 
 ### Maps and rewind summaries
 
-Browse memories on a map (with clustering) and generate rewind-style summaries from recent activity or journal/write personal notes.
+Users could browse memories on a clustered map, generate rewind-style summaries from recent activity, and write private journal notes.
 
 <CVImage src={maps} alt="The Actual World map and location timeline" />
 
@@ -89,7 +89,7 @@ Browse memories on a map (with clustering) and generate rewind-style summaries f
 
 ### Credits and premium mechanics
 
-I experimented with a credit system and paid mechanics too, including buying and gifting credits, which tied into the Stripe/payment side of the product. This was so that the social media didn't need to be supported by ads, but instead pay per what you use.
+I also tested a credit system that let users buy and gift credits through Stripe. The goal was to fund the platform through pay-per-use features instead of ads.
 
 <CVImage src={credits} alt="The Actual World credits management screens" />
 
