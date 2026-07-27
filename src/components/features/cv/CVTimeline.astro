@@ -18,18 +18,19 @@ const { entries, variant = "detailed" }: Props = Astro.props;
 const compact = variant === "icons";
 const layout = buildTimelineLayout(entries);
 const monthWidth = 20;
+const eventStep = compact ? 52 : 200;
 const contentInset = 34;
 const labelSpace = compact ? 34 : 220;
 const rowHeight = compact ? 38 : 66;
-const timeWidth = layout.monthCount * monthWidth + contentInset * 2;
-const timelineWidth = timeWidth + labelSpace;
+const linearTimeWidth = layout.monthCount * monthWidth + contentInset * 2;
+const linearTimelineWidth = linearTimeWidth + labelSpace;
+const evenTimeWidth = layout.entries.length * eventStep + contentInset * 2;
+const evenTimelineWidth = evenTimeWidth + labelSpace;
 const graphRowCount = compact
   ? layout.rowCount
   : Math.max(layout.rowCount, layout.labelRowCount);
 const graphHeight = graphRowCount * rowHeight + (compact ? 18 : 34);
 const nodeCenter = compact ? 17 : 22;
-const nowOffset =
-  (layout.endMonth - layout.startMonth - 1) * monthWidth + contentInset;
 
 const categoryColors: Record<TimelineCategory, string> = {
   experience: "var(--flexoki-orange)",
@@ -46,19 +47,40 @@ const getStartOffset = (entry: (typeof layout.entries)[number]) =>
 const getMonthOffset = (month: number) =>
   (month - layout.startMonth) * monthWidth + contentInset;
 
+const getEvenStartOffset = (index: number) => index * eventStep + contentInset;
+
+const evenEntryOffsets = new Map(
+  layout.entries.map((entry, index) => [entry.id, getEvenStartOffset(index)]),
+);
+
+const getEvenEntryOffset = (entry: (typeof layout.entries)[number]) =>
+  evenEntryOffsets.get(entry.id) ?? contentInset;
+
+const getEvenMonthOffset = (month: number) => {
+  const entryIndex = layout.entries.findIndex(
+    (entry) => entry.startMonth >= month,
+  );
+  const offsetIndex = entryIndex === -1 ? layout.entries.length : entryIndex;
+  return getEvenStartOffset(offsetIndex);
+};
+
 const getLaneCenter = (row: number) => row * rowHeight + nodeCenter;
 
-const getTrackPath = (entry: (typeof layout.entries)[number]) => {
+const getTrackPath = (
+  entry: (typeof layout.entries)[number],
+  startOffset: number,
+  getOffset: (month: number) => number,
+) => {
   const points = entry.lanePoints;
-  const end = getMonthOffset(entry.endMonth + 1);
+  const end = getOffset(entry.endMonth + 1);
   let currentRow = points[0]?.row ?? entry.row;
-  let path = `M ${getStartOffset(entry)} ${getLaneCenter(currentRow)}`;
+  let path = `M ${startOffset} ${getLaneCenter(currentRow)}`;
   const laneChanges = points.slice(1);
 
   for (const [index, point] of laneChanges.entries()) {
-    const transition = getMonthOffset(point.month);
+    const transition = getOffset(point.month);
     const nextTransition = laneChanges[index + 1]
-      ? getMonthOffset(laneChanges[index + 1].month)
+      ? getOffset(laneChanges[index + 1].month)
       : end;
     const transitionEnd = Math.min(end, nextTransition, transition + 36);
     const transitionWidth = transitionEnd - transition;
@@ -74,11 +96,17 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
 
   return `${path} L ${end} ${getLaneCenter(currentRow)}`;
 };
+
+const linearNowOffset = getMonthOffset(layout.endMonth - 1);
+const evenNowOffset = getEvenMonthOffset(layout.endMonth);
+const yearTicks = layout.ticks.filter((tick) => tick.label);
 ---
 
 <section
   class:list={["timeline-shell", compact && "timeline-shell-icons"]}
   aria-labelledby="timeline-title"
+  data-cv-timeline
+  data-timeline-spacing="linear"
 >
   <div class="timeline-heading">
     <div>
@@ -91,7 +119,25 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
         }
       </p>
     </div>
-    <p class="scroll-note" aria-hidden="true">Scroll through time →</p>
+    <div class="timeline-controls">
+      <p class="scroll-note" aria-hidden="true">Scroll through time →</p>
+      <button
+        class="spacing-switch"
+        type="button"
+        role="switch"
+        aria-checked="false"
+        aria-label="Evenly space timeline entries"
+        title="Evenly space timeline entries"
+        data-timeline-spacing-toggle
+        data-cuelume-toggle
+      >
+        <span class="spacing-option spacing-option-linear">Linear</span>
+        <span class="spacing-track" aria-hidden="true">
+          <span class="spacing-thumb"></span>
+        </span>
+        <span class="spacing-option spacing-option-even">Even</span>
+      </button>
+    </div>
   </div>
 
   <div class="category-legend" aria-label="Timeline categories">
@@ -110,13 +156,13 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
     data-timeline-scroller
     tabindex="0"
     role="region"
-    aria-label="Horizontal life timeline, ordered from oldest at the top to newest at the bottom. Scroll horizontally to explore the years."
+    aria-label="Horizontal life timeline, ordered from oldest to newest on a linear time scale. Scroll horizontally to explore the years."
   >
     <div
       class="timeline-canvas"
-      style={`--timeline-width:${timelineWidth}px;--time-width:${timeWidth}px;--month-width:${monthWidth}px;--content-inset:${contentInset}px;--row-height:${rowHeight}px`}
+      style={`--linear-timeline-width:${linearTimelineWidth}px;--linear-time-width:${linearTimeWidth}px;--even-timeline-width:${evenTimelineWidth}px;--even-time-width:${evenTimeWidth}px;--month-width:${monthWidth}px;--content-inset:${contentInset}px;--row-height:${rowHeight}px`}
     >
-      <div class="axis" aria-hidden="true">
+      <div class="axis axis-linear" aria-hidden="true">
         <div class="axis-line"></div>
         {
           layout.ticks.map((tick) => {
@@ -132,12 +178,32 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
             );
           })
         }
-        <span class="now-axis" style={`left:${nowOffset}px`}>
+        <span class="now-axis" style={`left:${linearNowOffset}px`}>
           <span>Now</span>
         </span>
       </div>
 
-      <div class="activity" aria-label="Monthly activity density">
+      <div class="axis axis-even" aria-hidden="true">
+        <div class="axis-line"></div>
+        {
+          yearTicks.map((tick) => (
+            <span
+              class="axis-tick axis-tick-year"
+              style={`left:${getEvenMonthOffset(tick.month)}px`}
+            >
+              <span>{tick.label}</span>
+            </span>
+          ))
+        }
+        <span class="now-axis" style={`left:${evenNowOffset}px`}>
+          <span>Now</span>
+        </span>
+      </div>
+
+      <div
+        class="activity activity-linear"
+        aria-label="Monthly activity density"
+      >
         <span class="activity-label">Busy</span>
         <div class="activity-bars" aria-hidden="true">
           {
@@ -151,17 +217,34 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
         </div>
       </div>
 
+      <div
+        class="activity activity-even"
+        aria-label="Chronological start order"
+      >
+        <span class="activity-label">Starts</span>
+        <div class="start-markers" aria-hidden="true">
+          {
+            layout.entries.map((entry, index) => (
+              <span
+                title={entry.startDate}
+                style={`left:${getEvenStartOffset(index)}px`}
+              />
+            ))
+          }
+        </div>
+      </div>
+
       <div class="unified-graph" style={`height:${graphHeight}px`}>
         <span
           class="now-marker"
-          style={`left:${nowOffset}px`}
+          style={`--linear-left:${linearNowOffset}px;--even-left:${evenNowOffset}px`}
           aria-hidden="true"></span>
 
         <svg
-          class="entry-tracks"
-          width={timelineWidth}
+          class="entry-tracks entry-tracks-linear"
+          width={linearTimelineWidth}
           height={graphHeight}
-          viewBox={`0 0 ${timelineWidth} ${graphHeight}`}
+          viewBox={`0 0 ${linearTimelineWidth} ${graphHeight}`}
           preserveAspectRatio="none"
           aria-hidden="true"
         >
@@ -170,7 +253,31 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
               .filter((entry) => entry.kind === "span")
               .map((entry) => (
                 <path
-                  d={getTrackPath(entry)}
+                  d={getTrackPath(entry, getStartOffset(entry), getMonthOffset)}
+                  style={`--entry-color:${categoryColors[entry.category]}`}
+                />
+              ))
+          }
+        </svg>
+
+        <svg
+          class="entry-tracks entry-tracks-even"
+          width={evenTimelineWidth}
+          height={graphHeight}
+          viewBox={`0 0 ${evenTimelineWidth} ${graphHeight}`}
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          {
+            layout.entries
+              .filter((entry) => entry.kind === "span")
+              .map((entry) => (
+                <path
+                  d={getTrackPath(
+                    entry,
+                    getEvenEntryOffset(entry),
+                    getEvenMonthOffset,
+                  )}
                   style={`--entry-color:${categoryColors[entry.category]}`}
                 />
               ))
@@ -181,6 +288,7 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
           layout.entries.map((entry) => {
             const color = categoryColors[entry.category];
             const start = getStartOffset(entry);
+            const evenStart = getEvenEntryOffset(entry);
             const top = entry.row * rowHeight;
             const labelOffset = (entry.labelRow - entry.row) * rowHeight;
             const connectorTop = nodeCenter + Math.min(0, labelOffset);
@@ -197,7 +305,7 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
                   ]}
                   href={entry.href}
                   data-start-date={entry.startDate}
-                  style={`left:${start}px;--entry-color:${color};--entry-label-offset:${labelOffset}px;--entry-connector-top:${connectorTop}px;--entry-connector-height:${Math.abs(labelOffset)}px`}
+                  style={`--linear-left:${start}px;--even-left:${evenStart}px;--entry-color:${color};--entry-label-offset:${labelOffset}px;--entry-connector-top:${connectorTop}px;--entry-connector-height:${Math.abs(labelOffset)}px`}
                   aria-label={label}
                   title={compact ? label : undefined}
                 >
@@ -251,14 +359,80 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
 </section>
 
 <script is:inline data-astro-rerun>
-  requestAnimationFrame(() => {
-    const scroller = document.querySelector("[data-timeline-scroller]");
-    if (!(scroller instanceof HTMLElement)) return;
-    if (scroller.dataset.timelinePositioned === "true") return;
+  (() => {
+    const STORAGE_KEY = "rgo-cv-timeline-spacing";
 
-    scroller.scrollLeft = 0;
-    scroller.dataset.timelinePositioned = "true";
-  });
+    function getStoredSpacing() {
+      try {
+        const value = window.localStorage.getItem(STORAGE_KEY);
+        return value === "even" ? "even" : "linear";
+      } catch {
+        return "linear";
+      }
+    }
+
+    function applyTimelineSpacing(spacing, preserveScroll) {
+      const timeline = document.querySelector("[data-cv-timeline]");
+      if (!(timeline instanceof HTMLElement)) return;
+
+      const scroller = timeline.querySelector("[data-timeline-scroller]");
+      const toggle = timeline.querySelector("[data-timeline-spacing-toggle]");
+      if (!(scroller instanceof HTMLElement)) return;
+      if (!(toggle instanceof HTMLButtonElement)) return;
+
+      const previousMaxScroll = scroller.scrollWidth - scroller.clientWidth;
+      const scrollProgress =
+        previousMaxScroll > 0 ? scroller.scrollLeft / previousMaxScroll : 0;
+
+      timeline.dataset.timelineSpacing = spacing;
+      toggle.setAttribute("aria-checked", String(spacing === "even"));
+      toggle.title =
+        spacing === "even"
+          ? "Use linear time spacing"
+          : "Evenly space timeline entries";
+      scroller.setAttribute(
+        "aria-label",
+        spacing === "even"
+          ? "Horizontal life timeline, ordered by start date with equal space between entries. Scroll horizontally to explore."
+          : "Horizontal life timeline, ordered from oldest to newest on a linear time scale. Scroll horizontally to explore the years.",
+      );
+
+      requestAnimationFrame(() => {
+        const nextMaxScroll = scroller.scrollWidth - scroller.clientWidth;
+        scroller.scrollLeft = preserveScroll
+          ? scrollProgress * Math.max(0, nextMaxScroll)
+          : 0;
+        scroller.dataset.timelinePositioned = "true";
+      });
+    }
+
+    applyTimelineSpacing(getStoredSpacing(), false);
+
+    if (window.__cvTimelineSpacingInitialized) return;
+    window.__cvTimelineSpacingInitialized = true;
+
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+
+      const toggle = target.closest("[data-timeline-spacing-toggle]");
+      if (!(toggle instanceof HTMLButtonElement)) return;
+
+      const timeline = toggle.closest("[data-cv-timeline]");
+      if (!(timeline instanceof HTMLElement)) return;
+
+      const spacing =
+        timeline.dataset.timelineSpacing === "even" ? "linear" : "even";
+
+      try {
+        window.localStorage.setItem(STORAGE_KEY, spacing);
+      } catch {
+        // The visible switch should still work if storage is unavailable.
+      }
+
+      applyTimelineSpacing(spacing, true);
+    });
+  })();
 </script>
 
 <style>
@@ -286,10 +460,99 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
     font-size: 0.9rem;
   }
 
+  .timeline-controls {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
   .scroll-note {
     flex: 0 0 auto;
     font-family: var(--font-family-mono);
     font-size: 0.72rem !important;
+  }
+
+  .spacing-switch {
+    display: inline-flex;
+    min-height: 28px;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.18rem 0.38rem;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: var(--bg-secondary);
+    color: var(--gray-color);
+    cursor: pointer;
+    font-family: var(--font-family-mono);
+    font-size: 0.62rem;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .spacing-switch:hover {
+    border-color: color-mix(
+      in srgb,
+      var(--link-color) 55%,
+      var(--border-color)
+    );
+  }
+
+  .spacing-switch:focus-visible {
+    outline: 2px solid var(--link-color);
+    outline-offset: 2px;
+  }
+
+  .spacing-option {
+    transition: color 0.15s ease;
+  }
+
+  .spacing-option-linear {
+    color: var(--text-color);
+  }
+
+  .spacing-track {
+    position: relative;
+    width: 1.6rem;
+    height: 0.9rem;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: var(--surface-color);
+    transition:
+      border-color 0.15s ease,
+      background-color 0.15s ease;
+  }
+
+  .spacing-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 0.58rem;
+    height: 0.58rem;
+    border-radius: 50%;
+    background: var(--link-color);
+    transition: transform 0.15s ease;
+  }
+
+  .timeline-shell[data-timeline-spacing="even"] .spacing-option-linear {
+    color: var(--gray-color);
+  }
+
+  .timeline-shell[data-timeline-spacing="even"] .spacing-option-even {
+    color: var(--text-color);
+  }
+
+  .timeline-shell[data-timeline-spacing="even"] .spacing-track {
+    border-color: color-mix(
+      in srgb,
+      var(--link-color) 55%,
+      var(--border-color)
+    );
+    background: color-mix(in srgb, var(--link-color) 12%, var(--surface-color));
+  }
+
+  .timeline-shell[data-timeline-spacing="even"] .spacing-thumb {
+    transform: translateX(0.66rem);
   }
 
   .category-legend {
@@ -340,10 +603,18 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
   }
 
   .timeline-canvas {
+    --timeline-width: var(--linear-timeline-width);
+    --time-width: var(--linear-time-width);
+
     position: relative;
     width: var(--timeline-width);
     min-width: 100%;
     padding-top: 0.9rem;
+  }
+
+  .timeline-shell[data-timeline-spacing="even"] .timeline-canvas {
+    --timeline-width: var(--even-timeline-width);
+    --time-width: var(--even-time-width);
   }
 
   .axis {
@@ -352,6 +623,22 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
     height: 44px;
     margin-bottom: 0.25rem;
     font-family: var(--font-family-mono);
+  }
+
+  .axis-even {
+    display: none;
+  }
+
+  .timeline-shell[data-timeline-spacing="even"] .axis-linear,
+  .timeline-shell[data-timeline-spacing="even"] .activity-linear,
+  .timeline-shell[data-timeline-spacing="even"] .entry-tracks-linear {
+    display: none;
+  }
+
+  .timeline-shell[data-timeline-spacing="even"] .axis-even,
+  .timeline-shell[data-timeline-spacing="even"] .activity-even,
+  .timeline-shell[data-timeline-spacing="even"] .entry-tracks-even {
+    display: block;
   }
 
   .axis-line {
@@ -409,6 +696,10 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
     border-bottom: 1px solid var(--border-color);
   }
 
+  .activity-even {
+    display: none;
+  }
+
   .activity-label {
     position: sticky;
     left: 0.55rem;
@@ -428,6 +719,16 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
     background: color-mix(in srgb, var(--link-color) 55%, transparent);
   }
 
+  .start-markers span {
+    position: absolute;
+    bottom: 0;
+    width: 2px;
+    height: 9px;
+    border-radius: 2px 2px 0 0;
+    background: color-mix(in srgb, var(--link-color) 55%, transparent);
+    transform: translateX(-1px);
+  }
+
   .unified-graph {
     position: relative;
     width: var(--timeline-width);
@@ -441,6 +742,11 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
     width: 1px;
     border-left: 1px dashed
       color-mix(in srgb, var(--link-color) 45%, transparent);
+    left: var(--linear-left);
+  }
+
+  .timeline-shell[data-timeline-spacing="even"] .now-marker {
+    left: var(--even-left);
   }
 
   .entry-tracks {
@@ -449,6 +755,10 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
     z-index: 2;
     overflow: visible;
     pointer-events: none;
+  }
+
+  .entry-tracks-even {
+    display: none;
   }
 
   .entry-tracks path {
@@ -488,6 +798,11 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
     color: var(--text-color);
     text-decoration: none;
     pointer-events: auto;
+    left: var(--linear-left);
+  }
+
+  .timeline-shell[data-timeline-spacing="even"] .timeline-entry {
+    left: var(--even-left);
   }
 
   .entry-node {
@@ -663,17 +978,18 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
       padding-inline: 1.25rem;
     }
 
+    .timeline-controls {
+      width: 100%;
+      justify-content: flex-end;
+      gap: 0.55rem;
+    }
+
     h1 {
       font-size: 1.45rem;
     }
 
     .timeline-heading p {
       font-size: 0.82rem;
-    }
-
-    .scroll-note {
-      display: block;
-      align-self: flex-end;
     }
 
     .category-legend {
@@ -686,7 +1002,10 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .entry-card {
+    .entry-card,
+    .spacing-option,
+    .spacing-track,
+    .spacing-thumb {
       transition: none;
     }
   }
