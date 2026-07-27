@@ -466,6 +466,7 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
     z-index: 3;
     width: var(--timeline-width);
     height: var(--row-height);
+    pointer-events: none;
   }
 
   .row-guide {
@@ -486,6 +487,7 @@ const getTrackPath = (entry: (typeof layout.entries)[number]) => {
     height: 64px;
     color: var(--text-color);
     text-decoration: none;
+    pointer-events: auto;
   }
 
   .entry-node {
