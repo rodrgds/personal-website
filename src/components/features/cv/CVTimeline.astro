@@ -14,19 +14,14 @@ interface Props {
   variant?: "detailed" | "icons";
 }
 
-interface EvenLanePoint {
+interface TrackPoint {
   offset: number;
   row: number;
 }
 
 interface EvenLanePosition {
   row: number;
-  lanePoints: EvenLanePoint[];
-}
-
-interface TrackPoint {
-  offset: number;
-  row: number;
+  lanePoints: TrackPoint[];
 }
 
 const { entries, variant = "detailed" }: Props = Astro.props;
@@ -34,8 +29,14 @@ const compact = variant === "icons";
 const layout = buildTimelineLayout(entries);
 type PositionedEntry = (typeof layout.entries)[number];
 
+interface EvenLaneEvent {
+  endingEntries: PositionedEntry[];
+  startingEntries: PositionedEntry[];
+}
+
 const monthWidth = 20;
 const eventStep = compact ? 52 : 200;
+const evenEndGapRatio = 0.4;
 const contentInset = 34;
 const labelSpace = compact ? 34 : 220;
 const rowHeight = compact ? 38 : 66;
@@ -90,40 +91,71 @@ const getEvenEndOffset = (entry: PositionedEntry) => {
   const boundaryIndex =
     nextEntryIndex === -1 ? layout.entries.length : nextEntryIndex;
 
-  return (
-    (getEvenStartOffset(previousEntryIndex) +
-      getEvenStartOffset(boundaryIndex)) /
-    2
-  );
+  const previousOffset = getEvenStartOffset(previousEntryIndex);
+  const boundaryOffset = getEvenStartOffset(boundaryIndex);
+  return previousOffset + (boundaryOffset - previousOffset) * evenEndGapRatio;
 };
 
-// Stable rows keep unrelated events from looking connected in ordinal spacing.
-// Point events use a free row for their icon but never reserve it.
+const evenLaneEvents = new Map<number, EvenLaneEvent>();
+
+const getEvenLaneEvent = (offset: number) => {
+  const existingEvent = evenLaneEvents.get(offset);
+  if (existingEvent) return existingEvent;
+
+  const event: EvenLaneEvent = {
+    endingEntries: [],
+    startingEntries: [],
+  };
+  evenLaneEvents.set(offset, event);
+  return event;
+};
+
+layout.entries.forEach((entry, index) => {
+  getEvenLaneEvent(getEvenStartOffset(index)).startingEntries.push(entry);
+
+  if (entry.kind === "span" && entry.endDate) {
+    getEvenLaneEvent(getEvenEndOffset(entry)).endingEntries.push(entry);
+  }
+});
+
+// Active entries stay ordered from oldest to newest. Ending a span compacts
+// every newer active span immediately; point events never join the active set.
 const evenLanePositions = new Map<string, EvenLanePosition>();
-const activeEvenRows: Array<PositionedEntry | undefined> = [];
+let activeEvenEntries: PositionedEntry[] = [];
 let evenGraphRowCount = 1;
 
-for (const [index, entry] of layout.entries.entries()) {
-  activeEvenRows.forEach((activeEntry, row) => {
-    if (activeEntry && activeEntry.endMonth < entry.startMonth) {
-      activeEvenRows[row] = undefined;
+for (const [offset, event] of [...evenLaneEvents].sort(
+  ([firstOffset], [secondOffset]) => firstOffset - secondOffset,
+)) {
+  const endingEntryIds = new Set(event.endingEntries.map((entry) => entry.id));
+  activeEvenEntries = activeEvenEntries.filter(
+    (entry) => !endingEntryIds.has(entry.id),
+  );
+
+  activeEvenEntries.forEach((activeEntry, row) => {
+    const position = evenLanePositions.get(activeEntry.id);
+    if (position?.lanePoints.at(-1)?.row !== row) {
+      position?.lanePoints.push({ offset, row });
     }
   });
 
-  const availableRow = activeEvenRows.findIndex(
-    (activeEntry) => activeEntry === undefined,
-  );
-  const row = availableRow === -1 ? activeEvenRows.length : availableRow;
-  evenLanePositions.set(entry.id, {
-    row,
-    lanePoints: [{ offset: getEvenStartOffset(index), row }],
-  });
+  for (const entry of event.startingEntries) {
+    const row = activeEvenEntries.length;
+    evenLanePositions.set(entry.id, {
+      row,
+      lanePoints: [{ offset, row }],
+    });
 
-  if (entry.kind === "span") {
-    activeEvenRows[row] = entry;
+    if (entry.kind === "span") {
+      activeEvenEntries.push(entry);
+    }
+
+    evenGraphRowCount = Math.max(
+      evenGraphRowCount,
+      row + 1,
+      activeEvenEntries.length,
+    );
   }
-
-  evenGraphRowCount = Math.max(evenGraphRowCount, row + 1);
 }
 
 const linearGraphHeight = linearGraphRowCount * rowHeight + graphBottomSpace;
@@ -192,7 +224,7 @@ const getEvenTrackPath = (entry: PositionedEntry) => {
     entry.endDate ? getEvenEndOffset(entry) : evenTimelineWidth,
     position.row,
     position.lanePoints,
-    Math.min(36, eventStep / 2),
+    Math.min(12, eventStep / 2),
   );
 };
 
