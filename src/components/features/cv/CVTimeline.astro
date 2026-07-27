@@ -14,9 +14,26 @@ interface Props {
   variant?: "detailed" | "icons";
 }
 
+interface EvenLanePoint {
+  offset: number;
+  row: number;
+}
+
+interface EvenLanePosition {
+  row: number;
+  lanePoints: EvenLanePoint[];
+}
+
+interface TrackPoint {
+  offset: number;
+  row: number;
+}
+
 const { entries, variant = "detailed" }: Props = Astro.props;
 const compact = variant === "icons";
 const layout = buildTimelineLayout(entries);
+type PositionedEntry = (typeof layout.entries)[number];
+
 const monthWidth = 20;
 const eventStep = compact ? 52 : 200;
 const contentInset = 34;
@@ -26,10 +43,10 @@ const linearTimeWidth = layout.monthCount * monthWidth + contentInset * 2;
 const linearTimelineWidth = linearTimeWidth + labelSpace;
 const evenTimeWidth = layout.entries.length * eventStep + contentInset * 2;
 const evenTimelineWidth = evenTimeWidth + labelSpace;
-const graphRowCount = compact
+const linearGraphRowCount = compact
   ? layout.rowCount
   : Math.max(layout.rowCount, layout.labelRowCount);
-const graphHeight = graphRowCount * rowHeight + (compact ? 18 : 34);
+const graphBottomSpace = compact ? 18 : 34;
 const nodeCenter = compact ? 17 : 22;
 
 const categoryColors: Record<TimelineCategory, string> = {
@@ -41,7 +58,7 @@ const categoryColors: Record<TimelineCategory, string> = {
   certifications: "var(--flexoki-purple)",
 };
 
-const getStartOffset = (entry: (typeof layout.entries)[number]) =>
+const getStartOffset = (entry: PositionedEntry) =>
   (entry.startMonth - layout.startMonth) * monthWidth + contentInset;
 
 const getMonthOffset = (month: number) =>
@@ -53,7 +70,7 @@ const evenEntryOffsets = new Map(
   layout.entries.map((entry, index) => [entry.id, getEvenStartOffset(index)]),
 );
 
-const getEvenEntryOffset = (entry: (typeof layout.entries)[number]) =>
+const getEvenEntryOffset = (entry: PositionedEntry) =>
   evenEntryOffsets.get(entry.id) ?? contentInset;
 
 const getEvenMonthOffset = (month: number) => {
@@ -64,25 +81,83 @@ const getEvenMonthOffset = (month: number) => {
   return getEvenStartOffset(offsetIndex);
 };
 
+const getEvenEndOffset = (entry: PositionedEntry) => {
+  const nextEntryIndex = layout.entries.findIndex(
+    (candidate) => candidate.startMonth > entry.endMonth,
+  );
+  const previousEntryIndex =
+    nextEntryIndex === -1 ? layout.entries.length - 1 : nextEntryIndex - 1;
+  const boundaryIndex =
+    nextEntryIndex === -1 ? layout.entries.length : nextEntryIndex;
+
+  return (
+    (getEvenStartOffset(previousEntryIndex) +
+      getEvenStartOffset(boundaryIndex)) /
+    2
+  );
+};
+
+// Stable rows keep unrelated events from looking connected in ordinal spacing.
+// Point events use a free row for their icon but never reserve it.
+const evenLanePositions = new Map<string, EvenLanePosition>();
+const activeEvenRows: Array<PositionedEntry | undefined> = [];
+let evenGraphRowCount = 1;
+
+for (const [index, entry] of layout.entries.entries()) {
+  activeEvenRows.forEach((activeEntry, row) => {
+    if (activeEntry && activeEntry.endMonth < entry.startMonth) {
+      activeEvenRows[row] = undefined;
+    }
+  });
+
+  const availableRow = activeEvenRows.findIndex(
+    (activeEntry) => activeEntry === undefined,
+  );
+  const row = availableRow === -1 ? activeEvenRows.length : availableRow;
+  evenLanePositions.set(entry.id, {
+    row,
+    lanePoints: [{ offset: getEvenStartOffset(index), row }],
+  });
+
+  if (entry.kind === "span") {
+    activeEvenRows[row] = entry;
+  }
+
+  evenGraphRowCount = Math.max(evenGraphRowCount, row + 1);
+}
+
+const linearGraphHeight = linearGraphRowCount * rowHeight + graphBottomSpace;
+const evenGraphHeight = evenGraphRowCount * rowHeight + graphBottomSpace;
+
+const getEvenLanePosition = (entry: PositionedEntry): EvenLanePosition =>
+  evenLanePositions.get(entry.id) ?? {
+    row: entry.row,
+    lanePoints: [{ offset: getEvenEntryOffset(entry), row: entry.row }],
+  };
+
 const getLaneCenter = (row: number) => row * rowHeight + nodeCenter;
 
 const getTrackPath = (
-  entry: (typeof layout.entries)[number],
   startOffset: number,
-  getOffset: (month: number) => number,
+  endOffset: number,
+  initialRow: number,
+  points: TrackPoint[],
+  maximumTransitionWidth: number,
 ) => {
-  const points = entry.lanePoints;
-  const end = getOffset(entry.endMonth + 1);
-  let currentRow = points[0]?.row ?? entry.row;
+  let currentRow = points[0]?.row ?? initialRow;
   let path = `M ${startOffset} ${getLaneCenter(currentRow)}`;
   const laneChanges = points.slice(1);
 
   for (const [index, point] of laneChanges.entries()) {
-    const transition = getOffset(point.month);
+    const transition = point.offset;
     const nextTransition = laneChanges[index + 1]
-      ? getOffset(laneChanges[index + 1].month)
-      : end;
-    const transitionEnd = Math.min(end, nextTransition, transition + 36);
+      ? laneChanges[index + 1].offset
+      : endOffset;
+    const transitionEnd = Math.min(
+      endOffset,
+      nextTransition,
+      transition + maximumTransitionWidth,
+    );
     const transitionWidth = transitionEnd - transition;
     const firstControl = transition + transitionWidth * 0.42;
     const secondControl = transition + transitionWidth * 0.58;
@@ -94,7 +169,31 @@ const getTrackPath = (
     currentRow = point.row;
   }
 
-  return `${path} L ${end} ${getLaneCenter(currentRow)}`;
+  return `${path} L ${endOffset} ${getLaneCenter(currentRow)}`;
+};
+
+const getLinearTrackPath = (entry: PositionedEntry) =>
+  getTrackPath(
+    getStartOffset(entry),
+    entry.endDate ? getMonthOffset(entry.endMonth + 1) : linearTimelineWidth,
+    entry.row,
+    entry.lanePoints.map((point) => ({
+      offset: getMonthOffset(point.month),
+      row: point.row,
+    })),
+    36,
+  );
+
+const getEvenTrackPath = (entry: PositionedEntry) => {
+  const position = getEvenLanePosition(entry);
+
+  return getTrackPath(
+    getEvenEntryOffset(entry),
+    entry.endDate ? getEvenEndOffset(entry) : evenTimelineWidth,
+    position.row,
+    position.lanePoints,
+    Math.min(36, eventStep / 2),
+  );
 };
 
 const linearNowOffset = getMonthOffset(layout.endMonth - 1);
@@ -234,7 +333,10 @@ const yearTicks = layout.ticks.filter((tick) => tick.label);
         </div>
       </div>
 
-      <div class="unified-graph" style={`height:${graphHeight}px`}>
+      <div
+        class="unified-graph"
+        style={`--linear-graph-height:${linearGraphHeight}px;--even-graph-height:${evenGraphHeight}px`}
+      >
         <span
           class="now-marker"
           style={`--linear-left:${linearNowOffset}px;--even-left:${evenNowOffset}px`}
@@ -243,8 +345,8 @@ const yearTicks = layout.ticks.filter((tick) => tick.label);
         <svg
           class="entry-tracks entry-tracks-linear"
           width={linearTimelineWidth}
-          height={graphHeight}
-          viewBox={`0 0 ${linearTimelineWidth} ${graphHeight}`}
+          height={linearGraphHeight}
+          viewBox={`0 0 ${linearTimelineWidth} ${linearGraphHeight}`}
           preserveAspectRatio="none"
           aria-hidden="true"
         >
@@ -253,7 +355,7 @@ const yearTicks = layout.ticks.filter((tick) => tick.label);
               .filter((entry) => entry.kind === "span")
               .map((entry) => (
                 <path
-                  d={getTrackPath(entry, getStartOffset(entry), getMonthOffset)}
+                  d={getLinearTrackPath(entry)}
                   style={`--entry-color:${categoryColors[entry.category]}`}
                 />
               ))
@@ -263,8 +365,8 @@ const yearTicks = layout.ticks.filter((tick) => tick.label);
         <svg
           class="entry-tracks entry-tracks-even"
           width={evenTimelineWidth}
-          height={graphHeight}
-          viewBox={`0 0 ${evenTimelineWidth} ${graphHeight}`}
+          height={evenGraphHeight}
+          viewBox={`0 0 ${evenTimelineWidth} ${evenGraphHeight}`}
           preserveAspectRatio="none"
           aria-hidden="true"
         >
@@ -273,11 +375,7 @@ const yearTicks = layout.ticks.filter((tick) => tick.label);
               .filter((entry) => entry.kind === "span")
               .map((entry) => (
                 <path
-                  d={getTrackPath(
-                    entry,
-                    getEvenEntryOffset(entry),
-                    getEvenMonthOffset,
-                  )}
+                  d={getEvenTrackPath(entry)}
                   style={`--entry-color:${categoryColors[entry.category]}`}
                 />
               ))
@@ -290,12 +388,16 @@ const yearTicks = layout.ticks.filter((tick) => tick.label);
             const start = getStartOffset(entry);
             const evenStart = getEvenEntryOffset(entry);
             const top = entry.row * rowHeight;
+            const evenTop = getEvenLanePosition(entry).row * rowHeight;
             const labelOffset = (entry.labelRow - entry.row) * rowHeight;
             const connectorTop = nodeCenter + Math.min(0, labelOffset);
             const label = `${entry.title}, ${TIMELINE_CATEGORY_LABELS[entry.category]}, ${entry.subtitle}, ${getTimelineDateLabel(entry)}`;
 
             return (
-              <div class="graph-row" style={`top:${top}px`}>
+              <div
+                class="graph-row"
+                style={`--linear-top:${top}px;--even-top:${evenTop}px`}
+              >
                 <span class="row-guide" aria-hidden="true" />
                 <a
                   class:list={[
@@ -732,6 +834,11 @@ const yearTicks = layout.ticks.filter((tick) => tick.label);
   .unified-graph {
     position: relative;
     width: var(--timeline-width);
+    height: var(--linear-graph-height);
+  }
+
+  .timeline-shell[data-timeline-spacing="even"] .unified-graph {
+    height: var(--even-graph-height);
   }
 
   .now-marker {
@@ -772,11 +879,16 @@ const yearTicks = layout.ticks.filter((tick) => tick.label);
 
   .graph-row {
     position: absolute;
+    top: var(--linear-top);
     left: 0;
     z-index: 3;
     width: var(--timeline-width);
     height: var(--row-height);
     pointer-events: none;
+  }
+
+  .timeline-shell[data-timeline-spacing="even"] .graph-row {
+    top: var(--even-top);
   }
 
   .row-guide {
