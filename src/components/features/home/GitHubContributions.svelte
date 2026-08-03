@@ -48,6 +48,12 @@
     hevy: "Hevy",
     leetcode: "LeetCode",
   };
+  const selectLabels: Record<ActivitySource, string> = {
+    github: "Code",
+    hevy: "Workouts",
+    leetcode: "Problems",
+  };
+  const comingSoonSources = ["Posts", "Steps", "Sleep", "Distance", "TV", "Music"];
   const sourceUnits: Record<ActivitySource, string> = {
     github: "contributions",
     hevy: "minutes",
@@ -201,9 +207,14 @@
     <div class="activity-summary">
       <label for="activity-source">Activity</label>
       <select id="activity-source" bind:value={activeSource}>
-        {#each Object.entries(sourceLabels) as [value, label] (value)}
+        {#each Object.entries(selectLabels) as [value, label] (value)}
           <option value={value}>{label}</option>
         {/each}
+        <optgroup label="Coming soon">
+          {#each comingSoonSources as label (label)}
+            <option disabled>{label}</option>
+          {/each}
+        </optgroup>
       </select>
       {#if visibleActivity}
         <span class="activity-count">{formatTotal(activeSource, visibleActivity.total)} since {visibleActivity.startYear}</span>
