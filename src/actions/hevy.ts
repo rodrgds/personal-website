@@ -47,9 +47,25 @@ const routinePageSchema = z.object({
 const workoutCountSchema = z.object({
   workout_count: z.number().int().nonnegative(),
 });
+const recentWorkoutsSchema = z.object({
+  workouts: z.array(
+    z.looseObject({
+      title: z.string(),
+      start_time: z.string(),
+      end_time: z.string(),
+    }),
+  ),
+});
 type HevyResult = {
   routines: z.infer<typeof hevyRoutineSchema>[];
-  stats: { workoutCount: number };
+  stats: {
+    workoutCount: number;
+    recentWorkouts: Array<{
+      title: string;
+      startTime: string;
+      endTime: string;
+    }>;
+  };
 };
 
 const workoutsPageSchema = z.object({
@@ -195,10 +211,42 @@ export const getHevyData = defineAction({
           "Hevy",
         );
 
+        const workoutsResponse = await fetchUpstream(
+          "https://api.hevyapp.com/v1/workouts?page=1&pageSize=5",
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+              "api-key": HEVY_API_KEY,
+            },
+          },
+        );
+
+        if (!workoutsResponse.ok) {
+          throw new ActionError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: `Hevy API error: ${workoutsResponse.status}`,
+          });
+        }
+
+        const workoutsData = await parseUpstreamJson(
+          workoutsResponse,
+          recentWorkoutsSchema,
+          "Hevy",
+        );
+        const recentWorkouts = workoutsData.workouts
+          .slice(0, 5)
+          .map((workout) => ({
+            title: workout.title,
+            startTime: workout.start_time,
+            endTime: workout.end_time,
+          }));
+
         const result = {
           routines: currentRoutines,
           stats: {
             workoutCount: countData.workout_count || 0,
+            recentWorkouts,
           },
         };
 

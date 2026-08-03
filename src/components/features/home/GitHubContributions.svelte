@@ -189,7 +189,7 @@
   });
 
   let visibleWeeks = $derived(
-    filterFutureDays(activity[activeSource]?.contributions ?? []),
+    filterFutureDays(activity[activeSource]?.contributions ?? []).reverse(),
   );
   let visibleActivity = $derived(activity[activeSource]);
   let monthLabels = $derived(getMonthLabels(visibleWeeks));
@@ -301,7 +301,7 @@
   .activity-header { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
   .activity-summary, .header-right { display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap; }
   .activity-summary label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-  select { min-height: 2.75rem; padding: 0.28rem 1.8rem 0.28rem 0.45rem; border: 1px solid var(--border-color); border-radius: 0.28rem; background: var(--background-color); color: var(--text-color); font: inherit; font-size: 0.8rem; cursor: pointer; }
+  select { min-height: 2.25rem; padding: 0.2rem 1.4rem 0.2rem 0.4rem; border: 1px solid var(--border-color); border-radius: 0.28rem; background: var(--background-color); color: var(--text-color); font: inherit; font-size: 0.8rem; cursor: pointer; }
   select:hover { border-color: var(--link-color); }
   select:focus-visible, .source-link:focus-visible, .retry-btn:focus-visible { outline: 2px solid var(--link-color); outline-offset: 2px; }
   .activity-count { font-size: 0.875rem; color: var(--text-color); }

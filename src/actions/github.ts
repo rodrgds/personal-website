@@ -20,7 +20,7 @@ interface GitHubContributionsData {
   startYear: number;
 }
 
-const GITHUB_CACHE_DURATION = 60 * 60 * 1000;
+const GITHUB_CACHE_DURATION = 3 * 60 * 60 * 1000;
 const GITHUB_GRAPHQL_ENDPOINT = "https://api.github.com/graphql";
 const GITHUB_USERNAME = "rodrgds";
 const githubContributionsCache = new SimpleCache<GitHubContributionsData>(

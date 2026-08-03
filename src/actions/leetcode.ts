@@ -7,7 +7,7 @@ import { buildActivityCalendar } from "./activity";
 
 const LEETCODE_USERNAME = "rodrgds";
 const LEETCODE_ENDPOINT = "https://leetcode.com/graphql";
-const leetcodeCache = new SimpleCache<LeetCodeResult>(60 * 60 * 1000, 1);
+const leetcodeCache = new SimpleCache<LeetCodeResult>(3 * 60 * 60 * 1000, 1);
 
 const leetcodeResponseSchema = z.object({
   data: z.object({

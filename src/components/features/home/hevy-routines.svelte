@@ -28,6 +28,13 @@
 
   interface WorkoutStats {
     workoutCount: number;
+    recentWorkouts: Workout[];
+  }
+
+  interface Workout {
+    title: string;
+    startTime: string;
+    endTime: string;
   }
 
   let routines: Routine[] = $state([]);
@@ -37,6 +44,61 @@
 
   let rootEl: HTMLDivElement | null = $state(null);
   let openDetailsId: string | null = $state(null);
+
+  function formatDate(isoDate: string): string {
+    const date = new Date(isoDate);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+
+  function getRelativeTime(isoDate: string): string {
+    const workoutDate = new Date(isoDate);
+    const now = new Date();
+    const workoutDay = new Date(
+      workoutDate.getFullYear(),
+      workoutDate.getMonth(),
+      workoutDate.getDate(),
+    );
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const diffMs = today.getTime() - workoutDay.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) {
+      const weeks = Math.floor(diffDays / 7);
+      return weeks === 1 ? "1 week ago" : `${weeks} weeks ago`;
+    }
+    const months = Math.floor(diffDays / 30);
+    return months === 1 ? "1 month ago" : `${months} months ago`;
+  }
+
+  function formatWorkoutDuration(
+    startTime: string | null | undefined,
+    endTime: string | null | undefined,
+  ): string | null {
+    if (!startTime || !endTime) return null;
+
+    const start = new Date(startTime).getTime();
+    const end = new Date(endTime).getTime();
+    if (!Number.isFinite(start) || !Number.isFinite(end)) return null;
+
+    const diffMs = end - start;
+    if (diffMs <= 0) return null;
+
+    const totalMinutes = Math.max(1, Math.round(diffMs / (1000 * 60)));
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    if (hours <= 0) return `${totalMinutes}m`;
+    if (minutes === 0) return `${hours}h`;
+    return `${hours}h ${minutes}m`;
+  }
 
   // Helper function to format sets - FIX for weighted exercises
   function formatSet(set: Set): string {
@@ -164,6 +226,22 @@
 </script>
 
 <div class="hevy-routines" bind:this={rootEl}>
+  {#snippet WorkoutRow(workout: Workout)}
+    {@const duration = formatWorkoutDuration(
+      workout.startTime,
+      workout.endTime,
+    )}
+    <div class="workout-item">
+      <div class="workout-title">{workout.title}</div>
+      <div class="workout-date">
+        {formatDate(workout.startTime)} • {getRelativeTime(workout.startTime)}
+        {#if duration}
+          • {duration}
+        {/if}
+      </div>
+    </div>
+  {/snippet}
+
   {#if loading}
     <div class="loading">
       <div class="spinner"></div>
@@ -189,6 +267,36 @@
           <div class="stat-label">Total Workouts</div>
           <div class="stat-value">{stats.workoutCount}</div>
         </div>
+        {#if stats.recentWorkouts && stats.recentWorkouts.length > 0}
+          <div class="stat-card workouts-card">
+            <div class="workouts-header">
+              <div class="stat-label">Recent Workouts</div>
+              {#if stats.recentWorkouts.length > 1}
+                <details
+                  class="more-workouts"
+                  data-dd-id="recent-workouts"
+                  ontoggle={(e) => handleDetailsToggle("recent-workouts", e)}
+                >
+                  <summary class="more-workouts-summary">
+                    Show {stats.recentWorkouts.length - 1} more
+                  </summary>
+                  <div class="more-workouts-content dropdown-content">
+                    {#each stats.recentWorkouts.slice(1) as workout, index (
+                      `${workout.startTime}-${index}`
+                    )}
+                      {@render WorkoutRow(workout)}
+                    {/each}
+                  </div>
+                </details>
+              {/if}
+            </div>
+            <div class="recent-workouts">
+              {#each stats.recentWorkouts.slice(0, 1) as workout (workout.startTime)}
+                {@render WorkoutRow(workout)}
+              {/each}
+            </div>
+          </div>
+        {/if}
       </div>
     {/if}
 
@@ -367,6 +475,19 @@
     justify-content: center;
   }
 
+  .workouts-card {
+    flex: 1;
+    min-width: 300px;
+    text-align: left;
+  }
+
+  .workouts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+
   .stat-label {
     font-size: 0.75rem;
     opacity: 0.7;
@@ -381,6 +502,59 @@
     font-weight: 700;
     line-height: 1;
     color: var(--link-color);
+  }
+
+  .recent-workouts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .workout-item {
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 0.25rem;
+  }
+
+  .workout-title {
+    font-weight: 600;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .workout-date {
+    font-size: 0.75rem;
+    opacity: 0.7;
+  }
+
+  .more-workouts {
+    position: relative;
+  }
+
+  .more-workouts-summary {
+    cursor: pointer;
+    user-select: none;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--link-color);
+    list-style: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    background: rgba(0, 0, 0, 0.02);
+    transition: background 0.2s;
+  }
+
+  .more-workouts-summary:hover {
+    background: rgba(0, 0, 0, 0.04);
+  }
+
+  .more-workouts-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .more-workouts-content {
+    min-width: 280px;
+    max-width: 320px;
   }
 
   .dropdown-content {
@@ -440,7 +614,8 @@
     z-index: 50;
   }
 
-  .exercise-item[open] {
+  .exercise-item[open],
+  .more-workouts[open] {
     position: relative;
     z-index: 60;
   }
@@ -526,6 +701,18 @@
       max-width: none;
     }
 
+    .more-workouts-content.dropdown-content {
+      position: absolute;
+      right: 0;
+      left: auto;
+      width: min(320px, calc(100vw - 2rem));
+      max-width: calc(100vw - 2rem);
+    }
+
+    .more-workouts-content {
+      min-width: 0;
+    }
+
   }
 
   .set-item {
@@ -583,6 +770,10 @@
       width: 100%;
     }
 
+    .workouts-card {
+      min-width: unset;
+    }
+
   }
 
   @media (prefers-color-scheme: dark) {
@@ -622,6 +813,10 @@
 
     .set-item {
       background: rgba(255, 255, 255, 0.05);
+    }
+
+    .workout-item {
+      background: rgba(255, 255, 255, 0.02);
     }
 
     .set-rpe {
