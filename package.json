@@ -24,7 +24,6 @@
     "@astrojs/sitemap": "3.7.3",
     "@astrojs/svelte": "9.0.1",
     "@astrojs/vercel": "11.0.3",
-    "@directus/sdk": "^21.3.0",
     "@rehype-pretty/transformers": "^0.13.2",
     "astro": "7.0.9",
     "cuelume": "0.1.2",

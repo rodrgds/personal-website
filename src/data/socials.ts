@@ -63,10 +63,6 @@ export const EXTRA_SOCIALS = [
   //   url: "https://url.rgo.pt/kick",
   // },
   // {
-  //   icon_name: "trakt",
-  //   url: "https://url.rgo.pt/movies",
-  // },
-  // {
   //   icon_name: "lastfm",
   //   url: "https://url.rgo.pt/music",
   // },
