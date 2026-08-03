@@ -2,24 +2,26 @@
   import { actions } from "astro:actions";
   import { onMount } from "svelte";
 
-  interface ContributionDay {
+  type ActivitySource = "github" | "hevy" | "leetcode";
+  type ActivityLevel = 0 | 1 | 2 | 3 | 4;
+
+  interface ActivityDay {
     date: string;
     count: number;
-    level: 0 | 1 | 2 | 3 | 4;
+    level: ActivityLevel;
   }
 
-  interface ContributionWeek {
-    days: ContributionDay[];
+  interface ActivityWeek {
+    days: ActivityDay[];
   }
 
-  let contributions: ContributionWeek[] = $state([]);
-  let totalContributions = $state(0);
-  let startYear = $state(new Date().getFullYear());
-  let loading = $state(true);
-  let error: string | null = $state(null);
+  interface ActivityData {
+    contributions: ActivityWeek[];
+    total: number;
+    startYear: number;
+  }
 
   const username = "rodrgds";
-
   const colorScale = [
     "var(--contrib-level-0)",
     "var(--contrib-level-1)",
@@ -27,7 +29,6 @@
     "var(--contrib-level-3)",
     "var(--contrib-level-4)",
   ];
-
   const monthNames = [
     "Jan",
     "Feb",
@@ -42,32 +43,51 @@
     "Nov",
     "Dec",
   ];
+  const sourceLabels: Record<ActivitySource, string> = {
+    github: "GitHub",
+    hevy: "Hevy",
+    leetcode: "LeetCode",
+  };
+  const sourceUnits: Record<ActivitySource, string> = {
+    github: "contributions",
+    hevy: "minutes",
+    leetcode: "submissions",
+  };
+  const sourceLinks: Record<ActivitySource, string | null> = {
+    github: `https://github.com/${username}`,
+    hevy: null,
+    leetcode: `https://leetcode.com/u/${username}`,
+  };
+
+  let activeSource = $state<ActivitySource>("github");
+  let activity = $state<Record<ActivitySource, ActivityData | null>>({
+    github: null,
+    hevy: null,
+    leetcode: null,
+  });
+  let loading = $state(true);
+  let error = $state<string | null>(null);
 
   function getMonthLabels(
-    weeks: ContributionWeek[],
+    weeks: ActivityWeek[],
   ): { month: string; index: number }[] {
     const labels: { month: string; index: number }[] = [];
     let lastMonth = -1;
     const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
     const isEarlyInMonth = now.getDate() <= 14;
 
     weeks.forEach((week, index) => {
       const firstDay = week.days[0];
-      if (firstDay) {
-        const date = new Date(firstDay.date);
-        const month = date.getMonth();
-        const year = date.getFullYear();
+      if (!firstDay) return;
 
-        if (month !== lastMonth) {
-          // Skip the latest month if we are in the first 14 days of that month
-          if (isEarlyInMonth && month === currentMonth && year === currentYear) {
-            return;
-          }
-          labels.push({ month: monthNames[month], index });
-          lastMonth = month;
+      const date = new Date(`${firstDay.date}T00:00:00`);
+      const month = date.getMonth();
+      if (month !== lastMonth) {
+        if (isEarlyInMonth && month === now.getMonth() && date.getFullYear() === now.getFullYear()) {
+          return;
         }
+        labels.push({ month: monthNames[month], index });
+        lastMonth = month;
       }
     });
 
@@ -75,148 +95,160 @@
   }
 
   function getYearLabels(
-    weeks: ContributionWeek[],
-  ): { year: string; startWeek: number; endWeek: number }[] {
-    const labels: { year: string; startWeek: number; endWeek: number }[] = [];
+    weeks: ActivityWeek[],
+  ): { year: string; startWeek: number }[] {
+    const labels: { year: string; startWeek: number }[] = [];
     let lastYear = -1;
     const now = new Date();
-    const currentYear = now.getFullYear();
-    const isEarlyInYear =
-      now.getMonth() === 0 && now.getDate() <= 14; // First 14 days of January
+    const isEarlyInYear = now.getMonth() === 0 && now.getDate() <= 14;
 
     weeks.forEach((week, index) => {
       const firstDay = week.days[0];
-      if (firstDay) {
-        const date = new Date(firstDay.date);
-        const year = date.getFullYear();
+      if (!firstDay) return;
 
-        if (year !== lastYear) {
-          // Skip the latest year if we are in the first 14 days of that year
-          if (isEarlyInYear && year === currentYear) {
-            return;
-          }
-          if (lastYear !== -1) {
-            labels[labels.length - 1].endWeek = index - 1;
-          }
-          labels.push({ year: String(year), startWeek: index, endWeek: index });
-          lastYear = year;
-        }
-      }
+      const year = new Date(`${firstDay.date}T00:00:00`).getFullYear();
+      if (year === lastYear || (isEarlyInYear && year === now.getFullYear())) return;
+
+      labels.push({ year: String(year), startWeek: index });
+      lastYear = year;
     });
-
-    if (labels.length > 0) {
-      labels[labels.length - 1].endWeek = weeks.length - 1;
-    }
 
     return labels;
   }
 
-  function filterFutureDays(weeks: ContributionWeek[]): ContributionWeek[] {
+  function filterFutureDays(weeks: ActivityWeek[]): ActivityWeek[] {
     const now = Date.now();
-
     return weeks
       .map((week) => ({
-        days: week.days.filter((day) => {
-          return new Date(day.date).getTime() <= now;
-        }),
+        days: week.days.filter((day) => new Date(`${day.date}T00:00:00`).getTime() <= now),
       }))
       .filter((week) => week.days.length > 0);
   }
 
-  async function fetchContributions() {
+  function toActivityData(data: {
+    contributions: ActivityWeek[];
+    totalContributions?: number;
+    totalMinutes?: number;
+    totalSolved?: number;
+    startYear: number;
+  }): ActivityData {
+    return {
+      contributions: data.contributions,
+      total: data.totalContributions ?? data.totalMinutes ?? data.totalSolved ?? 0,
+      startYear: data.startYear,
+    };
+  }
+
+  async function loadSource(source: ActivitySource, force = false) {
+    if (activity[source] && !force) {
+      loading = false;
+      return;
+    }
+
+    loading = true;
+    error = null;
+
     try {
-      loading = true;
-      error = null;
+      const result =
+        source === "github"
+          ? await actions.getGitHubContributions({ username })
+          : source === "hevy"
+            ? await actions.getHevyActivity({ forceRefresh: force })
+            : await actions.getLeetCodeActivity({ forceRefresh: force });
 
-      const result = await actions.getGitHubContributions({ username });
-
-      if (result.error) {
-        throw new Error(result.error.message || "Failed to fetch contributions");
+      if (result.error || !result.data) {
+        throw new Error(result.error?.message || `Failed to load ${sourceLabels[source]} activity`);
       }
 
-      const data = result.data;
-
-      if (!data) {
-        throw new Error("Failed to fetch contributions");
-      }
-
-      const filtered = filterFutureDays(data.contributions);
-      contributions = filtered.reverse();
-      totalContributions = data.totalContributions;
-      startYear = data.startYear;
+      activity[source] = toActivityData(result.data);
     } catch (e) {
-      console.error("Error fetching contributions:", e);
-      error = e instanceof Error ? e.message : "Failed to load contributions";
+      console.error(`Error fetching ${sourceLabels[source]} activity:`, e);
+      error = e instanceof Error ? e.message : `Failed to load ${sourceLabels[source]} activity`;
     } finally {
       loading = false;
     }
   }
 
+  function formatTotal(source: ActivitySource, total: number): string {
+    if (source === "hevy") return `${total.toLocaleString()} minutes trained`;
+    if (source === "leetcode") return `${total.toLocaleString()} problems solved`;
+    return `${total.toLocaleString()} contributions`;
+  }
+
+  function formatDay(day: ActivityDay, source: ActivitySource): string {
+    return `${day.count.toLocaleString()} ${sourceUnits[source]} on ${day.date}`;
+  }
+
   onMount(() => {
-    void fetchContributions();
-    const interval = setInterval(fetchContributions, 1000 * 60 * 60);
+    const interval = setInterval(() => void loadSource(activeSource, true), 1000 * 60 * 60);
     return () => clearInterval(interval);
   });
 
-  const monthLabels = $derived(getMonthLabels(contributions));
-  const yearLabels = $derived(getYearLabels(contributions));
+  $effect(() => {
+    void loadSource(activeSource);
+  });
+
+  let visibleWeeks = $derived(
+    filterFutureDays(activity[activeSource]?.contributions ?? []),
+  );
+  let visibleActivity = $derived(activity[activeSource]);
+  let monthLabels = $derived(getMonthLabels(visibleWeeks));
+  let yearLabels = $derived(getYearLabels(visibleWeeks));
 </script>
 
-<div class="github-contributions">
-  <div class="contributions-header">
-    <span class="contributions-count">
-      {totalContributions.toLocaleString()} contributions since {startYear}
-    </span>
+<div class="activity-graph">
+  <div class="activity-header">
+    <div class="activity-summary">
+      <label for="activity-source">Activity</label>
+      <select id="activity-source" bind:value={activeSource}>
+        {#each Object.entries(sourceLabels) as [value, label] (value)}
+          <option value={value}>{label}</option>
+        {/each}
+      </select>
+      {#if visibleActivity}
+        <span class="activity-count">{formatTotal(activeSource, visibleActivity.total)} since {visibleActivity.startYear}</span>
+      {/if}
+    </div>
     <div class="header-right">
-      <div class="legend">
+      <div class="legend" aria-label="Activity intensity: less to more">
         <span class="legend-label">Less</span>
         {#each colorScale as color, index (index)}
-          <div class="legend-day" style="background-color: {color}"></div>
+          <span class="legend-day" style="background-color: {color}"></span>
         {/each}
         <span class="legend-label">More</span>
       </div>
-      <a
-        href="https://github.com/{username}"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="github-link"
-      >
-        View on GitHub →
-      </a>
+      {#if sourceLinks[activeSource]}
+        <a href={sourceLinks[activeSource]} target="_blank" rel="noopener noreferrer" class="source-link">
+          View on {sourceLabels[activeSource]} →
+        </a>
+      {/if}
     </div>
   </div>
 
   {#if loading}
-    <div class="loading">
-      <div class="spinner"></div>
-      Loading...
-    </div>
+    <div class="loading" aria-live="polite"><div class="spinner"></div>Loading {sourceLabels[activeSource]} activity...</div>
   {:else if error}
-    <div class="error">
+    <div class="error" role="alert">
       <p>{error}</p>
-      <button onclick={fetchContributions} class="retry-btn">Retry</button>
+      <button onclick={() => loadSource(activeSource, true)} class="retry-btn">Retry</button>
     </div>
   {:else}
-    <div class="contributions-scroll-container">
-      <div class="contributions-wrapper">
-        <div class="day-labels">
-          <span></span>
-          <span>Mon</span>
-          <span></span>
-          <span>Wed</span>
-          <span></span>
-          <span>Fri</span>
-          <span></span>
+    <div class="activity-scroll-container">
+      <div class="activity-wrapper">
+        <div class="day-labels" aria-hidden="true">
+          <span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span>
         </div>
-        <div class="contributions-grid">
-          {#each contributions as week, index (week.days[0]?.date ?? index)}
+        <div class="activity-grid" aria-label={`${sourceLabels[activeSource]} activity calendar`}>
+          {#each visibleWeeks as week, index (week.days[0]?.date ?? index)}
             <div class="week">
               {#each week.days as day (day.date)}
                 <div
                   class="day"
                   class:day-empty={day.level === 0}
                   style="background-color: {colorScale[day.level]}"
-                  title="{day.count} contributions on {day.date}"
+                  title={formatDay(day, activeSource)}
+                  role="img"
+                  aria-label={formatDay(day, activeSource)}
                 ></div>
               {/each}
             </div>
@@ -224,22 +256,12 @@
         </div>
         <div class="month-labels">
           {#each monthLabels as label (`${label.month}-${label.index}`)}
-            <span
-              class="month-label"
-              style="left: calc(var(--contrib-cell-size) * {label.index})"
-            >
-              {label.month}
-            </span>
+            <span class="month-label" style="left: calc(var(--contrib-cell-size) * {label.index})">{label.month}</span>
           {/each}
         </div>
         <div class="year-labels">
           {#each yearLabels as label (label.year)}
-            <span
-              class="year-label"
-              style="left: calc(var(--contrib-cell-size) * {label.startWeek})"
-            >
-              {label.year}
-            </span>
+            <span class="year-label" style="left: calc(var(--contrib-cell-size) * {label.startWeek})">{label.year}</span>
           {/each}
         </div>
       </div>
@@ -275,274 +297,51 @@
     --contrib-level-4: #ff9500;
   }
 
-  .github-contributions {
-    margin: 1.5rem 0;
-  }
-
-  .contributions-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.75rem;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-
-  .contributions-count {
-    font-size: 0.875rem;
-    color: var(--text-color);
-  }
-
-  .header-right {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  .legend {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    font-size: 0.65rem;
-    color: var(--gray-color);
-  }
-
-  .legend-day {
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
-  }
-
-  .legend-label {
-    margin: 0 0.25rem;
-  }
-
-  .github-link {
-    position: relative;
-    display: inline-block;
-    font-size: 0.75rem;
-    color: var(--link-color);
-    text-decoration: none;
-  }
-
-  .github-link::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    width: 0;
-    height: 1px;
-    background-color: currentColor;
-    transition: width 0.25s ease;
-  }
-
-  .github-link:hover::before,
-  .github-link:focus-visible::before {
-    width: 100%;
-  }
-
-  .contributions-scroll-container {
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding-bottom: 0.5rem;
-    margin: 0 -0.5rem;
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-color) transparent;
-  }
-
-  .contributions-scroll-container::-webkit-scrollbar {
-    height: 6px;
-  }
-
-  .contributions-scroll-container::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .contributions-scroll-container::-webkit-scrollbar-thumb {
-    background-color: var(--border-color);
-    border-radius: 3px;
-  }
-
-  .contributions-wrapper {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .day-labels {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    position: absolute;
-    left: -2.5rem;
-    font-size: 0.65rem;
-    color: var(--gray-color);
-    padding-top: 2px;
-  }
-
-  .day-labels span {
-    height: 10px;
-    line-height: 10px;
-  }
-
-  .contributions-grid {
-    display: flex;
-    gap: 3px;
-    flex-direction: row;
-    width: fit-content;
-  }
-
-  .week {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    flex-shrink: 0;
-  }
-
-  .day {
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
-    transition:
-      transform 0.1s,
-      outline 0.1s;
-    cursor: pointer;
-  }
-
-  .day:hover {
-    transform: scale(1.2);
-    outline: 2px solid var(--link-color);
-    outline-offset: 1px;
-    z-index: 10;
-    position: relative;
-  }
-
-  .day-empty {
-    background-color: var(--contrib-level-0);
-  }
-
-  .month-labels {
-    position: relative;
-    height: 1rem;
-    margin-top: 0.25rem;
-    width: fit-content;
-    font-size: 0.65rem;
-    color: var(--gray-color);
-  }
-
-  .month-label {
-    position: absolute;
-    white-space: nowrap;
-  }
-
-  .year-labels {
-    position: relative;
-    height: 1.25rem;
-    width: fit-content;
-    font-size: 0.65rem;
-    color: var(--gray-color);
-    border-top: 1px solid var(--border-color);
-    padding-top: 0.25rem;
-    margin-top: 0.1rem;
-  }
-
-  .year-label {
-    position: absolute;
-    left: 0;
-    text-align: left;
-    font-weight: 500;
-  }
-
-  .loading,
-  .error {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    padding: 1rem;
-    color: var(--gray-color);
-    font-size: 0.875rem;
-  }
-
-  .spinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid var(--border-color);
-    border-top-color: var(--link-color);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  .error {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .error p {
-    margin: 0;
-  }
-
-  .retry-btn {
-    padding: 0.4rem 0.8rem;
-    background: var(--link-color);
-    color: var(--background-color);
-    border: none;
-    border-radius: 0.25rem;
-    cursor: pointer;
-    font-size: 0.75rem;
-    font-family: inherit;
-    transition: opacity 0.2s;
-  }
-
-  .retry-btn:hover {
-    opacity: 0.8;
-  }
+  .activity-graph { margin: 1.5rem 0; }
+  .activity-header { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+  .activity-summary, .header-right { display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap; }
+  .activity-summary label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  select { min-height: 2.75rem; padding: 0.28rem 1.8rem 0.28rem 0.45rem; border: 1px solid var(--border-color); border-radius: 0.28rem; background: var(--background-color); color: var(--text-color); font: inherit; font-size: 0.8rem; cursor: pointer; }
+  select:hover { border-color: var(--link-color); }
+  select:focus-visible, .source-link:focus-visible, .retry-btn:focus-visible { outline: 2px solid var(--link-color); outline-offset: 2px; }
+  .activity-count { font-size: 0.875rem; color: var(--text-color); }
+  .legend { display: flex; align-items: center; gap: 3px; font-size: 0.65rem; color: var(--gray-color); }
+  .legend-day { width: 10px; height: 10px; border-radius: 2px; }
+  .legend-label { margin: 0 0.25rem; }
+  .source-link { position: relative; color: var(--link-color); font-size: 0.75rem; text-decoration: none; }
+  .source-link::before { content: ""; position: absolute; right: 0; bottom: 0; left: 0; width: 0; height: 1px; background: currentColor; transition: width 0.25s ease; }
+  .source-link:hover::before, .source-link:focus-visible::before { width: 100%; }
+  .activity-scroll-container { overflow-x: auto; overflow-y: hidden; margin: 0 -0.5rem; padding: 0 0.5rem 0.5rem; scrollbar-width: thin; scrollbar-color: var(--border-color) transparent; }
+  .activity-wrapper { display: flex; flex-direction: column; min-width: max-content; position: relative; }
+  .day-labels { display: flex; flex-direction: column; gap: 3px; position: absolute; left: -2.5rem; padding-top: 2px; color: var(--gray-color); font-size: 0.65rem; }
+  .day-labels span { height: 10px; line-height: 10px; }
+  .activity-grid { display: flex; flex-direction: row; gap: 3px; width: fit-content; }
+  .week { display: flex; flex-direction: column; flex-shrink: 0; gap: 3px; }
+  .day { width: 10px; height: 10px; border-radius: 2px; cursor: pointer; transition: transform 0.1s, outline 0.1s; }
+  .day:hover { position: relative; z-index: 1; outline: 2px solid var(--link-color); outline-offset: 1px; transform: scale(1.2); }
+  .month-labels, .year-labels { position: relative; width: fit-content; font-size: 0.65rem; color: var(--gray-color); }
+  .month-labels { height: 1rem; margin-top: 0.25rem; }
+  .year-labels { height: 1.25rem; border-top: 1px solid var(--border-color); margin-top: 0.1rem; padding-top: 0.25rem; }
+  .month-label, .year-label { position: absolute; white-space: nowrap; }
+  .year-label { font-weight: 500; }
+  .loading, .error { display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 1rem; color: var(--gray-color); font-size: 0.875rem; }
+  .error { flex-direction: column; gap: 0.5rem; }
+  .error p { margin: 0; }
+  .spinner { width: 16px; height: 16px; border: 2px solid var(--border-color); border-top-color: var(--link-color); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  .retry-btn { padding: 0.4rem 0.8rem; border: none; border-radius: 0.25rem; background: var(--link-color); color: var(--background-color); cursor: pointer; font: inherit; font-size: 0.75rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   @media (max-width: 768px) {
-    .github-contributions {
-      --contrib-cell-size: 11px;
-    }
+    .legend { display: none; }
+    .day-labels { display: none; }
+    .activity-scroll-container { margin-right: -1rem; margin-left: -1rem; padding-right: 1rem; padding-left: 1rem; }
+    .activity-grid { gap: 2px; }
+    .week { gap: 2px; }
+    .day { width: 9px; height: 9px; }
+  }
 
-    .legend {
-      display: none;
-    }
-
-    .header-right {
-      gap: 0.5rem;
-    }
-
-    .day-labels {
-      display: none;
-    }
-
-    .contributions-scroll-container {
-      margin-left: -1rem;
-      margin-right: -1rem;
-      padding-left: 1rem;
-      padding-right: 1rem;
-    }
-
-    .day {
-      width: 9px;
-      height: 9px;
-    }
-
-    .week {
-      gap: 2px;
-    }
-
-    .contributions-grid {
-      gap: 2px;
-    }
-
-    .legend-day {
-      width: 9px;
-      height: 9px;
-    }
+  @media (prefers-reduced-motion: reduce) {
+    .day, .source-link::before { transition: none; }
+    .spinner { animation: none; }
   }
 </style>

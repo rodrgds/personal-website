@@ -2,6 +2,7 @@ import { defineAction, ActionError } from "astro:actions";
 import { z } from "astro/zod";
 
 import { fetchUpstream, parseUpstreamJson } from "../lib/upstream";
+import { buildActivityCalendar } from "./activity";
 import { hevyDataCache } from "./cache";
 
 const hevySetSchema = z.looseObject({
@@ -46,27 +47,27 @@ const routinePageSchema = z.object({
 const workoutCountSchema = z.object({
   workout_count: z.number().int().nonnegative(),
 });
-const workoutsSchema = z.object({
+type HevyResult = {
+  routines: z.infer<typeof hevyRoutineSchema>[];
+  stats: { workoutCount: number };
+};
+
+const workoutsPageSchema = z.object({
+  page: z.number().int().positive(),
+  page_count: z.number().int().nonnegative(),
   workouts: z.array(
     z.looseObject({
-      title: z.string(),
       start_time: z.string(),
       end_time: z.string(),
     }),
   ),
 });
 
-type HevyResult = {
-  routines: z.infer<typeof hevyRoutineSchema>[];
-  stats: {
-    workoutCount: number;
-    recentWorkouts: Array<{
-      title: string;
-      startTime: string;
-      endTime: string;
-    }>;
-  };
-};
+interface HevyActivityResult {
+  contributions: ReturnType<typeof buildActivityCalendar>;
+  totalMinutes: number;
+  startYear: number;
+}
 
 export const getHevyData = defineAction({
   input: z.object({
@@ -194,42 +195,10 @@ export const getHevyData = defineAction({
           "Hevy",
         );
 
-        const workoutsResponse = await fetchUpstream(
-          "https://api.hevyapp.com/v1/workouts?page=1&pageSize=5",
-          {
-            method: "GET",
-            headers: {
-              Accept: "application/json",
-              "api-key": HEVY_API_KEY,
-            },
-          },
-        );
-
-        if (!workoutsResponse.ok) {
-          throw new ActionError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: `Hevy API error: ${workoutsResponse.status}`,
-          });
-        }
-
-        const workoutsData = await parseUpstreamJson(
-          workoutsResponse,
-          workoutsSchema,
-          "Hevy",
-        );
-        const recentWorkouts = workoutsData.workouts
-          .slice(0, 5)
-          .map((workout) => ({
-            title: workout.title,
-            startTime: workout.start_time,
-            endTime: workout.end_time,
-          }));
-
         const result = {
           routines: currentRoutines,
           stats: {
             workoutCount: countData.workout_count || 0,
-            recentWorkouts,
           },
         };
 
@@ -241,6 +210,108 @@ export const getHevyData = defineAction({
         code: "INTERNAL_SERVER_ERROR",
         message:
           error instanceof Error ? error.message : "Failed to fetch Hevy data",
+      });
+    }
+  },
+});
+
+export const getHevyActivity = defineAction({
+  input: z.object({
+    forceRefresh: z.boolean().optional(),
+  }),
+  handler: async (_input) => {
+    const cacheKey = "hevy-activity";
+    const cached = hevyDataCache.get(cacheKey) as HevyActivityResult | null;
+    if (cached) return cached;
+
+    const HEVY_API_KEY = import.meta.env.HEVY_API_KEY;
+    if (!HEVY_API_KEY) {
+      throw new ActionError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Hevy API key not configured",
+      });
+    }
+
+    try {
+      const result = await hevyDataCache.getOrSet(cacheKey, async () => {
+        const workouts: Array<{ start_time: string; end_time: string }> = [];
+        let page = 1;
+        let pageCount = 1;
+
+        while (page <= pageCount) {
+          const response = await fetchUpstream(
+            `https://api.hevyapp.com/v1/workouts?page=${page}&pageSize=10`,
+            {
+              method: "GET",
+              headers: {
+                Accept: "application/json",
+                "api-key": HEVY_API_KEY,
+              },
+            },
+          );
+
+          if (!response.ok) {
+            throw new ActionError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: `Hevy API error: ${response.status}`,
+            });
+          }
+
+          const data = await parseUpstreamJson(
+            response,
+            workoutsPageSchema,
+            "Hevy",
+          );
+          workouts.push(...data.workouts);
+          pageCount = data.page_count;
+          page++;
+        }
+
+        const dailyMinutes = new Map<string, number>();
+        let totalMinutes = 0;
+
+        for (const workout of workouts) {
+          const start = new Date(workout.start_time).getTime();
+          const end = new Date(workout.end_time).getTime();
+          if (
+            !Number.isFinite(start) ||
+            !Number.isFinite(end) ||
+            end <= start
+          ) {
+            continue;
+          }
+
+          const minutes = Math.round((end - start) / (1000 * 60));
+          const date = workout.start_time.slice(0, 10);
+          totalMinutes += minutes;
+          dailyMinutes.set(date, (dailyMinutes.get(date) ?? 0) + minutes);
+        }
+
+        const firstDate = [...dailyMinutes.keys()].sort()[0];
+        const startYear = firstDate
+          ? new Date(`${firstDate}T00:00:00Z`).getUTCFullYear()
+          : new Date().getFullYear();
+
+        return {
+          contributions: buildActivityCalendar(
+            dailyMinutes,
+            startYear,
+            [30, 60, 90],
+          ),
+          totalMinutes,
+          startYear,
+        } satisfies HevyActivityResult;
+      });
+
+      return result as HevyActivityResult;
+    } catch (error) {
+      if (error instanceof ActionError) throw error;
+      throw new ActionError({
+        code: "INTERNAL_SERVER_ERROR",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to fetch Hevy activity",
       });
     }
   },
