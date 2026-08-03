@@ -21,14 +21,14 @@
   onClose={closeModal}
   title="My Movies & TV Shows"
   size="lg"
-  headerLink="https://wetrakr.com/user/rodrgds"
+  headerLink="https://url.rgo.pt/movies"
   headerLinkText="View WeTrakr profile"
 >
   <div class="migration-notice">
     <p>
       I'm moving my movie and TV show tracking from Trakt.tv to
       <a
-        href="https://wetrakr.com/user/rodrgds"
+        href="https://url.rgo.pt/movies"
         target="_blank"
         rel="noopener noreferrer"
         >WeTrakr</a
