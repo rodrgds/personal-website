@@ -131,6 +131,7 @@ in
     install.exec = "${frozenInstall}/bin/personal-website-frozen-install";
     setup.exec = "${frozenInstall}/bin/personal-website-frozen-install";
     dev.exec = "bun run dev";
+    dev-browser.exec = "bun run dev:browser";
     check.exec = "bun run check";
     typecheck.exec = "bun run typecheck";
     format-check.exec = "bun run format-check";
@@ -150,6 +151,7 @@ in
     echo "  setup         Reconcile dependencies from bun.lock"
     echo "  install       Reconcile dependencies from bun.lock"
     echo "  dev           Start Astro's development server"
+    echo "  dev-browser   Start Astro on 127.0.0.1 for browser QA"
     echo "  check         Run Astro diagnostics"
     echo "  typecheck     Run Astro diagnostics"
     echo "  format-check  Check formatting without changing files"
