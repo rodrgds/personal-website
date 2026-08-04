@@ -1,12 +1,9 @@
-import { getGitHubContributions } from "./github";
-import { getHevyActivity, getHevyData } from "./hevy";
-import { getLeetCodeActivity } from "./leetcode";
+import { getHevyData } from "./hevy";
 import { getLastfmData } from "./lastfm";
+import { getActivityData } from "./personal-data";
 
 export const server = {
-  getGitHubContributions,
+  getActivityData,
   getHevyData,
-  getHevyActivity,
-  getLeetCodeActivity,
   getLastfmData,
 };

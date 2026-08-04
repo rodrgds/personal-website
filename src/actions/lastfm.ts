@@ -1,43 +1,112 @@
-import { defineAction, ActionError } from "astro:actions";
+import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";
 
-import { fetchUpstream, parseUpstreamJson } from "../lib/upstream";
-import { lastfmDataCache } from "./cache";
+import { SimpleCache } from "../lib/cache";
+import { getPersonalDataDirectus } from "../lib/personal-data/directus";
+import type {
+  DataSourceRow,
+  MetricSummaryRow,
+} from "../lib/personal-data/model";
 
-const recentTracksSchema = z.object({
-  recenttracks: z.looseObject({
-    track: z.array(
-      z.looseObject({
-        name: z.string(),
-        url: z.string(),
-        artist: z.looseObject({ name: z.string() }),
-        album: z.looseObject({ "#text": z.string() }),
-        date: z.looseObject({ uts: z.string() }).optional(),
-        "@attr": z
-          .looseObject({ nowplaying: z.string().optional() })
-          .optional(),
-      }),
-    ),
-  }),
-});
-const lastfmUserSchema = z.object({
-  user: z.looseObject({
-    playcount: z.string(),
-    registered: z.looseObject({ unixtime: z.string() }).optional(),
-  }),
-});
+interface StoredScrobble extends Record<string, unknown> {
+  id: string;
+  uts: number;
+  artist: string;
+  artist_mbid: string | null;
+  track: string;
+  track_mbid: string | null;
+  album: string | null;
+  album_mbid: string | null;
+  url: string | null;
+  image_url: string | null;
+}
 
-type LastfmResult = {
-  recenttracks: z.infer<typeof recentTracksSchema>["recenttracks"];
+interface LastfmTrack extends Record<string, unknown> {
+  name: string;
+  url: string;
+  artist: { name: string; mbid?: string };
+  album: { "#text": string; mbid?: string };
+  image?: Array<{ size: string; "#text": string }>;
+  date?: { uts: string };
+  "@attr"?: { nowplaying?: string };
+}
+
+interface LastfmResult {
+  recenttracks: { track: LastfmTrack[] };
   stats: { totalScrobbles: number; registeredDate?: string };
-};
+}
 
-function limitLastfmResult(result: LastfmResult, limit: number): LastfmResult {
+const lastfmCache = new SimpleCache<LastfmResult>(2 * 60 * 1000, 5);
+
+function sourceState(
+  source: DataSourceRow | null,
+): Record<string, unknown> | null {
+  const rawState: unknown = source?.state;
+  if (rawState && typeof rawState === "object") {
+    return rawState as Record<string, unknown>;
+  }
+  if (typeof rawState === "string") {
+    try {
+      const parsed = JSON.parse(rawState) as unknown;
+      return parsed && typeof parsed === "object"
+        ? (parsed as Record<string, unknown>)
+        : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function isFreshNowPlaying(source: DataSourceRow | null): LastfmTrack | null {
+  const state = sourceState(source);
+  if (!state || typeof state !== "object") return null;
+  const checkedAt = String(state.nowPlayingCheckedAt ?? "");
+  if (Date.now() - new Date(checkedAt).getTime() > 20 * 60_000) return null;
+  const track = state.nowPlaying;
+  return track && typeof track === "object" ? (track as LastfmTrack) : null;
+}
+
+async function readLastfmData(limit: number): Promise<LastfmResult> {
+  const directus = getPersonalDataDirectus();
+  const [rows, summary, source] = await Promise.all([
+    directus.request<StoredScrobble[]>("/items/music_scrobbles", {
+      query: {
+        fields:
+          "id,uts,artist,artist_mbid,track,track_mbid,album,album_mbid,url,image_url",
+        sort: "-uts",
+        limit,
+      },
+    }),
+    directus.readOne<MetricSummaryRow>("metric_summaries", "music"),
+    directus.readOne<DataSourceRow>("data_sources", "lastfm"),
+  ]);
+
+  const tracks: LastfmTrack[] = rows.map((row) => ({
+    name: row.track,
+    url: row.url ?? "",
+    artist: {
+      name: row.artist,
+      ...(row.artist_mbid ? { mbid: row.artist_mbid } : {}),
+    },
+    album: {
+      "#text": row.album ?? "",
+      ...(row.album_mbid ? { mbid: row.album_mbid } : {}),
+    },
+    ...(row.image_url
+      ? { image: [{ size: "extralarge", "#text": row.image_url }] }
+      : {}),
+    date: { uts: String(row.uts) },
+  }));
+  const nowPlaying = isFreshNowPlaying(source);
+  if (nowPlaying) tracks.unshift(nowPlaying);
+
+  const registeredUts = Number(sourceState(source)?.registeredUts ?? 0);
   return {
-    ...result,
-    recenttracks: {
-      ...result.recenttracks,
-      track: result.recenttracks.track.slice(0, limit),
+    recenttracks: { track: tracks.slice(0, limit) },
+    stats: {
+      totalScrobbles: summary?.total_value ?? 0,
+      ...(registeredUts ? { registeredDate: String(registeredUts) } : {}),
     },
   };
 }
@@ -45,91 +114,20 @@ function limitLastfmResult(result: LastfmResult, limit: number): LastfmResult {
 export const getLastfmData = defineAction({
   input: z.object({
     limit: z.number().int().min(1).max(100).optional().default(10),
-    // Retained for wire compatibility; public callers cannot bypass the cache.
     forceRefresh: z.boolean().optional(),
   }),
   handler: async (input) => {
-    const cacheKey = "lastfm-data";
-
-    const cached = lastfmDataCache.get(cacheKey) as LastfmResult | null;
-    if (cached) return limitLastfmResult(cached, input.limit);
-
-    const LASTFM_API_KEY = import.meta.env.LASTFM_API_KEY;
-    const LASTFM_USERNAME = import.meta.env.LASTFM_USERNAME;
-
-    if (!LASTFM_API_KEY || !LASTFM_USERNAME) {
-      throw new ActionError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Last.fm credentials not configured",
-      });
-    }
-
+    const key = `lastfm:${input.limit}`;
+    if (input.forceRefresh) lastfmCache.clear();
     try {
-      const tracksUrl = new URL("https://ws.audioscrobbler.com/2.0/");
-      tracksUrl.searchParams.set("method", "user.getRecentTracks");
-      tracksUrl.searchParams.set("user", LASTFM_USERNAME);
-      tracksUrl.searchParams.set("api_key", LASTFM_API_KEY);
-      tracksUrl.searchParams.set("format", "json");
-      tracksUrl.searchParams.set("limit", "100");
-      tracksUrl.searchParams.set("extended", "1");
-
-      const result = (await lastfmDataCache.getOrSet(cacheKey, async () => {
-        const tracksResponse = await fetchUpstream(tracksUrl);
-
-        if (!tracksResponse.ok) {
-          throw new ActionError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: `Last.fm API error: ${tracksResponse.status}`,
-          });
-        }
-
-        const tracksData = await parseUpstreamJson(
-          tracksResponse,
-          recentTracksSchema,
-          "Last.fm",
-        );
-
-        const userUrl = new URL("https://ws.audioscrobbler.com/2.0/");
-        userUrl.searchParams.set("method", "user.getInfo");
-        userUrl.searchParams.set("user", LASTFM_USERNAME);
-        userUrl.searchParams.set("api_key", LASTFM_API_KEY);
-        userUrl.searchParams.set("format", "json");
-
-        const userResponse = await fetchUpstream(userUrl);
-
-        if (!userResponse.ok) {
-          throw new ActionError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: `Last.fm API error: ${userResponse.status}`,
-          });
-        }
-
-        const userData = await parseUpstreamJson(
-          userResponse,
-          lastfmUserSchema,
-          "Last.fm",
-        );
-
-        const result = {
-          recenttracks: tracksData.recenttracks,
-          stats: {
-            totalScrobbles: parseInt(userData.user.playcount) || 0,
-            registeredDate: userData.user.registered?.unixtime,
-          },
-        };
-
-        return result;
-      })) as LastfmResult;
-
-      return limitLastfmResult(result, input.limit);
+      return await lastfmCache.getOrSet(key, () => readLastfmData(input.limit));
     } catch (error) {
-      if (error instanceof ActionError) throw error;
       throw new ActionError({
         code: "INTERNAL_SERVER_ERROR",
         message:
           error instanceof Error
             ? error.message
-            : "Failed to fetch Last.fm data",
+            : "Failed to load stored Last.fm data",
       });
     }
   },
