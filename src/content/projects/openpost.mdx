@@ -4,14 +4,14 @@ startDate: "2026-03"
 url: "https://openpost.social"
 repo: "rodrgds/openpost"
 logo: "openpost"
-tags: ["Go", "SvelteKit", "SQLite", "OAuth", "Docker", "Self-hosted"]
+tags: ["Go", "SvelteKit", "SQLite", "Social Media", "MCP", "Self-hosted"]
 featured: true
 status: "active"
 bullets:
-  - "Built a Typefully/Buffer-style scheduler that runs as a single Go binary with an embedded SvelteKit frontend and SQLite persistence"
-  - "Implemented post scheduling and publishing flows for X, Mastodon, Bluesky, Threads, and LinkedIn"
-  - "Added account settings, media-library workflows, a SQLite-backed job queue, and multi-tenant RBAC"
-  - "Used coding agents end-to-end to explore AI-assisted development on an unfamiliar Go codebase"
+  - "Built an open-source content workspace for solo founders to create, adapt, schedule, publish, and track content across social platforms"
+  - "Shipped destination-aware composition, Social Sets, calendar and status views, analytics, native repost rules, replies, notifications, and reusable media workflows"
+  - "Added local image and video editors plus workspace-scoped API, CLI, and MCP automation without exposing social account credentials"
+  - "Kept self-hosting small with one Go binary or container, an embedded SvelteKit app, SQLite, local media, and database-backed jobs"
 ---
 
 import CVImage from "../../components/features/cv/CVImage.astro";
@@ -21,11 +21,11 @@ import openpostMain from "../../assets/cv/openpost/main.png";
 import openpostMedia from "../../assets/cv/openpost/media.png";
 import openpostSettings from "../../assets/cv/openpost/settings.png";
 
-**OpenPost** is an open-source alternative to tools like <Logo fixed src="typefully" /> **Typefully** and Buffer. I built it because most self-hosted alternatives like <Logo fixed src="postiz" /> **Postiz** were just too heavy and bloated for what I needed. I wanted something that was completely self-contained, where you could run a single <Logo fixed src="golang" /> **Go** binary on your own server without worrying about data leaving your machine or paying for monthly subscriptions.
+**OpenPost** is an open-source content workspace for solo founders. It turns launches, product updates, lessons, and ideas into content, then adapts, schedules, publishes, and tracks each destination from one place. Its destination-aware composer supports posts, threads, stories, short videos, and videos; Social Sets keep reusable account groups and format defaults; and calendar and status views show planned, published, and failed work.
 
-The app uses a <Logo fixed src="svelte" /> **SvelteKit** frontend, <Logo fixed src="sqlite" /> **SQLite** for local persistence, and can run with <Logo fixed src="docker" /> **Docker**. It currently supports publishing to <Logo fixed src="x" /> **X**, <Logo fixed src="mastodon" /> **Mastodon**, <Logo fixed src="bluesky" /> **Bluesky**, <Logo fixed src="threads" /> **Threads**, and <Logo fixed src="linkedin" /> **LinkedIn**.
+The product now covers the full publishing loop: account and post analytics, rules-based native reposts, comments and replies, supported inbox collection, personal and email notifications, and a shared media library with organization and stock search. OpenPost Image Editor and Video Editor create stills and social video locally, with watermark-free exports and both quick-cut and full editing workflows.
 
-This is still in early development but is already functional for scheduling and publishing posts.
+OpenPost supports X, <Logo fixed src="mastodon" /> **Mastodon**, <Logo fixed src="bluesky" /> **Bluesky**, LinkedIn profiles and Organization Pages, <Logo fixed src="threads" /> **Threads**, Facebook Pages, Instagram Business and Creator accounts, TikTok, YouTube, and Discord webhooks. It can run as a managed service or as one <Logo fixed src="golang" /> **Go** binary or container with an embedded <Logo fixed src="svelte" /> **SvelteKit** app, <Logo fixed src="sqlite" /> **SQLite**, local media, and database-backed jobs. PostgreSQL and S3-compatible storage are optional, while the API, CLI, and MCP use scoped OpenPost tokens instead of social account credentials.
 
 ## Screenshots
 

@@ -1,0 +1,40 @@
+---
+name: "Colonist Assistant"
+startDate: "2026-07"
+endDate: "2026-08"
+url: "https://chromewebstore.google.com/detail/giljoabonkhaolnpnbfpahenndegloin"
+repo: "rodrgds/colonist-assistant"
+logo: "colonist-assistant"
+tags: ["TypeScript", "Rust", "WebAssembly", "Chrome Extension", "Game AI"]
+category: "personal"
+featured: true
+status: "archived"
+bullets:
+  - "Built a local-only Chrome extension that reads visible Colonist game state, tracks known and possible opponent hands, and gives legal, board-aware advice"
+  - "Implemented a Rust and WebAssembly decision engine for openings, builds, trades, robber targets, discards, development-card timing, and live win estimates"
+  - "Added opt-in autopilot with board-state validation before each click, configurable pacing, and privacy safeguards that keep game data in the browser"
+---
+
+import CVImage from "../../components/features/cv/CVImage.astro";
+import CVImageGallery from "../../components/features/cv/CVImageGallery.astro";
+import Logo from "../../components/common/Logo.astro";
+import cardTracking from "../../assets/cv/colonist-assistant/card-tracking-and-win-estimates.png";
+import decisionSettings from "../../assets/cv/colonist-assistant/decision-engine-settings.png";
+import discardAdvice from "../../assets/cv/colonist-assistant/discard-card-advice.png";
+import liveAdvice from "../../assets/cv/colonist-assistant/live-strategy-advice.png";
+
+**Colonist Assistant** is an unofficial Chrome extension for friendly Colonist.io games where everyone has agreed to assistant use. It reads the game state already visible to the player, tracks known cards and honest ranges for unknown hands, estimates each player's position, and recommends one legal next step. Optional autopilot can carry out high-confidence steps after checking that the board still matches the state used to choose them.
+
+The extension combines a <Logo fixed src="typescript" /> **TypeScript** integration layer with a Rust decision engine compiled to WebAssembly. Its Strategist engine evaluates opening placements, builds, trades, robber targets, discards, development-card timing, and other legal actions. All game analysis runs locally in the browser, without a server, ads, tracking, or usage reports.
+
+### Live strategy advice
+
+<CVImage src={liveAdvice} alt="Colonist Assistant recommending a legal counteroffer during a live Colonist game" />
+
+### Card tracking, forced actions, and engine settings
+
+<CVImageGallery columns={2} mobileColumns={1}>
+  <CVImage src={cardTracking} alt="Colonist Assistant showing exact card counts, possible opponent-card ranges, bank totals, and live win estimates" />
+  <CVImage src={discardAdvice} alt="Colonist Assistant recommending an exact set of cards to discard after a seven" />
+  <CVImage src={decisionSettings} alt="Colonist Assistant settings for the Strategist engine, next-click highlighting, and autopilot" />
+</CVImageGallery>
