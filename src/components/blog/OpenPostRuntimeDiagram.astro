@@ -1,0 +1,204 @@
+<figure class="diagram" aria-labelledby="openpost-runtime-caption">
+  <div class="canvas">
+    <svg
+      viewBox="0 0 760 430"
+      role="img"
+      aria-labelledby="runtime-title runtime-desc"
+    >
+      <title id="runtime-title">OpenPost runtime architecture</title>
+      <desc id="runtime-desc"
+        >Browser, CLI, and MCP clients connect to one Go application containing
+        the embedded SvelteKit interface, HTTP backend, provider adapters, and
+        polling worker. It uses a relational database for product state and
+        durable jobs, separate media storage, and external social APIs.</desc
+      >
+      <defs>
+        <marker
+          id="runtime-arrow"
+          viewBox="0 0 10 10"
+          refX="8"
+          refY="5"
+          markerWidth="7"
+          markerHeight="7"
+          orient="auto"
+        >
+          <path d="M0 0 10 5 0 10z" class="arrow-head"></path>
+        </marker>
+      </defs>
+
+      <g class="arrows">
+        <path d="M118 66V105H250"></path>
+        <path d="M270 66V105"></path>
+        <path d="M422 66V105H386"></path>
+        <path d="M630 205H694"></path>
+        <path d="M376 300V344H228"></path>
+        <path d="M492 300V344H574"></path>
+      </g>
+
+      <g class="node client"
+        ><rect x="55" y="22" width="126" height="44" rx="5"></rect><text
+          x="118"
+          y="49"
+          text-anchor="middle">Browser</text
+        ></g
+      >
+      <g class="node client"
+        ><rect x="207" y="22" width="126" height="44" rx="5"></rect><text
+          x="270"
+          y="49"
+          text-anchor="middle">CLI</text
+        ></g
+      >
+      <g class="node client"
+        ><rect x="359" y="22" width="126" height="44" rx="5"></rect><text
+          x="422"
+          y="49"
+          text-anchor="middle">MCP client</text
+        ></g
+      >
+
+      <g class="boundary">
+        <rect x="58" y="105" width="572" height="195" rx="9"></rect>
+        <text x="78" y="132" class="tag">ONE GO APPLICATION / CONTAINER</text>
+      </g>
+
+      <g class="node frontend">
+        <rect x="82" y="154" width="156" height="112" rx="6"></rect>
+        <text x="100" y="183" class="title">Embedded UI</text>
+        <text x="100" y="207" class="detail">SvelteKit static build</text>
+        <text x="100" y="229" class="detail">served with go:embed</text>
+      </g>
+      <g class="node backend">
+        <rect x="258" y="154" width="196" height="112" rx="6"></rect>
+        <text x="276" y="183" class="title">HTTP backend</text>
+        <text x="276" y="207" class="detail">API · OAuth · media</text>
+        <text x="276" y="229" class="detail">services · adapters</text>
+      </g>
+      <g class="node worker">
+        <rect x="474" y="154" width="132" height="112" rx="6"></rect>
+        <text x="492" y="183" class="title">Worker</text>
+        <text x="492" y="207" class="detail">poll · claim</text>
+        <text x="492" y="229" class="detail">publish · retry</text>
+      </g>
+      <g class="node external">
+        <rect x="666" y="164" width="82" height="82" rx="6"></rect>
+        <text x="707" y="194" text-anchor="middle" class="title">Social</text>
+        <text x="707" y="216" text-anchor="middle" class="title">APIs</text>
+      </g>
+      <g class="node database">
+        <rect x="104" y="344" width="248" height="64" rx="6"></rect>
+        <text x="122" y="371" class="title">Database</text>
+        <text x="122" y="393" class="detail">product state + durable jobs</text>
+        <text x="340" y="371" text-anchor="end" class="tag"
+          >SQLite / PostgreSQL</text
+        >
+      </g>
+      <g class="node storage">
+        <rect x="450" y="344" width="248" height="64" rx="6"></rect>
+        <text x="468" y="371" class="title">Media storage</text>
+        <text x="468" y="393" class="detail">source files + derivatives</text>
+        <text x="686" y="371" text-anchor="end" class="tag"
+          >Local / S3-compatible</text
+        >
+      </g>
+    </svg>
+  </div>
+  <figcaption id="openpost-runtime-caption">
+    The default deployment has one application and two persistent boundaries:
+    the database and media storage.
+  </figcaption>
+</figure>
+
+<style>
+  .diagram {
+    margin: 1.35rem 0 1.6rem;
+  }
+  .canvas {
+    overflow-x: auto;
+  }
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    color: var(--text-color);
+  }
+  .node rect,
+  .boundary rect {
+    fill: var(--surface-color);
+    stroke: var(--border-color);
+    stroke-width: 1.4;
+    vector-effect: non-scaling-stroke;
+  }
+  .boundary rect {
+    fill: color-mix(in srgb, var(--bg-secondary) 62%, transparent);
+    stroke-dasharray: 5 5;
+  }
+  .frontend rect {
+    stroke: var(--flexoki-blue);
+  }
+  .backend rect {
+    stroke: var(--flexoki-cyan);
+  }
+  .worker rect {
+    stroke: var(--flexoki-orange);
+  }
+  .database rect {
+    stroke: var(--flexoki-green);
+  }
+  .storage rect {
+    stroke: var(--flexoki-purple);
+  }
+  .client rect,
+  .external rect {
+    stroke: var(--text-muted);
+  }
+  .arrows path {
+    fill: none;
+    stroke: var(--text-muted);
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+    marker-end: url(#runtime-arrow);
+  }
+  .arrow-head {
+    fill: var(--text-muted);
+  }
+  text {
+    fill: var(--text-color);
+    font-family: var(--font-family-mono);
+    font-size: 13px;
+  }
+  .title {
+    fill: var(--heading-color);
+    font-size: 14px;
+    font-weight: 650;
+  }
+  .detail {
+    fill: var(--text-muted);
+    font-size: 11px;
+  }
+  .tag {
+    fill: var(--text-muted);
+    font-size: 9px;
+    font-weight: 650;
+    letter-spacing: 0.06em;
+  }
+  figcaption {
+    margin-top: 0.7rem;
+    color: var(--text-muted);
+    font-family: var(--font-family-mono);
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+  @media (max-width: 34rem) {
+    svg {
+      min-width: 36rem;
+    }
+    .diagram {
+      margin-inline: calc(var(--page-padding) * -0.45);
+    }
+    figcaption {
+      margin-inline: calc(var(--page-padding) * 0.45);
+      font-size: 0.72rem;
+    }
+  }
+</style>

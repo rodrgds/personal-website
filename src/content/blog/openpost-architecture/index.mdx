@@ -1,0 +1,124 @@
+---
+title: "How OpenPost schedules posts without Redis"
+description: "How OpenPost uses its relational database as a durable job queue without turning a small self-hosted deployment into an unreliable one."
+tags: ["openpost", "architecture", "go", "sveltekit", "sqlite", "self-hosting"]
+pubDate: "2026-08-14"
+---
+
+import OpenPostRuntimeDiagram from "../../../components/blog/OpenPostRuntimeDiagram.astro";
+import OpenPostPublicationDiagram from "../../../components/blog/OpenPostPublicationDiagram.astro";
+
+I did not want a social scheduler to need Redis, Postgres, object storage, and several services before the login page appeared. That may be a normal production stack for a large hosted product. It is a poor starting point for someone running one scheduler on their own server.
+
+The constraint I chose for OpenPost was more specific: the default self-hosted deployment should be one Go binary or container, plus persistent data. Scheduled work still had to survive a restart. A failed publish needed a visible state and a safe retry path. Platform-specific behavior could not leak into every handler. Keeping the deployment small was only useful if it did not make the application careless.
+
+The resulting shape is compact:
+
+<OpenPostRuntimeDiagram />
+
+Production builds the SvelteKit frontend as static files and embeds them in the Go executable with `go:embed`. Echo serves HTTP. Huma defines the typed API operations and generates the OpenAPI surface. The browser, JSON API, OAuth callbacks, media routes, MCP endpoint, and polling worker therefore run in one process and under the same backend authority. The CLI calls that API instead of carrying a second copy of the product logic.
+
+One process does not mean one package. Handlers still own transport concerns, services own product rules, database packages own persistence, and provider code sits behind interfaces. I want one deployable unit by default, not a large package with HTTP, SQL, and OAuth mixed together.
+
+SQLite is that deployment's default database. Media goes to the local filesystem. OpenPost also supports PostgreSQL, and its `BlobStorage` interface allows S3-compatible storage. Those are options for hosted or larger installations, or for operators with different durability needs. The default is small, but it still needs configuration, backups, a persistent volume, and access to provider services over the network.
+
+## A schedule is a database record, not a timer
+
+The tempting first implementation of scheduling is a timer in the web process: accept a date, wait, then call the provider. It works in a demo and fails the first time the process restarts. A deploy loses the timer. A crash loses the reason it stopped. There is no durable place to show whether the work is pending, running, retrying, or dead.
+
+That is unacceptable for social publishing. A user may schedule something hours or weeks ahead and close the browser. Once OpenPost accepts that schedule, the state must outlive the process that accepted it. Publishing late is bad. Quietly forgetting the post is worse.
+
+OpenPost stores jobs as ordinary database rows alongside publication and account state. A job has a type and payload, a `run_at` time, a status, its attempt count and maximum attempts, the last error, and lock fields. The worker starts with the server, polls every second, recovers stale work, and drains all jobs that are due.
+
+The important part of the poll is the claim. This is a shortened version of the query in [`worker.go`](https://github.com/getopenpost/openpost/blob/main/backend/internal/queue/worker.go):
+
+```sql
+UPDATE jobs
+SET status = 'processing',
+    locked_at = CURRENT_TIMESTAMP,
+    locked_by = ?
+WHERE status = 'pending'
+  AND id = (
+    SELECT id
+    FROM jobs
+    WHERE status = 'pending'
+      AND run_at <= CURRENT_TIMESTAMP
+    ORDER BY run_at ASC
+    LIMIT 1
+  )
+RETURNING *;
+```
+
+The update changes the oldest due pending row to `processing`, records who owns it, and returns that row as one database operation. `UPDATE ... RETURNING` is doing real work here. If the worker selected a row and updated it in two separate operations, another worker could select the same pending job in between. Both could then publish it. Avoiding that race would require a transaction and appropriate locking semantics for each supported database. The atomic claim gives the code one clear boundary.
+
+The queue also creates an index on `(status, run_at)`. Polling is frequent by design, so finding the next pending due row must not turn into a scan of job history. Completed and failed rows stay useful for status and diagnosis without making the hot query needlessly expensive.
+
+Today OpenPost starts one worker in the main process. The lock still matters. It prevents the claim path from assuming that there can only ever be one caller, and it gives the job an explicit owner while it runs. That makes a later separate-worker mode possible without changing what a job means.
+
+## Failure is part of the queue contract
+
+Claiming a job safely is the easy half. The worker then has to decide what an error means.
+
+Each failure increments `attempts`. If it is retryable and the job has attempts left, the worker returns it to `pending` with a new `run_at`. The delay grows exponentially, includes jitter, and is bounded. When a provider supplies `Retry-After`, OpenPost feeds that into the delay rather than hammering the same endpoint on its own schedule. The job becomes terminally `failed` when the failure is not safe to retry or `max_attempts` has been reached. Its error remains available to the product instead of disappearing into a log.
+
+The classification is provider-aware. A rate limit, network failure, provider 5xx response, or provider-side media-processing failure can be temporary. Bad content, missing permission, an expired connection, a plan restriction, or duplicate content needs a person or a changed condition, not another identical request. OpenPost records the kind, provider code and HTTP status where available, whether a retry is allowed, the retry time, and the action the UI should offer.
+
+Long-running work adds another failure mode. A worker can die after claiming a job but before writing the result. While a job runs, a goroutine refreshes `locked_at` every five minutes. At the start of each polling pass, the worker looks for `processing` jobs whose lock has not moved for fifteen minutes. It clears the dead ownership and moves ordinary stale work back to `pending` without consuming an attempt. A healthy slow operation keeps its lock fresh; a dead process eventually stops blocking the row forever.
+
+Recovery is not identical for every job type. Periodic sweep jobs can be marked complete when a newer sweep is already pending, which avoids replaying obsolete housekeeping. A stale repost execution is more serious: the provider write may already have happened, so OpenPost marks it as an ambiguous failure instead of sending it again. The queue machinery is shared, but job semantics get the last word.
+
+## The limit: a provider POST is not exactly once
+
+An atomic database claim does not make an external API call atomic with the database update that follows it.
+
+Suppose OpenPost sends a publish request and the provider creates the post, but the response times out on its way back. Locally, the operation looks like a network failure. Retrying may create the same post twice. Without an idempotency key that the provider accepts and applies to that exact operation, OpenPost cannot prove whether the first write took effect.
+
+The current publication path classifies temporary errors and can retry failed destination renditions. That is useful for an explicit rate limit or a provider outage, but it is not a claim of exactly-once publishing. A timeout remains an awkward case because the classifier sees a network failure while the remote outcome may be unknown. The durable state and provider IDs reduce the places where duplicate work can happen; they cannot close the transaction around someone else's server.
+
+Other writes use a stricter policy. Automatic retries are deliberately disabled for ambiguous engagement actions, message sends, and repost execution. If one of those writes returns an error, the worker fails it rather than blindly repeating it. If the process dies during a repost call, stale-lock recovery also records the result as ambiguous. Read-side syncs and evaluation jobs may retry because repeating a read does not duplicate a public action.
+
+This distinction is why I did not hide retry policy inside a generic queue library. `attempts < max_attempts` is necessary, but it is not enough. The worker must know whether repeating this kind of work is safe, and the publisher must know which destination actually failed.
+
+## A cross-post is not one row
+
+The first data model people reach for is often a `posts` table with text, a scheduled date, and a JSON array of networks. It looks efficient until one destination needs shorter text, another needs a title, a third uses a thread, and only one of them rejects the video. Then the JSON field starts holding content overrides, remote IDs, error state, and exceptions to its own schema.
+
+OpenPost separates source intent from provider output.
+
+A `Publication` is the canonical thing the user is making: the source text, intent, content profile, schedule, and lifecycle state. Its ordered `PublicationSegment` rows represent the content structure. A normal post has one segment. A thread or a root post with follow-ups can have several. Source media belongs to those segments in order.
+
+Each selected social account gets a `Rendition`. This is the destination-specific form of the publication, not just a network name. It carries the platform, account, output profile, schedule override, content and settings, publish status, provider ID and URL, and structured error and retry state. Rendition segments retain their link to the source segments while holding destination text, overrides, order, status, and provider results. Rendition media can change order, role, alt text, thumbnail position, and settings for that destination.
+
+In compact form:
+
+<OpenPostPublicationDiagram />
+
+The extra tables become useful as soon as the APIs disagree. Networks have different text limits, media combinations, thread mechanics, visibility controls, schedules, and error responses. The source can say what the user meant while a rendition says what OpenPost will send to one account.
+
+It also changes failure handling. Publishing is not one all-or-nothing update across every network. OpenPost can publish or retry destination renditions that are still pending or failed with a retryable error. A successful destination keeps its provider ID and published state while another waits for its retry time. Repeating the whole cross-post because one API returned 429 would be both wasteful and dangerous.
+
+`Publication.revision` protects edits to this graph. Mutation requests carry the expected revision; a stale client cannot silently overwrite a newer version. This matters because an edit can affect the canonical segments and the derived destination output together. The revision gives that draft change one concurrency boundary even though its data spans several tables.
+
+## Share the workflow, expose the differences
+
+Provider code follows the same principle. The core `platform.Adapter` covers authentication, token refresh, account profile lookup, media upload, and publishing. Analytics, comments and reactions, engagement, messaging, account selection, and other features use optional capability interfaces. A provider should not implement a giant interface with fake methods for features its API does not have.
+
+Differences are also data, not only Go branches. A central capability catalog describes provider and output-profile limits, accepted media, required public media, available settings, and known caveats. Destination settings store the choices that apply to a rendition. The composer and validation paths can therefore show the actual provider rules instead of presenting a lowest-common-denominator post and failing later.
+
+OpenPost shares the parts that are actually common: load the account, validate the rendition, obtain media, call an adapter, classify the result, and persist destination state. OAuth details, upload protocols, threading, limits, and error codes remain visible in provider implementations. Treating unlike APIs as identical would make the abstraction smaller and the failures harder to understand.
+
+Storage follows a shorter version of the same boundary. `BlobStorage` gives services a common way to save, open, address, and delete media. Local files are the self-hosted default; S3-compatible storage is available when local disk is the wrong operational choice. Some providers accept uploaded bytes, while others must fetch a public URL, so storage abstraction does not erase delivery rules.
+
+The credential boundary also matters for automation. Social access and refresh tokens are encrypted at rest with AES-256-GCM. The API, CLI, and MCP do not receive those raw provider credentials. They use revocable OpenPost tokens that can be scoped to a workspace, with separate CLI and MCP scopes. Authentication, workspace access, validation, and publish rules run in the same backend for every client. A new client does not get a second, weaker version of the rules.
+
+## What this design does not solve
+
+I would not use this design for every workload. Polling adds steady database work, one in-process worker limits independent scaling, and SQLite has finite write concurrency. A large burst of jobs or long provider calls would expose those limits sooner than a dedicated queue and worker fleet.
+
+That is not OpenPost's current problem. Redis would solve a scale problem I do not have while giving every self-hoster another service to run, secure, back up, and monitor. I would rather keep the operational cost low and spend the complexity in the code that decides whether a provider write is safe to repeat and which destination failed.
+
+If measurements show database contention or a need to scale workers independently, PostgreSQL is already supported and the claim/lock model gives a separate worker process a clean boundary. I will make that change when the load earns it.
+
+The harder limits remain outside OpenPost either way. Provider APIs fail. OAuth apps need review. Rate limits change. Some media must be fetched across the public internet. A request can succeed remotely while its response is lost. One container makes OpenPost easier to operate; it does not make the systems it talks to reliable.
+
+The [OpenPost source](https://github.com/getopenpost/openpost) contains the full worker and publication model, and [openpost.social](https://openpost.social) has the project and self-hosting details.
