@@ -24,6 +24,7 @@ function raiseWatcherListenerLimit() {
 export default defineConfig({
   site: "https://rgo.pt",
   output: "server",
+  compressHTML: false,
   adapter: process.env.VERCEL === "1" ? vercel() : node({ mode: "standalone" }),
   integrations: [mdx(), sitemap(), svelte(), whiteLogosIntegration()],
   markdown: {
