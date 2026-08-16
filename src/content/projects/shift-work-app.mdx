@@ -1,18 +1,18 @@
 ---
-name: "Trabalho por Turnos"
+name: "ENF."
 startDate: "2023-02"
-url: "https://url.rgo.pt/turnos"
-logo: "trabalhoporturnos"
-tags: ["Framework7", "Svelte", "Capacitor", "Android", "Offline-first"]
+url: "https://url.rgo.pt/enf"
+logo: "enf"
+tags: ["Expo", "React Native", "SQLite", "Convex", "Offline-first"]
 featured: true
 status: "active"
 bullets:
-  - "Published an offline-first Android app for Portuguese shift workers, reaching 100+ downloads from nurses in Portugal"
-  - "Implemented shift scheduling, overtime/night-shift pay logic, municipal holidays, and monthly reports"
+  - "Rebuilt my offline-first shift app Trabalho por Turnos as ENF., a work companion for nurses in Portugal with calendar-based shift scheduling, overtime/night-shift pay logic, municipal holidays, and monthly reports"
+  - "The original app reached 100+ downloads from nurses in Portugal; ENF. keeps its local-first core and adds optional cloud backup and sync"
 demoVideo: "https://www.youtube.com/watch?v=bJtA1PApNfE"
 ---
 import Logo from "../../components/common/Logo.astro";
 
-Started as a family tool, then grew into a public Android app for Portuguese shift workers. I wanted to handle the annoying real-world details around overtime, night shifts, and holidays without needing a server or a complex login.
+Started as a family tool, then grew into a public Android app for Portuguese shift workers. It was called Trabalho por Turnos and now is just **ENF.**, an offline-first work companion for nurses in Portugal.
 
-The stack is <Logo fixed src="framework7" /> **Framework7** + <Logo fixed src="svelte" /> **Svelte 4** + <Logo fixed src="vite" /> **Vite** + <Logo fixed src="capacitor" /> **Capacitor**, with local persistence and native packaging. The app includes calendar-based shift management, municipal-holiday configuration, and automated monthly reports.
+The current app is built with <Logo fixed src="expo" /> **Expo** + <Logo fixed src="react" /> **React Native**, with <Logo fixed src="sqlite" /> **SQLite** as the local source of truth and optional <Logo fixed src="convex" /> **Convex** backup and sync. It keeps the calendar-based shift management, municipal-holiday configuration, overtime/night-shift logic, and automated monthly reports, and adds a news and community feed for nurses.

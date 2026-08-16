@@ -87,7 +87,7 @@ const compactProfile: CVProfile = {
       "Used agentic coding to ship five-platform publishing, media management, job queues, and multi-tenant RBAC",
     ],
     "projects/shift-work-app": [
-      "Published an offline-first Android app for Portuguese shift workers, reaching 100+ downloads, with scheduling, overtime/night-shift pay logic, municipal holidays, and monthly reports",
+      "Rebuilt the offline-first Android app Trabalho por Turnos into ENF., a companion for Portuguese nurses with scheduling, overtime/night-shift pay logic, municipal holidays, monthly reports, and optional cloud backup and sync",
     ],
     "projects/the-actual-world": [
       "Built a high-school capstone with Expo/React Native, private posts, maps, real-time chat, Stripe credits, push notifications, and PHP/MySQL admin tooling",
