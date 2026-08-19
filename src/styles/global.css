@@ -48,22 +48,22 @@
   --flexoki-purple: #5e409d;
   --flexoki-magenta: #a02f6f;
 
-  --background-color: #fff;
-  --bg-secondary: #f8f9fa;
-  --surface-color: #fff;
-  --surface-hover: #f1f5f9;
-  --heading-color: #222;
-  --text-color: #444;
-  --text-muted: #6b7280;
-  --link-color: #3a6eaa;
-  --accent: #3a6eaa;
+  --background-color: #fffcf0; /* flexoki paper */
+  --bg-secondary: #f2f0e5; /* flexoki base-50 */
+  --surface-color: #fffcf0; /* flexoki paper */
+  --surface-hover: #e6e4d9; /* flexoki base-100 */
+  --heading-color: #100f0f; /* flexoki black */
+  --text-color: #403e3c; /* flexoki base-800 */
+  --text-muted: #6f6e69; /* flexoki base-600 */
+  --link-color: #205ea6; /* flexoki blue-600 */
+  --accent: #bc5215; /* flexoki orange-600 */
   --link-underline-color: var(--link-color);
-  --visited-color: #6f4fb9;
-  --error: #dc2626;
-  --code-color: #222;
-  --blockquote-color: #222;
-  --border-color: #e5e7eb;
-  --gray-color: #6b7280;
+  --visited-color: #5e409d; /* flexoki purple-600 */
+  --error: #af3029; /* flexoki red-600 */
+  --code-color: #282726; /* flexoki base-900 */
+  --blockquote-color: #403e3c; /* flexoki base-800 */
+  --border-color: #dad8ce; /* flexoki base-150 */
+  --gray-color: #6f6e69; /* flexoki base-600 */
   --code-background-color: #1a1a1a;
 }
 
@@ -80,22 +80,22 @@
     --flexoki-purple: #8b7ec8;
     --flexoki-magenta: #ce5d97;
 
-    --background-color: #1e1e1e;
-    --bg-secondary: #252525;
-    --surface-color: #252525;
-    --surface-hover: #2d2d2d;
-    --heading-color: #eee;
-    --text-color: #ddd;
-    --text-muted: #9ca3af;
-    --link-color: #ff8800;
-    --accent: #ff8800;
+    --background-color: #100f0f; /* flexoki black */
+    --bg-secondary: #1c1b1a; /* flexoki base-950 */
+    --surface-color: #1c1b1a; /* flexoki base-950 */
+    --surface-hover: #282726; /* flexoki base-900 */
+    --heading-color: #e6e4d9; /* flexoki base-100 */
+    --text-color: #cecdc3; /* flexoki base-200 */
+    --text-muted: #878580; /* flexoki base-500 */
+    --link-color: #da702c; /* flexoki orange-400 */
+    --accent: #da702c; /* flexoki orange-400 */
     --link-underline-color: var(--link-color);
-    --visited-color: #cc6f00;
-    --error: #f87171;
-    --code-color: #ddd;
-    --blockquote-color: #ccc;
-    --border-color: #374151;
-    --gray-color: #9ca3af;
+    --visited-color: #d14d41; /* flexoki red-400 */
+    --error: #d14d41; /* flexoki red-400 */
+    --code-color: #e6e4d9; /* flexoki base-100 */
+    --blockquote-color: #cecdc3; /* flexoki base-200 */
+    --border-color: #403e3c; /* flexoki base-800 */
+    --gray-color: #878580; /* flexoki base-500 */
     --code-background-color: #0d0d0d;
   }
 }
@@ -112,22 +112,22 @@
   --flexoki-purple: #8b7ec8;
   --flexoki-magenta: #ce5d97;
 
-  --background-color: #1e1e1e;
-  --bg-secondary: #252525;
-  --surface-color: #252525;
-  --surface-hover: #2d2d2d;
-  --heading-color: #eee;
-  --text-color: #ddd;
-  --text-muted: #9ca3af;
-  --link-color: #ff8800;
-  --accent: #ff8800;
+  --background-color: #100f0f; /* flexoki black */
+  --bg-secondary: #1c1b1a; /* flexoki base-950 */
+  --surface-color: #1c1b1a; /* flexoki base-950 */
+  --surface-hover: #282726; /* flexoki base-900 */
+  --heading-color: #e6e4d9; /* flexoki base-100 */
+  --text-color: #cecdc3; /* flexoki base-200 */
+  --text-muted: #878580; /* flexoki base-500 */
+  --link-color: #da702c; /* flexoki orange-400 */
+  --accent: #da702c; /* flexoki orange-400 */
   --link-underline-color: var(--link-color);
-  --visited-color: #cc6f00;
-  --error: #f87171;
-  --code-color: #ddd;
-  --blockquote-color: #ccc;
-  --border-color: #374151;
-  --gray-color: #9ca3af;
+  --visited-color: #d14d41; /* flexoki red-400 */
+  --error: #d14d41; /* flexoki red-400 */
+  --code-color: #e6e4d9; /* flexoki base-100 */
+  --blockquote-color: #cecdc3; /* flexoki base-200 */
+  --border-color: #403e3c; /* flexoki base-800 */
+  --gray-color: #878580; /* flexoki base-500 */
   --code-background-color: #0d0d0d;
 }
 
@@ -294,7 +294,6 @@ a[data-animated-link="true"] .animated-link-line::before {
   transition: width 0.25s ease;
 }
 
-a[data-animated-link="true"]:hover .animated-link-line::before,
 a[data-animated-link="true"]:focus-visible .animated-link-line::before {
   width: 100%;
 }
@@ -322,8 +321,12 @@ button {
   cursor: pointer;
 }
 
+::selection {
+  background-color: color-mix(in srgb, var(--flexoki-blue) 22%, transparent);
+}
+
 :focus-visible {
-  outline: 2px solid var(--link-color);
+  outline: 2px solid var(--flexoki-blue);
   outline-offset: 0.18rem;
 }
 
@@ -360,7 +363,8 @@ code {
 }
 
 blockquote {
-  border-left: 1px solid #999;
+  border-left: 1px solid
+    color-mix(in srgb, var(--flexoki-blue) 60%, transparent);
   color: var(--blockquote-color);
   padding-left: 16px;
   margin: 0;
