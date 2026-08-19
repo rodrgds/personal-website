@@ -377,30 +377,30 @@
 
 <style>
   :global(:root) {
-    --contrib-level-0: #ebedf0;
-    --contrib-level-1: #b3d4f5;
-    --contrib-level-2: #6ba3d6;
-    --contrib-level-3: #3a6eaa;
-    --contrib-level-4: #1a4a7a;
+    --contrib-level-0: #f2f0e5;
+    --contrib-level-1: #92bfdb;
+    --contrib-level-2: #4385be;
+    --contrib-level-3: #3171b2;
+    --contrib-level-4: #205ea6;
     --contrib-cell-size: 13px;
   }
 
   @media (prefers-color-scheme: dark) {
     :global(:root:not([data-theme="light"])) {
-      --contrib-level-0: #2d1f00;
-      --contrib-level-1: #5c3d00;
-      --contrib-level-2: #8b5a00;
-      --contrib-level-3: #b37500;
-      --contrib-level-4: #ff9500;
+      --contrib-level-0: #1c1b1a;
+      --contrib-level-1: #71320d;
+      --contrib-level-2: #9d4310;
+      --contrib-level-3: #cb6120;
+      --contrib-level-4: #da702c;
     }
   }
 
   :global(:root[data-theme="dark"]) {
-    --contrib-level-0: #2d1f00;
-    --contrib-level-1: #5c3d00;
-    --contrib-level-2: #8b5a00;
-    --contrib-level-3: #b37500;
-    --contrib-level-4: #ff9500;
+    --contrib-level-0: #1c1b1a;
+    --contrib-level-1: #71320d;
+    --contrib-level-2: #9d4310;
+    --contrib-level-3: #cb6120;
+    --contrib-level-4: #da702c;
   }
 
   .activity-graph {

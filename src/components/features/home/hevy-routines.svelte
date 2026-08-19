@@ -426,7 +426,7 @@
   }
 
   .error {
-    color: #ef4444;
+    color: var(--error);
   }
 
   .retry-button {
@@ -464,8 +464,8 @@
   .stat-card {
     flex: 0 0 auto;
     min-width: 150px;
-    background: rgba(0, 0, 0, 0.02);
-    border: 1px solid var(--border-color, #e5e5e5);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
     padding: 1rem 1.25rem;
     border-radius: 0.5rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -512,7 +512,7 @@
 
   .workout-item {
     padding: 0.5rem;
-    background: rgba(0, 0, 0, 0.02);
+    background: var(--bg-secondary);
     border-radius: 0.25rem;
   }
 
@@ -540,12 +540,12 @@
     list-style: none;
     padding: 0.25rem 0.5rem;
     border-radius: 0.25rem;
-    background: rgba(0, 0, 0, 0.02);
+    background: var(--bg-secondary);
     transition: background 0.2s;
   }
 
   .more-workouts-summary:hover {
-    background: rgba(0, 0, 0, 0.04);
+    background: var(--surface-hover);
   }
 
   .more-workouts-summary::-webkit-details-marker {
