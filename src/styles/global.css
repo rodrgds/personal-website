@@ -495,3 +495,223 @@ figure[data-rehype-pretty-code-figure] button.rehype-pretty-copy .ready {
 figure[data-rehype-pretty-code-figure] button.rehype-pretty-copy .success {
   filter: brightness(2);
 }
+
+/* ---------------------------------------------------------------------------
+ * External link hover preview card
+ * A cmrg.me-style card shown beside external prose links on hover-capable
+ * devices. The card is a fixed, non-interactive overlay; placement and
+ * content are driven by the script in BaseHead.astro.
+ * ------------------------------------------------------------------------- */
+
+.link-preview-card {
+  --link-preview-width: 18rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 2000;
+  pointer-events: none;
+  width: var(--link-preview-width);
+  max-width: calc(100vw - 1.25rem);
+  visibility: hidden;
+  opacity: 0;
+  filter: blur(16px);
+  transform: scale(0.94);
+  transition:
+    opacity 0.28s ease-out,
+    filter 0.3s ease-out,
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0.45s;
+  will-change: transform, opacity, filter;
+}
+
+.link-preview-card[data-shown="true"] {
+  visibility: visible;
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
+  transition:
+    opacity 0.28s ease-out,
+    filter 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    visibility 0s linear 0s;
+}
+
+.link-preview-card-inner {
+  overflow: hidden;
+  border-radius: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--flexoki-base-700) 55%, transparent);
+  background-color: color-mix(
+    in srgb,
+    var(--flexoki-base-950) 97%,
+    transparent
+  );
+  box-shadow:
+    0 20px 64px -36px rgba(0, 0, 0, 0.95),
+    0 8px 24px -12px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.link-preview-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.875rem;
+}
+
+.link-preview-image {
+  display: none;
+  position: relative;
+  aspect-ratio: 1200 / 630;
+  margin-bottom: -1.5rem;
+  overflow: hidden;
+}
+
+.link-preview-image.has-image {
+  display: block;
+}
+
+.link-preview-image img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  filter: saturate(1.25) blur(4px);
+  transition:
+    opacity 0.3s ease-out,
+    filter 0.3s ease-out;
+  mask-image: linear-gradient(to bottom, black, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, black, transparent);
+}
+
+.link-preview-image.is-loaded img {
+  opacity: 1;
+  filter: saturate(1.25) blur(0);
+}
+
+/* A failed image keeps its slot so the card never repositions; it just
+   fades into a quiet gradient. */
+.link-preview-image.is-broken {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--flexoki-base-800) 45%, transparent),
+    color-mix(in srgb, var(--flexoki-base-900) 25%, transparent)
+  );
+}
+
+.link-preview-image.is-broken .link-preview-loading {
+  opacity: 0;
+}
+
+.link-preview-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  opacity: 1;
+  transition: opacity 0.2s ease-out;
+}
+
+.link-preview-loading i {
+  width: 0.25rem;
+  height: 0.25rem;
+  border-radius: 50%;
+  background-color: var(--flexoki-base-500);
+  animation: link-preview-pulse 1.2s ease-in-out infinite;
+}
+
+.link-preview-loading i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.link-preview-loading i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.link-preview-image.is-loaded .link-preview-loading {
+  opacity: 0;
+}
+
+@keyframes link-preview-pulse {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.link-preview-domain {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-family-mono);
+  font-size: 0.75rem;
+  line-height: 1;
+  color: var(--flexoki-base-200);
+}
+
+.link-preview-domain .link-preview-sep {
+  color: var(--flexoki-base-600);
+}
+
+.link-preview-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--flexoki-base-50);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.link-preview-desc {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--flexoki-base-200);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.link-preview-desc[hidden] {
+  display: none;
+}
+
+/* Loading cursor while the preview metadata is being fetched. */
+a[data-external-preview="true"].is-preview-loading {
+  cursor: progress;
+}
+
+/* ---------------------------------------------------------------------------
+ * Hand-drawn underline annotations (rough-notation)
+ * ------------------------------------------------------------------------- */
+
+[data-annotate] .rough-annotation path,
+.rough-annotation path {
+  stroke: color-mix(in srgb, var(--flexoki-orange) 88%, transparent 12%);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .link-preview-card,
+  .link-preview-image img {
+    transition: none;
+  }
+
+  .link-preview-loading i {
+    animation: none;
+  }
+}

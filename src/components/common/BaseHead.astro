@@ -114,9 +114,7 @@ const { title, description, image = "" } = Astro.props;
   }
 
   function updateSoundButtons(enabled: boolean): void {
-    const label = enabled
-      ? "Mute interface sounds"
-      : "Enable interface sounds";
+    const label = enabled ? "Mute interface sounds" : "Enable interface sounds";
 
     document.querySelectorAll("[data-sound-toggle]").forEach((button) => {
       button.setAttribute("aria-label", label);
@@ -389,6 +387,350 @@ const { title, description, image = "" } = Astro.props;
 
     window.addEventListener("resize", queueEnhancement);
   })();
+</script>
+
+<script is:inline>
+  (() => {
+    // External link hover previews, modeled after cmrg.me's link preview
+    // cards: a short dwell on an external prose link fetches Open Graph
+    // metadata from /api/link-preview and shows a small card beside the
+    // link. Hover-only devices; keyboard and touch users keep plain links.
+    const HOVER_CAPABLE = window.matchMedia(
+      "(hover: hover) and (pointer: fine)",
+    );
+    const DWELL_MS = 350;
+    const CARD_WIDTH = 288;
+    const OFFSET = 12;
+    const VIEWPORT_PAD = 10;
+
+    if (!HOVER_CAPABLE.matches) return;
+
+    const EXCLUSION_SELECTOR =
+      "nav, button, .socials, .download-pill, .button, .project, .timeline-entry";
+    const BLOCK_CHILD_SELECTOR =
+      ".card-container, div, p, ul, ol, h1, h2, h3, img, svg, video, picture, iframe";
+
+    let card = null;
+    let activeLink = null;
+    let dwellTimer = 0;
+    let fetchController = null;
+    let cardX = 0;
+    let cardY = 0;
+    const metaCache = new Map();
+
+    function isExternalProseLink(anchor) {
+      if (!(anchor instanceof HTMLAnchorElement)) return false;
+      if (!anchor.href) return false;
+      if (anchor.closest("astro-island")) return false;
+      if (anchor.closest(EXCLUSION_SELECTOR)) return false;
+      if (anchor.querySelector(BLOCK_CHILD_SELECTOR)) return false;
+      try {
+        const url = new URL(anchor.href);
+        if (url.protocol !== "http:" && url.protocol !== "https:") {
+          return false;
+        }
+        return url.hostname !== window.location.hostname;
+      } catch {
+        return false;
+      }
+    }
+
+    function markExternalLinks() {
+      const anchors = document.querySelectorAll("a[href]");
+      for (const anchor of anchors) {
+        if (anchor.dataset.externalPreview === "true") continue;
+        if (!isExternalProseLink(anchor)) continue;
+        anchor.dataset.externalPreview = "true";
+        // A soft tick while the preview is being considered.
+        anchor.setAttribute("data-cuelume-hover", "tick");
+      }
+    }
+
+    function cardSkeleton() {
+      const el = document.createElement("div");
+      el.className = "link-preview-card";
+      el.setAttribute("aria-hidden", "true");
+      el.innerHTML =
+        '<div class="link-preview-card-inner">' +
+        '<div class="link-preview-image">' +
+        '<img alt="" referrerpolicy="no-referrer" decoding="async" loading="lazy" />' +
+        '<div class="link-preview-loading" aria-hidden="true">' +
+        "<i></i><i></i><i></i>" +
+        "</div>" +
+        "</div>" +
+        '<div class="link-preview-text">' +
+        '<div class="link-preview-domain"></div>' +
+        '<h4 class="link-preview-title"></h4>' +
+        '<p class="link-preview-desc"></p>' +
+        "</div>" +
+        "</div>";
+      return el;
+    }
+
+    function getCard() {
+      // View transitions replace <body>, so rebuild if we lost our card.
+      if (!card || !card.isConnected) {
+        card = cardSkeleton();
+        document.body.appendChild(card);
+      }
+      return card;
+    }
+
+    function renderCard(meta) {
+      const el = getCard();
+      const imageWrap = el.querySelector(".link-preview-image");
+      const img = el.querySelector("img");
+      const domain = el.querySelector(".link-preview-domain");
+      const title = el.querySelector(".link-preview-title");
+      const desc = el.querySelector(".link-preview-desc");
+
+      // The image slot keeps its fixed aspect-ratio box whether or not the
+      // image loads, so the card height (and its position) never changes
+      // after it is placed. A failed image just shows a quiet gradient.
+      const hasImage = Boolean(meta.image);
+      imageWrap.classList.toggle("has-image", hasImage);
+      imageWrap.classList.remove("is-loaded", "is-broken");
+      img.removeAttribute("src");
+      img.onload = null;
+      img.onerror = null;
+
+      if (hasImage) {
+        img.onload = () => {
+          imageWrap.classList.add("is-loaded");
+          imageWrap.classList.remove("is-broken");
+          repositionCard();
+        };
+        img.onerror = () => {
+          imageWrap.classList.add("is-broken");
+          repositionCard();
+        };
+        img.src = meta.image;
+      }
+
+      if (meta.handle) {
+        domain.replaceChildren();
+        const host = document.createElement("span");
+        host.className = "link-preview-host";
+        host.textContent = meta.domain;
+        const sep = document.createElement("span");
+        sep.className = "link-preview-sep";
+        sep.setAttribute("aria-hidden", "true");
+        sep.textContent = "/";
+        const path = document.createElement("span");
+        path.className = "link-preview-handle";
+        path.textContent = meta.handle;
+        domain.append(host, sep, path);
+      } else {
+        domain.textContent = meta.domain;
+      }
+
+      title.textContent = meta.title || meta.domain;
+      if (meta.description) {
+        desc.textContent = meta.description;
+        desc.hidden = false;
+      } else {
+        desc.hidden = true;
+      }
+    }
+
+    function positionCard(link) {
+      const el = getCard();
+      const inner = el.querySelector(".link-preview-card-inner");
+      const rect = link.getBoundingClientRect();
+      // The card sits at scale(0.94) before it is shown, which skews
+      // getBoundingClientRect measurements. Normalize before flipping logic.
+      const currentScale =
+        card?.getAttribute("data-shown") === "true" ? 1 : 0.94;
+      const cardHeight = inner.getBoundingClientRect().height / currentScale;
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+
+      const belowTop = rect.bottom + OFFSET;
+      const aboveTop = rect.top - OFFSET - cardHeight;
+      const placeBelow = belowTop + cardHeight <= viewportHeight - VIEWPORT_PAD;
+      const placeAbove = aboveTop >= VIEWPORT_PAD;
+      const top = placeBelow ? belowTop : placeAbove ? aboveTop : belowTop;
+
+      const left = Math.min(
+        Math.max(rect.left, VIEWPORT_PAD),
+        viewportWidth - VIEWPORT_PAD - CARD_WIDTH,
+      );
+
+      cardX = left;
+      cardY = top;
+      el.style.transformOrigin = placeBelow ? "top center" : "bottom center";
+      applyCardTransform(card.getAttribute("data-shown") === "true" ? 1 : 0.94);
+    }
+
+    function applyCardTransform(scale) {
+      if (!card) return;
+      card.style.transform = `translate(${cardX}px, ${cardY}px) scale(${scale})`;
+    }
+
+    function repositionCard() {
+      if (activeLink && card && card.getAttribute("data-shown") === "true") {
+        positionCard(activeLink);
+      }
+    }
+
+    function showCard() {
+      getCard().setAttribute("data-shown", "true");
+      applyCardTransform(1);
+    }
+
+    function hideCard() {
+      if (card && card.isConnected) {
+        card.removeAttribute("data-shown");
+        applyCardTransform(0.94);
+      }
+    }
+
+    function cancelDwell() {
+      window.clearTimeout(dwellTimer);
+      dwellTimer = 0;
+      if (fetchController) {
+        fetchController.abort();
+        fetchController = null;
+      }
+      activeLink = null;
+    }
+
+    function dismiss() {
+      cancelDwell();
+      hideCard();
+    }
+
+    async function fetchAndShow(link) {
+      const url = link.href;
+      link.classList.add("is-preview-loading");
+      try {
+        let meta = metaCache.get(url);
+        if (!meta) {
+          fetchController = new AbortController();
+          try {
+            const response = await fetch(
+              `/api/link-preview?url=${encodeURIComponent(url)}`,
+              {
+                signal: fetchController.signal,
+                headers: { accept: "application/json" },
+              },
+            );
+            meta = response.ok ? await response.json() : {};
+          } catch {
+            meta = {};
+          }
+          fetchController = null;
+          metaCache.set(url, meta);
+        }
+
+        if (activeLink !== link) return;
+        if (!meta.title && !meta.description && !meta.image) return;
+
+        renderCard(meta);
+        positionCard(link);
+        showCard();
+      } finally {
+        link.classList.remove("is-preview-loading");
+      }
+    }
+
+    function enter(link) {
+      dismiss();
+      activeLink = link;
+      dwellTimer = window.setTimeout(() => {
+        void fetchAndShow(link);
+      }, DWELL_MS);
+    }
+
+    function handlePointerOver(event) {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const link = target.closest('a[data-external-preview="true"]');
+      if (link) enter(link);
+    }
+
+    function handlePointerOut(event) {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
+      const link = target.closest('a[data-external-preview="true"]');
+      if (!link) return;
+      if (
+        event.relatedTarget instanceof Node &&
+        link.contains(event.relatedTarget)
+      ) {
+        return;
+      }
+      if (activeLink === link) dismiss();
+    }
+
+    if (window.__rgoLinkPreviewInitialized) {
+      markExternalLinks();
+    } else {
+      window.__rgoLinkPreviewInitialized = true;
+      document.addEventListener("pointerover", handlePointerOver);
+      document.addEventListener("pointerout", handlePointerOut);
+      document.addEventListener("scroll", dismiss, {
+        capture: true,
+        passive: true,
+      });
+      window.addEventListener("resize", dismiss, { passive: true });
+
+      document.addEventListener("astro:page-load", markExternalLinks);
+      document.addEventListener("astro:after-swap", () => {
+        dismiss();
+        markExternalLinks();
+      });
+    }
+
+    markExternalLinks();
+  })();
+</script>
+
+<script>
+  import { annotate } from "rough-notation";
+
+  // Hand-drawn underline annotations, the same rough-notation effect cmrg.me
+  // uses on key phrases. Targets carry data-annotate="underline"; the stroke
+  // is themed through CSS (.rough-annotation path) and draws itself on page
+  // load. Skip entirely under reduced motion.
+  let annotations: ReturnType<typeof annotate>[] = [];
+
+  function clearAnnotations(): void {
+    for (const annotation of annotations) {
+      annotation.remove();
+    }
+    annotations = [];
+  }
+
+  function annotateTargets(): void {
+    clearAnnotations();
+
+    if (
+      typeof window === "undefined" ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+
+    const targets = document.querySelectorAll("[data-annotate]");
+    for (const target of targets) {
+      if (target.closest("astro-island")) continue;
+
+      const annotation = annotate(target as HTMLElement, {
+        type: "underline",
+        color: "currentColor",
+        strokeWidth: 2,
+        padding: 4,
+        animationDuration: 700,
+        iterations: 2,
+      });
+      annotation.show();
+      annotations.push(annotation);
+    }
+  }
+
+  document.addEventListener("astro:page-load", annotateTargets);
+  document.addEventListener("astro:after-swap", annotateTargets);
 </script>
 
 <!-- View Transitions -->

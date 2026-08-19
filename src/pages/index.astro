@@ -34,7 +34,12 @@ const posts = await getCollection("blog").then((posts) =>
       <h2>
         Hey! I'm
         <span class="name-wrap">
-          <button class="name-toggle" type="button" aria-label="Copy rgo.pt">
+          <button
+            class="name-toggle"
+            type="button"
+            aria-label="Copy rgo.pt"
+            data-cuelume-hover="tick"
+          >
             <span class="rodrigo-morph" aria-hidden="true">
               <span class="glyph r-upper">R</span>
               <span class="glyph r-lower">r</span>
@@ -53,12 +58,16 @@ const posts = await getCollection("blog").then((posts) =>
       </h2>
 
       <p>
-        Self-taught programmer since 14. I am <b><DateOfBirth client:load /></b>
-        years old and studying Computer Engineering at the Faculty of Engineering
-        of the University of Porto.
+        <span data-annotate="underline">Self-taught</span> programmer since 14. I
+        am <b><DateOfBirth client:load /></b> years old and studying Computer Engineering
+        at the Faculty of Engineering of the University of Porto.
       </p>
       <p>
-        I care about teaching, learning, <Logo src="firefox" /> web development, <Logo src="linux" /> Linux, FOSS, self-hosting, and minimalism. Away from computers, I spend time biking, photographing, lifting, and playing table tennis.
+        I care about teaching, learning, <Logo src="firefox" /> web development, <Logo
+          src="linux"
+        /> Linux, FOSS, self-hosting, and{" "}
+        <span data-annotate="underline">minimalism</span>. Away from computers,
+        I spend time biking, photographing, lifting, and playing table tennis.
       </p>
       <p>
         See <a href="/now">what I'm up to</a>, explore my <a href="/cv"
