@@ -693,27 +693,16 @@ const { title, description, image = "" } = Astro.props;
   // uses on key phrases. Targets carry data-annotate="underline"; the stroke
   // is themed through CSS (.rough-annotation path) and draws itself on page
   // load. An optional data-annotate-delay (ms) staggers the draw-in.
-  // Prose links (the animated-link units) additionally draw their underline
-  // as a rough annotation on hover instead of the flat CSS line. Hover-only;
-  // reduced motion users keep the plain focus underline.
-  const HOVERABLE_UNDERLINE = window.matchMedia(
-    "(hover: hover) and (pointer: fine)",
-  );
+  // Hover underlines for prose links use the CSS ::before animation instead
+  // (smooth retract on leave). Reduced motion users keep the plain underline.
   let annotations: ReturnType<typeof annotate>[] = [];
   let pendingTimers = new Set<number>();
-  let hoveredAnchor: Element | null = null;
-  const hoverAnnotations = new Map<Element, ReturnType<typeof annotate>[]>();
 
   function clearAnnotations(): void {
     for (const timer of pendingTimers) window.clearTimeout(timer);
     pendingTimers.clear();
     for (const annotation of annotations) annotation.remove();
     annotations = [];
-    for (const list of hoverAnnotations.values()) {
-      for (const annotation of list) annotation.remove();
-    }
-    hoverAnnotations.clear();
-    hoveredAnchor = null;
   }
 
   function underlineFor(target: HTMLElement): void {
@@ -750,63 +739,6 @@ const { title, description, image = "" } = Astro.props;
       underlineFor(target as HTMLElement);
     }
   }
-
-  function clearHoverUnderlines(anchor: Element): void {
-    const list = hoverAnnotations.get(anchor);
-    if (!list) return;
-    for (const annotation of list) annotation.remove();
-    hoverAnnotations.delete(anchor);
-  }
-
-  function drawHoverUnderlines(anchor: Element): void {
-    clearHoverUnderlines(anchor);
-    const lines = anchor.querySelectorAll(".animated-link-line");
-    if (lines.length === 0) return;
-
-    const list: ReturnType<typeof annotate>[] = [];
-    for (const line of lines) {
-      const annotation = annotate(line as HTMLElement, {
-        type: "underline",
-        color: "currentColor",
-        strokeWidth: 2,
-        padding: 4,
-        animationDuration: 350,
-        iterations: 1,
-      });
-      annotation.show();
-      list.push(annotation);
-    }
-    hoverAnnotations.set(anchor, list);
-  }
-
-  const HOVERED_LINK_SELECTOR = "a[data-animated-link='true']";
-
-  document.addEventListener("pointerover", (event) => {
-    if (!HOVERABLE_UNDERLINE.matches) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const target = event.target instanceof Element
-      ? event.target.closest(HOVERED_LINK_SELECTOR)
-      : null;
-    if (!target || target.closest("astro-island")) return;
-    if (hoveredAnchor !== target) {
-      hoveredAnchor = target;
-      drawHoverUnderlines(target);
-    }
-  });
-
-  document.addEventListener("pointerout", (event) => {
-    const target = event.target instanceof Element
-      ? event.target.closest(HOVERED_LINK_SELECTOR)
-      : null;
-    if (!target || target !== hoveredAnchor) return;
-    const related = event.relatedTarget instanceof Element
-      ? event.relatedTarget.closest(HOVERED_LINK_SELECTOR)
-      : null;
-    if (related !== target) {
-      hoveredAnchor = null;
-      clearHoverUnderlines(target);
-    }
-  });
 
   document.addEventListener("astro:page-load", annotateTargets);
   document.addEventListener("astro:after-swap", annotateTargets);

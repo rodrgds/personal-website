@@ -14,6 +14,12 @@
   src: url("/fonts/source-serif-4-v8-latin-regular.woff2") format("woff2");
 }
 
+@font-face {
+  font-family: "Reenie Beanie";
+  src: url("/fonts/reenie-beanie-v20-latin-regular.woff2") format("woff2");
+  font-display: swap;
+}
+
 :root {
   color-scheme: light;
 
@@ -22,6 +28,7 @@
   --page-padding: 1.5rem;
   --font-family: "Source Serif 4", serif;
   --font-family-serif: "Source Serif 4", serif;
+  --font-family-handwritten: "Reenie Beanie", cursive;
   --font-family-mono: "JetBrains Mono", monospace;
   --font-scale: 1.1em;
 
@@ -56,7 +63,7 @@
   --text-color: #403e3c; /* flexoki base-800 */
   --text-muted: #6f6e69; /* flexoki base-600 */
   --link-color: #205ea6; /* flexoki blue-600 */
-  --accent: #bc5215; /* flexoki orange-600 */
+  --accent: #205ea6; /* flexoki blue-600 */
   --link-underline-color: var(--link-color);
   --visited-color: #5e409d; /* flexoki purple-600 */
   --error: #af3029; /* flexoki red-600 */
@@ -90,7 +97,7 @@
     --link-color: #da702c; /* flexoki orange-400 */
     --accent: #da702c; /* flexoki orange-400 */
     --link-underline-color: var(--link-color);
-    --visited-color: #d14d41; /* flexoki red-400 */
+    --visited-color: #8b7ec8; /* flexoki purple-400 */
     --error: #d14d41; /* flexoki red-400 */
     --code-color: #e6e4d9; /* flexoki base-100 */
     --blockquote-color: #cecdc3; /* flexoki base-200 */
@@ -122,7 +129,7 @@
   --link-color: #da702c; /* flexoki orange-400 */
   --accent: #da702c; /* flexoki orange-400 */
   --link-underline-color: var(--link-color);
-  --visited-color: #d14d41; /* flexoki red-400 */
+  --visited-color: #8b7ec8; /* flexoki purple-400 */
   --error: #d14d41; /* flexoki red-400 */
   --code-color: #e6e4d9; /* flexoki base-100 */
   --blockquote-color: #cecdc3; /* flexoki base-200 */
@@ -294,8 +301,15 @@ a[data-animated-link="true"] .animated-link-line::before {
   transition: width 0.25s ease;
 }
 
+a[data-animated-link="true"]:hover .animated-link-line::before,
 a[data-animated-link="true"]:focus-visible .animated-link-line::before {
   width: 100%;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  a[data-animated-link="true"] .animated-link-line::before {
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
 }
 
 a .animated-link-token {
@@ -319,6 +333,10 @@ button {
   font-family: var(--font-family);
   margin: 0;
   cursor: pointer;
+}
+
+.font-handwritten {
+  font-family: var(--font-family-handwritten);
 }
 
 ::selection {
@@ -707,6 +725,19 @@ a[data-external-preview="true"].is-preview-loading {
   stroke: color-mix(in srgb, var(--flexoki-orange) 88%, transparent 12%);
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.rough-annotation.is-retracting path {
+  animation: rough-notation-undraw 0.28s ease-in forwards !important;
+}
+
+@keyframes rough-notation-undraw {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: var(--rno-len, 200px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

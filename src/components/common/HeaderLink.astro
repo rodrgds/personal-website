@@ -19,7 +19,8 @@ const target = external ? "_blank" : undefined;
   target={target}
   class:list={[className, { active: isActive }]}
   data-annotate={isActive ? "underline" : undefined}
-  data-annotate-delay={isActive ? "700" : undefined}
+  data-annotate-delay={isActive ? "500" : undefined}
+  transition:name={isActive ? "active-nav" : undefined}
   {...props}
 >
   <span class="label">
