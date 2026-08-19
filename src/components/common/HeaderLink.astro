@@ -18,6 +18,8 @@ const target = external ? "_blank" : undefined;
   href={href}
   target={target}
   class:list={[className, { active: isActive }]}
+  data-annotate={isActive ? "underline" : undefined}
+  data-annotate-delay={isActive ? "700" : undefined}
   {...props}
 >
   <span class="label">
@@ -28,15 +30,6 @@ const target = external ? "_blank" : undefined;
       <span class="external-mark" aria-hidden="true">
         ↗
       </span>
-    )
-  }
-  {
-    isActive && (
-      <span
-        class="active-line"
-        transition:name="active-nav"
-        aria-hidden="true"
-      />
     )
   }
 </a>
@@ -76,15 +69,5 @@ const target = external ? "_blank" : undefined;
 
   .external-mark {
     color: var(--gray-color);
-  }
-
-  .active-line {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    height: 2px;
-    border-radius: 999px;
-    background: var(--link-color);
   }
 </style>
