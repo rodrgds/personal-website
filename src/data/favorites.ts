@@ -123,14 +123,15 @@ export const FAVORITES = {
       icon: "✈️",
       rating: 5,
       categories: ["entertainment", "tech", "sports"],
-      comment: "A showcase for what modern filmmaking can do.",
+      comment:
+        "Proof that sequels can be great. The aerial shots alone are worth it.",
     },
     {
       tmdbId: 10681,
       label: "WALL-E",
       rating: 5,
       categories: ["entertainment", "tech", "philosophy", "science"],
-      comment: "Pixar's environmental masterpiece.",
+      comment: "My favorite Pixar film, and almost no dialogue for most of it.",
     },
   ],
   shows: [
@@ -158,7 +159,7 @@ export const FAVORITES = {
       rating: 4,
       categories: ["entertainment", "lifestyle", "psychology"],
       comment:
-        "Heartbreaking look at poverty and resilience. Margaret Qualley's performance is raw and real.",
+        "Hard to watch at times. Margaret Qualley carries the whole show.",
     },
     {
       tmdbId: 67744,
@@ -189,7 +190,7 @@ export const FAVORITES = {
       rating: 5,
       categories: ["entertainment", "thriller", "psychology", "storytelling"],
       comment:
-        "The first two seasons are exceptional—the best seasons of any TV show I've watched.",
+        "The first two seasons are exceptional, the best seasons of any TV show I've watched.",
     },
     {
       tmdbId: 37680,
@@ -400,7 +401,7 @@ export const FAVORITES = {
         "self-improvement",
       ],
       comment:
-        "Wealth and happiness principles. Timeless wisdom combined with his (Naval's) podcast and tweets.",
+        "Wealth and happiness principles collected from his (Naval's) podcasts and tweets.",
     },
     {
       title: "The Four Agreements",
@@ -410,7 +411,7 @@ export const FAVORITES = {
       rating: 5,
       categories: ["philosophy", "lifestyle", "self-improvement"],
       comment:
-        "Ancient Toltec wisdom for personal freedom. Simple but profound: be impeccable with your word, don't take anything personally, don't make assumptions, and always do your best.",
+        "Four rules to live by: be impeccable with your word, don't take anything personally, don't make assumptions, and always do your best.",
     },
   ],
   blogs: [
@@ -443,7 +444,7 @@ export const FAVORITES = {
         "startup",
       ],
       comment:
-        "Y Combinator founder's essays on startups and life. Each one is a masterclass.",
+        "Y Combinator founder's essays on startups and life. Short, direct, and worth re-reading.",
     },
     {
       title: "Sean Goedecke",
