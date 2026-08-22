@@ -2,15 +2,21 @@ import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";
 
 import { SimpleCache } from "../lib/cache";
+import {
+  isJsonObject,
+  isJsonString,
+  parseJson,
+  type JsonObject,
+} from "../lib/json";
 import { getPersonalDataDirectus } from "../lib/personal-data/directus";
 
-interface StoredRoutine extends Record<string, unknown> {
+interface StoredRoutine extends JsonObject {
   id: string;
   folder_title: string | null;
-  payload: Record<string, unknown>;
+  payload: JsonObject | string;
 }
 
-interface StoredWorkout extends Record<string, unknown> {
+interface StoredWorkout extends JsonObject {
   id: string;
   title: string | null;
   start_time: string | null;
@@ -18,7 +24,7 @@ interface StoredWorkout extends Record<string, unknown> {
 }
 
 interface HevyResult {
-  routines: Record<string, unknown>[];
+  routines: JsonObject[];
   stats: {
     workoutCount: number;
     recentWorkouts: Array<{
@@ -31,21 +37,12 @@ interface HevyResult {
 
 const hevyCache = new SimpleCache<HevyResult>(5 * 60 * 1000, 1);
 
-function parseRoutinePayload(payload: unknown): Record<string, unknown> {
-  if (payload && typeof payload === "object") {
-    return payload as Record<string, unknown>;
-  }
-  if (typeof payload === "string") {
-    try {
-      const parsed = JSON.parse(payload) as unknown;
-      if (parsed && typeof parsed === "object") {
-        return parsed as Record<string, unknown>;
-      }
-    } catch {
-      return {};
-    }
-  }
-  return {};
+/** Routine payloads are stored as JSON objects; older rows may hold text. */
+function parseRoutinePayload(payload: JsonObject | string): JsonObject {
+  if (isJsonObject(payload)) return payload;
+
+  const parsed = parseJson(payload);
+  return isJsonObject(parsed) ? parsed : {};
 }
 
 async function readHevyData(): Promise<HevyResult> {
@@ -56,7 +53,7 @@ async function readHevyData(): Promise<HevyResult> {
   const currentRoutines = routines
     .filter((routine) => routine.folder_title?.toLowerCase() === "current")
     .map((routine) => parseRoutinePayload(routine.payload))
-    .filter((routine) => typeof routine.id === "string");
+    .filter((routine) => isJsonString(routine.id));
 
   const recentWorkouts = await directus.request<StoredWorkout[]>(
     "/items/workouts",
@@ -82,13 +79,16 @@ async function readHevyData(): Promise<HevyResult> {
     routines: currentRoutines,
     stats: {
       workoutCount: Number(aggregate[0]?.count?.id ?? 0),
-      recentWorkouts: recentWorkouts
-        .filter((workout) => workout.start_time && workout.end_time)
-        .map((workout) => ({
-          title: workout.title ?? "Workout",
-          startTime: workout.start_time as string,
-          endTime: workout.end_time as string,
-        })),
+      recentWorkouts: recentWorkouts.flatMap((workout) => {
+        if (!workout.start_time || !workout.end_time) return [];
+        return [
+          {
+            title: workout.title ?? "Workout",
+            startTime: workout.start_time,
+            endTime: workout.end_time,
+          },
+        ];
+      }),
     },
   };
 }

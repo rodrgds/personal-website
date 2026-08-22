@@ -8,7 +8,7 @@ interface ProjectionDefinition {
   source: string;
 }
 
-const PROJECTION_DEFINITIONS: Record<ActivitySource, ProjectionDefinition> = {
+const PROJECTION_DEFINITIONS = {
   github: {
     label: "Code",
     unit: "contributions",
@@ -45,7 +45,7 @@ const PROJECTION_DEFINITIONS: Record<ActivitySource, ProjectionDefinition> = {
     totalUnit: "scrobbles",
     source: "lastfm",
   },
-};
+} satisfies Record<ActivitySource, ProjectionDefinition>;
 
 function firstDate(dailyValues: Map<string, number>): string {
   return (
@@ -63,15 +63,13 @@ export async function refreshActivityProjection(
   const definition = PROJECTION_DEFINITIONS[metric];
   const desired = [...dailyValues.entries()]
     .filter(([, value]) => Number.isFinite(value) && value > 0)
-    .map(
-      ([date, value]): ActivityDayRow => ({
-        id: `${metric}:${date}`,
-        metric,
-        date,
-        value: Math.round(value),
-        source: definition.source,
-      }),
-    );
+    .map(([date, value]): ActivityDayRow => ({
+      id: `${metric}:${date}`,
+      metric,
+      date,
+      value: Math.round(value),
+      source: definition.source,
+    }));
 
   const current = await directus.readAll<ActivityDayRow>("activity_days", {
     fields: ["id"],

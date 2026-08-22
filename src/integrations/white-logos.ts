@@ -38,6 +38,8 @@ async function getLogoSnapshot(): Promise<Record<string, number>> {
 async function readCache(): Promise<LogoCache | null> {
   try {
     const contents = await readFile(cacheFile, "utf-8");
+    // SAFETY: the cache file is written by this integration only; a corrupt
+    // file fails JSON.parse and falls back to a fresh analysis.
     return JSON.parse(contents) as LogoCache;
   } catch {
     return null;

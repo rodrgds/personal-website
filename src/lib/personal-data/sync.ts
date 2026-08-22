@@ -1,5 +1,11 @@
 import { createHash, randomUUID } from "node:crypto";
 
+import {
+  isJsonObject,
+  parseJson,
+  type JsonObject,
+  type JsonValue,
+} from "../json";
 import { getPersonalDataDirectus, type PersonalDataDirectus } from "./directus";
 import type { DataSourceRow, SyncMode, SyncResult, SyncSource } from "./model";
 import { SOURCE_LABELS, SYNC_SOURCES } from "./model";
@@ -12,31 +18,43 @@ const LASTFM_API_ENDPOINT = "https://ws.audioscrobbler.com/2.0/";
 const USERNAME = "rodrgds";
 
 interface ImportResult extends SyncResult {
-  state?: Record<string, unknown> | null;
+  state?: JsonObject | null;
 }
 
 function readEnv(name: string): string | undefined {
-  return (
-    process.env[name] ??
-    (import.meta.env as Record<string, string | undefined>)[name]
-  );
+  const fromProcess = process.env[name];
+  if (fromProcess !== undefined) return fromProcess;
+
+  // SAFETY: Astro types import.meta.env with known keys only; the sync
+  // sources are configured through arbitrary env names at runtime.
+  const env = import.meta.env as Record<string, string | undefined>;
+  return env[name];
 }
 
-function asRecord(value: unknown): Record<string, unknown> {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
-  return value as Record<string, unknown>;
+function isJsonString(value: JsonValue): value is string {
+  return typeof value === "string";
 }
 
-function asRecords(value: unknown): Record<string, unknown>[] {
+function isJsonNumber(value: JsonValue): value is number {
+  return typeof value === "number";
+}
+
+/** Coerce a JSON value to an object, treating anything else as empty. */
+function asRecord(value: JsonValue | undefined): JsonObject {
+  return value !== undefined && isJsonObject(value) ? value : {};
+}
+
+function asRecords(value: JsonValue | undefined): JsonObject[] {
   return Array.isArray(value) ? value.map(asRecord) : [];
 }
 
-function asString(value: unknown): string {
-  return typeof value === "string" ? value : "";
+function asString(value: JsonValue | undefined): string {
+  return value !== undefined && isJsonString(value) ? value : "";
 }
 
-function asNumber(value: unknown): number {
-  const number = typeof value === "number" ? value : Number(value);
+function asNumber(value: JsonValue | undefined): number {
+  const number =
+    value !== undefined && isJsonNumber(value) ? value : Number(value);
   return Number.isFinite(number) ? number : 0;
 }
 
@@ -45,7 +63,7 @@ async function requestJson<T>(
   init: RequestInit = {},
   retries = 2,
 ): Promise<T> {
-  let lastError: unknown;
+  let lastError: Error | null = null;
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const response = await fetch(input, {
@@ -58,9 +76,11 @@ async function requestJson<T>(
           `Upstream request failed (${response.status}): ${details}`,
         );
       }
+      // SAFETY: callers own T and the endpoint returns JSON; a payload that
+      // does not match T is handled by the per-source coercion helpers.
       return (await response.json()) as T;
     } catch (error) {
-      lastError = error;
+      lastError = error instanceof Error ? error : new Error(String(error));
       if (attempt === retries) break;
       await new Promise((resolve) => setTimeout(resolve, 500 * 2 ** attempt));
     }
@@ -77,19 +97,16 @@ function requireEnv(name: string): string {
 async function githubGraphql(
   token: string,
   query: string,
-  variables: Record<string, unknown>,
-): Promise<Record<string, unknown>> {
-  const response = await requestJson<Record<string, unknown>>(
-    GITHUB_GRAPHQL_ENDPOINT,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ query, variables }),
+  variables: JsonObject,
+): Promise<JsonObject> {
+  const response = await requestJson<JsonObject>(GITHUB_GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify({ query, variables }),
+  });
   const errors = asRecords(response.errors);
   if (errors.length > 0) {
     throw new Error(`GitHub GraphQL error: ${asString(errors[0].message)}`);
@@ -170,26 +187,23 @@ async function importLeetcode(
   directus: PersonalDataDirectus,
   mode: SyncMode,
 ): Promise<ImportResult> {
-  const response = await requestJson<Record<string, unknown>>(
-    LEETCODE_GRAPHQL_ENDPOINT,
-    {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "User-Agent": "rgo.pt personal data importer",
-      },
-      body: JSON.stringify({
-        query: `query getUserProfile($username: String!) {
+  const response = await requestJson<JsonObject>(LEETCODE_GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      "User-Agent": "rgo.pt personal data importer",
+    },
+    body: JSON.stringify({
+      query: `query getUserProfile($username: String!) {
           matchedUser(username: $username) {
             submissionCalendar
             submitStatsGlobal { acSubmissionNum { difficulty count } }
           }
         }`,
-        variables: { username: USERNAME },
-      }),
-    },
-  );
+      variables: { username: USERNAME },
+    }),
+  });
   const errors = asRecords(response.errors);
   if (errors.length > 0) {
     throw new Error(`LeetCode GraphQL error: ${asString(errors[0].message)}`);
@@ -200,7 +214,7 @@ async function importLeetcode(
 
   const daily = new Map<string, number>();
   for (const [timestamp, rawCount] of Object.entries(
-    JSON.parse(rawCalendar) as Record<string, unknown>,
+    parseJson(rawCalendar) ?? {},
   )) {
     const date = new Date(asNumber(timestamp) * 1_000)
       .toISOString()
@@ -237,13 +251,13 @@ async function readHevyPages(
   path: string,
   itemField: string,
   apiKey: string,
-): Promise<Record<string, unknown>[]> {
-  const items: Record<string, unknown>[] = [];
+): Promise<JsonObject[]> {
+  const items: JsonObject[] = [];
   let page = 1;
   let pageCount = 1;
   while (page <= pageCount) {
     const joiner = path.includes("?") ? "&" : "?";
-    const response = await requestJson<Record<string, unknown>>(
+    const response = await requestJson<JsonObject>(
       `${HEVY_API_ENDPOINT}${path}${joiner}page=${page}&pageSize=10`,
       { headers: hevyHeaders(apiKey) },
     );
@@ -254,9 +268,7 @@ async function readHevyPages(
   return items;
 }
 
-function normalizeWorkout(
-  workout: Record<string, unknown>,
-): Record<string, unknown> & { id: string } {
+function normalizeWorkout(workout: JsonObject): JsonObject & { id: string } {
   const startTime = asString(workout.start_time) || null;
   const endTime = asString(workout.end_time) || null;
   const start = startTime ? new Date(startTime).getTime() : Number.NaN;
@@ -320,8 +332,8 @@ async function importHevy(
     await directus.deleteOne("routines", staleRoutine.id);
   }
 
-  let workoutRows: Array<Record<string, unknown> & { id: string }> = [];
-  let deletedRows: Array<Record<string, unknown> & { id: string }> = [];
+  let workoutRows: Array<JsonObject & { id: string }> = [];
+  let deletedRows: Array<JsonObject & { id: string }> = [];
   if (mode === "full" || !source.cursor) {
     const workouts = await readHevyPages("/workouts", "workouts", apiKey);
     workoutRows = workouts
@@ -406,7 +418,7 @@ async function importHevy(
   };
 }
 
-function lastfmTrackId(track: Record<string, unknown>, uts: number): string {
+function lastfmTrackId(track: JsonObject, uts: number): string {
   const artist =
     asString(asRecord(track.artist).name) || asString(track.artist);
   const album = asString(asRecord(track.album)["#text"]);
@@ -415,7 +427,7 @@ function lastfmTrackId(track: Record<string, unknown>, uts: number): string {
     .digest("hex");
 }
 
-function lastfmImage(track: Record<string, unknown>): string | null {
+function lastfmImage(track: JsonObject): string | null {
   const images = asRecords(track.image);
   const preferred =
     images.find((image) => image.size === "extralarge") ??
@@ -424,16 +436,18 @@ function lastfmImage(track: Record<string, unknown>): string | null {
   return asString(preferred?.["#text"]) || null;
 }
 
+type LastfmRequestParams = Record<string, string>;
+
 async function lastfmRequest(
   params: Record<string, string>,
-): Promise<Record<string, unknown>> {
+): Promise<JsonObject> {
   const url = new URL(LASTFM_API_ENDPOINT);
   for (const [key, value] of Object.entries(params)) {
     url.searchParams.set(key, value);
   }
   url.searchParams.set("api_key", requireEnv("LASTFM_API_KEY"));
   url.searchParams.set("format", "json");
-  return requestJson<Record<string, unknown>>(url);
+  return requestJson<JsonObject>(url);
 }
 
 async function importLastfm(
@@ -442,24 +456,29 @@ async function importLastfm(
   source: DataSourceRow,
 ): Promise<ImportResult> {
   const username = requireEnv("LASTFM_USERNAME");
-  const baseParams: Record<string, string> = {
+  const baseParams = {
     method: "user.getRecentTracks",
     user: username,
     limit: "200",
     extended: "1",
-  };
+  } satisfies LastfmRequestParams;
+  const rangeParams: LastfmRequestParams = {};
   if (mode === "incremental" && source.cursor) {
     const overlap = Math.max(0, asNumber(source.cursor) - 24 * 60 * 60);
-    baseParams.from = String(overlap);
+    rangeParams.from = String(overlap);
   }
 
-  const rows: Array<Record<string, unknown> & { id: string }> = [];
-  let nowPlaying: Record<string, unknown> | null = null;
+  const rows: Array<JsonObject & { id: string }> = [];
+  let nowPlaying: JsonObject | null = null;
   let page = 1;
   let pageCount = 1;
   let newestUts = asNumber(source.cursor);
   while (page <= pageCount) {
-    const response = await lastfmRequest({ ...baseParams, page: String(page) });
+    const response = await lastfmRequest({
+      ...baseParams,
+      ...rangeParams,
+      page: String(page),
+    });
     const recent = asRecord(response.recenttracks);
     pageCount = Math.max(1, asNumber(asRecord(recent["@attr"]).totalPages));
     for (const track of asRecords(recent.track)) {

@@ -1,3 +1,5 @@
+import type { JsonObject } from "../json";
+
 export const ACTIVITY_SOURCES = [
   "github",
   "hevy",
@@ -13,11 +15,11 @@ export type ActivitySource = (typeof ACTIVITY_SOURCES)[number];
 export type SyncSource = (typeof SYNC_SOURCES)[number];
 export type SyncMode = "incremental" | "full";
 
-export interface DataSourceRow extends Record<string, unknown> {
+export interface DataSourceRow extends JsonObject {
   id: string;
   label: string;
   cursor: string | null;
-  state: Record<string, unknown> | null;
+  state: JsonObject | null;
   status: "pending" | "running" | "healthy" | "error";
   last_synced_at: string | null;
   last_success_at: string | null;
@@ -25,7 +27,7 @@ export interface DataSourceRow extends Record<string, unknown> {
   records_synced: number;
 }
 
-export interface ActivityDayRow extends Record<string, unknown> {
+export interface ActivityDayRow extends JsonObject {
   id: string;
   metric: ActivitySource;
   date: string;
@@ -33,7 +35,7 @@ export interface ActivityDayRow extends Record<string, unknown> {
   source: string;
 }
 
-export interface MetricSummaryRow extends Record<string, unknown> {
+export interface MetricSummaryRow extends JsonObject {
   id: ActivitySource;
   label: string;
   unit: string;
@@ -52,21 +54,18 @@ export interface SyncResult {
   cursor: string | null;
 }
 
-export const ACTIVITY_THRESHOLDS: Record<
-  ActivitySource,
-  [number, number, number]
-> = {
+export const ACTIVITY_THRESHOLDS = {
   github: [3, 6, 9],
   hevy: [30, 60, 90],
   leetcode: [1, 3, 5],
   steps: [3_000, 7_000, 10_000],
   sleep: [360, 420, 480],
   music: [5, 15, 30],
-};
+} as const satisfies Record<ActivitySource, [number, number, number]>;
 
-export const SOURCE_LABELS: Record<SyncSource, string> = {
+export const SOURCE_LABELS = {
   github: "GitHub",
   hevy: "Hevy",
   leetcode: "LeetCode",
   lastfm: "Last.fm",
-};
+} as const satisfies Record<SyncSource, string>;

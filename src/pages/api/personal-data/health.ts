@@ -5,6 +5,7 @@ import { z } from "astro/zod";
 
 import { getPersonalDataDirectus } from "../../../lib/personal-data/directus";
 import { refreshHealthProjections } from "../../../lib/personal-data/projections";
+import type { JsonObject } from "../../../lib/json";
 
 export const prerender = false;
 
@@ -74,7 +75,7 @@ interface NormalizedHealthDay {
   source: "macrodroid" | "health_connect";
 }
 
-interface StoredHealthDay extends Record<string, unknown> {
+interface StoredHealthDay extends JsonObject {
   id: string;
   date: string;
   timezone: string;
@@ -85,7 +86,7 @@ interface StoredHealthDay extends Record<string, unknown> {
   source: string;
 }
 
-interface StoredSleepSession extends Record<string, unknown> {
+interface StoredSleepSession extends JsonObject {
   id: string;
   date: string;
   session_end_time: string;
@@ -99,7 +100,7 @@ interface NormalizedHealthConnectPayload {
   sleepSessions: StoredSleepSession[];
 }
 
-function json(body: unknown, status: number): Response {
+function json<TBody extends object>(body: TBody, status: number): Response {
   return Response.json(body, {
     status,
     headers: {

@@ -56,20 +56,21 @@ async function mapTmdbFavorite(
     title: favorite.label,
     rating: favorite.rating,
     categories: favorite.categories,
-    ...(favorite.icon ? { icon: favorite.icon } : {}),
-    ...(favorite.comment ? { comment: favorite.comment } : {}),
   };
+  if (favorite.icon) fallback.icon = favorite.icon;
+  if (favorite.comment) fallback.comment = favorite.comment;
 
   if (!isTmdbConfigured()) return fallback;
 
   try {
     const details = await getTmdbMediaDetails(mediaType, favorite.tmdbId);
-    return {
+    const enriched: FavoriteItem = {
       ...fallback,
       title: details.title,
-      ...(details.year ? { year: details.year } : {}),
-      ...(details.posterUrl ? { image: details.posterUrl } : {}),
     };
+    if (details.year) enriched.year = details.year;
+    if (details.posterUrl) enriched.image = details.posterUrl;
+    return enriched;
   } catch (error) {
     console.error(
       `Failed to load TMDB ${mediaType} ${favorite.tmdbId} (${favorite.label}):`,
@@ -87,7 +88,7 @@ export async function loadFavorites(): Promise<FavoriteSection[]> {
     FAVORITES.shows.map((favorite) => mapTmdbFavorite("tv", favorite)),
   );
 
-  const itemsBySection: Record<FavoriteSectionId, FavoriteItem[]> = {
+  const itemsBySection = {
     movies,
     shows,
     podcasts: FAVORITES.podcasts.map((favorite) =>
@@ -108,7 +109,7 @@ export async function loadFavorites(): Promise<FavoriteSection[]> {
     cool: FAVORITES.cool.map((favorite) =>
       mapStandardFavorite("cool", favorite),
     ),
-  };
+  } satisfies Record<FavoriteSectionId, FavoriteItem[]>;
 
   return SECTION_CONFIG.map((section) => ({
     ...section,

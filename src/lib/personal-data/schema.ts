@@ -1,11 +1,30 @@
+import type { JsonValue } from "../json";
 import { getPersonalDataDirectus } from "./directus";
 import { SOURCE_LABELS, SYNC_SOURCES } from "./model";
+
+// Directus field metadata is written back with a known shape; the read-side
+// response keeps free-form JSON under `meta`/`schema`.
+type DirectusFieldOptions = {
+  interface?: string;
+  required?: boolean;
+  hidden?: boolean;
+  readonly?: boolean;
+  special?: string[];
+};
+
+type DirectusFieldSchema = {
+  is_primary_key?: boolean;
+  is_nullable?: boolean;
+  is_indexed?: boolean;
+  default_value?: JsonValue | null;
+  max_length?: number | null;
+};
 
 interface FieldDefinition {
   field: string;
   type: string;
-  meta?: Record<string, unknown>;
-  schema?: Record<string, unknown>;
+  meta?: DirectusFieldOptions;
+  schema?: DirectusFieldSchema;
 }
 
 interface CollectionDefinition {
@@ -37,7 +56,7 @@ function field(
     hidden?: boolean;
     readonly?: boolean;
     interface?: string;
-    defaultValue?: unknown;
+    defaultValue?: JsonValue;
     maxLength?: number;
     special?: string[];
   } = {},
@@ -60,13 +79,14 @@ function field(
       required: options.required ?? false,
       hidden: options.hidden ?? false,
       readonly: options.readonly ?? false,
-      special: options.special ?? (type === "json" ? ["cast-json"] : undefined),
+      special: options.special ?? (type === "json" ? ["cast-json"] : []),
     },
     schema: {
       is_nullable: !(options.required ?? false),
       is_indexed: options.indexed ?? false,
-      default_value: options.defaultValue,
-      max_length: options.maxLength,
+      default_value:
+        options.defaultValue === undefined ? null : options.defaultValue,
+      max_length: options.maxLength ?? null,
     },
   };
 }

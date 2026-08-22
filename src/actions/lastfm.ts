@@ -2,13 +2,14 @@ import { ActionError, defineAction } from "astro:actions";
 import { z } from "astro/zod";
 
 import { SimpleCache } from "../lib/cache";
+import type { JsonObject } from "../lib/json";
 import { getPersonalDataDirectus } from "../lib/personal-data/directus";
 import type {
   DataSourceRow,
   MetricSummaryRow,
 } from "../lib/personal-data/model";
 
-interface StoredScrobble extends Record<string, unknown> {
+interface StoredScrobble extends JsonObject {
   id: string;
   uts: number;
   artist: string;
@@ -21,7 +22,7 @@ interface StoredScrobble extends Record<string, unknown> {
   image_url: string | null;
 }
 
-interface LastfmTrack extends Record<string, unknown> {
+interface LastfmTrack {
   name: string;
   url: string;
   artist: { name: string; mbid?: string };
@@ -38,33 +39,30 @@ interface LastfmResult {
 
 const lastfmCache = new SimpleCache<LastfmResult>(2 * 60 * 1000, 5);
 
-function sourceState(
-  source: DataSourceRow | null,
-): Record<string, unknown> | null {
-  const rawState: unknown = source?.state;
-  if (rawState && typeof rawState === "object") {
-    return rawState as Record<string, unknown>;
-  }
-  if (typeof rawState === "string") {
-    try {
-      const parsed = JSON.parse(rawState) as unknown;
-      return parsed && typeof parsed === "object"
-        ? (parsed as Record<string, unknown>)
-        : null;
-    } catch {
-      return null;
-    }
-  }
-  return null;
-}
+/** Fields the sync job stores in the data_sources row state. */
+const lastfmStateSchema = z.looseObject({
+  nowPlayingCheckedAt: z.string().optional(),
+  nowPlaying: z
+    .looseObject({
+      name: z.string(),
+      url: z.string(),
+      artist: z.looseObject({ name: z.string() }),
+      album: z.looseObject({ "#text": z.string() }),
+    })
+    .optional(),
+  registeredUts: z.number().optional(),
+});
 
 function isFreshNowPlaying(source: DataSourceRow | null): LastfmTrack | null {
-  const state = sourceState(source);
-  if (!state || typeof state !== "object") return null;
-  const checkedAt = String(state.nowPlayingCheckedAt ?? "");
+  const parsed = lastfmStateSchema.safeParse(source?.state ?? {});
+  if (!parsed.success) return null;
+
+  const state = parsed.data;
+  const checkedAt = state.nowPlayingCheckedAt ?? "";
   if (Date.now() - new Date(checkedAt).getTime() > 20 * 60_000) return null;
-  const track = state.nowPlaying;
-  return track && typeof track === "object" ? (track as LastfmTrack) : null;
+  // SAFETY: the zod schema above validated the now-playing track fields;
+  // LastfmTrack only adds optional passthrough fields on top of them.
+  return (state.nowPlaying as LastfmTrack | undefined) ?? null;
 }
 
 async function readLastfmData(limit: number): Promise<LastfmResult> {
@@ -82,32 +80,36 @@ async function readLastfmData(limit: number): Promise<LastfmResult> {
     directus.readOne<DataSourceRow>("data_sources", "lastfm"),
   ]);
 
-  const tracks: LastfmTrack[] = rows.map((row) => ({
-    name: row.track,
-    url: row.url ?? "",
-    artist: {
-      name: row.artist,
-      ...(row.artist_mbid ? { mbid: row.artist_mbid } : {}),
-    },
-    album: {
-      "#text": row.album ?? "",
-      ...(row.album_mbid ? { mbid: row.album_mbid } : {}),
-    },
-    ...(row.image_url
-      ? { image: [{ size: "extralarge", "#text": row.image_url }] }
-      : {}),
-    date: { uts: String(row.uts) },
-  }));
+  const tracks: LastfmTrack[] = rows.map((row) => {
+    const artist: LastfmTrack["artist"] = { name: row.artist };
+    if (row.artist_mbid) artist.mbid = row.artist_mbid;
+    const album: LastfmTrack["album"] = { "#text": row.album ?? "" };
+    if (row.album_mbid) album.mbid = row.album_mbid;
+
+    const track: LastfmTrack = {
+      name: row.track,
+      url: row.url ?? "",
+      artist,
+      album,
+      date: { uts: String(row.uts) },
+    };
+    if (row.image_url) {
+      track.image = [{ size: "extralarge", "#text": row.image_url }];
+    }
+    return track;
+  });
   const nowPlaying = isFreshNowPlaying(source);
   if (nowPlaying) tracks.unshift(nowPlaying);
 
-  const registeredUts = Number(sourceState(source)?.registeredUts ?? 0);
+  const registeredUts =
+    lastfmStateSchema.safeParse(source?.state ?? {}).data?.registeredUts ?? 0;
+  const stats: LastfmResult["stats"] = {
+    totalScrobbles: summary?.total_value ?? 0,
+  };
+  if (registeredUts) stats.registeredDate = String(registeredUts);
   return {
     recenttracks: { track: tracks.slice(0, limit) },
-    stats: {
-      totalScrobbles: summary?.total_value ?? 0,
-      ...(registeredUts ? { registeredDate: String(registeredUts) } : {}),
-    },
+    stats,
   };
 }
 

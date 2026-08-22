@@ -1,3 +1,5 @@
+import { isJsonObject, type JsonObject, type JsonValue } from "../json";
+
 const DEFAULT_TIMEOUT_MS = 20_000;
 const DEFAULT_PAGE_SIZE = 500;
 const WRITE_BATCH_SIZE = 100;
@@ -8,8 +10,16 @@ interface DirectusEnvelope<T> {
   errors?: Array<{ message?: string; extensions?: { code?: string } }>;
 }
 
+type DirectusQueryValue =
+  | string
+  | number
+  | boolean
+  | JsonObject
+  | JsonObject[]
+  | undefined;
+
 interface DirectusRequestOptions extends RequestInit {
-  query?: Record<string, string | number | boolean | object | undefined>;
+  query?: Record<string, DirectusQueryValue>;
   retries?: number;
 }
 
@@ -20,10 +30,13 @@ export interface UpsertResult {
 }
 
 function readEnv(name: string): string | undefined {
-  return (
-    process.env[name] ??
-    (import.meta.env as Record<string, string | undefined>)[name]
-  );
+  const fromProcess = process.env[name];
+  if (fromProcess !== undefined) return fromProcess;
+
+  // SAFETY: Astro types import.meta.env with known keys only; the sync
+  // sources are configured through arbitrary env names at runtime.
+  const env = import.meta.env as Record<string, string | undefined>;
+  return env[name];
 }
 
 function chunk<T>(items: T[], size: number): T[][] {
@@ -38,11 +51,12 @@ function delay(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
-function canonicalize(value: unknown): unknown {
+/** Strip system-managed Directus fields and order keys so rows compare equal. */
+function canonicalize(value: JsonValue): JsonValue {
   if (Array.isArray(value)) return value.map(canonicalize);
-  if (value && typeof value === "object") {
+  if (isJsonObject(value)) {
     return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>)
+      Object.entries(value)
         .filter(([key]) => !["date_created", "date_updated"].includes(key))
         .sort(([left], [right]) => left.localeCompare(right))
         .map(([key, entry]) => [key, canonicalize(entry)]),
@@ -51,7 +65,7 @@ function canonicalize(value: unknown): unknown {
   return value;
 }
 
-function comparableItem(item: Record<string, unknown>): string {
+function comparableItem(item: JsonObject): string {
   return JSON.stringify(canonicalize(item));
 }
 
@@ -87,68 +101,76 @@ export class PersonalDataDirectus {
       if (value === undefined) continue;
       url.searchParams.set(
         key,
-        typeof value === "object" ? JSON.stringify(value) : String(value),
+        value instanceof Object ? JSON.stringify(value) : String(value),
       );
     }
 
-    let lastError: unknown;
+    let lastError: Error | null = null;
     for (let attempt = 0; attempt <= retries; attempt++) {
       try {
+        const requestHeaders = new Headers(headers);
+        requestHeaders.set("Accept", "application/json");
+        requestHeaders.set("Authorization", `Bearer ${this.token}`);
+        if (init.body) requestHeaders.set("Content-Type", "application/json");
+
         const response = await fetch(url, {
           ...init,
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${this.token}`,
-            ...(init.body ? { "Content-Type": "application/json" } : {}),
-            ...headers,
-          },
+          headers: requestHeaders,
           signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
         });
 
+        // SAFETY: the caller owns T and the endpoint returns a Directus item
+        // envelope; a missing or non-JSON body degrades to null data below.
         const body = (await response
           .json()
           .catch(() => null)) as DirectusEnvelope<T> | null;
-        if (response.ok) return body?.data as T;
 
-        const message =
-          body?.errors?.[0]?.message ??
-          `Directus request failed with status ${response.status}`;
-        const error = new DirectusError(
-          message,
-          response.status,
-          body?.errors?.[0]?.extensions?.code,
-        );
+        if (!response.ok) {
+          const message =
+            body?.errors?.[0]?.message ??
+            `Directus request failed with status ${response.status}`;
+          const error = new DirectusError(
+            message,
+            response.status,
+            body?.errors?.[0]?.extensions?.code,
+          );
 
-        if (
-          attempt < retries &&
-          (response.status === 429 || response.status >= 500)
-        ) {
-          await delay(250 * 2 ** attempt);
-          lastError = error;
-          continue;
+          if (
+            attempt < retries &&
+            (response.status === 429 || response.status >= 500)
+          ) {
+            await delay(250 * 2 ** attempt);
+            lastError = error;
+            continue;
+          }
+          throw error;
         }
-        throw error;
+
+        // SAFETY: T describes the requested collection, and Directus returns
+        // that collection's items for a well-formed read. A missing body
+        // yields undefined data rather than a failed request.
+        return body?.data as T;
       } catch (error) {
-        lastError = error;
+        lastError = error instanceof Error ? error : new Error(String(error));
         if (
           attempt < retries &&
-          (!(error instanceof DirectusError) || error.status >= 500)
+          (!(lastError instanceof DirectusError) || lastError.status >= 500)
         ) {
           await delay(250 * 2 ** attempt);
           continue;
         }
-        throw error;
+        throw lastError;
       }
     }
 
-    throw lastError;
+    throw lastError ?? new Error("Directus request failed");
   }
 
-  async readAll<T extends Record<string, unknown>>(
+  async readAll<T extends JsonObject>(
     collection: string,
     options: {
       fields?: string[];
-      filter?: object;
+      filter?: JsonObject;
       sort?: string[];
       limit?: number;
     } = {},
@@ -173,7 +195,7 @@ export class PersonalDataDirectus {
     }
   }
 
-  async readOne<T extends Record<string, unknown>>(
+  async readOne<T extends JsonObject>(
     collection: string,
     id: string,
     fields?: string[],
@@ -188,10 +210,7 @@ export class PersonalDataDirectus {
     return rows[0] ?? null;
   }
 
-  async createMany(
-    collection: string,
-    items: Array<Record<string, unknown>>,
-  ): Promise<void> {
+  async createMany(collection: string, items: JsonObject[]): Promise<void> {
     for (const batch of chunk(items, WRITE_BATCH_SIZE)) {
       await this.request(`/items/${collection}`, {
         method: "POST",
@@ -200,10 +219,7 @@ export class PersonalDataDirectus {
     }
   }
 
-  async updateMany(
-    collection: string,
-    items: Array<Record<string, unknown>>,
-  ): Promise<void> {
+  async updateMany(collection: string, items: JsonObject[]): Promise<void> {
     for (const batch of chunk(items, WRITE_BATCH_SIZE)) {
       await this.request(`/items/${collection}`, {
         method: "PATCH",
@@ -215,7 +231,7 @@ export class PersonalDataDirectus {
   async updateOne(
     collection: string,
     id: string,
-    item: Record<string, unknown>,
+    item: JsonObject,
   ): Promise<void> {
     await this.request(`/items/${collection}/${encodeURIComponent(id)}`, {
       method: "PATCH",
@@ -240,17 +256,17 @@ export class PersonalDataDirectus {
 
   async upsertMany(
     collection: string,
-    items: Array<Record<string, unknown> & { id: string }>,
+    items: Array<JsonObject & { id: string }>,
     immutable = false,
   ): Promise<UpsertResult> {
     if (items.length === 0) return { created: 0, updated: 0, skipped: 0 };
 
-    const existing = new Map<string, Record<string, unknown>>();
+    const existing = new Map<string, JsonObject>();
     for (const ids of chunk(
       items.map((item) => item.id),
       READ_BATCH_SIZE,
     )) {
-      const rows = await this.readAll<Record<string, unknown>>(collection, {
+      const rows = await this.readAll<JsonObject>(collection, {
         filter: { id: { _in: ids } },
         limit: READ_BATCH_SIZE,
       });
