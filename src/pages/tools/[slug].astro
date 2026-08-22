@@ -12,6 +12,10 @@ if (!tool) {
 const { Content } = await render(tool);
 ---
 
-<ToolLayout title={tool.data.title} description={tool.data.description} fullWidth={tool.data.fullWidth}>
+<ToolLayout
+  title={tool.data.title}
+  description={tool.data.description}
+  fullWidth={tool.data.fullWidth}
+>
   <Content />
 </ToolLayout>

@@ -5,18 +5,15 @@ export interface Props {
   crypto: string;
   symbol: string;
   address: string;
-  qr?: boolean; // Default is handled below
+  qr?: boolean;
 }
 
-// Set default value for qr
-const { crypto, symbol, address, qr = true } = Astro.props as Props;
+const { crypto, symbol, address, qr = true } = Astro.props;
 
-// Generate unique IDs based on crypto name (or potentially address if guaranteed unique and safe)
-// Using crypto name is generally safer for DOM IDs
 const safeCryptoId = crypto.toLowerCase().replace(/[^a-z0-9]+/gi, "-");
 const canvasId = `qr-canvas-${safeCryptoId}`;
 const componentId = `crypto-component-${safeCryptoId}`;
-const modalId = `qr-modal-${componentId}`; // Unique modal ID per component instance
+const modalId = `qr-modal-${componentId}`;
 const modalTitleId = `qr-modal-title-${componentId}`;
 const emptyQrImageSrc =
   "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
@@ -97,16 +94,10 @@ const emptyQrImageSrc =
   import { play } from "cuelume";
   import QRCode from "qrcode";
 
-  // --- Modal Functions (Now operate on specific modal instance) ---
   function showQrModal(
     canvasElement: HTMLCanvasElement,
     modalElement: HTMLElement,
   ) {
-    if (!modalElement || !canvasElement) {
-      console.error("Modal or Canvas element not found for showing!");
-      return;
-    }
-    // Find elements *within this specific modal*
     const modalQrImage = modalElement.querySelector(
       ".modal-qr-image",
     ) as HTMLImageElement;
@@ -117,25 +108,18 @@ const emptyQrImageSrc =
       ".modal-close-button",
     ) as HTMLButtonElement;
 
-    if (!modalQrImage || !modalQrAddress) {
-      console.error(
-        "Modal image or address element not found inside modal:",
-        modalElement.id,
-      );
-      return;
-    }
+    if (!modalQrImage || !modalQrAddress) return;
 
     try {
-      // Generate a higher-resolution data URL for the modal image
-      const dataUrl = canvasElement.toDataURL("image/png"); // Get canvas content as PNG
+      const dataUrl = canvasElement.toDataURL("image/png");
       modalQrImage.src = dataUrl;
       modalQrImage.alt = `Enlarged QR Code for ${canvasElement.dataset.address}`;
-      modalQrAddress.textContent = canvasElement.dataset.address || ""; // Display address below
-      modalElement.style.display = "flex"; // Show the modal
+      modalQrAddress.textContent = canvasElement.dataset.address || "";
+      modalElement.style.display = "flex";
       modalElement.setAttribute("aria-hidden", "false");
-      modalCloseButton?.focus(); // Focus the close button for accessibility
+      modalCloseButton?.focus();
 
-      // Store the element that triggered the modal to return focus later
+      // Remember the trigger so focus can return to it on close.
       modalElement.dataset.triggeredBy = canvasElement.id;
     } catch (err: unknown) {
       console.error("Error generating QR code data URL for modal:", err);
@@ -148,8 +132,7 @@ const emptyQrImageSrc =
   }
 
   function hideQrModal(modalElement: HTMLElement) {
-    if (!modalElement) return;
-    modalElement.style.display = "none"; // Hide the modal
+    modalElement.style.display = "none";
     modalElement.setAttribute("aria-hidden", "true");
 
     // Clear content
@@ -162,16 +145,13 @@ const emptyQrImageSrc =
     if (modalQrImage) modalQrImage.src = modalQrImage.dataset.emptySrc || "";
     if (modalQrAddress) modalQrAddress.textContent = "";
 
-    // Return focus to the element that opened the modal (optional but good practice)
     const triggerId = modalElement.dataset.triggeredBy;
     if (triggerId) {
-      const triggerElement = document.getElementById(triggerId);
-      triggerElement?.focus();
-      delete modalElement.dataset.triggeredBy; // Clean up
+      document.getElementById(triggerId)?.focus();
+      delete modalElement.dataset.triggeredBy;
     }
   }
 
-  // --- QR Code Generation (Takes modal as argument now) ---
   async function generateQrCode(
     canvasElement: HTMLCanvasElement,
     modalElement: HTMLElement,
@@ -197,24 +177,19 @@ const emptyQrImageSrc =
         margin: 1,
         errorCorrectionLevel: "M",
       });
-      // console.log(`QR Code generated successfully for canvas #${canvasElement.id}`);
 
-      // --- Attach click listener AFTER QR is generated ---
-      // Only add listener if it hasn't been added before
       if (!canvasElement.dataset.clickListenerAttached) {
         canvasElement.addEventListener("click", () => {
-          showQrModal(canvasElement, modalElement); // Pass the specific modal
+          showQrModal(canvasElement, modalElement);
         });
         canvasElement.dataset.clickListenerAttached = "true";
       }
 
-      // --- Attach keydown listener AFTER QR is generated ---
-      // Only add listener if it hasn't been added before
       if (!canvasElement.dataset.keydownListenerAttached) {
         canvasElement.addEventListener("keydown", (event) => {
           if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault(); // Prevent spacebar scrolling
-            showQrModal(canvasElement, modalElement); // Pass the specific modal
+            event.preventDefault();
+            showQrModal(canvasElement, modalElement);
           }
         });
         canvasElement.dataset.keydownListenerAttached = "true";
@@ -317,10 +292,6 @@ const emptyQrImageSrc =
       }
       // Escape key close
       if (!modalElement.dataset.keydownListenerAttached) {
-        // Need to listen on the modal when it's open, or globally?
-        // Attaching to modal means it only works when modal *or its content* has focus
-        // Attaching to document is more robust but needs careful management.
-        // Let's attach to modal for simplicity, requires modal or button to have focus.
         modalElement.addEventListener("keydown", (event) => {
           if (event.key === "Escape") {
             hideQrModal(modalElement);
@@ -337,9 +308,7 @@ const emptyQrImageSrc =
     }
   }
 
-  // Run initializer for all components on the page initially
   function runInitialization() {
-    // console.log("Running initialization...");
     document
       .querySelectorAll(".crypto-component-wrapper")
       .forEach((wrapper) => {
@@ -347,17 +316,11 @@ const emptyQrImageSrc =
       });
   }
 
-  // Run on initial load
-  // Use 'astro:page-load' which runs once after all content is on the page
   document.addEventListener("astro:page-load", runInitialization);
-
-  // Handle Astro view transitions (if you use them)
-  // 'astro:after-swap' runs after new content replaces old content
   document.addEventListener("astro:after-swap", runInitialization);
 </script>
 
 <style>
-  /* --- Existing Styles --- */
   .button {
     background-color: var(--link-color);
     border: none;
@@ -399,8 +362,7 @@ const emptyQrImageSrc =
   /* Style the small canvas element */
   .qr-code-canvas {
     display: block;
-    /* Set desired small size */
-    width: 44px !important; /* Roughly matches button height */
+    width: 44px !important;
     height: 44px !important;
     border: 1px solid var(--border-color);
     border-radius: 0.25rem;
@@ -442,13 +404,13 @@ const emptyQrImageSrc =
 
   .modal-content {
     background-color: #fefefe;
-    margin: auto; /* Centered */
+    margin: auto;
     padding: 20px;
     border: 1px solid #888;
-    width: 80%; /* Could be more specific, e.g., 300px */
-    max-width: 350px; /* Max width for the modal */
+    width: 80%;
+    max-width: 350px;
     border-radius: 5px;
-    position: relative; /* For positioning the close button */
+    position: relative;
     box-shadow:
       0 4px 8px 0 rgba(0, 0, 0, 0.2),
       0 6px 20px 0 rgba(0, 0, 0, 0.19);
@@ -456,7 +418,6 @@ const emptyQrImageSrc =
     animation-duration: 0.3s;
   }
 
-  /* Add Animation */
   @keyframes animatetop {
     from {
       top: -300px;
@@ -490,14 +451,8 @@ const emptyQrImageSrc =
     outline: none;
   }
 
-  /* Style for the image inside the modal */
-  /* Use class selector instead of ID */
   .modal-qr-image {
-    max-width: 100%; /* Ensure it fits */
-    height: auto; /* Maintain aspect ratio */
-  }
-  /* Use class selector */
-  .modal-qr-address {
-    /* Styles already defined inline, but could be moved here */
+    max-width: 100%;
+    height: auto;
   }
 </style>

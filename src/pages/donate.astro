@@ -11,18 +11,11 @@ import CryptoWallet from "../components/features/donate/CryptoWallet.astro";
 <html lang="en">
   <head>
     <BaseHead title={"Donate"} description={SITE_DESCRIPTION} />
-    <style>
-      .wallet-address {
-        font-size: 1rem;
-        font-weight: 400;
-        color: #666;
-      }
-    </style>
   </head>
 
   <body>
     <Header title={SITE_TITLE} />
-    <main style="width: 100%">
+    <main>
       <h1>Donate</h1>
       <p>
         Thank you for your interest in supporting my work. I'm currently
@@ -32,7 +25,6 @@ import CryptoWallet from "../components/features/donate/CryptoWallet.astro";
         <Logo src="paypal" alt="PayPal logo" size={30} />
         {" "} PayPal
       </h3>
-      <div style="width: 100%; margin-bottom: 0.75rem"></div>
       <a class="button" href="https://url.rgo.pt/paypal" target="_blank"
         >Donate with PayPal</a
       >
@@ -77,6 +69,9 @@ import CryptoWallet from "../components/features/donate/CryptoWallet.astro";
     </main>
     <Footer />
     <style>
+      main {
+        width: 100%;
+      }
       .button {
         background-color: var(--link-color);
         border: none;

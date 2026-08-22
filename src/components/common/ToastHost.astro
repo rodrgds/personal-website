@@ -1,32 +1,33 @@
-<div id="app-toast" class="app-toast" role="status" aria-live="polite" hidden></div>
+<div id="app-toast" class="app-toast" role="status" aria-live="polite" hidden>
+</div>
 
 <script>
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     let toastVersion = 0;
-    let queuedMessage = '';
+    let queuedMessage = "";
     let queuedDuration = 1900;
 
     const showQueuedToast = () => {
-      const toastEl = document.getElementById('app-toast');
+      const toastEl = document.getElementById("app-toast");
       if (!toastEl || !queuedMessage) return;
 
       const currentVersion = ++toastVersion;
 
       toastEl.textContent = queuedMessage;
       toastEl.hidden = false;
-      toastEl.classList.remove('visible');
+      toastEl.classList.remove("visible");
 
       // Split visibility changes across frames so the enter transition can interpolate.
       window.requestAnimationFrame(() => {
         window.requestAnimationFrame(() => {
           if (currentVersion !== toastVersion) return;
-          toastEl.classList.add('visible');
+          toastEl.classList.add("visible");
         });
       });
 
       window.setTimeout(() => {
         if (currentVersion !== toastVersion) return;
-        toastEl.classList.remove('visible');
+        toastEl.classList.remove("visible");
 
         window.setTimeout(() => {
           if (currentVersion !== toastVersion) return;
@@ -35,19 +36,19 @@
       }, queuedDuration);
     };
 
-    window.addEventListener('app:toast', (event) => {
+    window.addEventListener("app:toast", (event) => {
       if (!(event instanceof CustomEvent)) return;
 
       const detail = event.detail;
-      if (!detail || typeof detail !== 'object') return;
+      if (!detail || typeof detail !== "object") return;
 
       const maybeMessage = detail.message;
       const maybeDuration = detail.duration;
 
-      if (typeof maybeMessage !== 'string' || !maybeMessage.trim()) return;
+      if (typeof maybeMessage !== "string" || !maybeMessage.trim()) return;
 
       queuedMessage = maybeMessage;
-      queuedDuration = typeof maybeDuration === 'number' ? maybeDuration : 1900;
+      queuedDuration = typeof maybeDuration === "number" ? maybeDuration : 1900;
       showQueuedToast();
     });
   }
@@ -72,7 +73,8 @@
       transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
     z-index: 80;
     pointer-events: none;
-    box-shadow: 0 5px 16px color-mix(in srgb, var(--text-color) 16%, transparent);
+    box-shadow: 0 5px 16px
+      color-mix(in srgb, var(--text-color) 16%, transparent);
   }
 
   .app-toast.visible {

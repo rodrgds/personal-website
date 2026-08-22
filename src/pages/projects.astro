@@ -36,19 +36,21 @@ const projects = (await getCollection("projects")).sort((a, b) =>
         <div class="projects-grid">
           {
             projects.map((project) => (
-                <Card
-                  title={project.data.name}
-                  logo={project.data.logo}
-                  stack={project.data.tags}
-                  description={project.data.bullets?.[0] ?? "View project details."}
-                  link={
-                    project.data.url ??
-                    (project.data.repo
-                      ? `https://github.com/${project.data.repo}`
-                      : `/cv?view=list#project-${project.id}`)
-                  }
-                />
-              ))
+              <Card
+                title={project.data.name}
+                logo={project.data.logo}
+                stack={project.data.tags}
+                description={
+                  project.data.bullets?.[0] ?? "View project details."
+                }
+                link={
+                  project.data.url ??
+                  (project.data.repo
+                    ? `https://github.com/${project.data.repo}`
+                    : `/cv?view=list#project-${project.id}`)
+                }
+              />
+            ))
           }
         </div>
       </section>

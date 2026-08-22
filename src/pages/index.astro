@@ -9,8 +9,6 @@ import Logo from "../components/common/Logo.astro";
 import DateOfBirth from "../components/features/home/date-of-birth.svelte";
 import GitHubContributions from "../components/features/home/GitHubContributions.svelte";
 
-// import projects from "../data/projects.json";
-
 const posts = await getCollection("blog").then((posts) =>
   posts.sort((a, b) => {
     return (
@@ -18,9 +16,6 @@ const posts = await getCollection("blog").then((posts) =>
     );
   }),
 );
-
-// const res = await fetch("http://localhost:4321/api/location");
-// const { lat, lng } = await res.json();
 ---
 
 <!doctype html>
@@ -66,8 +61,10 @@ const posts = await getCollection("blog").then((posts) =>
         I care about teaching, learning, <Logo src="firefox" /> web development, <Logo
           src="linux"
         /> Linux, FOSS, self-hosting, and{" "}
-        <span data-annotate="underline" data-annotate-delay="1000">minimalism</span>. Away from computers,
-        I spend time biking, photographing, lifting, and playing table tennis.
+        <span data-annotate="underline" data-annotate-delay="1000"
+          >minimalism</span
+        >. Away from computers, I spend time biking, photographing, lifting, and
+        playing table tennis.
       </p>
       <p>
         See <a href="/now">what I'm up to</a>, explore my <a href="/cv"
@@ -94,45 +91,6 @@ const posts = await getCollection("blog").then((posts) =>
           ))
         }
       </ul>
-
-      <!-- <h3>Projects</h3>
-      <ul>
-        {projects.map((project) => (
-          <li>
-            <time datetime={project.date}>
-              {new Date(project.date).toLocaleDateString("en-us", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              })}
-            </time>
-            <div class="popover__wrapper">
-              <a href={project.link} target="_blank">{project.title}</a>
-              <div class="popover__content">
-                <h2>{project.title}</h2>
-                <time datetime={project.date}>
-                  {new Date(project.date).toLocaleDateString("en-us", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </time>
-                <p>{project.description}</p>
-                {project.stack && (
-                  <ul class="stack">
-                    {project.stack.map((item) => (
-                      <li>{item}</li>
-                    ))}
-                  </ul>
-                )}
-                {project.img && (
-                  <img src={project.img} alt={project.title} />
-                )}
-              </div>
-            </div>
-          </li>
-        ))}
-      </ul> -->
 
       <section class="home-section">
         <GitHubContributions client:load />
@@ -231,10 +189,7 @@ const posts = await getCollection("blog").then((posts) =>
         const nameButton = target.closest(".name-toggle");
         if (nameButton) {
           copyDomainToClipboard();
-          return;
         }
-
-        // Extra socials feature removed
       });
     </script>
   </body>
