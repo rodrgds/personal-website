@@ -40,7 +40,7 @@ function createSettingsStore() {
     },
     reset: () => {
       set(DEFAULT_SETTINGS);
-      if (typeof localStorage !== "undefined") {
+      if ("localStorage" in globalThis) {
         localStorage.removeItem(STORAGE_KEY);
         localStorage.setItem(STORAGE_VERSION_KEY, STORAGE_VERSION);
       }

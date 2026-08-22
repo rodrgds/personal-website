@@ -9,7 +9,7 @@ export interface Props {
   fixed?: boolean;
 }
 
-let { src, alt, size, fixed = false } = Astro.props as Props;
+let { src, alt, size, fixed = false } = Astro.props;
 const normalizedSrc = src.replace(/\.(png|webp|jpe?g|svg)$/i, "");
 
 size = size || 22;
@@ -23,8 +23,11 @@ function isEmoji(str: string) {
 }
 
 // Determine if logo needs inversion
-const isWhiteLogo = whiteLogos.includes(normalizedSrc as any);
-const isBlackLogo = blackLogos.includes(normalizedSrc as any);
+// SAFETY: white-logos.ts and black-logos.ts are generated as literal name
+// unions; a plain string membership check is the intended use here.
+const isWhiteLogo = (whiteLogos as readonly string[]).includes(normalizedSrc);
+// SAFETY: same generated literal-union list as above.
+const isBlackLogo = (blackLogos as readonly string[]).includes(normalizedSrc);
 const isExactMonochrome = normalizedSrc === "diassolutions";
 ---
 

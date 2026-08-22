@@ -1,3 +1,4 @@
+import { isJsonObject, type JsonValue } from "../../../lib/json";
 import type { MonitorSettings, Listing } from "./types";
 
 export interface FetchResult {
@@ -16,17 +17,18 @@ function canReceiveCredential(requestUrl: string): boolean {
   );
 }
 
-function isListing(value: unknown): value is Listing {
-  if (!value || typeof value !== "object") return false;
-  const listing = value as Record<string, unknown>;
-  const item = listing.item as Record<string, unknown> | undefined;
+// SAFETY: the CSFloat listings response is untrusted JSON, so this guard
+// checks every Listing field before the payload reaches the monitor UI.
+function isListing(value: JsonValue): value is Listing {
+  if (!isJsonObject(value)) return false;
+  const { item } = value;
   return (
-    typeof listing.id === "string" &&
-    typeof listing.created_at === "string" &&
-    typeof listing.price === "number" &&
-    (listing.type === "buy_now" || listing.type === "auction") &&
-    Boolean(item) &&
-    typeof item?.market_hash_name === "string"
+    typeof value.id === "string" &&
+    typeof value.created_at === "string" &&
+    typeof value.price === "number" &&
+    (value.type === "buy_now" || value.type === "auction") &&
+    isJsonObject(item) &&
+    typeof item.market_hash_name === "string"
   );
 }
 
@@ -129,9 +131,8 @@ export async function fetchListings(
       }
 
       // Prepare headers
-      const headers: Record<string, string> = {
-        Accept: "application/json",
-      };
+      type ProxyHeaders = { accept: string; Authorization?: string };
+      const headers: ProxyHeaders = { accept: "application/json" };
 
       // CSFloat REQUIRES Authorization.
       if (settings.apiKey && !canReceiveCredential(url)) {
@@ -171,14 +172,18 @@ export async function fetchListings(
         continue; // Try next proxy
       }
 
-      const data: unknown = await response.json();
-      const payload = data as { data?: unknown; listings?: unknown };
-      const rawListings = payload.data ?? payload.listings;
+      // SAFETY: the CSFloat API wraps listings in either a data or a
+      // listings key depending on endpoint version; both hold raw JSON.
+      const data = (await response.json()) as {
+        data?: JsonValue;
+        listings?: JsonValue;
+      };
+      const rawListings = data.data ?? data.listings;
       if (!Array.isArray(rawListings) || !rawListings.every(isListing)) {
         lastError = `Proxy ${proxyUrl || "Direct"} returned an invalid response`;
         continue;
       }
-      const listings = rawListings;
+      const listings: Listing[] = rawListings;
 
       return { listings, status: 200, proxyUsed: proxyUrl || "Direct" };
     } catch (e) {

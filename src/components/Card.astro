@@ -9,7 +9,7 @@ export interface Props {
   link?: string;
 }
 
-const { title, logo, stack, description, link } = Astro.props as Props;
+const { title, logo, stack, description, link } = Astro.props;
 const Tag = link ? "a" : "article";
 ---
 

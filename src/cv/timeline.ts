@@ -50,14 +50,14 @@ export const TIMELINE_CATEGORIES: TimelineCategory[] = [
   "certifications",
 ];
 
-export const TIMELINE_CATEGORY_LABELS: Record<TimelineCategory, string> = {
+export const TIMELINE_CATEGORY_LABELS = {
   experience: "Experience",
   "personal-projects": "Personal projects",
   "university-projects": "University projects",
   education: "Education",
   honors: "Honors",
   certifications: "Certifications",
-};
+} satisfies Record<TimelineCategory, string>;
 
 function parseMonth(value: string): number {
   const match = /^(\d{4})-(\d{2})$/.exec(value);

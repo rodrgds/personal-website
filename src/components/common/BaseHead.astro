@@ -724,9 +724,9 @@ const { title, description, image = "" } = Astro.props;
       return;
     }
 
-    const targets = document.querySelectorAll("[data-annotate]");
+    const targets = document.querySelectorAll<HTMLElement>("[data-annotate]");
     for (const target of targets) {
-      underlineFor(target as HTMLElement);
+      underlineFor(target);
     }
   }
 

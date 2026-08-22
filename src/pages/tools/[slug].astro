@@ -3,7 +3,7 @@ import ToolLayout from "../../layouts/ToolLayout.astro";
 import { getEntry, render } from "astro:content";
 
 const { slug } = Astro.params;
-const tool = await getEntry("tools", slug as string);
+const tool = slug === undefined ? undefined : await getEntry("tools", slug);
 
 if (!tool) {
   return Astro.redirect("/404");

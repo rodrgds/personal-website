@@ -8,7 +8,7 @@ interface Props {
 }
 
 const { src, alt, size = 28 } = Astro.props;
-const isImageSource = typeof src === "string" && src.includes("/");
+const isImageSource = src !== undefined && src.includes("/");
 ---
 
 {

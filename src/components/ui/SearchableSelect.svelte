@@ -41,7 +41,7 @@
   }
 
   function handleOutsideClick(event: MouseEvent) {
-    if (isOpen && container && !container.contains(event.target as Node)) {
+    if (isOpen && container && event.target instanceof Node && !container.contains(event.target)) {
       isOpen = false;
     }
   }

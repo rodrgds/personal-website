@@ -161,8 +161,8 @@
   }
 
   function handleDetailsToggle(id: string, e: Event) {
-    const details = e.currentTarget as HTMLDetailsElement;
-    if (!details) return;
+    if (!(e.currentTarget instanceof HTMLDetailsElement)) return;
+    const details = e.currentTarget;
 
     if (details.open) {
       openDetailsId = id;
@@ -184,7 +184,7 @@
     estimateHeight: (item: T) => number,
   ): T[][] {
     const cols: T[][] = Array.from({ length: numCols }, () => []);
-    const heights = new Array<number>(numCols).fill(0);
+    const heights = Array.from({ length: numCols }, () => 0);
 
     for (const item of items) {
       const shortestCol = heights.indexOf(Math.min(...heights));

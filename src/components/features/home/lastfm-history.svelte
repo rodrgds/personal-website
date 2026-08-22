@@ -74,7 +74,7 @@
     estimateHeight: (item: T) => number,
   ): T[][] {
     const cols: T[][] = Array.from({ length: numCols }, () => []);
-    const heights = new Array<number>(numCols).fill(0);
+    const heights = Array.from({ length: numCols }, () => 0);
 
     for (const item of items) {
       const shortestCol = heights.indexOf(Math.min(...heights));

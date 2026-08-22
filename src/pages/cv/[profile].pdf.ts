@@ -13,8 +13,12 @@ export const getStaticPaths: GetStaticPaths = async () => {
 };
 
 export const GET: APIRoute = async ({ params }) => {
-  const profileSlug = params.profile as CVProfileSlug;
-  const profile = cvProfiles[profileSlug];
+  const profileSlug = params.profile;
+  // SAFETY: getStaticPaths emits exactly one path per key of cvProfiles.
+  const profile =
+    profileSlug !== undefined && profileSlug in cvProfiles
+      ? cvProfiles[profileSlug as CVProfileSlug]
+      : undefined;
 
   if (!profile) {
     return new Response(`CV profile "${params.profile}" not found.`, {

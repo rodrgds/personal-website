@@ -512,19 +512,20 @@ const universityProjects = renderedProjects.filter(
             if (!(target instanceof HTMLImageElement)) return;
             if (!target.matches(".video-poster img")) return;
 
-            let urls = [];
+            // CVYouTubeEmbed serializes its thumbnail fallback list as a
+            // JSON string array on the poster element.
+            let urls;
             try {
               urls = JSON.parse(target.dataset.thumbnailUrls ?? "[]");
             } catch {
               return;
             }
-
             if (!Array.isArray(urls)) return;
 
             const currentIndex = Number(target.dataset.thumbnailIndex ?? "0");
             const nextUrl = urls[currentIndex + 1];
 
-            if (typeof nextUrl !== "string") return;
+            if (nextUrl === undefined || nextUrl.constructor !== String) return;
 
             target.dataset.thumbnailIndex = String(currentIndex + 1);
             target.src = nextUrl;

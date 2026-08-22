@@ -57,39 +57,39 @@
     "Nov",
     "Dec",
   ];
-  const sourceLabels: Record<ActivitySource, string> = {
+  const sourceLabels = {
     github: "GitHub",
     hevy: "Hevy",
     leetcode: "LeetCode",
     steps: "Phone",
     sleep: "Health Connect",
     music: "Last.fm",
-  };
-  const selectLabels: Record<ActivitySource, string> = {
+  } satisfies Record<ActivitySource, string>;
+  const selectLabels = {
     github: "Code",
     hevy: "Workouts",
     leetcode: "Problems",
     steps: "Steps",
     sleep: "Sleep",
     music: "Music",
-  };
+  } satisfies Record<ActivitySource, string>;
   const comingSoonSources = ["Posts", "TV"];
-  const sourceUnits: Record<ActivitySource, string> = {
+  const sourceUnits = {
     github: "contributions",
     hevy: "minutes",
     leetcode: "submissions",
     steps: "steps",
     sleep: "minutes",
     music: "scrobbles",
-  };
-  const sourceLinks: Record<ActivitySource, string | null> = {
+  } satisfies Record<ActivitySource, string>;
+  const sourceLinks = {
     github: `https://github.com/${username}`,
     hevy: null,
     leetcode: `https://leetcode.com/u/${username}`,
     steps: null,
     sleep: null,
     music: "https://url.rgo.pt/music",
-  };
+  } as const satisfies Record<ActivitySource, string | null>;
 
   let activeSource = $state<ActivitySource>("github");
   let activity = $state<Record<ActivitySource, ActivityData | null>>({

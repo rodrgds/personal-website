@@ -1,4 +1,6 @@
-export interface Item {
+import type { JsonObject } from "../../../lib/json";
+
+export interface Item extends JsonObject {
   market_hash_name: string;
   float_value?: number;
   paint_seed?: number;
@@ -6,14 +8,14 @@ export interface Item {
   inspect_link?: string;
 }
 
-export interface Reference {
+export interface Reference extends JsonObject {
   base_price?: number;
   predicted_price?: number;
   quantity?: number;
   last_updated?: string;
 }
 
-export interface Listing {
+export interface Listing extends JsonObject {
   id: string;
   created_at: string;
   price: number;

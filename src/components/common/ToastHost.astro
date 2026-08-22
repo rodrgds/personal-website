@@ -2,7 +2,11 @@
 </div>
 
 <script>
-  if (typeof window !== "undefined") {
+  import type { JsonValue } from "../../lib/json";
+  import { isJsonNumber, isJsonString } from "../../lib/json";
+
+  // The toast host only runs in the browser; the guard keeps SSR imports safe.
+  if ("window" in globalThis) {
     let toastVersion = 0;
     let queuedMessage = "";
     let queuedDuration = 1900;
@@ -39,16 +43,17 @@
     window.addEventListener("app:toast", (event) => {
       if (!(event instanceof CustomEvent)) return;
 
-      const detail = event.detail;
-      if (!detail || typeof detail !== "object") return;
+      // SAFETY: toast senders dispatch a JSON-shaped detail payload.
+      const { message, duration } = event.detail as {
+        message?: JsonValue;
+        duration?: JsonValue;
+      };
 
-      const maybeMessage = detail.message;
-      const maybeDuration = detail.duration;
+      if (message === undefined || !isJsonString(message)) return;
+      if (!message.trim()) return;
 
-      if (typeof maybeMessage !== "string" || !maybeMessage.trim()) return;
-
-      queuedMessage = maybeMessage;
-      queuedDuration = typeof maybeDuration === "number" ? maybeDuration : 1900;
+      queuedMessage = message;
+      queuedDuration = isJsonNumber(duration) ? duration : 1900;
       showQueuedToast();
     });
   }

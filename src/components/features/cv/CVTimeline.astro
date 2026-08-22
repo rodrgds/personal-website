@@ -50,14 +50,14 @@ const linearGraphRowCount = compact
 const graphBottomSpace = compact ? 18 : 34;
 const nodeCenter = compact ? 17 : 22;
 
-const categoryColors: Record<TimelineCategory, string> = {
+const categoryColors = {
   experience: "var(--flexoki-orange)",
   "personal-projects": "var(--flexoki-cyan)",
   "university-projects": "var(--flexoki-green)",
   education: "var(--flexoki-blue)",
   honors: "var(--flexoki-yellow)",
   certifications: "var(--flexoki-purple)",
-};
+} satisfies Record<TimelineCategory, string>;
 
 const getStartOffset = (entry: PositionedEntry) =>
   (entry.startMonth - layout.startMonth) * monthWidth + contentInset;

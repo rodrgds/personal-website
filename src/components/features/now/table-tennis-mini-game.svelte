@@ -218,7 +218,7 @@
     const impactY = ballY + randomRange(-8, 8);
     spawnImpactBurst(impactX, impactY, side);
 
-    if (typeof window !== "undefined") {
+    if ("window" in globalThis) {
       window.dispatchEvent(
         new CustomEvent("app:toast", {
           detail: {
@@ -267,8 +267,15 @@
     if (repeatedTrajectoryCount >= 3) applyAntiCheatKick();
   }
 
-  function pointerToField(clientX: number, clientY: number): { x: number; y: number } {
-    if (!playfieldContainer) return { x: fieldWidth * 0.5, y: fieldHeight * 0.78 };
+  interface FieldPoint {
+    x: number;
+    y: number;
+  }
+
+  function pointerToField(clientX: number, clientY: number): FieldPoint {
+    if (!playfieldContainer) {
+      return { x: fieldWidth * 0.5, y: fieldHeight * 0.78 };
+    }
     const rect = playfieldContainer.getBoundingClientRect();
     return {
       x: clientX - rect.left,
@@ -553,7 +560,7 @@
   });
 
   $effect(() => {
-    if (!active || typeof document === "undefined") return;
+    if (!active || !("document" in globalThis)) return;
     const previousOverflow = document.body.style.overflow;
     const previousTouchAction = document.body.style.touchAction;
     document.body.style.overflow = "hidden";

@@ -27,6 +27,11 @@ export interface ActivityBucket {
   activeDays: number;
 }
 
+interface BucketLabel {
+  label: string;
+  shortLabel: string;
+}
+
 export const RANGE_OPTIONS: Array<{ value: TimeRange; label: string }> = [
   { value: "week", label: "Week" },
   { value: "month", label: "Month" },
@@ -35,10 +40,7 @@ export const RANGE_OPTIONS: Array<{ value: TimeRange; label: string }> = [
   { value: "all", label: "All time" },
 ];
 
-export const GRAIN_OPTIONS: Record<
-  TimeRange,
-  Array<{ value: TimeGrain; label: string }>
-> = {
+export const GRAIN_OPTIONS = {
   week: [{ value: "day", label: "Daily" }],
   month: [
     { value: "day", label: "Daily" },
@@ -57,15 +59,15 @@ export const GRAIN_OPTIONS: Record<
     { value: "quarter", label: "Quarterly" },
     { value: "year", label: "Yearly" },
   ],
-};
+} satisfies Record<TimeRange, Array<{ value: TimeGrain; label: string }>>;
 
-export const DEFAULT_GRAIN: Record<TimeRange, TimeGrain> = {
+export const DEFAULT_GRAIN = {
   week: "day",
   month: "day",
   quarter: "week",
   year: "month",
   all: "year",
-};
+} as const satisfies Record<TimeRange, TimeGrain>;
 
 const longMonthFormatter = new Intl.DateTimeFormat("en", {
   timeZone: "UTC",
@@ -293,7 +295,7 @@ function bucketLabels(
   start: string,
   grain: TimeGrain,
   range: TimeRange,
-): { label: string; shortLabel: string } {
+): BucketLabel {
   const date = parseDate(start);
   if (grain === "day") {
     return {

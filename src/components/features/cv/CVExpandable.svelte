@@ -58,20 +58,18 @@
     }
 
     const handleOtherExpanded = (e: Event) => {
-      const event = e as CustomEvent<CVExpandableOpenDetail>;
-      if (event.detail.id !== elementId) {
+      if (
+        e instanceof CustomEvent &&
+        e.detail.id !== elementId
+      ) {
         closeSelf();
       }
     };
 
     const handleOpenRequest = (e: Event) => {
-      const event = e as CustomEvent<CVExpandableRequestDetail>;
-      if (event.detail.id === elementId) {
+      if (e instanceof CustomEvent && e.detail.id === elementId) {
         void openSelf();
-        return;
       }
-
-      closeSelf();
     };
 
     const handleHashChange = () => {

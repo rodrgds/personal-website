@@ -24,13 +24,13 @@ type CVCollectionKind =
   | "honors"
   | "certifications";
 
-const CV_ENTRY_PREFIXES: Record<CVCollectionKind, string> = {
+const CV_ENTRY_PREFIXES = {
   experience: "experience",
   projects: "project",
   education: "education",
   honors: "honor",
   certifications: "certification",
-};
+} as const satisfies Record<CVCollectionKind, string>;
 
 function normalizeBullets(value: string[] | undefined): string[] {
   if (!value || value.length === 0) return [];
@@ -74,14 +74,17 @@ function sortByDateDesc<T extends { date: string }>(
 type EntryWithRelated = { slug: string; title: string; related?: string[] };
 
 export function getCVEntryHref(data: CVCollectionsData, slug: string): string {
+  const collectionsByKind = {
+    experience: data.experience,
+    projects: data.projects,
+    education: data.education,
+    honors: data.honors,
+    certifications: data.certifications,
+  } satisfies Record<CVCollectionKind, { id: string }[]>;
+  // SAFETY: the object above lists every CV collection kind exactly once, so
+  // its entries keep that order and pairing when Object.entries flattens it.
   const collectionKey = (
-    Object.entries({
-      experience: data.experience,
-      projects: data.projects,
-      education: data.education,
-      honors: data.honors,
-      certifications: data.certifications,
-    }) as [CVCollectionKind, { id: string }[]][]
+    Object.entries(collectionsByKind) as [CVCollectionKind, { id: string }[]][]
   ).find(([, entries]) => entries.some((entry) => entry.id === slug))?.[0];
 
   if (!collectionKey) {
@@ -147,26 +150,31 @@ export function getCVRelatedItems(
   return merged;
 }
 
-async function getTypedCollection<T>(
-  collection:
-    | "experience"
-    | "projects"
-    | "education"
-    | "certifications"
-    | "honors",
-): Promise<CVCollectionEntry<T>[]> {
-  const entries = await getCollection(collection as any);
-  return entries as unknown as CVCollectionEntry<T>[];
+type CVCollectionDataMap = {
+  experience: ExperienceData;
+  projects: ProjectData;
+  education: EducationData;
+  certifications: CertificationData;
+  honors: HonorData;
+};
+
+async function getTypedCollection<K extends keyof CVCollectionDataMap>(
+  collection: K,
+): Promise<CVCollectionEntry<CVCollectionDataMap[K]>[]> {
+  const entries = await getCollection(collection);
+  // SAFETY: Astro types each registered collection from its content config
+  // schema, which mirrors CVCollectionEntry's shape (id, data, body).
+  return entries as CVCollectionEntry<CVCollectionDataMap[K]>[];
 }
 
 export async function getCVCollectionsData(): Promise<CVCollectionsData> {
   const [experience, projects, education, certifications, honors] =
     await Promise.all([
-      getTypedCollection<ExperienceData>("experience"),
-      getTypedCollection<ProjectData>("projects"),
-      getTypedCollection<EducationData>("education"),
-      getTypedCollection<CertificationData>("certifications"),
-      getTypedCollection<HonorData>("honors"),
+      getTypedCollection("experience"),
+      getTypedCollection("projects"),
+      getTypedCollection("education"),
+      getTypedCollection("certifications"),
+      getTypedCollection("honors"),
     ]);
 
   return {
@@ -187,6 +195,8 @@ function filterByInclude<T>(
   }
 
   const entryMap = new Map(entries.map((e) => [e.id, e]));
+  // SAFETY: includeIds reference entry ids from related frontmatter; a stale
+  // id drops out of the filter instead of producing an undefined entry.
   return includeIds
     .map((id) => entryMap.get(id))
     .filter(Boolean) as CVCollectionEntry<T>[];

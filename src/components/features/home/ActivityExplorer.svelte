@@ -63,44 +63,44 @@
     "var(--activity-level-3)",
     "var(--activity-level-4)",
   ];
-  const sourceLabels: Record<ActivitySource, string> = {
+  const sourceLabels = {
     github: "GitHub",
     hevy: "Hevy",
     leetcode: "LeetCode",
     steps: "Phone",
     sleep: "Health Connect",
     music: "Last.fm",
-  };
-  const selectLabels: Record<ActivitySource, string> = {
+  } satisfies Record<ActivitySource, string>;
+  const selectLabels = {
     github: "Code",
     hevy: "Workouts",
     leetcode: "Problems",
     steps: "Steps",
     sleep: "Sleep",
     music: "Music",
-  };
-  const sourceUnits: Record<ActivitySource, string> = {
+  } satisfies Record<ActivitySource, string>;
+  const sourceUnits = {
     github: "contributions",
     hevy: "minutes",
     leetcode: "submissions",
     steps: "steps",
     sleep: "minutes",
     music: "scrobbles",
-  };
-  const sourceLinks: Record<ActivitySource, string | null> = {
+  } satisfies Record<ActivitySource, string>;
+  const sourceLinks = {
     github: `https://github.com/${username}`,
     hevy: null,
     leetcode: `https://leetcode.com/u/${username}`,
     steps: null,
     sleep: null,
     music: "https://url.rgo.pt/music",
-  };
-  const rangeNouns: Record<Exclude<TimeRange, "all">, string> = {
+  } as const satisfies Record<ActivitySource, string | null>;
+  const rangeNouns = {
     week: "week",
     month: "month",
     quarter: "quarter",
     year: "year",
-  };
+  } satisfies Record<Exclude<TimeRange, "all">, string>;
 
   let activeSource = $state<ActivitySource>("github");
   let activeRange = $state<TimeRange>("year");
@@ -119,6 +119,7 @@
   let error = $state<string | null>(null);
 
   function isActivitySource(value: string | null): value is ActivitySource {
+    // SAFETY: activitySources enumerates the ActivitySource union exactly.
     return value !== null && activitySources.includes(value as ActivitySource);
   }
 
@@ -144,7 +145,7 @@
   }
 
   function updateUrl(): void {
-    if (typeof window === "undefined") return;
+    if (!("window" in globalThis)) return;
     const url = new URL(window.location.href);
     url.searchParams.set("activity", activeSource);
     url.searchParams.set("range", activeRange);
@@ -165,7 +166,8 @@
   }
 
   function changeSource(event: Event): void {
-    const value = (event.currentTarget as HTMLSelectElement).value;
+    if (!(event.currentTarget instanceof HTMLSelectElement)) return;
+    const value = event.currentTarget.value;
     if (!isActivitySource(value)) return;
     activeSource = value;
     anchorDate = today;
@@ -173,7 +175,8 @@
   }
 
   function changeRange(event: Event): void {
-    const value = (event.currentTarget as HTMLSelectElement).value;
+    if (!(event.currentTarget instanceof HTMLSelectElement)) return;
+    const value = event.currentTarget.value;
     if (!isTimeRange(value)) return;
     activeRange = value;
     activeGrain = DEFAULT_GRAIN[value];
@@ -182,7 +185,8 @@
   }
 
   function changeGrain(event: Event): void {
-    const value = (event.currentTarget as HTMLSelectElement).value;
+    if (!(event.currentTarget instanceof HTMLSelectElement)) return;
+    const value = event.currentTarget.value;
     if (!isTimeGrain(value)) return;
     activeGrain = value;
     updateUrlAfterStateChange();

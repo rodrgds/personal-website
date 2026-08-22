@@ -238,7 +238,7 @@
   });
 
   // Watch for changes to update URL
-  $: if (mounted && typeof window !== "undefined") {
+  $: if (mounted && "window" in globalThis) {
     updateURL();
   }
 </script>

@@ -349,7 +349,7 @@ const TEMPLATE = String.raw`#import "@preview/scienceicons:0.1.0": orcid-icon
 
 export function generateTypst(profile: CVProfile, cv: ResolvedCV): string {
   const sectionTitles = profile.sectionTitles ?? {};
-  const sectionBuilders: Record<CVSectionKey, () => string> = {
+  const sectionBuilders = {
     education: () =>
       buildEducationSection(cv.education, sectionTitles.education),
     experience: () =>
@@ -358,7 +358,7 @@ export function generateTypst(profile: CVProfile, cv: ResolvedCV): string {
     honors: () =>
       buildHonorsSection(cv.honors, cv.certifications, sectionTitles.honors),
     skills: () => buildSkillsSection(profile, sectionTitles.skills),
-  };
+  } satisfies Record<CVSectionKey, () => string>;
 
   const sections = (
     profile.sectionOrder ??

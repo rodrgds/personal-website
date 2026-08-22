@@ -50,9 +50,10 @@
     syncExpandedIdFromHash();
 
     const handleExpandedChange = (e: Event) => {
-      const event = e as CustomEvent<CVExpandableOpenDetail>;
-      expandedId = event.detail.id;
-      updateButtonStates();
+      if (e instanceof CustomEvent) {
+        expandedId = e.detail.id;
+        updateButtonStates();
+      }
     };
 
     const handleHashChange = () => {
@@ -87,7 +88,7 @@
       const target = e.target;
       if (!(target instanceof Element)) return;
 
-      const link = target.closest("a[href]") as HTMLAnchorElement | null;
+      const link = target.closest("a[href]");
       if (!link) return;
 
       const href = link.getAttribute("href");

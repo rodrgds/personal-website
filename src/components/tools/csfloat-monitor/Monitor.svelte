@@ -53,9 +53,14 @@
     { label: "Performance", value: "performance" },
   ];
 
-  onMount(() => {
+// Settings keys written by versions before the proxy-list migration.
+type LegacySettings = {
+  proxyUrls?: string[];
+  useDirectProxy?: boolean;
+};
+
+onMount(() => {
     settings.load();
-    // Migration for old settings: if max discount is likely < 1, multiply by 100
     if ($settings.dynDiscountMaxPercent <= 1.0) {
       $settings.dynDiscountMaxPercent *= 100;
       $settings.dynDiscountMinPercent *= 100;
@@ -63,21 +68,18 @@
     }
 
     // Migration for proxy settings (string[] -> ProxyConfig[])
-    // Use 'any' cast to access old removed properties if they exist in local storage
-    const current = get(settings) as any;
+    // SAFETY: localStorage may still hold the pre-migration shape with
+    // proxyUrls/useDirectProxy, so those legacy keys are read defensively.
+    const current = get(settings) as MonitorSettings & LegacySettings;
     if (!current.proxies && current.proxyUrls) {
-      // Convert old string array to new object array
       const direct = current.useDirectProxy || false;
-      current.proxies = current.proxyUrls.map((url: string) => ({
+      current.proxies = current.proxyUrls.map((url) => ({
         url,
         isDirect: direct,
       }));
       settings.set(current);
     } else if (!current.proxies) {
-      // Init default if completely missing
-      current.proxies = [
-        { url: "http://localhost:8010/proxy", isDirect: true },
-      ];
+      current.proxies = [{ url: "http://localhost:8010/proxy", isDirect: true }];
       settings.set(current);
     }
 
@@ -167,27 +169,31 @@
     );
   }
 
+  type GroupedLog =
+    | LogEntry
+    | { id: string; timestamp: Date; type: "check-summary"; count: number };
+
   $: groupedLogs = (() => {
     let checkCount = 0;
-    return logs.reduce((acc, log) => {
+    const grouped: GroupedLog[] = [];
+    for (const log of logs) {
       if (log.isCheck && checkCount++ >= 5) {
-        const prevGroup = acc[acc.length - 1];
+        const prevGroup = grouped[grouped.length - 1];
         if (prevGroup && prevGroup.type === "check-summary") {
           prevGroup.count++;
-          return acc;
-        } else {
-          acc.push({
-            id: "summary-" + log.id,
-            timestamp: log.timestamp,
-            type: "check-summary",
-            count: 1,
-          });
-          return acc;
+          continue;
         }
+        grouped.push({
+          id: "summary-" + log.id,
+          timestamp: log.timestamp,
+          type: "check-summary",
+          count: 1,
+        });
+        continue;
       }
-      acc.push(log);
-      return acc;
-    }, [] as any[]);
+      grouped.push(log);
+    }
+    return grouped;
   })();
 
   function startMonitor() {

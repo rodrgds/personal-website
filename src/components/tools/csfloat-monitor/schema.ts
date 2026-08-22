@@ -11,7 +11,7 @@ export interface SchemaEntry {
 
 // Cache stores
 export const rarities: Writable<Record<string, SchemaEntry>> = writable({});
-export const qualities: Writable<Record<string, unknown>> = writable({});
+export const qualities: Writable<Record<string, SchemaEntry>> = writable({});
 export const paints: Writable<Record<string, SchemaEntry>> = writable({});
 export const definitions: Writable<Record<string, SchemaEntry>> = writable({});
 export const items: Writable<Record<string, SchemaEntry>> = writable({});

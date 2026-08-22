@@ -56,8 +56,8 @@ const { Content } = await render(entry);
     }
     <script is:inline>
       document.addEventListener("astro:after-swap", () => {
-        if (typeof renderMathInElement === "function") {
-          renderMathInElement(document.body, {
+        if (window.renderMathInElement) {
+          window.renderMathInElement(document.body, {
             delimiters: [
               { left: "$$", right: "$$", display: true },
               { left: "$", right: "$", display: false },

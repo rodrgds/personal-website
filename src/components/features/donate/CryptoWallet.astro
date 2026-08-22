@@ -98,15 +98,13 @@ const emptyQrImageSrc =
     canvasElement: HTMLCanvasElement,
     modalElement: HTMLElement,
   ) {
-    const modalQrImage = modalElement.querySelector(
-      ".modal-qr-image",
-    ) as HTMLImageElement;
-    const modalQrAddress = modalElement.querySelector(
-      ".modal-qr-address",
-    ) as HTMLElement;
-    const modalCloseButton = modalElement.querySelector(
+    const modalQrImage =
+      modalElement.querySelector<HTMLImageElement>(".modal-qr-image");
+    const modalQrAddress =
+      modalElement.querySelector<HTMLElement>(".modal-qr-address");
+    const modalCloseButton = modalElement.querySelector<HTMLButtonElement>(
       ".modal-close-button",
-    ) as HTMLButtonElement;
+    );
 
     if (!modalQrImage || !modalQrAddress) return;
 
@@ -136,12 +134,10 @@ const emptyQrImageSrc =
     modalElement.setAttribute("aria-hidden", "true");
 
     // Clear content
-    const modalQrImage = modalElement.querySelector(
-      ".modal-qr-image",
-    ) as HTMLImageElement;
-    const modalQrAddress = modalElement.querySelector(
-      ".modal-qr-address",
-    ) as HTMLElement;
+    const modalQrImage =
+      modalElement.querySelector<HTMLImageElement>(".modal-qr-image");
+    const modalQrAddress =
+      modalElement.querySelector<HTMLElement>(".modal-qr-address");
     if (modalQrImage) modalQrImage.src = modalQrImage.dataset.emptySrc || "";
     if (modalQrAddress) modalQrAddress.textContent = "";
 
@@ -222,18 +218,17 @@ const emptyQrImageSrc =
   // --- Initialization Logic ---
   /** @param {HTMLElement} componentWrapper */
   function initializeComponent(componentWrapper: HTMLElement) {
-    const canvasElement = componentWrapper.querySelector(
+    const canvasElement = componentWrapper.querySelector<HTMLCanvasElement>(
       "canvas.qr-code-canvas",
-    ) as HTMLCanvasElement;
-    const modalElement = componentWrapper.querySelector(
-      ".qr-modal",
-    ) as HTMLElement;
-    const closeButton = modalElement?.querySelector(
+    );
+    const modalElement =
+      componentWrapper.querySelector<HTMLElement>(".qr-modal");
+    const closeButton = modalElement?.querySelector<HTMLButtonElement>(
       ".modal-close-button",
-    ) as HTMLButtonElement;
-    const copyButton = componentWrapper.querySelector(
+    );
+    const copyButton = componentWrapper.querySelector<HTMLButtonElement>(
       "[data-crypto-button]",
-    ) as HTMLButtonElement;
+    );
 
     // Setup copy button functionality
     if (copyButton && !copyButton.dataset.listenerAttached) {
@@ -310,9 +305,9 @@ const emptyQrImageSrc =
 
   function runInitialization() {
     document
-      .querySelectorAll(".crypto-component-wrapper")
+      .querySelectorAll<HTMLElement>(".crypto-component-wrapper")
       .forEach((wrapper) => {
-        initializeComponent(wrapper as HTMLElement);
+        initializeComponent(wrapper);
       });
   }
 
