@@ -16,61 +16,76 @@ const { Content } = await render(entry);
 ---
 
 <html lang="en">
-	<head>
-		<BaseHead title={entry.data.title} description={entry.data.description} />
+  <head>
+    <BaseHead title={entry.data.title} description={entry.data.description} />
 
-		<style>
-			.title {
-				font-size: 2em;
-				margin: 0.25em 0 0;
-			}
-			hr {
-				border-top: 1px solid var(--border-color);
-				margin: 1rem 0;
-			}
-		</style>
-		<!-- import latex if it is used -->
-		{entry.data.katex === true && (
-			<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.3/dist/katex.min.js" integrity="sha384-97gW6UIJxnlKemYavrqDHSX3SiygeOwIZhwyOKRfSaf0JWKRVj9hLASHgFTzT+0O" crossorigin="anonymous"/>
-			<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.3/dist/katex.min.css" integrity="sha384-Juol1FqnotbkyZUT5Z7gUPjQ9gzlwCENvUZTpQBAPxtusdwFLRy382PSDx5UUJ4/" crossorigin="anonymous"/>
-			<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.3/dist/contrib/auto-render.min.js" integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05" crossorigin="anonymous"
-		onload='renderMathInElement(document.body,{delimiters: [
-									{left: "$$", right: "$$", display: true},
-								{left: "$", right: "$", display: false}
-			]});'/>
-			<script is:inline>
-				document.addEventListener('astro:after-swap', () => {
-					if (typeof renderMathInElement === 'function') {
-						renderMathInElement(document.body, {
-							delimiters: [
-								{left: "$$", right: "$$", display: true},
-								{left: "$", right: "$", display: false}
-							]
-						});
-					}
-				});
-			</script>
-		)}
-	</head>
+    <style>
+      .title {
+        font-size: 2em;
+        margin: 0.25em 0 0;
+      }
+      hr {
+        border-top: 1px solid var(--border-color);
+        margin: 1rem 0;
+      }
+    </style>
+    {
+      entry.data.katex === true && (
+        <>
+          <script
+            defer
+            src="https://cdn.jsdelivr.net/npm/katex@0.16.3/dist/katex.min.js"
+            integrity="sha384-97gW6UIJxnlKemYavrqDHSX3SiygeOwIZhwyOKRfSaf0JWKRVj9hLASHgFTzT+0O"
+            crossorigin="anonymous"
+          />
+          <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/katex@0.16.3/dist/katex.min.css"
+            integrity="sha384-Juol1FqnotbkyZUT5Z7gUPjQ9gzlwCENvUZTpQBAPxtusdwFLRy382PSDx5UUJ4/"
+            crossorigin="anonymous"
+          />
+          <script
+            defer
+            src="https://cdn.jsdelivr.net/npm/katex@0.16.3/dist/contrib/auto-render.min.js"
+            integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05"
+            crossorigin="anonymous"
+            onload='renderMathInElement(document.body,{delimiters: [{left: "$$", right: "$$", display: true},{left: "$", right: "$", display: false}]});'
+          />
+        </>
+      )
+    }
+    <script is:inline>
+      document.addEventListener("astro:after-swap", () => {
+        if (typeof renderMathInElement === "function") {
+          renderMathInElement(document.body, {
+            delimiters: [
+              { left: "$$", right: "$$", display: true },
+              { left: "$", right: "$", display: false },
+            ],
+          });
+        }
+      });
+    </script>
+  </head>
 
-	<body>
-		<Header />
-		<main>
-			<article>
-				<!-- {heroImage && <img width={720} height={360} src={heroImage} alt="" />} -->
-				<h1 class="title" transition:name={`blogpost-name-${entry.id}`}>{entry.data.title}</h1>
-				{entry.data.pubDate && <time transition:name={`blogpost-pubdate-${entry.id}`}>{entry.data.pubDate}</time>}
-				<!-- {
-					updatedDate && (
-						<div>
-							Last updated on <time>{updatedDate}</time>
-						</div>
-					)
-				} -->
-				<hr />
+  <body>
+    <Header />
+    <main>
+      <article>
+        <h1 class="title" transition:name={`blogpost-name-${entry.id}`}>
+          {entry.data.title}
+        </h1>
+        {
+          entry.data.pubDate && (
+            <time transition:name={`blogpost-pubdate-${entry.id}`}>
+              {entry.data.pubDate}
+            </time>
+          )
+        }
+        <hr />
         <Content />
-			</article>
-		</main>
-		<Footer />
-	</body>
+      </article>
+    </main>
+    <Footer />
+  </body>
 </html>
