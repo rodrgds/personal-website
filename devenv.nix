@@ -154,10 +154,10 @@ in
     echo "  dev-browser   Start Astro on 127.0.0.1 for browser QA"
     echo "  check         Run Astro diagnostics"
     echo "  typecheck     Run Astro diagnostics"
-    echo "  format-check  Check formatting without changing files"
-    echo "  lint          Run all configured static checks"
+    echo "  format-check  Check formatting (oxfmt + prettier) without changes"
+    echo "  lint          Run oxlint with the anti-slop plugin"
     echo "  build         Build and optimize the production site"
-    echo "  verify        Run the universally available static checks"
+    echo "  verify        Run lint, format checks, and Astro diagnostics"
     echo "  verify-full   Run static checks and the secret-dependent build"
     echo ""
   '';

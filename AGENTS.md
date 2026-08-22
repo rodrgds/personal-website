@@ -25,11 +25,11 @@ Dotenv files are parsed as data and are never sourced, evaluated, or copied into
 the Nix store.
 
 Available commands are `install`, `setup`, `dev`, `dev-browser`, `check`,
-`typecheck`, `format-check`, `lint`, `build`, `verify`, and `verify-full`.
-`install` and `setup` reconcile `node_modules` from `bun.lock`. `dev-browser`
-serves `http://127.0.0.1:4321`, which is the stable browser-automation endpoint.
-`verify` matches the universally available CI gate; `verify-full` additionally
-runs the secret-dependent production build.
+`typecheck`, `format`, `format-check`, `lint`, `build`, `verify`, and
+`verify-full`. `install` and `setup` reconcile `node_modules` from `bun.lock`.
+`dev-browser` serves `http://127.0.0.1:4321`, which is the stable
+browser-automation endpoint. `verify` matches the universally available CI
+gate; `verify-full` additionally runs the secret-dependent production build.
 
 There is no test framework or code linter configured. Here, `lint` means the
 existing formatting and Astro diagnostics; do not claim or add a fake test suite.
@@ -105,16 +105,23 @@ The image-optimization tail of local and VPS builds can be quiet for several
 minutes. If the process is alive and has no error, keep it attached rather than
 restarting it or treating silence as a failure.
 
-## Formatting
+## Formatting and linting
+
+- **oxlint** is the linter (`bun run lint`). It loads the vendored generic
+  anti-slop plugin from `tools/oxlint/anti-slop/`; its rules reject untyped
+  boundaries, unsafe dictionaries, and unjustified type assertions. Justify a
+  deliberate assertion with a `SAFETY:` comment directly above it instead of
+  suppressing rules.
+- **oxfmt** formats JS/TS/JSON (config in `.oxfmtrc.json`).
+- **Prettier** remains only for `.astro` files, which oxfmt cannot parse
+  (plugin: `prettier-plugin-astro`, config in `.prettierrc`). `.svelte` and
+  `.mdx` files are not formatted by any tool; keep their style consistent by
+  hand.
 
 ```bash
-bunx prettier --write .
-format-check
+bun run format        # oxfmt --write + prettier --write on .astro
+verify                # oxlint + format-check + astro check
 ```
-
-Prettier config is in `package.json`. `.prettierignore` excludes `**/*.mdx`.
-Use `verify` for the normal local/CI gate. Run `verify-full` only when build
-environment variables and Typst's package cache are available.
 
 ## Writing and product copy
 

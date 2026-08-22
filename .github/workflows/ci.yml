@@ -35,12 +35,17 @@ jobs:
             app:
               - 'src/**'
               - 'public/**'
+              - 'tools/**'
               - 'astro.config.mjs'
               - 'svelte.config.js'
               - 'tsconfig.json'
               - 'package.json'
               - 'bun.lock'
               - 'bun.lockb'
+              - 'oxlint.config.ts'
+              - '.oxfmtrc.json'
+              - '.prettierrc'
+              - '.prettierignore'
               - 'devenv.nix'
               - 'devenv.yaml'
               - 'devenv.lock'
@@ -142,8 +147,7 @@ jobs:
           # on the VPS after this code-quality gate succeeds.
           if [[ "$APP_CHANGED" == "true" || "$CI_CHANGED" == "true" ]]; then
             install
-            format-check
-            typecheck
+            verify
           fi
 
   deploy-production:

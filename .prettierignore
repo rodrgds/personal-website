@@ -17,3 +17,5 @@ dist
 
 # Per-project .devenv shell state
 .devenv/
+# Vendored anti-slop oxlint plugin
+tools/oxlint/anti-slop/
