@@ -253,7 +253,6 @@
     </p>
   </div>
 
-  <!-- Filter Controls -->
   <div class="filter-controls">
     <div class="filter-header">
       <div class="filter-title-row">
@@ -346,7 +345,6 @@
                 on:keydown={(e) =>
                   e.key === "Enter" && handleItemClick(e, itemId)}
               >
-                <!-- Image/Icon -->
                 <div class="item-image">
                   {#if item.image}
                     <img
@@ -366,7 +364,6 @@
                   {/if}
                 </div>
 
-                <!-- Content -->
                 <div class="item-content">
                   <div class="item-header">
                     <div class="title-with-indicators">
@@ -422,7 +419,6 @@
                     {/if}
                   </p>
 
-                  <!-- Favorite Episodes (for podcasts) - only show on hover/click -->
                   {#if section === "podcasts" && item.favoriteEpisodes}
                     <div class="favorite-episodes">
                       <h4>Favorite Episodes:</h4>
@@ -445,7 +441,6 @@
                     </div>
                   {/if}
 
-                  <!-- Tags -->
                   <div class="item-tags">
                     <div class="tags-list">
                       {#each item.categories || [] as category (category)}

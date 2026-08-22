@@ -135,10 +135,9 @@
   // Get grouped history
   let groupedHistory = $derived(data ? groupHistory(data.history) : []);
 
-  // Masonry column helpers — greedy shortest-column algorithm.
-  // Each item is placed in whichever column currently has the least estimated
-  // height, which keeps columns visually balanced regardless of whether cards
-  // have a poster image or not.
+  // Masonry columns: place each item in whichever column currently has the
+  // least estimated height, which keeps columns visually balanced regardless
+  // of whether cards have a poster image or not.
   function greedyColumns<T>(
     items: T[],
     numCols: number,
@@ -156,8 +155,8 @@
     return cols;
   }
 
-  // Height estimates (in arbitrary units — only relative values matter).
-  // A card with a poster has a 2:3 portrait image + text; one without is text only.
+  // Height estimates in arbitrary units; only relative values matter.
+  // A card with a poster is a 2:3 portrait image + text; one without is text only.
   function estimateItemHeight(item: any): number {
     return item.posterPath ? 420 : 110;
   }
@@ -187,7 +186,6 @@
   <p class="error">Failed to load watch history: {error}</p>
 {:else if data}
   <div class="trakt-container">
-    <!-- Data Source Indicator -->
     <div class="data-source">
       <img src="/logos/trakt.png" alt="Trakt" class="source-logo" />
       <span class="source-text"
@@ -195,7 +193,6 @@
       >
     </div>
 
-    <!-- Stats Header -->
     {#if data.stats}
       <div class="stats-header">
         <div class="stat-card">

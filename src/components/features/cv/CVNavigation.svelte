@@ -122,7 +122,6 @@
   }
 </script>
 
-<!-- Left Button -->
 <button
   class="nav-button nav-button-left"
   class:hidden={isFirst}
@@ -135,7 +134,6 @@
   </svg>
 </button>
 
-<!-- Right Button -->
 <button
   class="nav-button nav-button-right"
   class:hidden={isLast}

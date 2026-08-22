@@ -1,11 +1,20 @@
 import { writable, type Writable } from "svelte/store";
 
+// Schema entries come from the cs2-items-schema JSON dumps; only the fields
+// read by the monitor are typed.
+export interface SchemaEntry {
+  name?: string;
+  weapon?: string;
+  def?: string;
+  paint?: string;
+}
+
 // Cache stores
-export const rarities: Writable<Record<string, any>> = writable({});
-export const qualities: Writable<Record<string, string>> = writable({});
-export const paints: Writable<Record<string, any>> = writable({});
-export const definitions: Writable<Record<string, any>> = writable({});
-export const items: Writable<Record<string, any>> = writable({});
+export const rarities: Writable<Record<string, SchemaEntry>> = writable({});
+export const qualities: Writable<Record<string, unknown>> = writable({});
+export const paints: Writable<Record<string, SchemaEntry>> = writable({});
+export const definitions: Writable<Record<string, SchemaEntry>> = writable({});
+export const items: Writable<Record<string, SchemaEntry>> = writable({});
 
 let fetched = false;
 
@@ -41,7 +50,6 @@ export async function fetchSchemas() {
     items.set(i);
 
     fetched = true;
-    console.log("CSFloat Monitor: Schemas fetched successfully");
   } catch (e) {
     console.error("CSFloat Monitor: Failed to fetch schemas", e);
   }

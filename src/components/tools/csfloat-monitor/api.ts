@@ -181,10 +181,10 @@ export async function fetchListings(
       const listings = rawListings;
 
       return { listings, status: 200, proxyUsed: proxyUrl || "Direct" };
-    } catch (e: any) {
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Unknown error";
       const pUrl = proxy ? proxy.url : "Direct";
-      // Catch specific fetch errors (like CORS or Network failures)
-      lastError = `Proxy ${pUrl} failed: ${e.name === "TypeError" ? "CORS/Network Block" : e.message || "Unknown error"}`;
+      lastError = `Proxy ${pUrl} failed: ${e instanceof TypeError ? "CORS/Network Block" : message}`;
       continue; // Try next proxy
     }
   }

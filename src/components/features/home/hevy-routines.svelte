@@ -100,27 +100,22 @@
     return `${hours}h ${minutes}m`;
   }
 
-  // Helper function to format sets - FIX for weighted exercises
   function formatSet(set: Set): string {
-    // Check if it's a weighted exercise (has weight but also reps)
     if (set.weight_kg !== undefined && set.weight_kg > 0 && set.reps) {
       return `${set.weight_kg}kg × ${set.reps}`;
     }
-    // Bodyweight exercises (reps only)
     if (set.reps && !set.weight_kg) {
       return `${set.reps} reps`;
     }
-    // Duration-based exercises
     if (set.duration_seconds) {
       const mins = Math.floor(set.duration_seconds / 60);
       const secs = set.duration_seconds % 60;
       return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
     }
-    // Distance-based exercises
     if (set.distance_meters) {
       return `${set.distance_meters}m`;
     }
-    return "—";
+    return "-";
   }
 
   async function loadRoutines() {
@@ -136,7 +131,6 @@
       }
 
       if (result.data) {
-        // Reverse the order of routines
         routines = (result.data.routines || []).reverse();
         stats = result.data.stats;
       }
@@ -181,10 +175,9 @@
     }
   }
 
-  // Masonry column helpers — greedy shortest-column algorithm.
-  // Each item is placed in whichever column currently has the least estimated
-  // height, which keeps columns visually balanced regardless of how many
-  // exercises each routine contains.
+  // Masonry columns: place each routine in whichever column currently has the
+  // least estimated height, which keeps columns visually balanced regardless
+  // of how many exercises each routine contains.
   function greedyColumns<T>(
     items: T[],
     numCols: number,
@@ -202,7 +195,7 @@
     return cols;
   }
 
-  // Height estimates (in arbitrary units — only relative values matter).
+  // Height estimates in arbitrary units; only relative values matter.
   // A card has a base height plus a contribution per exercise row.
   function estimateRoutineHeight(routine: Routine): number {
     const exerciseCount = routine.exercises?.length ?? 0;
@@ -245,15 +238,14 @@
   {#if loading}
     <div class="loading">
       <div class="spinner"></div>
-      <p>Loading your routines...</p>
+      <p>Loading routines...</p>
     </div>
   {:else if error}
     <div class="error">
-      <p>❌ {error}</p>
+      <p>{error}</p>
       <button onclick={loadRoutines} class="retry-button">Retry</button>
     </div>
   {:else}
-    <!-- Data Source Indicator -->
     <div class="data-source">
       <img src="/logos/hevy.png" alt="Hevy" class="source-logo" />
       <span class="source-text"
@@ -302,8 +294,7 @@
 
     {#if routines.length === 0}
       <div class="empty">
-        <p>No routines found in your "Current" folder.</p>
-        <p class="hint">Add some routines to the "Current" folder in Hevy!</p>
+        <p>No routines in the "Current" folder right now.</p>
       </div>
     {:else}
       <div class="routines-masonry">
@@ -447,11 +438,6 @@
 
   .empty {
     gap: 0.5rem;
-  }
-
-  .hint {
-    font-size: 0.875rem;
-    opacity: 0.7;
   }
 
   .stats-header {

@@ -65,10 +65,9 @@
     return imageUrl && imageUrl.trim() ? imageUrl : null;
   }
 
-  // Masonry column helpers — greedy shortest-column algorithm.
-  // Each item is placed in whichever column currently has the least estimated
-  // height, which keeps columns visually balanced regardless of whether cards
-  // have album art or not.
+  // Masonry columns: place each item in whichever column currently has the
+  // least estimated height, which keeps columns visually balanced regardless
+  // of whether cards have album art or not.
   function greedyColumns<T>(
     items: T[],
     numCols: number,
@@ -86,7 +85,7 @@
     return cols;
   }
 
-  // Height estimates (in arbitrary units — only relative values matter).
+  // Height estimates in arbitrary units; only relative values matter.
   // A card with album art is a square image + text; one without is text only.
   function estimateItemHeight(item: GridItem): number {
     if (item.__type === "stats") return 200;
@@ -134,7 +133,6 @@
   <p class="error">Failed to load music data: {error}</p>
 {:else if data}
   <div class="lastfm-container">
-    <!-- Data Source Indicator -->
     <div class="data-source">
       <img src="/logos/lastfm.png" alt="Last.fm" class="source-logo" />
       <span class="source-text"

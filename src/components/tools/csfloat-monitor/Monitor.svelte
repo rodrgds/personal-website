@@ -31,12 +31,12 @@
     distinctSeen: 0,
   };
 
-  let timeoutId: any = null;
+  let timeoutId: number | null = null;
   let lastSeenIds = new SvelteSet<string>();
   let countdownMs = 0;
   let targetSleep = 0;
   let targetSleepMs = 0;
-  let countdownInterval: any = null;
+  let countdownInterval: ReturnType<typeof setInterval> | null = null;
   let countdownEndTs = 0;
   let firstFetchAfterStart = false;
 
@@ -150,9 +150,10 @@
           console.error("Ntfy failed with status:", res.status, errorText);
           addLog(`Ntfy failed: ${res.status}`, "error");
         }
-      } catch (e: any) {
+      } catch (e) {
+        const message = e instanceof Error ? e.message : "Unknown error";
         console.error("Ntfy exception", e);
-        addLog(`Ntfy Error: ${e.message || "Unknown error"}`, "error");
+        addLog(`Ntfy Error: ${message}`, "error");
       }
     }
   }
@@ -193,7 +194,7 @@
     if (isRunning) return;
     isRunning = true;
     firstFetchAfterStart = true;
-    addLog("🚀 CSFloat Monitor Started", "info");
+    addLog("CSFloat Monitor Started", "info");
     loop();
   }
 
@@ -416,11 +417,9 @@
       if (isRunning) {
         timeoutId = setTimeout(loop, finalSleep * 1000);
       }
-    } catch (e: any) {
-      addLog(
-        `Crash detected in loop: ${e.message || "Unknown error"}`,
-        "error"
-      );
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Unknown error";
+      addLog(`Crash detected in loop: ${message}`, "error");
       // Continue monitoring even on crash - retry with next proxy
       if (isRunning) {
         timeoutId = setTimeout(loop, 10000);
@@ -464,9 +463,7 @@
 
 <div class="monitor-container">
   <div class="layout-grid">
-    <!-- Sidebar / Settings -->
     <div class="sidebar">
-      <!-- Controls -->
       <div class="panel controls-panel">
         <div class="status-header">
           <h2 class="section-title">Monitor Status</h2>
@@ -529,7 +526,6 @@
         </div>
       </div>
 
-      <!-- Settings -->
       <div class="panel settings-panel">
         <div class="settings-header">
           <h2 class="section-title">Settings</h2>
@@ -538,7 +534,6 @@
         <Tabs items={tabs} bind:activeTab />
 
         <div class="settings-content">
-          <!-- GENERAL -->
           {#if activeTab === "general"}
             <div class="form-section">
               <div>
@@ -645,7 +640,6 @@
             </div>
           {/if}
 
-          <!-- FILTERS -->
           {#if activeTab === "filters"}
             <div class="form-section">
               <div class="two-col-grid">
@@ -656,7 +650,7 @@
                     type="number"
                     value={$settings.minPrice / 100}
                     on:input={(e) => {
-                      const target = e.target as any;
+                      const target = e.currentTarget as HTMLInputElement;
                       $settings.minPrice =
                         parseFloat(target.value || "0") * 100;
                     }}
@@ -669,7 +663,7 @@
                     type="number"
                     value={$settings.maxPrice / 100}
                     on:input={(e) => {
-                      const target = e.target as any;
+                      const target = e.currentTarget as HTMLInputElement;
                       $settings.maxPrice =
                         parseFloat(target.value || "0") * 100;
                     }}
@@ -710,7 +704,7 @@
                     { value: -1, label: "Any" },
                     ...Object.entries($rarities).map(([k, v]) => ({
                       value: parseInt(k),
-                      label: v.name || v.weapon || `Rarity ${k}`, // Handle schema variations
+                      label: v.name || v.weapon || `Rarity ${k}`,
                     })),
                   ]}
                 />
@@ -746,7 +740,7 @@
                       if ($settings.defIndex !== -1) {
                         allowedPaints = new SvelteSet();
                         const defIdStr = $settings.defIndex.toString();
-                        Object.values($items).forEach((item: any) => {
+                        Object.values($items).forEach((item) => {
                           if (item.def === defIdStr && item.paint) {
                             allowedPaints!.add(parseInt(item.paint));
                           }
@@ -871,7 +865,6 @@
             </div>
           {/if}
 
-          <!-- NOTIFICATIONS -->
           {#if activeTab === "notifications"}
             <div class="form-section">
               <Checkbox
@@ -925,7 +918,6 @@
             </div>
           {/if}
 
-          <!-- DISCOUNT -->
           {#if activeTab === "discount"}
             <div class="form-section">
               <div class="checkbox-row">
@@ -989,7 +981,6 @@
                     />
                   </div>
 
-                  <!-- Visualization: Examples -->
                   <div class="visualization-container">
                     <Label>Discount Threshold Examples</Label>
                     <div class="examples-list">
@@ -1073,7 +1064,6 @@
       </div>
     </div>
 
-    <!-- Main Content / Logs -->
     <div class="main">
       <div class="panel logs-panel">
         <div class="logs-header">
