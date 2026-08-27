@@ -1,9 +1,43 @@
 ---
-const today = new Date();
+import { Moon, Sun, Volume2, VolumeX } from "lucide-astro";
 import ToastHost from "./ToastHost.astro";
+
+const today = new Date();
 ---
 
 <footer transition:name="footer">
+  <div class="footer-controls" role="group" aria-label="Site preferences">
+    <button
+      class="footer-toggle theme-toggle"
+      type="button"
+      data-theme-toggle
+      data-cuelume-toggle
+      aria-label="Switch color theme"
+      title="Switch color theme"
+    >
+      <span class="theme-icon theme-icon-light" aria-hidden="true">
+        <Sun size={18} strokeWidth={1.8} />
+      </span>
+      <span class="theme-icon theme-icon-dark" aria-hidden="true">
+        <Moon size={18} strokeWidth={1.8} />
+      </span>
+    </button>
+    <button
+      class="footer-toggle sound-toggle"
+      type="button"
+      data-sound-toggle
+      aria-label="Mute interface sounds"
+      aria-pressed="true"
+      title="Mute interface sounds"
+    >
+      <span class="sound-icon sound-icon-on" aria-hidden="true">
+        <Volume2 size={18} strokeWidth={1.8} />
+      </span>
+      <span class="sound-icon sound-icon-off" aria-hidden="true">
+        <VolumeX size={18} strokeWidth={1.8} />
+      </span>
+    </button>
+  </div>
   <p>
     &copy; {today.getFullYear()}
     <img src="/favicon.webp" alt="" aria-hidden="true" />
@@ -18,6 +52,60 @@ import ToastHost from "./ToastHost.astro";
     padding: 3.5rem 0 2rem;
     color: var(--gray-color);
     font-size: 0.88rem;
+  }
+
+  .footer-controls {
+    display: flex;
+    justify-content: center;
+    gap: 0.2rem;
+    margin-bottom: 0.65rem;
+    color: var(--link-color);
+  }
+
+  .footer-toggle {
+    display: inline-grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    line-height: 1;
+    transition:
+      opacity 0.2s ease-out,
+      transform 0.2s ease-out;
+  }
+
+  .footer-toggle:hover,
+  .footer-toggle:focus-visible {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+
+  .theme-icon,
+  .sound-icon {
+    display: none;
+    width: 1.18rem;
+    height: 1.18rem;
+  }
+
+  .theme-icon :global(svg),
+  .sound-icon :global(svg) {
+    width: 100%;
+    height: 100%;
+    stroke: currentColor;
+    fill: none;
+  }
+
+  .theme-toggle[data-theme-state="light"] .theme-icon-dark,
+  .theme-toggle:not([data-theme-state]) .theme-icon-dark,
+  .theme-toggle[data-theme-state="dark"] .theme-icon-light,
+  .sound-toggle[data-sound-state="on"] .sound-icon-on,
+  .sound-toggle:not([data-sound-state]) .sound-icon-on,
+  .sound-toggle[data-sound-state="off"] .sound-icon-off {
+    display: inline-grid;
+    place-items: center;
   }
 
   p {

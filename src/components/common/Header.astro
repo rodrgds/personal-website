@@ -1,6 +1,5 @@
 ---
 import HeaderLink from "./HeaderLink.astro";
-import { Moon, Sun, Volume2, VolumeX } from "lucide-astro";
 ---
 
 <header>
@@ -13,36 +12,6 @@ import { Moon, Sun, Volume2, VolumeX } from "lucide-astro";
       <HeaderLink href="/faves">Faves</HeaderLink>
     </div>
     <div class="flex">
-      <button
-        class="header-toggle theme-toggle"
-        type="button"
-        data-theme-toggle
-        data-cuelume-toggle
-        aria-label="Switch color theme"
-        title="Switch color theme"
-      >
-        <span class="theme-icon theme-icon-light" aria-hidden="true">
-          <Sun size={18} strokeWidth={1.8} />
-        </span>
-        <span class="theme-icon theme-icon-dark" aria-hidden="true">
-          <Moon size={18} strokeWidth={1.8} />
-        </span>
-      </button>
-      <button
-        class="header-toggle sound-toggle"
-        type="button"
-        data-sound-toggle
-        aria-label="Mute interface sounds"
-        aria-pressed="true"
-        title="Mute interface sounds"
-      >
-        <span class="sound-icon sound-icon-on" aria-hidden="true">
-          <Volume2 size={18} strokeWidth={1.8} />
-        </span>
-        <span class="sound-icon sound-icon-off" aria-hidden="true">
-          <VolumeX size={18} strokeWidth={1.8} />
-        </span>
-      </button>
       <HeaderLink
         class="hide-sometimes"
         href="https://url.rgo.pt/mastodon"
@@ -151,72 +120,6 @@ import { Moon, Sun, Volume2, VolumeX } from "lucide-astro";
   .x-icon {
     font-size: 1.28rem;
     line-height: 1;
-  }
-
-  .header-toggle {
-    display: inline-grid;
-    place-items: center;
-    width: 1.75rem;
-    height: 1.75rem;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: var(--link-color);
-    font-family: var(--font-family-mono);
-    line-height: 1;
-    transition:
-      opacity 0.2s ease-out,
-      transform 0.2s ease-out;
-  }
-
-  .theme-icon {
-    display: none;
-    width: 1.18rem;
-    height: 1.18rem;
-  }
-
-  .theme-icon :global(svg) {
-    width: 100%;
-    height: 100%;
-    stroke: currentColor;
-    fill: none;
-  }
-
-  .theme-toggle[data-theme-state="light"] .theme-icon-dark,
-  .theme-toggle:not([data-theme-state]) .theme-icon-dark {
-    display: inline-grid;
-    place-items: center;
-  }
-
-  .theme-toggle[data-theme-state="dark"] .theme-icon-light {
-    display: inline-grid;
-    place-items: center;
-  }
-
-  .sound-icon {
-    display: none;
-    width: 1.18rem;
-    height: 1.18rem;
-  }
-
-  .sound-icon :global(svg) {
-    width: 100%;
-    height: 100%;
-    stroke: currentColor;
-    fill: none;
-  }
-
-  .sound-toggle[data-sound-state="on"] .sound-icon-on,
-  .sound-toggle:not([data-sound-state]) .sound-icon-on,
-  .sound-toggle[data-sound-state="off"] .sound-icon-off {
-    display: inline-grid;
-    place-items: center;
-  }
-
-  .header-toggle:hover,
-  .header-toggle:focus-visible {
-    opacity: 0.8;
-    transform: scale(1.1);
   }
 
   @media (min-width: 400px) {
