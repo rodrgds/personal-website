@@ -5,7 +5,7 @@ import Header from "../../components/common/Header.astro";
 import Footer from "../../components/common/Footer.astro";
 
 const { slug } = Astro.params;
-const blogEntries = await getCollection("blog");
+const blogEntries = await getCollection("blog", ({ data }) => !data.draft);
 const entry = blogEntries.find((e) => e.id === slug);
 
 if (!entry) {

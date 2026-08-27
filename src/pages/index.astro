@@ -9,12 +9,13 @@ import Logo from "../components/common/Logo.astro";
 import DateOfBirth from "../components/features/home/date-of-birth.svelte";
 import GitHubContributions from "../components/features/home/GitHubContributions.svelte";
 
-const posts = await getCollection("blog").then((posts) =>
-  posts.sort((a, b) => {
-    return (
-      new Date(b.data.pubDate).valueOf() - new Date(a.data.pubDate).valueOf()
-    );
-  }),
+const posts = await getCollection("blog", ({ data }) => !data.draft).then(
+  (posts) =>
+    posts.sort((a, b) => {
+      return (
+        new Date(b.data.pubDate).valueOf() - new Date(a.data.pubDate).valueOf()
+      );
+    }),
 );
 ---
 
