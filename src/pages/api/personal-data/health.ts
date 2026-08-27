@@ -5,6 +5,7 @@ import { z } from "astro/zod";
 
 import { getPersonalDataDirectus } from "../../../lib/personal-data/directus";
 import { refreshHealthProjections } from "../../../lib/personal-data/projections";
+import { getSleepSessionStartTime } from "../../../lib/personal-data/sleep";
 import type { JsonObject } from "../../../lib/json";
 
 export const prerender = false;
@@ -168,8 +169,9 @@ function normalizeHealthConnectWebhook(
   }
   const sleepSessions = new Map<string, StoredSleepSession>();
   for (const record of payload.sleep ?? []) {
+    const sessionStartTime = getSleepSessionStartTime(record);
     const id = `health-connect-sleep:${createHash("sha256")
-      .update(record.session_end_time)
+      .update(sessionStartTime)
       .digest("hex")
       .slice(0, 48)}`;
     sleepSessions.set(id, {

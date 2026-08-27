@@ -1,5 +1,6 @@
 import type { PersonalDataDirectus } from "./directus";
 import type { ActivityDayRow, ActivitySource, MetricSummaryRow } from "./model";
+import { getSleepSecondsByDate, type SleepSessionInterval } from "./sleep";
 
 interface ProjectionDefinition {
   label: string;
@@ -114,33 +115,27 @@ export async function refreshHealthProjections(
     fields: ["date", "steps", "sleep_minutes"],
     sort: ["date"],
   });
-  const sleepSessions = await directus.readAll<{
-    date: string;
-    duration_seconds: number;
-  }>("sleep_sessions", {
-    fields: ["date", "duration_seconds"],
-    sort: ["date"],
-  });
+  const sleepSessions = await directus.readAll<SleepSessionInterval>(
+    "sleep_sessions",
+    {
+      fields: ["date", "session_end_time", "duration_seconds"],
+      sort: ["date"],
+    },
+  );
 
   const steps = new Map<string, number>();
   const sleep = new Map<string, number>();
-  const sessionSleep = new Map<string, number>();
+  const sessionSleep = getSleepSecondsByDate(sleepSessions);
   for (const row of rows) {
     if (row.steps !== null && row.steps >= 0) steps.set(row.date, row.steps);
     if (row.sleep_minutes !== null && row.sleep_minutes >= 0) {
       sleep.set(row.date, row.sleep_minutes);
     }
   }
-  for (const session of sleepSessions) {
-    sessionSleep.set(
-      session.date,
-      (sessionSleep.get(session.date) ?? 0) + session.duration_seconds / 60,
-    );
-  }
   // Raw Health Connect sessions are authoritative when both collectors have a
   // value for the same wake-up day.
-  for (const [date, minutes] of sessionSleep) {
-    sleep.set(date, minutes);
+  for (const [date, seconds] of sessionSleep) {
+    sleep.set(date, seconds / 60);
   }
 
   const legacyDistanceDays = await directus.readAll<{ id: string }>(

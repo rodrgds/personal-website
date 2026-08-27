@@ -67,10 +67,11 @@ sleep history. In HC Webhook:
    23:50. The post-midnight run captures the completed previous day.
 
 The endpoint accepts HC Webhook's normal JSON envelope with `steps` and `sleep`
-arrays. Steps become one row per day. Each sleep session receives a stable ID
-and is attributed to the date on which it ended, so the activity square appears
-on the wake-up day. Repeated syncs and overlapping backfills update the existing
-records instead of adding duplicates.
+arrays. Steps become one row per day. Each sleep session is keyed by its inferred
+start time and attributed to the date on which it ended, so the activity square
+appears on the wake-up day. Repeated syncs update the same session even when its
+end time changes. The projection merges overlapping intervals so old partial
+snapshots and duplicate providers cannot inflate the daily total.
 
 ### Health history backfill
 
@@ -84,7 +85,7 @@ Backfill at most one year at a time. The website accepts up to 400 daily Steps
 records and 800 Sleep sessions in one authenticated request, then writes them in
 Directus batches. Use adjacent, non-overlapping yearly ranges for a longer
 history. Re-sending a range is safe: the date remains the stable Steps key and
-the sleep session end time remains the stable Sleep key.
+the inferred sleep session start time remains the stable Sleep key.
 
 ### MacroDroid fallback
 
