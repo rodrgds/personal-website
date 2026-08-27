@@ -37,10 +37,17 @@ const posts = await getCollection("blog", ({ data }) => !data.draft).then(
             data-cuelume-hover="tick"
           >
             <span class="rodrigo-morph" aria-hidden="true">
-              <span class="name-full">Rodrigo</span>
-              <span class="name-short"
-                >rgo.<span class="heading-emoji">🇵🇹</span></span
-              >
+              <span class="morph-line">
+                <span class="initial-letter">
+                  <span class="r-upper">R</span>
+                  <span class="r-lower">r</span>
+                </span>
+                <span class="name-middle">odri</span>
+                <span class="name-tail">go</span>
+                <span class="pt-suffix"
+                  >.<span class="heading-emoji">🇵🇹</span></span
+                >
+              </span>
             </span>
           </button>
           <span class="dias">Dias</span>
@@ -294,43 +301,106 @@ const posts = await getCollection("blog", ({ data }) => !data.draft).then(
 
   .rodrigo-morph {
     position: relative;
-    display: inline-grid;
+    display: inline-block;
     line-height: 1;
     font-family: inherit;
     vertical-align: baseline;
     overflow: visible;
   }
 
-  .name-full,
-  .name-short {
-    grid-area: 1 / 1;
+  .rodrigo-morph::before {
+    content: "Rodrigo";
+    display: block;
+    visibility: hidden;
+  }
+
+  .morph-line {
+    --name-middle-shift: 1.085em;
+
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: inline-flex;
+    align-items: baseline;
+    line-height: 1;
     white-space: nowrap;
+  }
+
+  .initial-letter {
+    position: relative;
+    display: inline-grid;
+  }
+
+  .r-upper,
+  .r-lower {
+    grid-area: 1 / 1;
     transition:
       opacity 0.2s ease,
       transform 0.32s cubic-bezier(0.2, 0.75, 0.2, 1);
     will-change: transform, opacity;
   }
 
-  .name-full {
+  .r-upper {
     opacity: 1;
     transform: translateY(0);
   }
 
-  .name-short {
+  .r-lower {
     opacity: 0;
     transform: translateY(0.12em) scale(0.94);
   }
 
-  .name-toggle:hover .name-full,
-  .name-toggle:focus-visible .name-full {
+  .name-middle {
+    display: inline-block;
+    white-space: nowrap;
+    transition:
+      opacity 0.2s ease,
+      transform 0.28s cubic-bezier(0.2, 0.75, 0.2, 1);
+  }
+
+  .name-tail {
+    position: relative;
+    display: inline-block;
+    transition: transform 0.38s cubic-bezier(0.2, 0.75, 0.2, 1);
+  }
+
+  .pt-suffix {
+    display: inline-block;
+    opacity: 0;
+    transform: translate(-0.1em, 0.12em) scale(0.94);
+    transition:
+      opacity 0.18s ease,
+      transform 0.26s cubic-bezier(0.2, 0.75, 0.2, 1);
+  }
+
+  .name-toggle:hover .r-upper,
+  .name-toggle:focus-visible .r-upper {
     opacity: 0;
     transform: translateY(-0.12em) scale(0.94);
   }
 
-  .name-toggle:hover .name-short,
-  .name-toggle:focus-visible .name-short {
+  .name-toggle:hover .r-lower,
+  .name-toggle:focus-visible .r-lower {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+
+  .name-toggle:hover .name-middle,
+  .name-toggle:focus-visible .name-middle {
+    opacity: 0;
+    transform: translateY(-0.16em) scale(0.94);
+  }
+
+  .name-toggle:hover .name-tail,
+  .name-toggle:focus-visible .name-tail {
+    transform: translateX(calc(var(--name-middle-shift) * -1));
+  }
+
+  .name-toggle:hover .pt-suffix,
+  .name-toggle:focus-visible .pt-suffix {
+    opacity: 1;
+    transform: translateX(calc(var(--name-middle-shift) * -1)) scale(1);
+    transition-delay: 180ms;
   }
 
   .dias {
@@ -415,7 +485,7 @@ const posts = await getCollection("blog", ({ data }) => !data.draft).then(
   .writings li > a:focus-visible::before {
     content: "→";
     position: absolute;
-    left: -1.1rem;
+    left: -1.4rem;
     top: 50%;
     transform: translateY(-50%);
     pointer-events: none;
@@ -425,7 +495,7 @@ const posts = await getCollection("blog", ({ data }) => !data.draft).then(
   .writings li > a:focus-visible::after {
     content: "←";
     position: absolute;
-    right: -1.1rem;
+    right: -1.4rem;
     top: 50%;
     transform: translateY(-50%);
     pointer-events: none;
