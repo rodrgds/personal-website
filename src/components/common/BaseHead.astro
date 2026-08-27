@@ -100,7 +100,9 @@ const { title, description, image = "" } = Astro.props;
   import { bind, play, setEnabled } from "cuelume";
 
   const SOUND_STORAGE_KEY = "rgo-sound-enabled";
+  const ITEM_HOVER_GAP_MS = 70;
   const root = document.documentElement;
+  let lastItemHoverTime = -Infinity;
 
   function getSoundPreference(): boolean {
     try {
@@ -146,6 +148,28 @@ const { title, description, image = "" } = Astro.props;
     }
   }
 
+  function playItemHoverSound(event: PointerEvent): void {
+    if (event.pointerType !== "mouse") return;
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches)
+      return;
+
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const item = target.closest('a[data-external-preview="true"]');
+    if (!item) return;
+    if (
+      event.relatedTarget instanceof Node &&
+      item.contains(event.relatedTarget)
+    ) {
+      return;
+    }
+
+    const now = performance.now();
+    if (now - lastItemHoverTime < ITEM_HOVER_GAP_MS) return;
+    lastItemHoverTime = now;
+    play("press");
+  }
+
   bind();
   applySoundPreference(getSoundPreference());
 
@@ -159,6 +183,8 @@ const { title, description, image = "" } = Astro.props;
 
       toggleSound();
     });
+
+    document.addEventListener("pointerover", playItemHoverSound);
 
     window.addEventListener("storage", (event) => {
       if (event.key !== SOUND_STORAGE_KEY) return;
@@ -431,8 +457,6 @@ const { title, description, image = "" } = Astro.props;
         if (anchor.dataset.externalPreview === "true") continue;
         if (!isExternalProseLink(anchor)) continue;
         anchor.dataset.externalPreview = "true";
-        // A soft tick while the preview is being considered.
-        anchor.setAttribute("data-cuelume-hover", "tick");
       }
     }
 
@@ -443,7 +467,6 @@ const { title, description, image = "" } = Astro.props;
       el.innerHTML =
         '<div class="link-preview-card-inner">' +
         '<div class="link-preview-image">' +
-        '<img alt="" referrerpolicy="no-referrer" decoding="async" loading="lazy" />' +
         '<div class="link-preview-loading" aria-hidden="true">' +
         "<i></i><i></i><i></i>" +
         "</div>" +
@@ -469,7 +492,6 @@ const { title, description, image = "" } = Astro.props;
     function renderCard(meta) {
       const el = getCard();
       const imageWrap = el.querySelector(".link-preview-image");
-      const img = el.querySelector("img");
       const domain = el.querySelector(".link-preview-domain");
       const title = el.querySelector(".link-preview-title");
       const desc = el.querySelector(".link-preview-desc");
@@ -480,11 +502,14 @@ const { title, description, image = "" } = Astro.props;
       const hasImage = Boolean(meta.image);
       imageWrap.classList.toggle("has-image", hasImage);
       imageWrap.classList.remove("is-loaded", "is-broken");
-      img.removeAttribute("src");
-      img.onload = null;
-      img.onerror = null;
+      imageWrap.querySelector("img")?.remove();
 
       if (hasImage) {
+        const img = document.createElement("img");
+        img.alt = "";
+        img.referrerPolicy = "no-referrer";
+        img.decoding = "async";
+        img.loading = "lazy";
         img.onload = () => {
           imageWrap.classList.add("is-loaded");
           imageWrap.classList.remove("is-broken");
@@ -495,6 +520,7 @@ const { title, description, image = "" } = Astro.props;
           repositionCard();
         };
         img.src = meta.image;
+        imageWrap.prepend(img);
       }
 
       if (meta.handle) {
