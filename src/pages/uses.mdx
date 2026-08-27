@@ -1,12 +1,12 @@
 ---
 layout: "../layouts/TwoCols.astro"
 title: Uses Page
-updatedDate: 2026-07-06
+updatedDate: 2026-08-27
 ---
 
 import Logo from "../components/common/Logo.astro";
 
-<details style="column-span: all; -webkit-column-span: all; margin-bottom: 1.5rem; padding: 0.4rem 1rem; background: rgba(255, 193, 7, 0.1); border-left: 4px solid rgba(255, 193, 7, 0.6); border-radius: 4px;">
+<details style="column-span: all; -webkit-column-span: all; margin-bottom: 1.5rem; padding: 0.4rem 1rem; background: color-mix(in srgb, var(--flexoki-yellow) 10%, transparent); border: 1px solid color-mix(in srgb, var(--flexoki-yellow) 38%, transparent); border-radius: 4px;">
   <summary style="cursor: pointer; font-weight: bold; user-select: none;">Affiliate/referral disclaimer</summary>
   <p style="margin-top: 0.5rem;">Some links on this page are affiliate/referral links (marked with <sup>ref</sup>). I may earn a commission if you sign up through these links, at no extra cost to you (and may even get you a discount). I only recommend services I personally use and trust. Feel free to search for these services directly if you prefer.</p>
 </details>
@@ -17,27 +17,24 @@ import Logo from "../components/common/Logo.astro";
 
 - Operating Systems
   - <Logo fixed src="nixos" /> [NixOS](https://nixos.org/) - Desktop & server
-    - <Logo fixed src="i3wm" /> [i3wm](https://i3wm.org/) - Window manager
-    - <Logo fixed src="bumblebeestatus" /> [Bumblebee Status](https://bumblebee-status.readthedocs.io) - Status bar
+    - <Logo fixed src="hyprland" /> [Hyprland](https://hypr.land/) - Wayland compositor
+    - <Logo fixed src="quickshell" /> [Quickshell](https://quickshell.org/) - Desktop bar
     - <Logo fixed src="homemanager" /> [Home Manager](https://github.com/nix-community/home-manager) - Dotfiles
     - <Logo fixed src="vicinae" /> [Vicinae](https://www.vicinae.com/) - Application launcher
   - <Logo fixed src="macos" /> [macOS](https://www.apple.com/macos) - Laptop
     - <Logo fixed src="nixdarwin" /> [nix-darwin](https://github.com/nix-darwin/nix-darwin) - System config
     - <Logo fixed src="aerospace" /> [AeroSpace](https://github.com/nikitabobko/AeroSpace) - Window manager
     - <Logo fixed src="karabiner" /> [Karabiner-Elements](https://karabiner-elements.pqrs.org/) - Keyboard customization
-  - <Logo fixed src="ubuntu" /> [Ubuntu](https://ubuntu.com/) - Servers
-- <Logo fixed src="microsoftedge" /> [Microsoft Edge](https://www.microsoft.com/en-us/edge/download) - Browser
-  - <Logo fixed src="ublockoriginlite" /> [uBlock Origin Lite](https://chromewebstore.google.com/detail/ublock-origin-lite/ddkjiahejlhfcafbddmgiahcphecmpfh) - Ad blocker
+- <Logo fixed src="brave" /> [Brave](https://brave.com/download/) - Browser
   - <Logo fixed src="darkreader" /> [Dark Reader](https://chromewebstore.google.com/detail/dark-reader/eimadpbcbfnmbkopoojfekhnkhdbieeh) - Dark mode
   - <Logo fixed src="bitwarden" /> [Bitwarden](https://chromewebstore.google.com/detail/bitwarden-password-manage/nngceckbapebfimnlniiiahkandclblb) - Password manager
   {/* - <Logo fixed src="karakeep" /> [Karakeep](https://chromewebstore.google.com/detail/karakeep/kgcjekpmcjjogibpjebkhaanilehneje) - Bookmark manager */}
 - Dev
-  - <Logo fixed src="vscode" /> [Visual Studio Code](https://code.visualstudio.com/) - Code editor
   - <Logo fixed src="zed" /> [Zed](https://zed.dev/) - Code editor
   - <Logo fixed src="opencode" /> [Opencode](https://opencode.ai/) - AI coding agent
   - <Logo fixed src="neovim" /> [Neovim](https://neovim.io/) - Config editor
   - <Logo fixed src="ghostty" /> [Ghostty](https://ghostty.org/) - Terminal emulator
-  - <Logo fixed src="zsh" /> [zsh](https://www.zsh.org/) & <Logo fixed src="bash" /> [bash](https://www.gnu.org/software/bash/) - Shells
+  - <Logo fixed src="bash" /> [bash](https://www.gnu.org/software/bash/) - Shell
   - <Logo fixed src="starship" /> [Starship](https://starship.rs/) - Shell prompt
   {/* - <Logo fixed src="alacritty" /> [Alacritty](https://alacritty.org/) - Terminal emulator */}
 - Others
@@ -82,19 +79,18 @@ import Logo from "../components/common/Logo.astro";
 - <Logo fixed src="umami" /> [Umami](https://umami.is) - Website analytics
 - <Logo fixed src="vaultwarden" /> [Vaultwarden](https://github.com/dani-garcia/vaultwarden) - Password manager
 - <Logo fixed src="directus" /> [Directus](https://directus.io/) - Headless CMS
-- <Logo fixed src="hermes-agent" /> [Hermes Agent](https://hermes-agent.nousresearch.com/) - Personal AI agent
 - <Logo fixed src="teamspeak" /> [TeamSpeak](https://www.teamspeak.com) - Voice chat server
 - <Logo fixed src="ntfy" /> [ntfy](https://ntfy.sh/) - Push notifications
-- <Logo fixed src="termix" /> [Termix](https://termix.site/) - Server management
+- <Logo fixed src="adguardhome" /> [AdGuard Home](https://adguard.com/en/adguard-home/overview.html) - DNS & ad blocking
+- <Logo fixed src="litellm" /> [LiteLLM](https://litellm.ai/) - LLM API proxy
+- <Logo fixed src="openpost" /> [OpenPost](https://url.rgo.pt/openpost) - Social media scheduler
 - <Logo fixed src="synology-dsm" /> [Synology NAS](https://www.synology.com/en-global) with:
+  - <Logo fixed src="hermes-agent" /> [Hermes Agent](https://hermes-agent.nousresearch.com/) - Personal AI agent
   - <Logo fixed src="synologydrive" /> [Synology Drive](https://www.synology.com/en-global/dsm/feature/drive) - File drive
   - <Logo fixed src="immich" /> [Immich](https://immich.app/) - Photo management
   - <Logo fixed src="jellyfin" /> [Jellyfin](https://jellyfin.org/) - Media streaming
   - <Logo fixed src="audiobookshelf" /> [Audiobookshelf](https://www.audiobookshelf.org/) - Book & audiobook management
   - <Logo fixed src="paperlessngx" /> [Paperless-ngx](https://docs.paperless-ngx.com/) - Document management
-  - <Logo fixed src="adguardhome" /> [AdGuard Home](https://adguard.com/en/adguard-home/overview.html) - DNS & ad blocking
-  - <Logo fixed src="litellm" /> [LiteLLM](https://litellm.ai/) - LLM API proxy
-  - <Logo fixed src="openpost" /> [OpenPost](https://url.rgo.pt/openpost) - Social media scheduler
   {/* - <Logo fixed src="homeassistant" /> [Home Assistant](https://www.home-assistant.io/) - Home automation */}
 {/* - <Logo fixed src="penpot" /> [Penpot](https://penpot.app/) - Design & prototyping */}
 {/* - <Logo fixed src="karakeep" /> [Karakeep](https://karakeep.app/) - Bookmarking */}
@@ -103,7 +99,7 @@ import Logo from "../components/common/Logo.astro";
 ### Free
 
 - <Logo fixed src="komoot" /> [Komoot](https://www.komoot.com/) - Route planner & navigation
-- [WeTrakr](https://url.rgo.pt/movies) - Movie & TV show tracking
+- <Logo fixed src="wetrakr" /> [WeTrakr](https://url.rgo.pt/movies) - Movie & TV show tracking
 - <Logo fixed src="lastfm" /> [Last.fm](https://www.last.fm/) - Music tracking
 - <Logo fixed src="tailscale" /> [Tailscale](https://tailscale.com/) - Mesh VPN
 - <Logo fixed src="github" /> [GitHub](https://github.com/) - Git repository
