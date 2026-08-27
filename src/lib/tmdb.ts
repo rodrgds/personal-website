@@ -93,13 +93,13 @@ export async function getTmdbMediaDetails(
   return tmdbMediaCache.getOrSet(cacheKey, async () => {
     const data = await requestTmdb(`/${mediaType}/${tmdbId}`, tmdbMediaSchema);
     const year = getYearLabel(mediaType, data);
-    const details = {
+    const details: TmdbMediaDetails = {
       id: data.id,
       title: data.title ?? data.name ?? `TMDB ${tmdbId}`,
     };
-    if (year) return { ...details, year };
+    if (year) details.year = year;
     if (data.poster_path) {
-      return { ...details, posterUrl: getTmdbPosterUrl(data.poster_path) };
+      details.posterUrl = getTmdbPosterUrl(data.poster_path);
     }
     return details;
   });
