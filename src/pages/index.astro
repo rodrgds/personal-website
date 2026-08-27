@@ -27,7 +27,7 @@ const posts = await getCollection("blog", ({ data }) => !data.draft).then(
   <body>
     <Header title={SITE_TITLE} />
     <main>
-      <h2 class="intro">
+      <h2 class="intro handwritten-heading handwritten-heading--page">
         Hey! I'm
         <span class="name-wrap">
           <button
@@ -38,12 +38,14 @@ const posts = await getCollection("blog", ({ data }) => !data.draft).then(
           >
             <span class="rodrigo-morph" aria-hidden="true">
               <span class="name-full">Rodrigo</span>
-              <span class="name-short">Rgo.🇵🇹</span>
+              <span class="name-short"
+                >Rgo.<span class="heading-emoji">🇵🇹</span></span
+              >
             </span>
           </button>
           <span class="dias">Dias</span>
         </span>
-        👋
+        <span class="heading-emoji" aria-hidden="true">👋</span>
       </h2>
 
       <p>
@@ -195,18 +197,25 @@ const posts = await getCollection("blog", ({ data }) => !data.draft).then(
   }
 
   .intro {
-    font-family: var(--font-family-handwritten);
-    font-size: 2.15rem;
-    font-weight: 400;
-    line-height: 1;
+    margin-bottom: 0.8rem;
   }
 
   .home-section h2 {
     margin-bottom: 0.9rem;
     color: var(--heading-color);
-    font-size: 1.65rem;
+    font-size: var(--font-size-handwritten-section);
     font-weight: 400;
     font-family: var(--font-family-handwritten);
+    line-height: 0.95;
+  }
+
+  .heading-emoji {
+    display: inline-block;
+    font-family:
+      "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+    font-size: 0.56em;
+    line-height: 1;
+    vertical-align: 0.12em;
   }
 
   .socials {

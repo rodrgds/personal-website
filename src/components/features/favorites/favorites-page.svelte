@@ -245,7 +245,7 @@
 
 <div class="favorites-container">
   <div class="header-section compact">
-    <h1>My Favorites</h1>
+    <h1 class="handwritten-heading handwritten-heading--page">My Favorites</h1>
     <p>
       A curated collection of my favorite movies, shows, podcasts, books, blogs,
       articles, videos, and cool stuff that have shaped my thinking. Saved here
@@ -326,7 +326,7 @@
           <span class="collapse-icon"
             >{collapsedSections.has(section) ? "▶" : "▼"}</span
           >
-          {sectionTitle}
+          <span class="section-label">{sectionTitle}</span>
           <span class="item-count">({items.length})</span>
         </button>
       </h2>
@@ -504,8 +504,10 @@
   }
 
   .header-section.compact h1 {
-    font-size: 1.5rem;
-    font-weight: 600;
+    font-size: var(--font-size-handwritten-page);
+    font-weight: 400;
+    line-height: 0.95;
+    font-family: var(--font-family-handwritten);
     margin-bottom: 0.5rem;
     color: var(--heading-color);
   }
@@ -721,6 +723,13 @@
     cursor: pointer;
     font-size: 1.125rem;
     color: var(--heading-color);
+  }
+
+  .section-label {
+    font-family: var(--font-family-handwritten);
+    font-size: var(--font-size-handwritten-section);
+    font-weight: 400;
+    line-height: 0.95;
   }
 
   .collapse-icon {
