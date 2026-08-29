@@ -6,6 +6,13 @@ Astro 7 + Svelte 5 personal website with SSR. Production uses the standalone Nod
 adapter; Vercel builds select the Vercel adapter with `VERCEL=1`. Package manager:
 **bun**. Node 22.
 
+## Project state and memory
+
+- The **Personal Website** Vikunja project is the authority for private/internal active work, priorities and execution state. Use Executor to create or update tasks. GitHub Issues remain only for public reports and contributor-facing discussion.
+- Hindsight bank `rodrigo` is the authority for durable cross-agent site context, content decisions, constraints and project history. Recall with `project:personal-website` before substantial work. Retain only verified durable facts with `project:personal-website` and `source:<agent>`; never retain secrets, raw logs, temporary task state, completed-work reports or unverified claims.
+- Code, content collections, build/deploy commands, public docs and hard engineering constraints remain versioned here. Do not create mutable context/ADR folders, local issue stores, task boards or agent-memory files.
+- Verify recalled content facts against the source repositories and current collections before publishing them.
+
 ## Development Environment
 
 ```bash
