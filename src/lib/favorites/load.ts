@@ -15,18 +15,17 @@ import type {
 interface SectionConfig {
   id: FavoriteSectionId;
   title: string;
-  defaultIcon: string;
 }
 
 const SECTION_CONFIG: SectionConfig[] = [
-  { id: "movies", title: "Movies", defaultIcon: "🎬" },
-  { id: "shows", title: "Shows", defaultIcon: "📺" },
-  { id: "podcasts", title: "Podcasts", defaultIcon: "🎧" },
-  { id: "books", title: "Books", defaultIcon: "📚" },
-  { id: "blogs", title: "Blogs", defaultIcon: "✍️" },
-  { id: "articles", title: "Articles", defaultIcon: "📄" },
-  { id: "videos", title: "Videos", defaultIcon: "▶️" },
-  { id: "cool", title: "Cool Stuff", defaultIcon: "⭐" },
+  { id: "movies", title: "Movies" },
+  { id: "shows", title: "Shows" },
+  { id: "podcasts", title: "Podcasts" },
+  { id: "books", title: "Books" },
+  { id: "blogs", title: "Blogs" },
+  { id: "articles", title: "Articles" },
+  { id: "videos", title: "Videos" },
+  { id: "cool", title: "Cool Stuff" },
 ];
 
 function slugify(value: string): string {

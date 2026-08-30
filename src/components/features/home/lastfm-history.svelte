@@ -1,5 +1,9 @@
 <script lang="ts">
   import { actions } from "astro:actions";
+  import {
+    ArrowTopRightOnSquareIcon,
+    MusicalNoteIcon,
+  } from "heroicons-svelte/24/outline";
 
   let data: any = $state(null);
   let error: string | null = $state(null);
@@ -198,9 +202,11 @@
       rel="noopener noreferrer"
       class="more-row"
     >
-      <span class="more-row-icon">🎵</span>
+      <MusicalNoteIcon class="more-row-icon" />
       <span class="more-row-label">And more...</span>
-      <span class="more-row-link">View full history →</span>
+      <span class="more-row-link"
+        >View full history <ArrowTopRightOnSquareIcon class="ui-icon" /></span
+      >
     </a>
   </div>
 {/if}
@@ -339,8 +345,9 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
 
-  .more-row-icon {
-    font-size: 1.25rem;
+  :global(.more-row-icon) {
+    width: 1.25rem;
+    height: 1.25rem;
     flex-shrink: 0;
   }
 
@@ -350,6 +357,9 @@
   }
 
   .more-row-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
     font-size: 0.875rem;
     color: var(--link-color);
   }

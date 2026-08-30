@@ -1,5 +1,10 @@
 <script lang="ts">
   import { actions } from "astro:actions";
+  import {
+    ArrowTopRightOnSquareIcon,
+    FilmIcon,
+    TvIcon,
+  } from "heroicons-svelte/24/outline";
 
   let data: any = $state(null);
   let error: string | null = $state(null);
@@ -229,7 +234,11 @@
                       class="poster-image"
                     />
                     <div class="type-badge">
-                      {item.type === "movie" ? "🎬 Movie" : "📺 Show"}
+                      {#if item.type === "movie"}
+                        <FilmIcon /> Movie
+                      {:else}
+                        <TvIcon /> Show
+                      {/if}
                     </div>
                   </div>
                 {/if}
@@ -282,9 +291,11 @@
       rel="noopener noreferrer"
       class="more-row"
     >
-      <span class="more-row-icon">📺</span>
+      <TvIcon class="more-row-icon" />
       <span class="more-row-label">And more...</span>
-      <span class="more-row-link">View full history →</span>
+      <span class="more-row-link"
+        >View full history <ArrowTopRightOnSquareIcon class="ui-icon" /></span
+      >
     </a>
 
     <div class="tmdb-credit">
@@ -425,8 +436,9 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
 
-  .more-row-icon {
-    font-size: 1.25rem;
+  :global(.more-row-icon) {
+    width: 1.25rem;
+    height: 1.25rem;
     flex-shrink: 0;
   }
 
@@ -436,6 +448,9 @@
   }
 
   .more-row-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
     font-size: 0.875rem;
     color: var(--link-color);
   }
@@ -460,6 +475,9 @@
     position: absolute;
     top: 0.5rem;
     left: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
     background: rgba(0, 0, 0, 0.8);
     color: white;
     padding: 0.25rem 0.5rem;
@@ -467,6 +485,11 @@
     font-size: 0.75rem;
     font-weight: 600;
     backdrop-filter: blur(4px);
+  }
+
+  .type-badge :global(svg) {
+    width: 0.85rem;
+    height: 0.85rem;
   }
 
   .card-content {

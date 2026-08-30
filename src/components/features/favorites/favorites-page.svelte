@@ -1,4 +1,20 @@
 <script>
+  import {
+    ArrowsRightLeftIcon,
+    BookOpenIcon,
+    ChatBubbleLeftIcon,
+    ChevronDownIcon,
+    ChevronRightIcon,
+    DocumentTextIcon,
+    FilmIcon,
+    MicrophoneIcon,
+    PlayIcon,
+    RssIcon,
+    SparklesIcon,
+    StarIcon as StarOutlineIcon,
+    TvIcon,
+  } from "heroicons-svelte/24/outline";
+  import { StarIcon as StarSolidIcon } from "heroicons-svelte/24/solid";
   import { afterUpdate, onMount } from "svelte";
   import { SvelteSet } from "svelte/reactivity";
 
@@ -13,6 +29,17 @@
   let mounted = false;
   let collapsedSections = new SvelteSet();
   let slotMeasureFrame;
+
+  const sectionIcons = {
+    movies: FilmIcon,
+    shows: TvIcon,
+    podcasts: MicrophoneIcon,
+    books: BookOpenIcon,
+    blogs: RssIcon,
+    articles: DocumentTextIcon,
+    videos: PlayIcon,
+    cool: SparklesIcon,
+  };
 
   $: showClearButton = activeFilters.size > 0;
 
@@ -191,10 +218,6 @@
       .join(" ");
   }
 
-  function renderStars(rating) {
-    return "★".repeat(rating) + "☆".repeat(5 - rating);
-  }
-
   function isTagHighlighted(category, itemId) {
     return (
       activeFilters.has(category) &&
@@ -262,7 +285,7 @@
           on:click={goToRandomFavorite}
           title="Visit a random favorite"
         >
-          🎲 Surprise me
+          <ArrowsRightLeftIcon class="ui-icon" /> Surprise me
         </button>
       </div>
       <div class="filter-options">
@@ -288,8 +311,8 @@
           <select bind:value={sortBy}>
             <option value="alpha">A-Z</option>
             <option value="alpha-desc">Z-A</option>
-            <option value="rating-desc">★ High</option>
-            <option value="rating">★ Low</option>
+            <option value="rating-desc">Rating: high to low</option>
+            <option value="rating">Rating: low to high</option>
           </select>
         </div>
       </div>
@@ -314,7 +337,7 @@
     {/if}
   </div>
 
-  {#each visibleSections as { id: section, title: sectionTitle, defaultIcon, items } (section)}
+  {#each visibleSections as { id: section, title: sectionTitle, items } (section)}
     <section class="content-section">
       <h2 class="section-title">
         <button
@@ -323,9 +346,11 @@
           on:click={() => toggleSection(section)}
           aria-expanded={!collapsedSections.has(section)}
         >
-          <span class="collapse-icon"
-            >{collapsedSections.has(section) ? "▶" : "▼"}</span
-          >
+          {#if collapsedSections.has(section)}
+            <ChevronRightIcon class="collapse-icon" />
+          {:else}
+            <ChevronDownIcon class="collapse-icon" />
+          {/if}
           <span class="section-label">{sectionTitle}</span>
           <span class="item-count">({items.length})</span>
         </button>
@@ -359,7 +384,11 @@
                     />
                   {:else}
                     <div class="item-icon">
-                      {item.icon || defaultIcon}
+                      {#if item.icon}
+                        {item.icon}
+                      {:else}
+                        <svelte:component this={sectionIcons[section]} />
+                      {/if}
                     </div>
                   {/if}
                 </div>
@@ -391,19 +420,27 @@
                       </div>
                       <div class="rating-container">
                         {#if item.rating}
-                          <div class="rating-top">
-                            {renderStars(item.rating)}
+                          <div class="rating-top" aria-label={`${item.rating} out of 5 stars`}>
+                            {#each Array(5) as _, index (index)}
+                              {#if index < item.rating}
+                                <StarSolidIcon />
+                              {:else}
+                                <StarOutlineIcon />
+                              {/if}
+                            {/each}
                           </div>
                         {/if}
                         <div class="indicators">
                           {#if item.comment}
-                            <span class="indicator" title="Has comment">💬</span
+                            <span class="indicator" title="Has comment"
+                              ><ChatBubbleLeftIcon /></span
                             >
                           {/if}
                           {#if section === "podcasts" && item.favoriteEpisodes}
                             <span
                               class="indicator"
-                              title="Has favorite episodes">⭐</span
+                              title="Has favorite episodes"
+                              ><StarSolidIcon /></span
                             >
                           {/if}
                         </div>
@@ -732,8 +769,9 @@
     line-height: 0.95;
   }
 
-  .collapse-icon {
-    font-size: 0.85rem;
+  :global(.collapse-icon) {
+    width: 0.9rem;
+    height: 0.9rem;
     color: var(--gray-color);
   }
 
@@ -821,6 +859,11 @@
     color: var(--gray-color);
   }
 
+  .item-icon :global(svg) {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
   .item-content {
     flex: 1;
     min-width: 0;
@@ -861,8 +904,13 @@
   }
 
   .indicator {
-    font-size: 0.875rem;
+    display: inline-flex;
     opacity: 0.7;
+  }
+
+  .indicator :global(svg) {
+    width: 0.9rem;
+    height: 0.9rem;
   }
 
   .item-title {
@@ -898,6 +946,12 @@
     font-weight: 600;
     display: flex;
     align-items: center;
+    gap: 0.08rem;
+  }
+
+  .rating-top :global(svg) {
+    width: 0.75rem;
+    height: 0.75rem;
   }
 
   .item-comment {

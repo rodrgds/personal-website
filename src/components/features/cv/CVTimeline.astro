@@ -1,5 +1,6 @@
 ---
 import CVEntryAvatar from "./CVEntryAvatar.astro";
+import { ArrowRightIcon } from "heroicons-svelte/24/outline";
 import {
   TIMELINE_CATEGORIES,
   TIMELINE_CATEGORY_LABELS,
@@ -256,7 +257,9 @@ const yearTicks = layout.ticks.filter((tick) => tick.label);
       </p>
     </div>
     <div class="timeline-controls">
-      <p class="scroll-note" aria-hidden="true">Scroll through time →</p>
+      <p class="scroll-note" aria-hidden="true">
+        Scroll through time <ArrowRightIcon class="ui-icon" />
+      </p>
       <button
         class="spacing-switch"
         type="button"

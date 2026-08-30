@@ -21,7 +21,7 @@ const { title, description, fullWidth = false } = Astro.props;
     <Header />
     <main class={`tool-container ${fullWidth ? "full-width" : ""}`}>
       <div class="header-section">
-        <h1>{title}</h1>
+        <h1 class="handwritten-heading handwritten-heading--page">{title}</h1>
         <p class="description">{description}</p>
       </div>
       <slot />
@@ -54,9 +54,6 @@ const { title, description, fullWidth = false } = Astro.props;
   }
 
   h1 {
-    font-size: 1.875rem;
-    line-height: 2.25rem;
-    font-weight: 700;
     margin-bottom: 0.5rem;
   }
 

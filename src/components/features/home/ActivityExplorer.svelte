@@ -1,5 +1,10 @@
 <script lang="ts">
   import { actions } from "astro:actions";
+  import {
+    ArrowLeftIcon,
+    ArrowRightIcon,
+    ArrowTopRightOnSquareIcon,
+  } from "heroicons-svelte/24/outline";
   import { onMount } from "svelte";
 
   import {
@@ -505,9 +510,10 @@
         href={sourceLinks[activeSource]}
         target="_blank"
         rel="noopener noreferrer"
-        class="source-link"
-      >
-        View on {sourceLabels[activeSource]} <span aria-hidden="true">↗</span>
+      class="source-link"
+    >
+        View on {sourceLabels[activeSource]}
+        <ArrowTopRightOnSquareIcon class="ui-icon" />
       </a>
     {/if}
   </div>
@@ -521,7 +527,7 @@
         disabled={!canGoBack}
         aria-label={`Previous ${activeRange}`}
       >
-        <span aria-hidden="true">←</span>
+        <ArrowLeftIcon />
       </button>
     {/if}
 
@@ -542,7 +548,7 @@
         disabled={latestPeriod}
         aria-label={`Next ${activeRange}`}
       >
-        <span aria-hidden="true">→</span>
+        <ArrowRightIcon />
       </button>
     {/if}
   </div>
@@ -875,6 +881,11 @@
     padding: 0;
     font-family: var(--font-family-mono);
     font-size: 1rem;
+  }
+
+  .period-button :global(svg) {
+    width: 1rem;
+    height: 1rem;
   }
 
   .period-button:hover:not(:disabled),

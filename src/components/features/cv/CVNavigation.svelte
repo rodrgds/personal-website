@@ -1,4 +1,8 @@
 <script lang="ts">
+  import {
+    ChevronLeftIcon,
+    ChevronRightIcon,
+  } from "heroicons-svelte/24/outline";
   import { onMount } from "svelte";
   import {
     CV_EXPANDABLE_OPEN_EVENT,
@@ -127,24 +131,20 @@
   class="nav-button nav-button-left"
   class:hidden={isFirst}
   onclick={goPrev}
-  title="Previous (← or ↑)"
+  title="Previous (Left Arrow or Up Arrow)"
   aria-label="Go to previous CV entry"
 >
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-    <polyline points="15 18 9 12 15 6"></polyline>
-  </svg>
+  <ChevronLeftIcon />
 </button>
 
 <button
   class="nav-button nav-button-right"
   class:hidden={isLast}
   onclick={goNext}
-  title="Next (→ or ↓)"
+  title="Next (Right Arrow or Down Arrow)"
   aria-label="Go to next CV entry"
 >
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-    <polyline points="9 18 15 12 9 6"></polyline>
-  </svg>
+  <ChevronRightIcon />
 </button>
 
 <style>
@@ -188,7 +188,7 @@
     display: none;
   }
 
-  .nav-button svg {
+  .nav-button :global(svg) {
     width: 20px;
     height: 20px;
   }

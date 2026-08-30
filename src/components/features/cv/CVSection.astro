@@ -1,4 +1,6 @@
 ---
+import { ChevronRightIcon } from "heroicons-svelte/24/outline";
+
 interface Props {
   id: string;
   title: string;
@@ -24,9 +26,7 @@ const {
       data-cv-section
     >
       <summary>
-        <span class="collapse-icon" aria-hidden="true">
-          ▶
-        </span>
+        <ChevronRightIcon class="ui-icon collapse-icon" />
         <span class="section-title" id={id} role="heading" aria-level="2">
           {title}
         </span>
@@ -89,7 +89,8 @@ const {
   }
 
   .collapse-icon {
-    font-size: 0.72rem;
+    width: 0.8rem;
+    height: 0.8rem;
     color: var(--gray-color);
     transition: transform 0.18s ease;
   }

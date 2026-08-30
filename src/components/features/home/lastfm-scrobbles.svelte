@@ -1,5 +1,6 @@
 <script lang="ts">
   import { actions } from "astro:actions";
+  import { ArrowTopRightOnSquareIcon } from "heroicons-svelte/24/outline";
   import { onMount } from "svelte";
 
   let data: any = $state(null);
@@ -60,7 +61,7 @@
         target="_blank"
         rel="noopener noreferrer"
       >
-        View full profile →
+        View full profile <ArrowTopRightOnSquareIcon class="ui-icon" />
       </a>
     </div>
 
@@ -96,6 +97,12 @@
   .profile-link {
     text-align: right;
     font-size: 0.875rem;
+  }
+
+  .profile-link a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
   }
 
   .tracks-list {

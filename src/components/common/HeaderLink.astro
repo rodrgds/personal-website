@@ -1,4 +1,6 @@
 ---
+import { ArrowTopRightOnSquareIcon } from "heroicons-svelte/24/outline";
+
 export interface Props extends astroHTML.JSX.AnchorHTMLAttributes {
   href: string;
   external?: boolean;
@@ -23,13 +25,7 @@ const target = external ? "_blank" : undefined;
   <span class="label">
     <slot />
   </span>
-  {
-    external && (
-      <span class="external-mark" aria-hidden="true">
-        ↗
-      </span>
-    )
-  }
+  {external && <ArrowTopRightOnSquareIcon class="ui-icon external-mark" />}
   {
     isActive && (
       <svg

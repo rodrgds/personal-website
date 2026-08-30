@@ -1,4 +1,8 @@
 <script lang="ts">
+  import {
+    ArrowTopRightOnSquareIcon,
+    XMarkIcon,
+  } from "heroicons-svelte/24/outline";
   import { onMount } from "svelte";
   import type { Snippet } from "svelte";
 
@@ -78,7 +82,7 @@
               rel="noopener noreferrer"
               class="header-link"
             >
-              {headerLinkText} →
+              {headerLinkText} <ArrowTopRightOnSquareIcon class="ui-icon" />
             </a>
           {/if}
           <button
@@ -86,7 +90,7 @@
             onclick={handleClose}
             aria-label="Close modal"
           >
-            ×
+            <XMarkIcon />
           </button>
         </div>
       </div>
@@ -96,7 +100,7 @@
         onclick={handleClose}
         aria-label="Close modal"
       >
-        ×
+        <XMarkIcon />
       </button>
     {/if}
     <div class="modal-body">
@@ -189,6 +193,9 @@
   }
 
   .header-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
     font-size: 0.875rem;
     color: var(--link-color);
     transition: opacity 0.2s;
@@ -203,7 +210,6 @@
   .close-button-absolute {
     background: none;
     border: none;
-    font-size: 2rem;
     line-height: 1;
     cursor: pointer;
     color: var(--text-color);
@@ -212,6 +218,12 @@
       background-color 0.16s ease,
       color 0.16s ease;
     border-radius: 0.28rem;
+  }
+
+  .close-button :global(svg),
+  .close-button-absolute :global(svg) {
+    width: 1.35rem;
+    height: 1.35rem;
   }
 
   .close-button:hover,

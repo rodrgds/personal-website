@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { ChevronDownIcon } from "heroicons-svelte/24/outline";
   import { createEventDispatcher } from "svelte";
   import Label from "./Label.svelte";
   import Input from "./Input.svelte";
@@ -64,7 +65,7 @@
     <span class="selected-label">
       {selectedOption ? selectedOption.label : placeholder}
     </span>
-    <span class="chevron">▼</span>
+    <ChevronDownIcon class="chevron" />
   </div>
 
   {#if isOpen}
@@ -127,8 +128,9 @@
     background-color: var(--surface-hover);
   }
 
-  .chevron {
-    font-size: 0.7rem;
+  :global(.chevron) {
+    width: 0.9rem;
+    height: 0.9rem;
     opacity: 0.5;
   }
 

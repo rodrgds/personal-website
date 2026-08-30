@@ -8,6 +8,7 @@ import { SOCIALS } from "../data/socials";
 import Logo from "../components/common/Logo.astro";
 import DateOfBirth from "../components/features/home/date-of-birth.svelte";
 import GitHubContributions from "../components/features/home/GitHubContributions.svelte";
+import { ArrowLeftIcon, ArrowRightIcon } from "heroicons-svelte/24/outline";
 
 const posts = await getCollection("blog", ({ data }) => !data.draft).then(
   (posts) =>
@@ -119,7 +120,9 @@ const posts = await getCollection("blog", ({ data }) => !data.draft).then(
                   href={"/posts/" + post.id}
                   transition:name={`blogpost-name-${post.id}`}
                 >
-                  {post.data.title}
+                  <ArrowRightIcon class="ui-icon writing-arrow writing-arrow-before" />
+                  <span>{post.data.title}</span>
+                  <ArrowLeftIcon class="ui-icon writing-arrow writing-arrow-after" />
                 </a>
               </li>
             ))
@@ -477,28 +480,34 @@ const posts = await getCollection("blog", ({ data }) => !data.draft).then(
 
   .writings li > a {
     position: relative;
+    display: inline-flex;
+    align-items: center;
     width: fit-content;
     text-decoration-thickness: 0.05em;
   }
 
-  .writings li > a:hover::before,
-  .writings li > a:focus-visible::before {
-    content: "→";
+  .writing-arrow {
     position: absolute;
-    left: -1.4rem;
     top: 50%;
+    width: 1rem;
+    height: 1rem;
     transform: translateY(-50%);
+    opacity: 0;
     pointer-events: none;
+    transition: opacity 0.15s ease-out;
   }
 
-  .writings li > a:hover::after,
-  .writings li > a:focus-visible::after {
-    content: "←";
-    position: absolute;
+  .writing-arrow-before {
+    left: -1.4rem;
+  }
+
+  .writing-arrow-after {
     right: -1.4rem;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
+  }
+
+  .writings li > a:hover .writing-arrow,
+  .writings li > a:focus-visible .writing-arrow {
+    opacity: 1;
   }
 
   @media (max-width: 560px) {
@@ -514,10 +523,7 @@ const posts = await getCollection("blog", ({ data }) => !data.draft).then(
       padding: 0.45rem 0;
     }
 
-    .writings li > a:hover::before,
-    .writings li > a:focus-visible::before,
-    .writings li > a:hover::after,
-    .writings li > a:focus-visible::after {
+    .writing-arrow {
       display: none;
     }
   }

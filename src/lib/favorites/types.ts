@@ -65,6 +65,5 @@ export interface FavoriteItem {
 export interface FavoriteSection {
   id: FavoriteSectionId;
   title: string;
-  defaultIcon: string;
   items: FavoriteItem[];
 }

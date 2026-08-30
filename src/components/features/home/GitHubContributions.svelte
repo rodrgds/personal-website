@@ -1,5 +1,6 @@
 <script lang="ts">
   import { actions } from "astro:actions";
+  import { ArrowTopRightOnSquareIcon } from "heroicons-svelte/24/outline";
   import { onMount } from "svelte";
 
   type ActivitySource =
@@ -308,7 +309,8 @@
           rel="noopener noreferrer"
           class="source-link"
         >
-          View on {sourceLabels[activeSource]} →
+          View on {sourceLabels[activeSource]}
+          <ArrowTopRightOnSquareIcon class="ui-icon" />
         </a>
       {/if}
     </div>
@@ -483,6 +485,9 @@
 
   .source-link {
     position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
     color: var(--link-color);
     font-size: 0.75rem;
     text-decoration: none;

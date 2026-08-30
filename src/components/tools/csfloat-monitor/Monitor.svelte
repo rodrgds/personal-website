@@ -1,4 +1,10 @@
 <script lang="ts">
+  import {
+    ArrowRightIcon,
+    PlusIcon,
+    SignalIcon,
+    XMarkIcon,
+  } from "heroicons-svelte/24/outline";
   import { onMount, onDestroy } from "svelte";
   import { SvelteSet } from "svelte/reactivity";
   import { get } from "svelte/store";
@@ -218,7 +224,7 @@ onMount(() => {
     targetSleep = 0;
     targetSleepMs = 0;
     stats.status = "Stopped";
-    addLog("🛑 Monitor Stopped", "warning");
+    addLog("Monitor stopped", "warning");
   }
 
   async function loop() {
@@ -246,7 +252,7 @@ onMount(() => {
         const waitTime = Math.max(120, (resetTime || 30) * 2);
         stats.status = `Rate Limited. Waiting ${waitTime}s`;
         addLog(
-          `⛔ Rate Limit Hit via ${proxyUsed}! Cooldown ${waitTime}s`,
+          `Rate limit hit via ${proxyUsed}. Cooldown ${waitTime}s`,
           "error"
         );
         timeoutId = setTimeout(loop, waitTime * 1000);
@@ -589,7 +595,7 @@ onMount(() => {
                             $settings.proxies = $settings.proxies.filter(
                               (_, idx) => idx !== i
                             );
-                          }}>✕</Button
+                          }}><XMarkIcon /></Button
                         >
                       </div>
                     </div>
@@ -605,7 +611,7 @@ onMount(() => {
                       ];
                     }}
                   >
-                    + Add Proxy
+                    <PlusIcon class="ui-icon" /> Add Proxy
                   </Button>
                 </div>
                 <span class="help-text"
@@ -1021,7 +1027,7 @@ onMount(() => {
                             <span class="ex-price"
                               >${example.price.toFixed(2)}</span
                             >
-                            <span class="ex-arrow">→</span>
+                            <ArrowRightIcon class="ex-arrow" />
                             <span class="ex-disc">{example.discount}%</span>
                           </div>
                         {/each}
@@ -1095,7 +1101,7 @@ onMount(() => {
         <div class="log-container">
           {#if logs.length === 0}
             <div class="empty-state">
-              <span class="big-icon">📡</span>
+              <SignalIcon class="big-icon" />
               <p>Ready to monitor.</p>
             </div>
           {/if}
@@ -1485,6 +1491,11 @@ onMount(() => {
     min-width: 0 !important;
   }
 
+  :global(.narrow-btn svg) {
+    width: 1rem;
+    height: 1rem;
+  }
+
   .tip-box {
     margin-top: 0.75rem;
     padding: 0.75rem;
@@ -1602,9 +1613,10 @@ onMount(() => {
   .ex-price {
     font-weight: 600;
   }
-  .ex-arrow {
+  :global(.ex-arrow) {
+    width: 0.8rem;
+    height: 0.8rem;
     color: var(--gray-color);
-    font-size: 0.7rem;
   }
   .ex-disc {
     color: var(--primary-color);
@@ -1701,8 +1713,9 @@ onMount(() => {
     color: #9ca3af;
     gap: 6px;
   }
-  .big-icon {
-    font-size: 2.25rem;
+  :global(.big-icon) {
+    width: 2.25rem;
+    height: 2.25rem;
   }
   .check-summary {
     font-size: 9px;

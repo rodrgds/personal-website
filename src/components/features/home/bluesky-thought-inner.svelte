@@ -1,4 +1,9 @@
 <script lang="ts">
+  import {
+    ArrowsRightLeftIcon,
+    ArrowTopRightOnSquareIcon,
+  } from "heroicons-svelte/24/outline";
+
   interface Post {
     text: string;
     date: string;
@@ -33,7 +38,7 @@
         onclick={shuffle}
         title="Pick another random post"
       >
-        🎲
+        <ArrowsRightLeftIcon />
       </button>
     </div>
     <p class="thought-text">{posts[currentIndex].text}</p>
@@ -45,7 +50,7 @@
         rel="noopener noreferrer"
         class="view-on-bsky"
       >
-        View on Bluesky →
+        View on Bluesky <ArrowTopRightOnSquareIcon class="ui-icon" />
       </a>
     </div>
   </div>
@@ -76,11 +81,15 @@
   .shuffle-btn {
     background: none;
     border: none;
-    font-size: 1rem;
     cursor: pointer;
     color: var(--link-color);
     padding: 0;
     line-height: 1;
+  }
+
+  .shuffle-btn :global(svg) {
+    width: 1rem;
+    height: 1rem;
   }
 
   .shuffle-btn:hover {
@@ -107,6 +116,9 @@
   }
 
   .view-on-bsky {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
     font-size: 0.75rem;
     color: var(--link-color);
     text-decoration: none;
