@@ -161,12 +161,22 @@ jobs:
           DEPLOY_WEBHOOK_SECRET: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}
         run: |
           set -euo pipefail
+          request_path=/hooks/deploy-personal-website
+          issued_at=$(date +%s)
+          delivery_id="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${GITHUB_SHA}"
           payload=$(printf '{"repository":"%s","sha":"%s"}' "$GITHUB_REPOSITORY" "$GITHUB_SHA")
-          signature=$(printf '%s' "$payload" | openssl dgst -sha256 -hmac "$DEPLOY_WEBHOOK_SECRET" | awk '{print "sha256=" $2}')
+          body_digest=$(printf '%s' "$payload" | openssl dgst -sha256 | awk '{print $2}')
+          canonical_request=$(printf 'POST\n%s\n%s\n%s\n%s' \
+            "$request_path" "$issued_at" "$delivery_id" "$body_digest")
+          signature=$(printf '%s' "$canonical_request" | openssl dgst -sha256 -hmac "$DEPLOY_WEBHOOK_SECRET" | awk '{print "sha256=" $2}')
           response=$(curl --fail-with-body --silent --show-error \
+            --connect-timeout 10 \
+            --max-time 3660 \
             -H 'Content-Type: application/json' \
-            -H "X-Hub-Signature-256: $signature" \
-            --data "$payload" \
-            https://webhooks.rgo.pt/hooks/deploy-personal-website)
+            -H "X-Deploy-Timestamp: $issued_at" \
+            -H "X-Deploy-Delivery: $delivery_id" \
+            -H "X-Deploy-Signature-256: $signature" \
+            --data-binary "$payload" \
+            "https://webhooks.rgo.pt$request_path")
           printf '%s\n' "$response"
-          grep -q 'DEPLOY_OK personal-website' <<<"$response"
+          [ "$response" = '{"status":"completed"}' ]
