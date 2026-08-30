@@ -230,6 +230,27 @@ export const PERSONAL_DATA_SCHEMA: CollectionDefinition[] = [
     ],
   },
   {
+    collection: "exercise_templates",
+    icon: "exercise",
+    note: "Hevy exercise metadata used to map workout exercises to muscle groups.",
+    fields: [
+      primaryString("id", 64),
+      field("title", "string", { required: true }),
+      field("primary_muscle_group", "string", {
+        required: true,
+        indexed: true,
+        maxLength: 32,
+      }),
+      field("secondary_muscle_groups", "json", { required: true }),
+      field("is_custom", "boolean", {
+        required: true,
+        defaultValue: false,
+      }),
+      dateCreated,
+      dateUpdated,
+    ],
+  },
+  {
     collection: "health_days",
     icon: "directions_walk",
     note: "Daily phone health aggregates received from the private ingestion API.",

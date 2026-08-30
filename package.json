@@ -16,7 +16,6 @@
     "build": "astro build",
     "verify": "bun run lint && bun run format-check && bun run typecheck",
     "verify:full": "bun run verify && bun run build",
-    "verify:full": "bun run verify && bun run build",
     "preview": "astro preview",
     "personal-data": "bun scripts/personal-data.ts",
     "astro": "astro"
@@ -30,7 +29,9 @@
     "@astrojs/vercel": "11.0.3",
     "@rehype-pretty/transformers": "^0.13.2",
     "astro": "7.0.9",
+    "body-muscles": "1.0.0",
     "cuelume": "0.1.2",
+    "heroicons-svelte": "2.0.2",
     "lucide-astro": "^0.556.0",
     "markdown-it": "^14.3.0",
     "qrcode": "^1.5.4",

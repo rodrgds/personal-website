@@ -1,6 +1,9 @@
 <script lang="ts">
   import { actions } from "astro:actions";
 
+  import type { MuscleTraining } from "../../../lib/hevy-muscles";
+  import MuscleHeatmap from "./MuscleHeatmap.svelte";
+
   interface Set {
     index: number;
     type: string;
@@ -29,6 +32,9 @@
   interface WorkoutStats {
     workoutCount: number;
     recentWorkouts: Workout[];
+    musclePeriodDays: number;
+    muscleDataAvailable: boolean;
+    muscles: MuscleTraining[];
   }
 
   interface Workout {
@@ -224,7 +230,7 @@
       workout.startTime,
       workout.endTime,
     )}
-    <div class="workout-item">
+    <li class="workout-item">
       <div class="workout-title">{workout.title}</div>
       <div class="workout-date">
         {formatDate(workout.startTime)} • {getRelativeTime(workout.startTime)}
@@ -232,7 +238,7 @@
           • {duration}
         {/if}
       </div>
-    </div>
+    </li>
   {/snippet}
 
   {#if loading}
@@ -254,40 +260,21 @@
     </div>
 
     {#if stats}
-      <div class="stats-header">
-        <div class="stat-card">
-          <div class="stat-label">Total Workouts</div>
-          <div class="stat-value">{stats.workoutCount}</div>
-        </div>
+      <div class="workout-overview">
+        <MuscleHeatmap
+          muscles={stats.muscles}
+          periodDays={stats.musclePeriodDays}
+          dataAvailable={stats.muscleDataAvailable}
+        />
         {#if stats.recentWorkouts && stats.recentWorkouts.length > 0}
-          <div class="stat-card workouts-card">
-            <div class="workouts-header">
-              <div class="stat-label">Recent Workouts</div>
-              {#if stats.recentWorkouts.length > 1}
-                <details
-                  class="more-workouts"
-                  data-dd-id="recent-workouts"
-                  ontoggle={(e) => handleDetailsToggle("recent-workouts", e)}
-                >
-                  <summary class="more-workouts-summary">
-                    Show {stats.recentWorkouts.length - 1} more
-                  </summary>
-                  <div class="more-workouts-content dropdown-content">
-                    {#each stats.recentWorkouts.slice(1) as workout, index (
-                      `${workout.startTime}-${index}`
-                    )}
-                      {@render WorkoutRow(workout)}
-                    {/each}
-                  </div>
-                </details>
-              {/if}
-            </div>
-            <div class="recent-workouts">
-              {#each stats.recentWorkouts.slice(0, 1) as workout (workout.startTime)}
+          <section class="recent-workouts-panel" aria-labelledby="recent-workouts-title">
+            <h3 id="recent-workouts-title">Recent workouts</h3>
+            <ul class="recent-workouts">
+              {#each stats.recentWorkouts.slice(0, 3) as workout (workout.startTime)}
                 {@render WorkoutRow(workout)}
               {/each}
-            </div>
-          </div>
+            </ul>
+          </section>
         {/if}
       </div>
     {/if}
@@ -440,66 +427,36 @@
     gap: 0.5rem;
   }
 
-  .stats-header {
-    display: flex;
-    gap: 1rem;
+  .workout-overview {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(15rem, 0.65fr);
+    align-items: center;
+    gap: 1.5rem;
     margin-bottom: 2rem;
-    flex-wrap: wrap;
   }
 
-  .stat-card {
-    flex: 0 0 auto;
-    min-width: 150px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    padding: 1rem 1.25rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    text-align: center;
+  .recent-workouts-panel {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    min-width: 0;
   }
 
-  .workouts-card {
-    flex: 1;
-    min-width: 300px;
-    text-align: left;
-  }
-
-  .workouts-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.5rem;
-  }
-
-  .stat-label {
-    font-size: 0.75rem;
-    opacity: 0.7;
-    margin-bottom: 0;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    font-weight: 600;
-  }
-
-  .stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    line-height: 1;
-    color: var(--link-color);
+  .recent-workouts-panel h3 {
+    margin: 0 0 0.35rem;
+    color: var(--heading-color);
+    font-size: 1rem;
   }
 
   .recent-workouts {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--border-color);
+    list-style: none;
   }
 
   .workout-item {
-    padding: 0.5rem;
-    background: var(--bg-secondary);
-    border-radius: 0.25rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--border-color);
   }
 
   .workout-title {
@@ -511,36 +468,6 @@
   .workout-date {
     font-size: 0.75rem;
     opacity: 0.7;
-  }
-
-  .more-workouts {
-    position: relative;
-  }
-
-  .more-workouts-summary {
-    cursor: pointer;
-    user-select: none;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--link-color);
-    list-style: none;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    background: var(--bg-secondary);
-    transition: background 0.2s;
-  }
-
-  .more-workouts-summary:hover {
-    background: var(--surface-hover);
-  }
-
-  .more-workouts-summary::-webkit-details-marker {
-    display: none;
-  }
-
-  .more-workouts-content {
-    min-width: 280px;
-    max-width: 320px;
   }
 
   .dropdown-content {
@@ -600,8 +527,7 @@
     z-index: 50;
   }
 
-  .exercise-item[open],
-  .more-workouts[open] {
+  .exercise-item[open] {
     position: relative;
     z-index: 60;
   }
@@ -687,18 +613,6 @@
       max-width: none;
     }
 
-    .more-workouts-content.dropdown-content {
-      position: absolute;
-      right: 0;
-      left: auto;
-      width: min(320px, calc(100vw - 2rem));
-      max-width: calc(100vw - 2rem);
-    }
-
-    .more-workouts-content {
-      min-width: 0;
-    }
-
   }
 
   .set-item {
@@ -747,27 +661,16 @@
   }
 
   @media (max-width: 768px) {
-    .stats-header {
-      flex-direction: column;
+    .workout-overview {
+      grid-template-columns: 1fr;
     }
 
-    .stat-card {
-      min-width: unset;
-      width: 100%;
+    .recent-workouts-panel {
+      order: -1;
     }
-
-    .workouts-card {
-      min-width: unset;
-    }
-
   }
 
   @media (prefers-color-scheme: dark) {
-    .stat-card {
-      background: rgba(255, 255, 255, 0.03);
-      border-color: rgba(255, 255, 255, 0.1);
-    }
-
     .data-source {
       background: rgba(255, 255, 255, 0.03);
       border-color: rgba(255, 255, 255, 0.1);
@@ -799,10 +702,6 @@
 
     .set-item {
       background: rgba(255, 255, 255, 0.05);
-    }
-
-    .workout-item {
-      background: rgba(255, 255, 255, 0.02);
     }
 
     .set-rpe {

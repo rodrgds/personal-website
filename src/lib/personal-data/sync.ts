@@ -48,6 +48,10 @@ function asRecords(value: JsonValue | undefined): JsonObject[] {
   return Array.isArray(value) ? value.map(asRecord) : [];
 }
 
+function asStrings(value: JsonValue | undefined): string[] {
+  return Array.isArray(value) ? value.filter(isJsonString) : [];
+}
+
 function asString(value: JsonValue | undefined): string {
   return value !== undefined && isJsonString(value) ? value : "";
 }
@@ -332,6 +336,38 @@ async function importHevy(
     await directus.deleteOne("routines", staleRoutine.id);
   }
 
+  const exerciseTemplates = await readHevyPages(
+    "/exercise_templates",
+    "exercise_templates",
+    apiKey,
+  );
+  const exerciseTemplateRows = exerciseTemplates
+    .filter((template) => asString(template.id))
+    .map((template) => ({
+      id: asString(template.id),
+      title: asString(template.title) || "Untitled exercise",
+      primary_muscle_group: asString(template.primary_muscle_group) || "other",
+      secondary_muscle_groups: asStrings(template.secondary_muscle_groups),
+      is_custom: template.is_custom === true,
+    }));
+  const exerciseTemplateResult = await directus.upsertMany(
+    "exercise_templates",
+    exerciseTemplateRows,
+  );
+  const storedExerciseTemplateIds = await directus.readAll<{ id: string }>(
+    "exercise_templates",
+    { fields: ["id"] },
+  );
+  const currentExerciseTemplateIds = new Set(
+    exerciseTemplateRows.map((template) => template.id),
+  );
+  const staleExerciseTemplates = storedExerciseTemplateIds.filter(
+    (template) => !currentExerciseTemplateIds.has(template.id),
+  );
+  for (const staleTemplate of staleExerciseTemplates) {
+    await directus.deleteOne("exercise_templates", staleTemplate.id);
+  }
+
   let workoutRows: Array<JsonObject & { id: string }> = [];
   let deletedRows: Array<JsonObject & { id: string }> = [];
   if (mode === "full" || !source.cursor) {
@@ -404,6 +440,9 @@ async function importHevy(
     routineResult.created +
     routineResult.updated +
     staleRoutines.length +
+    exerciseTemplateResult.created +
+    exerciseTemplateResult.updated +
+    staleExerciseTemplates.length +
     workoutResult.created +
     workoutResult.updated +
     deletedResult.created +
@@ -412,7 +451,11 @@ async function importHevy(
   return {
     source: "hevy",
     mode,
-    seen: routineRows.length + workoutRows.length + deletedRows.length,
+    seen:
+      routineRows.length +
+      exerciseTemplateRows.length +
+      workoutRows.length +
+      deletedRows.length,
     written,
     cursor: new Date().toISOString(),
   };
