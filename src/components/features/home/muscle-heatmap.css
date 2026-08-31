@@ -1,0 +1,206 @@
+.muscle-heatmap {
+  --heat-0: color-mix(in srgb, var(--text-muted) 14%, var(--background-color));
+  --heat-1: color-mix(in srgb, var(--link-color) 28%, var(--background-color));
+  --heat-2: color-mix(in srgb, var(--link-color) 50%, var(--background-color));
+  --heat-3: color-mix(in srgb, var(--link-color) 74%, var(--background-color));
+  --heat-4: var(--link-color);
+
+  display: flex;
+  flex-direction: column;
+  min-height: 22rem;
+  padding: 1rem 1.25rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+}
+
+.muscle-heatmap .heatmap-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.muscle-heatmap .heatmap-header h3 {
+  margin: 0;
+  color: var(--heading-color);
+  font-size: 1rem;
+}
+
+.muscle-heatmap .heatmap-header p {
+  margin: 0.15rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.muscle-heatmap .legend {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+}
+
+.muscle-heatmap .legend-cell {
+  width: 0.65rem;
+  height: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
+  border-radius: 0.12rem;
+}
+
+.muscle-heatmap .legend-cell[data-level="0"],
+.muscle-heatmap path[data-level="0"] {
+  fill: var(--heat-0);
+}
+
+.muscle-heatmap .legend-cell[data-level="0"] {
+  background: var(--heat-0);
+}
+
+.muscle-heatmap path[data-level="1"] {
+  fill: var(--heat-1);
+}
+
+.muscle-heatmap .legend-cell[data-level="1"] {
+  background: var(--heat-1);
+}
+
+.muscle-heatmap path[data-level="2"] {
+  fill: var(--heat-2);
+}
+
+.muscle-heatmap .legend-cell[data-level="2"] {
+  background: var(--heat-2);
+}
+
+.muscle-heatmap path[data-level="3"] {
+  fill: var(--heat-3);
+}
+
+.muscle-heatmap .legend-cell[data-level="3"] {
+  background: var(--heat-3);
+}
+
+.muscle-heatmap path[data-level="4"] {
+  fill: var(--heat-4);
+}
+
+.muscle-heatmap .legend-cell[data-level="4"] {
+  background: var(--heat-4);
+}
+
+.muscle-heatmap .body-views {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  flex: 1;
+  gap: 0.75rem;
+  min-height: 0;
+  padding: 0.75rem 0 0.35rem;
+}
+
+.muscle-heatmap figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+}
+
+.muscle-heatmap svg {
+  width: 100%;
+  height: 14.5rem;
+  overflow: visible;
+}
+
+.muscle-heatmap path {
+  cursor: help;
+  stroke: color-mix(in srgb, var(--background-color) 82%, var(--text-muted));
+  stroke-width: 0.12;
+  transition:
+    fill 180ms ease-out,
+    stroke 180ms ease-out;
+}
+
+.muscle-heatmap path[data-tracked="true"] {
+  cursor: pointer;
+}
+
+.muscle-heatmap path:hover,
+.muscle-heatmap path[data-selected="true"] {
+  stroke: var(--heading-color);
+  stroke-width: 0.25;
+}
+
+.muscle-heatmap path:focus {
+  outline: none;
+}
+
+.muscle-heatmap path:focus-visible {
+  stroke: var(--heading-color);
+  stroke-width: 0.45;
+}
+
+.muscle-heatmap figcaption {
+  margin-top: 0.15rem;
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.muscle-heatmap .heatmap-detail {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 1.25rem;
+  font-size: 0.8125rem;
+}
+
+.muscle-heatmap .heatmap-detail strong {
+  color: var(--heading-color);
+}
+
+.muscle-heatmap .heatmap-detail span {
+  color: var(--text-muted);
+}
+
+.muscle-heatmap .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 480px) {
+  .muscle-heatmap {
+    min-height: 19rem;
+    padding: 0.85rem;
+  }
+
+  .muscle-heatmap .heatmap-header {
+    align-items: flex-end;
+  }
+
+  .muscle-heatmap svg {
+    height: 12rem;
+  }
+
+  .muscle-heatmap .heatmap-detail {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.05rem;
+    text-align: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .muscle-heatmap path {
+    transition: none;
+  }
+}
