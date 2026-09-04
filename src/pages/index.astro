@@ -101,6 +101,23 @@ const posts = await getCollection("blog", ({ data }) => !data.draft).then(
       </section>
 
       <section class="home-section">
+        <h2>Toys &amp; Tools</h2>
+        <ul class="toys-tools">
+          <li>
+            <a href="/edu">Higher education research map</a>
+            <p>
+              An evolving map of why higher education falls short, what
+              universities do, and what better learning systems could look like.
+            </p>
+          </li>
+          <li>
+            <a href="/csfloat">CSFloat Monitor</a>
+            <p>A live, client-side monitor for CSFloat listings and deals.</p>
+          </li>
+        </ul>
+      </section>
+
+      <section class="home-section">
         <h2>Writings</h2>
         <ul class="writings">
           {
@@ -266,6 +283,33 @@ const posts = await getCollection("blog", ({ data }) => !data.draft).then(
     list-style-type: none;
     padding: 0;
     margin: 0;
+  }
+
+  .toys-tools {
+    display: grid;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .toys-tools li {
+    display: grid;
+    grid-template-columns: minmax(10rem, 0.72fr) minmax(0, 1.28fr);
+    gap: 1rem;
+    align-items: baseline;
+  }
+
+  .toys-tools a {
+    width: fit-content;
+    font-weight: 600;
+  }
+
+  .toys-tools p {
+    margin: 0;
+    color: var(--gray-color);
+    font-size: 0.92rem;
+    line-height: 1.45;
   }
 
   .writings li {
@@ -521,6 +565,11 @@ const posts = await getCollection("blog", ({ data }) => !data.draft).then(
       grid-template-columns: 1fr;
       gap: 0;
       padding: 0.45rem 0;
+    }
+
+    .toys-tools li {
+      grid-template-columns: 1fr;
+      gap: 0.08rem;
     }
 
     .writing-arrow {

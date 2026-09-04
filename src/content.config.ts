@@ -120,17 +120,6 @@ const honorsCollection = defineCollection({
   }),
 });
 
-const toolsCollection = defineCollection({
-  loader: glob({ pattern: "**/*.mdx", base: "./src/content/tools" }),
-  schema: z.object({
-    title: z.string(),
-    description: z.string(),
-    icon: z.string().optional(),
-    status: z.enum(["active", "wip", "archived"]).default("active"),
-    fullWidth: z.boolean().optional().default(false),
-  }),
-});
-
 export const collections = {
   blog: blogCollection,
   experience: experienceCollection,
@@ -138,7 +127,6 @@ export const collections = {
   education: educationCollection,
   certifications: certificationsCollection,
   honors: honorsCollection,
-  tools: toolsCollection,
   thoughts: defineCollection({
     loader: blueskyLoader({
       repo: "rgo.pt",

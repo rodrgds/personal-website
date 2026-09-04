@@ -634,7 +634,7 @@ onMount(() => {
                   </ol>
                   <p class="tip-text" style="margin-top: 0.5rem; opacity: 0.9;">
                     <strong>Windows Users:</strong> Download
-                    <a href="/tools/csfloat-monitor.cmd" download
+                    <a href="/csfloat-monitor.cmd" download
                       >csfloat-monitor.cmd</a
                     > - it automatically starts the proxy and opens this page in one
                     click!
@@ -1345,6 +1345,10 @@ onMount(() => {
   .sidebar {
     display: flex;
     flex-direction: column;
+    min-width: 0;
+  }
+  .main {
+    min-width: 0;
   }
   @media (min-width: 1024px) {
     .layout-grid {

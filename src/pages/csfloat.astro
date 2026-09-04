@@ -1,0 +1,12 @@
+---
+import Monitor from "../components/tools/csfloat-monitor/Monitor.svelte";
+import ToolLayout from "../layouts/ToolLayout.astro";
+---
+
+<ToolLayout
+  title="CSFloat Monitor"
+  description="Real-time client-side monitor for CSFloat listings. Set your parameters and get notified when a deal pops up."
+  fullWidth
+>
+  <Monitor client:only="svelte" />
+</ToolLayout>

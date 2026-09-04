@@ -18,7 +18,7 @@ if (-not (Get-Command "lcp" -ErrorAction SilentlyContinue)) {
 $proxyProc = Start-Process "cmd.exe" -ArgumentList "/c lcp --proxyUrl https://csfloat.com" -WindowStyle Hidden -PassThru
 
 # 3. Open the browser
-Start-Process "https://rgo.pt/tools/csfloat-monitor"
+Start-Process "https://rgo.pt/csfloat"
 
 # 4. Create the Tray Icon
 $notifyIcon = New-Object System.Windows.Forms.NotifyIcon
@@ -30,7 +30,7 @@ $notifyIcon.Icon = [System.Drawing.SystemIcons]::Application
 $notifyIcon.add_MouseClick({
     param($sender, $e)
     if ($e.Button -eq [System.Windows.Forms.MouseButtons]::Left) {
-        Start-Process "https://rgo.pt/tools/csfloat-monitor"
+        Start-Process "https://rgo.pt/csfloat"
     }
 })
 

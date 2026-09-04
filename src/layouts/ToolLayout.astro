@@ -60,4 +60,10 @@ const { title, description, fullWidth = false } = Astro.props;
   .description {
     color: var(--gray-color);
   }
+
+  @media (max-width: 600px) {
+    :global(body.full-width-body) {
+      padding-inline: 1rem !important;
+    }
+  }
 </style>
