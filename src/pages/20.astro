@@ -7,80 +7,60 @@ import ToolLayout from "../layouts/ToolLayout.astro";
 
 <ToolLayout
   title="What $20 AI subscription should I buy?"
-  description="Tons of people ask me this, in person and online, so here is my answer."
+  description="People ask me this constantly, in person and online. So here is my answer."
 >
   <Decide client:idle />
 
-  <section class="plans">
-    <h2>All five, briefly</h2>
-    <ul>
-      {
-        PLANS.map((plan) => (
-          <li>
-            <a href={plan.url} target="_blank" rel="noopener noreferrer">
-              {plan.name}
-            </a>
-            <span class="plan-price">{plan.price}</span>
-            <span class="plan-line">{plan.headline}</span>
-          </li>
-        ))
-      }
-    </ul>
-    <p class="updated">Checked {LAST_CHECKED}.</p>
-  </section>
+  <ol class="plans">
+    {
+      PLANS.map((plan) => (
+        <li>
+          <a href={plan.url} target="_blank" rel="noopener noreferrer">
+            {plan.name}
+          </a>
+          <span class="price">{plan.price}</span>
+        </li>
+      ))
+    }
+  </ol>
+  <p class="updated">
+    Checked {LAST_CHECKED}. Google is the Portugal price in euros; the rest are
+    the US list price, before VAT.
+  </p>
 </ToolLayout>
 
 <style>
   .plans {
-    margin-top: 3rem;
-  }
-
-  h2 {
-    margin: 0 0 1rem;
-    font-family: var(--font-family-serif);
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--heading-color);
-  }
-
-  .plans ul {
-    margin: 0;
+    max-width: 26rem;
+    margin: 4rem 0 0;
     padding: 0;
     list-style: none;
-  }
-
-  .plans li {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.2rem 0.6rem;
-    align-items: baseline;
-    padding: 0.6rem 0;
-    border-top: 1px solid var(--border-color);
-    font-size: 0.94rem;
+    font-size: 0.9rem;
     line-height: 1.45;
   }
 
-  .plans li:first-child {
-    border-top: 0;
+  .plans li {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: baseline;
+    column-gap: 1rem;
+    padding: 0.7rem 0;
+    border-top: 1px solid var(--border-color);
   }
 
   .plans a {
     font-weight: 600;
   }
 
-  .plan-price {
+  .price {
     color: var(--gray-color);
     font-variant-numeric: tabular-nums;
   }
 
-  .plan-line {
-    flex: 1 1 18rem;
-    color: var(--gray-color);
-  }
-
   .updated {
+    max-width: 26rem;
     margin: 1.25rem 0 0;
     color: var(--gray-color);
-    font-size: 0.85rem;
+    font-size: 0.8rem;
   }
 </style>

@@ -1,163 +1,160 @@
 <script lang="ts">
-  import { START_NODE, isPlanId, nodeById } from "./flow";
+  import Logo from "./Logo.svelte";
+  import { START_NODE, nodeById, isPlanId } from "./flow";
   import { planById } from "./plans";
 
-  interface Step {
-    readonly nodeId: string;
-    readonly label: string;
-    readonly next: string;
-  }
+  /** Each entry is a question id plus the answer taken from it. */
+  type Answer = { nodeId: string; yes: boolean };
 
-  let steps = $state<Step[]>([]);
+  let trail = $state<Answer[]>([]);
 
-  const currentId = $derived(
-    steps.length === 0 ? START_NODE : steps[steps.length - 1].next,
-  );
-  const currentPlan = $derived(isPlanId(currentId) ? planById(currentId) : null);
-  const currentNode = $derived(currentPlan === null ? nodeById(currentId) : null);
+  const currentId = $derived.by(() => {
+    let id = START_NODE;
+    for (const answer of trail) {
+      const node = nodeById(answer.nodeId);
+      id = answer.yes ? node.yes : node.no;
+    }
+    return id;
+  });
 
-  function choose(nodeId: string, label: string, next: string) {
-    steps = [...steps, { nodeId, label, next }];
+  const plan = $derived(isPlanId(currentId) ? planById(currentId) : null);
+  const node = $derived(plan === null ? nodeById(currentId) : null);
+
+  function answer(yes: boolean) {
+    if (node === null) return;
+    trail = [...trail, { nodeId: node.id, yes }];
   }
 
   function back() {
-    steps = steps.slice(0, -1);
+    trail = trail.slice(0, -1);
   }
 
   function restart() {
-    steps = [];
+    trail = [];
   }
 </script>
 
-<div class="decide">
-  {#if currentPlan}
-    <section class="verdict" aria-live="polite">
-      <p class="eyebrow">{currentPlan.skip ? "Not this one" : "Buy this"}</p>
-      <h2>{currentPlan.name} <span class="price">{currentPlan.price}</span></h2>
-      <p class="headline">{currentPlan.headline}</p>
-      <ul class="why">
-        {#each currentPlan.why as reason (reason)}
-          <li>{reason}</li>
-        {/each}
-      </ul>
-      <p class="watch">{currentPlan.watchOut}</p>
-      {#if currentPlan.skip}
-        <p class="alternative">
-          Get {planById(currentPlan.alternate).name} instead:
-          {planById(currentPlan.alternate).price}.
-        </p>
-      {/if}
-      <p class="links">
-        <a href={currentPlan.url} target="_blank" rel="noopener noreferrer">
-          Official pricing
-        </a>
-        <button type="button" on:click={restart}>Start over</button>
-      </p>
-    </section>
-  {:else if currentNode}
-    <section class="question">
-      <h2>{currentNode.question}</h2>
-      {#if currentNode.hint}
-        <p class="hint">{currentNode.hint}</p>
-      {/if}
-      <div class="options">
-        {#each currentNode.options as option (option.label)}
-          <button type="button" on:click={() => choose(currentNode.id, option.label, option.next)}>
-            {option.label}
-          </button>
-        {/each}
+<div class="chart">
+  {#each trail as step, index (index)}
+    <div class="done">
+      <p class="done-question">{nodeById(step.nodeId).question}</p>
+      <p class="done-answer">{step.yes ? "Yes" : "No"}</p>
+    </div>
+    <div class="stem" aria-hidden="true"></div>
+  {/each}
+
+  {#if plan}
+    <div class="verdict" aria-live="polite">
+      <div class="badge">
+        <Logo id={plan.id} />
       </div>
-      {#if steps.length > 0}
-        <button class="back" type="button" on:click={back}>Back</button>
+      <h2>{plan.name}</h2>
+      <p class="price">{plan.price}</p>
+      <p class="why">{plan.why}</p>
+      <p class="links">
+        <a href={plan.url} target="_blank" rel="noopener noreferrer">Pricing</a>
+        <button type="button" onclick={restart}>Start over</button>
+      </p>
+    </div>
+  {:else if node}
+    <div class="ask" aria-live="polite">
+      <h2>{node.question}</h2>
+      <div class="answers">
+        <button type="button" onclick={() => answer(true)}>Yes</button>
+        <button type="button" onclick={() => answer(false)}>No</button>
+      </div>
+      {#if trail.length > 0}
+        <button class="back" type="button" onclick={back}>Back</button>
       {/if}
-    </section>
+    </div>
   {/if}
 </div>
 
 <style>
-  .decide {
-    margin: 1.5rem 0 0;
+  .chart {
+    display: flex;
+    max-width: 26rem;
+    margin: 2.5rem 0 0;
+    flex-direction: column;
   }
 
-  .eyebrow {
-    margin: 0 0 0.4rem;
-    color: var(--gray-color);
-    font-size: 0.8rem;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-
-  h2 {
-    margin: 0 0 0.5rem;
-    font-family: var(--font-family-serif);
-    font-size: 1.45rem;
-    font-weight: 600;
-    line-height: 1.3;
-    color: var(--heading-color);
-  }
-
-  .price {
-    margin-left: 0.4rem;
-    color: var(--gray-color);
-    font-family: var(--font-family);
-    font-size: 0.95rem;
-    font-weight: 500;
-  }
-
-  .hint,
-  .headline {
-    max-width: 34rem;
-    margin: 0 0 1.25rem;
-    line-height: 1.55;
-  }
-
-  .hint {
-    color: var(--gray-color);
-    font-size: 0.93rem;
-  }
-
-  .options {
+  .done {
     display: grid;
-    gap: 0.5rem;
-    max-width: 34rem;
+    gap: 0.1rem;
   }
 
-  .options button {
-    padding: 0.75rem 0.9rem;
+  .done-question {
+    margin: 0;
+    color: var(--gray-color);
+    font-size: 0.95rem;
+    line-height: 1.4;
+  }
+
+  .done-answer {
+    margin: 0;
+    color: var(--heading-color);
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .stem {
+    width: 1px;
+    height: 1.1rem;
+    margin: 0.4rem 0 0.4rem 0.35rem;
+    background: var(--border-color);
+  }
+
+  .ask h2 {
+    margin: 0 0 1.5rem;
+    font-family: var(--font-family-serif);
+    font-size: 1.9rem;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--heading-color);
+    text-wrap: balance;
+  }
+
+  .answers {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem;
+  }
+
+  .answers button {
+    padding: 1rem;
     border: 1px solid var(--border-color);
     border-radius: 4px;
     background: transparent;
     color: var(--text-color);
     font-family: inherit;
-    font-size: 0.97rem;
-    line-height: 1.4;
-    text-align: left;
+    font-size: 1.05rem;
+    font-weight: 600;
     cursor: pointer;
     transition:
       background-color 120ms ease,
       border-color 120ms ease;
   }
 
-  .options button:hover,
-  .options button:focus-visible {
+  .answers button:hover {
     border-color: var(--link-color);
     background: var(--bg-secondary);
   }
 
-  .options button:focus-visible {
+  .answers button:focus-visible,
+  .back:focus-visible,
+  .links button:focus-visible {
     outline: 2px solid var(--link-color);
     outline-offset: 2px;
   }
 
   .back {
-    margin-top: 1rem;
+    margin-top: 1.25rem;
     padding: 0;
     border: 0;
     background: none;
     color: var(--gray-color);
     font-family: inherit;
-    font-size: 0.88rem;
+    font-size: 0.85rem;
     text-decoration: underline;
     cursor: pointer;
   }
@@ -167,39 +164,47 @@
   }
 
   .verdict {
-    max-width: 38rem;
-    padding-top: 1.25rem;
-    border-top: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .badge {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 1.25rem;
+    color: var(--heading-color);
+  }
+
+  .verdict h2 {
+    margin: 0;
+    font-family: var(--font-family-serif);
+    font-size: 2.5rem;
+    font-weight: 600;
+    line-height: 1.05;
+    color: var(--heading-color);
+  }
+
+  .price {
+    margin: 0.35rem 0 1.25rem;
+    color: var(--gray-color);
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
   }
 
   .why {
-    margin: 0 0 1rem;
-    padding-left: 1.1rem;
-    line-height: 1.55;
-  }
-
-  .why li {
-    margin-bottom: 0.5rem;
-  }
-
-  .watch {
-    margin: 0 0 1rem;
-    color: var(--gray-color);
-    font-size: 0.93rem;
+    margin: 0 0 1.5rem;
+    font-size: 1.1rem;
     line-height: 1.5;
-  }
-
-  .alternative {
-    margin: 0 0 1rem;
-    font-size: 0.93rem;
   }
 
   .links {
     display: flex;
-    gap: 1.25rem;
-    align-items: center;
-    margin: 1.25rem 0 0;
-    font-size: 0.93rem;
+    gap: 1.5rem;
+    margin: 0;
+    font-size: 0.95rem;
   }
 
   .links button {
@@ -218,13 +223,21 @@
   }
 
   @media (max-width: 600px) {
-    h2 {
-      font-size: 1.25rem;
+    .chart {
+      margin-top: 2rem;
     }
 
-    .price {
-      display: block;
-      margin: 0.3rem 0 0;
+    .ask h2 {
+      font-size: 1.6rem;
+    }
+
+    .verdict h2 {
+      font-size: 2rem;
+    }
+
+    .badge {
+      width: 2.5rem;
+      height: 2.5rem;
     }
   }
 </style>

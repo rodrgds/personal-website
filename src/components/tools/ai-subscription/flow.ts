@@ -2,82 +2,54 @@ import type { PlanId } from "./plans";
 
 export const LAST_CHECKED = "28 October 2026";
 
-export interface FlowOption {
-  readonly label: string;
-  readonly next: string;
-}
-
 export interface FlowNode {
   readonly id: string;
   readonly question: string;
-  readonly hint?: string;
-  readonly options: readonly FlowOption[];
+  /** Node id or plan id. */
+  readonly yes: string;
+  /** Node id or plan id. */
+  readonly no: string;
 }
 
-/** Terminals are plan ids. Everything else is `FlowNode.id`. */
-export const START_NODE = "usage";
+/** The chart every reader walks: yes/no, one question at a time. */
+export const START_NODE = "x-only";
 
 export const FLOW: readonly FlowNode[] = [
   {
-    id: "usage",
-    question: "What will you use it for most?",
-    hint: "The thing you will actually do most, not what you would like to do.",
-    options: [
-      { label: "Writing code, mostly in an agent", next: "code-quality" },
-      { label: "Chatting, writing, making images", next: "chat-priority" },
-      { label: "Both, about the same", next: "both" },
-      {
-        label: "Storage, plus an assistant inside Google apps",
-        next: "google-ai-pro",
-      },
-      { label: "I want X anyway", next: "x-premium" },
-    ],
+    id: "x-only",
+    question: "Do you just want X without the ads?",
+    yes: "x-premium",
+    no: "storage",
   },
   {
-    id: "code-quality",
-    question: "Does the smartest model matter?",
-    hint: "Everything after this is detail.",
-    options: [
-      { label: "Yes. I want the best code", next: "budget" },
-      { label: "No. I want a lot of good usage, cheap", next: "opencode-go" },
-    ],
+    id: "storage",
+    question: "Is your Gmail or Drive running out of space?",
+    yes: "google-ai-pro",
+    no: "code",
   },
   {
-    id: "budget",
-    question: "What can you spend a month?",
-    options: [
-      { label: "$20", next: "claude-pro" },
-      { label: "$10", next: "opencode-go" },
-    ],
+    id: "code",
+    question: "Do you write code more than you chat?",
+    yes: "chat-app",
+    no: "chatgpt-plus",
   },
   {
-    id: "chat-priority",
-    question: "What do you want from the chat side?",
-    options: [
-      {
-        label: "The most messages, plus real image generation",
-        next: "chatgpt-plus",
-      },
-      {
-        label: "Gemini inside Gmail, Docs and the rest",
-        next: "google-ai-pro",
-      },
-    ],
+    id: "chat-app",
+    question: "Would you give up the chat app for half the price?",
+    yes: "opencode-go",
+    no: "sharpest",
   },
   {
-    id: "both",
-    question: "One plan has to cover both. Which half do you protect?",
-    hint: "Whichever you would hate to hit a limit on first.",
-    options: [
-      { label: "The chat side. I want the most usage", next: "chatgpt-plus" },
-      { label: "The coding side. I want the best code", next: "claude-pro" },
-    ],
+    id: "sharpest",
+    question: "Is the single best model worth running out sooner?",
+    yes: "claude-pro",
+    no: "chatgpt-plus",
   },
 ];
 
 const PLAN_IDS: ReadonlySet<string> = new Set<PlanId>([
-  "claude-pro",
   "chatgpt-plus",
+  "claude-pro",
   "opencode-go",
   "google-ai-pro",
   "x-premium",
@@ -87,6 +59,8 @@ export function isPlanId(value: string): value is PlanId {
   return PLAN_IDS.has(value);
 }
 
-export function nodeById(id: string): FlowNode | null {
-  return FLOW.find((node) => node.id === id) ?? null;
+export function nodeById(id: string): FlowNode {
+  const match = FLOW.find((node) => node.id === id);
+  if (!match) throw new Error(`Unknown node: ${id}`);
+  return match;
 }
