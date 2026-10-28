@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { FLOW, START_NODE, isPlanId, nodeById } from "./flow";
+  import { START_NODE, isPlanId, nodeById } from "./flow";
   import { planById } from "./plans";
 
   interface Step {
@@ -30,41 +30,21 @@
 </script>
 
 <div class="decide">
-  {#if steps.length > 0}
-    <ol class="trail">
-      {#each steps as step, index (index)}
-        <li>
-          <span class="trail-answer">{step.label}</span>
-        </li>
-      {/each}
-    </ol>
-  {/if}
-
   {#if currentPlan}
     <section class="verdict" aria-live="polite">
       <p class="eyebrow">{currentPlan.skip ? "Not this one" : "Buy this"}</p>
-      <h2>
-        {currentPlan.name}
-        <span class="price">{currentPlan.price}</span>
-      </h2>
+      <h2>{currentPlan.name} <span class="price">{currentPlan.price}</span></h2>
       <p class="headline">{currentPlan.headline}</p>
-      {#if currentPlan.skip}
-        <p class="skip-note">You asked, so here is the honest answer.</p>
-      {/if}
       <ul class="why">
         {#each currentPlan.why as reason (reason)}
           <li>{reason}</li>
         {/each}
       </ul>
-      <p class="watch">
-        <strong>Watch out:</strong>
-        {currentPlan.watchOut}
-      </p>
+      <p class="watch">{currentPlan.watchOut}</p>
       {#if currentPlan.skip}
         <p class="alternative">
-          What most people should get instead:
-          <strong>{planById(currentPlan.alternate).name}</strong>
-          at {planById(currentPlan.alternate).price}.
+          Get {planById(currentPlan.alternate).name} instead:
+          {planById(currentPlan.alternate).price}.
         </p>
       {/if}
       <p class="links">
@@ -76,9 +56,10 @@
     </section>
   {:else if currentNode}
     <section class="question">
-      <p class="eyebrow">Question {steps.length + 1}</p>
       <h2>{currentNode.question}</h2>
-      <p class="hint">{currentNode.hint}</p>
+      {#if currentNode.hint}
+        <p class="hint">{currentNode.hint}</p>
+      {/if}
       <div class="options">
         {#each currentNode.options as option (option.label)}
           <button type="button" on:click={() => choose(currentNode.id, option.label, option.next)}>
@@ -95,34 +76,11 @@
 
 <style>
   .decide {
-    margin: 2rem 0 0;
-  }
-
-  .trail {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem 0.75rem;
-    margin: 0 0 1.75rem;
-    padding: 0;
-    list-style: none;
-    color: var(--gray-color);
-    font-size: 0.85rem;
-    line-height: 1.4;
-  }
-
-  .trail li::after {
-    content: "→";
-    margin-left: 0.75rem;
-    opacity: 0.5;
-  }
-
-  .trail li:last-child::after {
-    content: "";
-    margin: 0;
+    margin: 1.5rem 0 0;
   }
 
   .eyebrow {
-    margin: 0 0 0.5rem;
+    margin: 0 0 0.4rem;
     color: var(--gray-color);
     font-size: 0.8rem;
     font-weight: 600;
@@ -131,7 +89,7 @@
   }
 
   h2 {
-    margin: 0 0 0.6rem;
+    margin: 0 0 0.5rem;
     font-family: var(--font-family-serif);
     font-size: 1.45rem;
     font-weight: 600;
@@ -140,8 +98,7 @@
   }
 
   .price {
-    display: inline-block;
-    margin-left: 0.5rem;
+    margin-left: 0.4rem;
     color: var(--gray-color);
     font-family: var(--font-family);
     font-size: 0.95rem;
@@ -150,26 +107,30 @@
 
   .hint,
   .headline {
-    max-width: 36rem;
-    margin: 0 0 1.5rem;
-    color: var(--text-color);
-    line-height: 1.6;
+    max-width: 34rem;
+    margin: 0 0 1.25rem;
+    line-height: 1.55;
+  }
+
+  .hint {
+    color: var(--gray-color);
+    font-size: 0.93rem;
   }
 
   .options {
     display: grid;
     gap: 0.5rem;
-    max-width: 36rem;
+    max-width: 34rem;
   }
 
   .options button {
-    padding: 0.8rem 1rem;
+    padding: 0.75rem 0.9rem;
     border: 1px solid var(--border-color);
     border-radius: 4px;
     background: transparent;
     color: var(--text-color);
     font-family: inherit;
-    font-size: 0.98rem;
+    font-size: 0.97rem;
     line-height: 1.4;
     text-align: left;
     cursor: pointer;
@@ -190,7 +151,7 @@
   }
 
   .back {
-    margin-top: 1.25rem;
+    margin-top: 1rem;
     padding: 0;
     border: 0;
     background: none;
@@ -206,48 +167,38 @@
   }
 
   .verdict {
-    max-width: 40rem;
-    padding: 1.5rem 0 0;
+    max-width: 38rem;
+    padding-top: 1.25rem;
     border-top: 1px solid var(--border-color);
   }
 
   .why {
-    margin: 0 0 1.25rem;
+    margin: 0 0 1rem;
     padding-left: 1.1rem;
-    line-height: 1.6;
+    line-height: 1.55;
   }
 
   .why li {
-    margin-bottom: 0.6rem;
+    margin-bottom: 0.5rem;
   }
 
   .watch {
     margin: 0 0 1rem;
     color: var(--gray-color);
     font-size: 0.93rem;
-    line-height: 1.55;
+    line-height: 1.5;
   }
 
-  .watch strong {
-    color: var(--text-color);
-  }
-
-  .skip-note,
   .alternative {
     margin: 0 0 1rem;
     font-size: 0.93rem;
-    line-height: 1.55;
-  }
-
-  .skip-note {
-    color: var(--error);
   }
 
   .links {
     display: flex;
     gap: 1.25rem;
     align-items: center;
-    margin: 1.5rem 0 0;
+    margin: 1.25rem 0 0;
     font-size: 0.93rem;
   }
 
@@ -273,7 +224,7 @@
 
     .price {
       display: block;
-      margin: 0.35rem 0 0;
+      margin: 0.3rem 0 0;
     }
   }
 </style>

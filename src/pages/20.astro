@@ -6,133 +6,80 @@ import ToolLayout from "../layouts/ToolLayout.astro";
 ---
 
 <ToolLayout
-  title="The best AI subscription for about $20"
-  description="One answer per person, not a list of five. Prices include what you actually pay after tax, checked against each vendor's own page."
+  title="What $20 AI subscription should I buy?"
+  description="Tons of people ask me this, in person and online, so here is my answer."
 >
-  <p class="lede">
-    People ask me this constantly, so here is the answer as a flowchart instead
-    of an essay. I pay for these and use them for code and writing, which is the
-    only reason this page exists.
-  </p>
-
   <Decide client:idle />
 
   <section class="plans">
-    <h2>The five plans, side by side</h2>
+    <h2>All five, briefly</h2>
     <ul>
       {
         PLANS.map((plan) => (
           <li>
-            <div class="plan-head">
-              <h3>
-                <a href={plan.url} target="_blank" rel="noopener noreferrer">
-                  {plan.name}
-                </a>
-              </h3>
-              <p class="plan-price">{plan.price}</p>
-            </div>
-            <p class="plan-note">{plan.priceNote}</p>
-            <p>{plan.headline}</p>
+            <a href={plan.url} target="_blank" rel="noopener noreferrer">
+              {plan.name}
+            </a>
+            <span class="plan-price">{plan.price}</span>
+            <span class="plan-line">{plan.headline}</span>
           </li>
         ))
       }
     </ul>
-  </section>
-
-  <section class="notes">
-    <h2>How I judge this</h2>
-    <p>
-      Usage resets are the thing nobody puts on a pricing page, and they change
-      the answer more than model benchmarks do. When a vendor is handing out
-      resets, the same $20 buys several times the work, and that is worth more
-      than a slightly smarter model.
-    </p>
-    <p>
-      Chat and coding limits are usually separate pools. That is why ChatGPT
-      Plus keeps landing at the top for people who do both: it is two allowances
-      for one price, not one allowance shared across everything.
-    </p>
-    <p>
-      If you only take one thing from this page: the gap between a $10 plan and
-      a $20 plan is much smaller than the gap between paying nothing and paying
-      $10. Start cheap, find the limit, then upgrade when you actually hit it.
-    </p>
-    <p class="updated">Prices last checked {LAST_CHECKED}.</p>
+    <p class="updated">Checked {LAST_CHECKED}.</p>
   </section>
 </ToolLayout>
 
 <style>
-  .lede {
-    max-width: 36rem;
-    margin: 0;
-    color: var(--text-color);
-    line-height: 1.6;
-  }
-
-  .plans,
-  .notes {
-    margin-top: 3.5rem;
+  .plans {
+    margin-top: 3rem;
   }
 
   h2 {
-    margin: 0 0 1.25rem;
+    margin: 0 0 1rem;
     font-family: var(--font-family-serif);
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: 600;
     color: var(--heading-color);
   }
 
   .plans ul {
-    display: grid;
-    gap: 1.5rem;
     margin: 0;
     padding: 0;
     list-style: none;
   }
 
   .plans li {
-    padding-left: 1rem;
-    border-left: 2px solid var(--border-color);
-  }
-
-  .plan-head {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.35rem 0.75rem;
+    gap: 0.2rem 0.6rem;
     align-items: baseline;
+    padding: 0.6rem 0;
+    border-top: 1px solid var(--border-color);
+    font-size: 0.94rem;
+    line-height: 1.45;
   }
 
-  .plan-head h3 {
-    margin: 0;
-    font-size: 1rem;
+  .plans li:first-child {
+    border-top: 0;
+  }
+
+  .plans a {
     font-weight: 600;
   }
 
   .plan-price {
-    margin: 0;
     color: var(--gray-color);
-    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
   }
 
-  .plan-note {
-    margin: 0.25rem 0 0.5rem;
+  .plan-line {
+    flex: 1 1 18rem;
     color: var(--gray-color);
-    font-size: 0.88rem;
-    line-height: 1.5;
-  }
-
-  .plans li > p:last-child {
-    margin: 0;
-    line-height: 1.55;
-  }
-
-  .notes p {
-    max-width: 38rem;
-    margin: 0 0 1rem;
-    line-height: 1.65;
   }
 
   .updated {
+    margin: 1.25rem 0 0;
     color: var(--gray-color);
     font-size: 0.85rem;
   }
