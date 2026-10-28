@@ -1,7 +1,5 @@
 ---
 import Decide from "../components/tools/ai-subscription/Decide.svelte";
-import { LAST_CHECKED } from "../components/tools/ai-subscription/flow";
-import { PLANS } from "../components/tools/ai-subscription/plans";
 import ToolLayout from "../layouts/ToolLayout.astro";
 ---
 
@@ -10,57 +8,4 @@ import ToolLayout from "../layouts/ToolLayout.astro";
   description="People ask me this constantly, in person and online. So here is my answer."
 >
   <Decide client:idle />
-
-  <ol class="plans">
-    {
-      PLANS.map((plan) => (
-        <li>
-          <a href={plan.url} target="_blank" rel="noopener noreferrer">
-            {plan.name}
-          </a>
-          <span class="price">{plan.price}</span>
-        </li>
-      ))
-    }
-  </ol>
-  <p class="updated">
-    Checked {LAST_CHECKED}. Google is the Portugal price in euros; the rest are
-    the US list price, before VAT.
-  </p>
 </ToolLayout>
-
-<style>
-  .plans {
-    max-width: 26rem;
-    margin: 4rem 0 0;
-    padding: 0;
-    list-style: none;
-    font-size: 0.9rem;
-    line-height: 1.45;
-  }
-
-  .plans li {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: baseline;
-    column-gap: 1rem;
-    padding: 0.7rem 0;
-    border-top: 1px solid var(--border-color);
-  }
-
-  .plans a {
-    font-weight: 600;
-  }
-
-  .price {
-    color: var(--gray-color);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .updated {
-    max-width: 26rem;
-    margin: 1.25rem 0 0;
-    color: var(--gray-color);
-    font-size: 0.8rem;
-  }
-</style>

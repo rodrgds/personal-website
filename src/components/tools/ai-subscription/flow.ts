@@ -1,7 +1,5 @@
 import type { PlanId } from "./plans";
 
-export const LAST_CHECKED = "28 October 2026";
-
 export interface FlowNode {
   readonly id: string;
   readonly question: string;
@@ -30,12 +28,12 @@ export const FLOW: readonly FlowNode[] = [
   {
     id: "code",
     question: "Do you write code more than you chat?",
-    yes: "chat-app",
+    yes: "usage",
     no: "chatgpt-plus",
   },
   {
-    id: "chat-app",
-    question: "Would you give up the chat app for half the price?",
+    id: "usage",
+    question: "Do you want far more usage, even from dumber models?",
     yes: "opencode-go",
     no: "sharpest",
   },

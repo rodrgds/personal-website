@@ -38,7 +38,7 @@ export const PLANS: readonly AiPlan[] = [
     id: "opencode-go",
     name: "OpenCode Go",
     price: "$10/mo",
-    why: "Coding only, no chat app, and half the price.",
+    why: "Far more usage than the $20 plans, from cheaper models.",
     url: "https://opencode.ai/docs/go/",
   },
   {
