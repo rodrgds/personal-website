@@ -32,7 +32,7 @@ export const FLOW: readonly FlowNode[] = [
   },
   {
     id: "claude",
-    question: "Prefer Claude for writing and coding?",
+    question: "Is the single best model worth running out sooner?",
     yes: "claude-pro",
     no: "chatgpt-plus",
   },
