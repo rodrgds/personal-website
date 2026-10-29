@@ -2,8 +2,7 @@ export type PlanId =
   | "chatgpt-plus"
   | "claude-pro"
   | "opencode-go"
-  | "google-ai-pro"
-  | "x-premium";
+  | "google-ai-pro";
 
 export interface AiPlan {
   id: PlanId;
@@ -24,36 +23,29 @@ export const PLANS: readonly AiPlan[] = [
     id: "chatgpt-plus",
     name: "ChatGPT Plus",
     price: "$20/mo",
-    why: "One plan that does everything, and the most usage of the $20 options.",
+    why: "Chat, coding, images and voice in one subscription.",
     url: "https://chatgpt.com/pricing/",
   },
   {
     id: "claude-pro",
     name: "Claude Pro",
     price: "$20/mo",
-    why: "The sharpest model for hard code.",
+    why: "Claude for writing and coding, with shared usage limits.",
     url: "https://claude.com/pricing",
   },
   {
     id: "opencode-go",
     name: "OpenCode Go",
     price: "$10/mo",
-    why: "Far more usage than the $20 plans, from cheaper models.",
+    why: "More coding usage with a selection of cheaper models.",
     url: "https://opencode.ai/docs/go/",
   },
   {
     id: "google-ai-pro",
     name: "Google AI Pro",
     price: "\u20ac21.99/mo",
-    why: "5 TB of storage, with Gemini across Gmail and Docs.",
+    why: "Gemini in Gmail and Drive, plus cloud storage.",
     url: "https://gemini.google/pt/subscriptions/?hl=pt-PT",
-  },
-  {
-    id: "x-premium",
-    name: "X Premium",
-    price: "$8/mo",
-    why: "Buy it for X, not for AI.",
-    url: "https://help.x.com/en/using-x/x-premium",
   },
 ];
 

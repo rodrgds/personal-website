@@ -9,37 +9,30 @@ export interface FlowNode {
   readonly no: string;
 }
 
-/** The chart every reader walks: yes/no, one question at a time. */
-export const START_NODE = "x-only";
-
+/** Preference tree: one recommendation per path. */
+export const START_NODE = "google";
 export const FLOW: readonly FlowNode[] = [
   {
-    id: "x-only",
-    question: "Do you just want X without the ads?",
-    yes: "x-premium",
-    no: "storage",
-  },
-  {
-    id: "storage",
-    question: "Is your Gmail or Drive running out of space?",
+    id: "google",
+    question: "Do you want Gemini in Gmail and Drive?",
     yes: "google-ai-pro",
     no: "code",
   },
   {
     id: "code",
-    question: "Do you write code more than you chat?",
+    question: "Do you want a coding-focused subscription?",
     yes: "usage",
-    no: "chatgpt-plus",
+    no: "claude",
   },
   {
     id: "usage",
-    question: "Do you want far more usage, even from dumber models?",
+    question: "More coding usage with weaker models?",
     yes: "opencode-go",
-    no: "sharpest",
+    no: "claude",
   },
   {
-    id: "sharpest",
-    question: "Is the single best model worth running out sooner?",
+    id: "claude",
+    question: "Prefer Claude for writing and coding?",
     yes: "claude-pro",
     no: "chatgpt-plus",
   },
@@ -50,7 +43,6 @@ const PLAN_IDS: ReadonlySet<string> = new Set<PlanId>([
   "claude-pro",
   "opencode-go",
   "google-ai-pro",
-  "x-premium",
 ]);
 
 export function isPlanId(value: string): value is PlanId {
