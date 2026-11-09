@@ -1,0 +1,64 @@
+---
+import { getCollection } from "astro:content";
+import Default from "../../layouts/Default.astro";
+
+export const prerender = true;
+
+const decks = (await getCollection("slides", ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.date.localeCompare(a.data.date),
+);
+---
+
+<Default
+  content={{
+    title: "Slides",
+    description:
+      "Presentations from my videos. Open one to browse it, zoom in and draw on it.",
+  }}
+>
+  <h1>Slides</h1>
+  <p>
+    Presentations from my videos. Each one opens as a canvas you can move
+    around, zoom and draw on. Your drawings stay in your browser.
+  </p>
+  <ul class="slides-list">
+    {
+      decks.map((deck) => (
+        <li>
+          <a href={`/slides/${deck.id}`} data-astro-reload>
+            {deck.data.title}
+          </a>
+          <span class="slides-meta">
+            {[deck.data.course, deck.data.date].filter(Boolean).join(" · ")}
+          </span>
+          <p>{deck.data.description}</p>
+          {deck.data.video && (
+            <a href={deck.data.video} target="_blank" rel="noreferrer">
+              Watch the video
+            </a>
+          )}
+        </li>
+      ))
+    }
+  </ul>
+</Default>
+
+<style>
+  .slides-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .slides-list p {
+    margin: 0.25rem 0;
+  }
+
+  .slides-meta {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.9em;
+  }
+</style>

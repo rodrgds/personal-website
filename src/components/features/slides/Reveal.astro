@@ -1,0 +1,11 @@
+---
+export interface Props {
+  /** Step at which the first item appears; later items follow one step each. */
+  start?: number;
+  class?: string;
+}
+
+const { start = 1, class: className } = Astro.props;
+---
+
+<div class:list={["reveal", className]} data-reveal={start}><slot /></div>

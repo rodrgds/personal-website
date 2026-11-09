@@ -1,0 +1,28 @@
+---
+import { getCollection, render, type CollectionEntry } from "astro:content";
+import Deck from "../../components/features/slides/Deck.astro";
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const decks = await getCollection("slides", ({ data }) => !data.draft);
+  return decks.map((deck) => ({ params: { slug: deck.id }, props: { deck } }));
+}
+
+interface Props {
+  deck: CollectionEntry<"slides">;
+}
+
+const { deck } = Astro.props;
+const { Content } = await render(deck);
+---
+
+<Deck
+  slug={deck.id}
+  title={deck.data.title}
+  description={deck.data.description}
+  lang={deck.data.lang}
+  video={deck.data.video}
+>
+  <Content />
+</Deck>

@@ -1,0 +1,14 @@
+---
+export interface Props {
+  title: string;
+  /** Short label shown in the slide footer and speaker view. */
+  label?: string;
+}
+
+const { title, label } = Astro.props;
+---
+
+<section class="deck-chapter" data-chapter data-title={label ?? title}>
+  <h3 class="deck-chapter-title">{title}</h3>
+  <div class="deck-chapter-column"><slot /></div>
+</section>

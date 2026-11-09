@@ -1,0 +1,42 @@
+---
+export interface Preset {
+  at: number;
+  domain: string;
+  path: string;
+  url: string;
+}
+
+export interface Props {
+  presets?: Preset[];
+}
+
+const { presets = [] } = Astro.props;
+---
+
+<div
+  class="lab cookie-lab"
+  data-widget="cookie"
+  data-presets={JSON.stringify(presets)}
+  data-steps={presets.reduce((max, preset) => Math.max(max, preset.at), 0)}
+>
+  <div class="cookie-inputs">
+    <label class="lab-field">
+      <span>cookie <code>Domain=</code></span>
+      <input type="text" spellcheck="false" data-cookie-domain />
+    </label>
+    <label class="lab-field">
+      <span>cookie <code>Path=</code></span>
+      <input type="text" spellcheck="false" data-cookie-path />
+    </label>
+    <label class="lab-field cookie-url">
+      <span>pedido para</span>
+      <input type="text" spellcheck="false" data-cookie-url />
+    </label>
+  </div>
+  <div class="cookie-checks">
+    <p data-cookie-check="domain"></p>
+    <p data-cookie-check="path"></p>
+  </div>
+  <p class="cookie-verdict" data-cookie-verdict aria-live="polite"></p>
+  <p class="lab-meta" data-cookie-origin></p>
+</div>

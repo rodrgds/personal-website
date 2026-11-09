@@ -1,0 +1,29 @@
+---
+export interface Props {
+  /** Where the question comes from, e.g. "Teste 1, 2023/24". */
+  source: string;
+  options?: string[];
+  /** Index of the correct option. */
+  correct?: number;
+  /** Step that reveals the answer. */
+  at?: number;
+}
+
+const { source, options = [], correct, at = 1 } = Astro.props;
+---
+
+<div class="quiz">
+  <p class="quiz-source">Pergunta de teste · {source}</p>
+  <div class="quiz-prompt"><slot /></div>
+  {
+    options.length > 0 && (
+      <ol class="quiz-options">
+        {options.map((option, index) => (
+          <li data-correct={index === correct ? "" : undefined}>{option}</li>
+        ))}
+      </ol>
+    )
+  }
+  <span class="quiz-flag" data-show={at}></span>
+  <div class="quiz-answer" data-show={at}><slot name="answer" /></div>
+</div>

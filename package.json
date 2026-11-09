@@ -34,6 +34,8 @@
     "heroicons-svelte": "2.0.2",
     "lucide-astro": "^0.556.0",
     "markdown-it": "^14.3.0",
+    "pele": "1.6.0",
+    "perfect-freehand": "^1.2.3",
     "qrcode": "^1.5.4",
     "rehype-pretty-code": "^0.14.4",
     "rough-notation": "^0.5.1",

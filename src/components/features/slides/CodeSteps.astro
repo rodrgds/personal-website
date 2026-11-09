@@ -1,0 +1,18 @@
+---
+export interface Props {
+  /** One line range per step, e.g. ["1-2", "4", "6-8"]. */
+  steps: string[];
+  /** Step at which the first range is focused. */
+  start?: number;
+}
+
+const { steps, start = 1 } = Astro.props;
+---
+
+<div
+  class="code-steps"
+  data-code-steps={JSON.stringify(steps)}
+  data-code-start={start}
+>
+  <slot />
+</div>

@@ -1,0 +1,71 @@
+---
+export interface Preset {
+  at: number;
+  /** Input bytes; "\x90" escapes are decoded. */
+  input: string;
+}
+
+export interface Props {
+  presets?: Preset[];
+}
+
+const { presets = [] } = Astro.props;
+const CODE = [
+  '<span class="tok-k">void</span> <span class="tok-f">greet</span>(<span class="tok-k">char</span> *s) {',
+  '  <span class="tok-k">char</span> buf[<span class="tok-n">16</span>];',
+  '  <span class="tok-f">strcpy</span>(buf, s); <span class="tok-c">// sem limite!</span>',
+  "}",
+].join("\n");
+const words = [
+  { name: "s", note: "argumento (char *)", kind: "arg" },
+  { name: "ret", note: "endereço de retorno", kind: "ret" },
+  { name: "ebp", note: "frame pointer guardado", kind: "fp" },
+  { name: "buf[12..15]", note: "", kind: "buf" },
+  { name: "buf[8..11]", note: "", kind: "buf" },
+  { name: "buf[4..7]", note: "", kind: "buf" },
+  { name: "buf[0..3]", note: "← strcpy começa aqui", kind: "buf" },
+];
+---
+
+<div
+  class="lab overflow-lab"
+  data-widget="overflow"
+  data-presets={JSON.stringify(presets)}
+  data-steps={presets.reduce((max, preset) => Math.max(max, preset.at), 0)}
+>
+  <div class="lab-side">
+    <pre class="lab-code"><code set:html={CODE} /></pre>
+    <label class="lab-field">
+      <span>input (<code>s</code>) · <code>\x41</code> = byte</span>
+      <input
+        type="text"
+        spellcheck="false"
+        autocomplete="off"
+        data-overflow-input
+        aria-label="Input copiado para buf"
+      />
+    </label>
+    <p class="lab-meta" data-overflow-count></p>
+    <p class="lab-status" data-overflow-status aria-live="polite"></p>
+  </div>
+  <div class="overflow-stack" data-overflow-stack>
+    <div class="mem-axis"><span>endereços altos</span></div>
+    {
+      words.map((word, index) => (
+        <div class={`overflow-word kind-${word.kind}`} data-word={6 - index}>
+          <span class="overflow-addr" data-word-addr />
+          <span class="overflow-bytes">
+            {[0, 1, 2, 3].map(() => (
+              <span class="overflow-byte" />
+            ))}
+          </span>
+          <span class="overflow-name">
+            <strong>{word.name}</strong>
+            {word.note && <small>{word.note}</small>}
+          </span>
+        </div>
+      ))
+    }
+    <div class="mem-axis"><span>endereços baixos · cópia escreve ↑</span></div>
+  </div>
+</div>

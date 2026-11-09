@@ -1,0 +1,41 @@
+---
+export type MarkType =
+  | "underline"
+  | "box"
+  | "circle"
+  | "highlight"
+  | "strike"
+  | "cross"
+  | "bracket";
+
+export type MarkColor =
+  | "red"
+  | "orange"
+  | "yellow"
+  | "green"
+  | "cyan"
+  | "blue"
+  | "purple"
+  | "magenta";
+
+export interface Props {
+  type?: MarkType;
+  /** Step at which the mark is drawn. 0 draws it when the slide opens. */
+  at?: number;
+  color?: MarkColor;
+  /** Wrap block content instead of inline text. */
+  block?: boolean;
+}
+
+const {
+  type = "underline",
+  at = 0,
+  color = type === "highlight" ? "yellow" : "red",
+  block = false,
+} = Astro.props;
+const Tag = block ? "div" : "span";
+---
+
+<Tag class="mark" data-mark={type} data-mark-at={at} data-mark-color={color}
+  ><slot /></Tag
+>

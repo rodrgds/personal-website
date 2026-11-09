@@ -1,0 +1,25 @@
+---
+export interface Props {
+  /** Shown in the speaker view and the script. Defaults to the first heading. */
+  title?: string;
+  id?: string;
+  layout?: "default" | "title" | "section" | "center" | "split";
+  class?: string;
+}
+
+const { title, id, layout = "default", class: className } = Astro.props;
+---
+
+<section
+  class:list={["slide", `slide--${layout}`, className]}
+  data-slide
+  data-title={title}
+  id={id}
+>
+  <svg
+    class="slide-marks slide-marks--under"
+    data-marks-under
+    aria-hidden="true"></svg>
+  <div class="slide-body"><slot /></div>
+  <svg class="slide-marks" data-marks aria-hidden="true"></svg>
+</section>

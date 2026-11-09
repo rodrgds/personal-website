@@ -1,0 +1,23 @@
+---
+export interface Props {
+  /** CSS grid-template-columns value. */
+  columns?: string;
+  align?: "start" | "center" | "end" | "stretch";
+  gap?: number;
+  class?: string;
+}
+
+const {
+  columns = "1fr 1fr",
+  align = "start",
+  gap = 64,
+  class: className,
+} = Astro.props;
+---
+
+<div
+  class:list={["cols", className]}
+  style={`--cols:${columns};--cols-align:${align};--cols-gap:${gap}px`}
+>
+  <slot />
+</div>

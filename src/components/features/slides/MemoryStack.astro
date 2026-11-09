@@ -1,0 +1,168 @@
+---
+export type MemoryTone =
+  | "plain"
+  | "arg"
+  | "ret"
+  | "fp"
+  | "local"
+  | "buf"
+  | "bad"
+  | "code"
+  | "canary"
+  | "gadget"
+  | "free"
+  | "meta"
+  | "data"
+  | "muted";
+
+/** A value shown during a step range ("2" = from step 2, "0-1" = steps 0 to 1). */
+export interface MemoryValue {
+  at: string;
+  text: string;
+  tone?: MemoryTone;
+}
+
+export interface MemoryRow {
+  value?: string | MemoryValue[];
+  label?: string | MemoryValue[];
+  addr?: string;
+  tone?: MemoryTone;
+  /** Step range during which the row is visible. */
+  show?: string;
+  /** Step range during which the row is emphasised. */
+  focus?: string;
+  /** Height in row units, for buffers. */
+  size?: number;
+  /** Renders an elision row ("…"). */
+  gap?: boolean;
+}
+
+export interface MemoryPointer {
+  name: string;
+  /** Index into rows, counted from the top. */
+  row: number;
+  at?: string;
+}
+
+export interface MemoryCaption {
+  at: string;
+  text: string;
+}
+
+export interface Props {
+  rows: MemoryRow[];
+  pointers?: MemoryPointer[];
+  captions?: MemoryCaption[];
+  title?: string;
+  high?: string;
+  low?: string;
+  width?: number;
+  /** Arrow showing where the stack grows. */
+  growth?: "down" | "up" | "none";
+  compact?: boolean;
+}
+
+const {
+  rows,
+  pointers = [],
+  captions = [],
+  title,
+  high = "endereços altos",
+  low = "endereços baixos",
+  width,
+  growth = "none",
+  compact = false,
+} = Astro.props;
+
+function values(
+  value: string | MemoryValue[] | undefined,
+): (MemoryValue & { always?: boolean })[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) return [{ at: "0", text: value, always: true }];
+  return value;
+}
+---
+
+<figure
+  class:list={[
+    "mem",
+    compact && "mem--compact",
+    rows.some((row) => row.addr) && "mem--addr",
+  ]}
+  style={width ? `--mem-width:${width}px` : undefined}
+>
+  {title && <figcaption class="mem-title">{title}</figcaption>}
+  <div class="mem-axis">
+    <span>{high}</span>
+    {
+      growth !== "none" && (
+        <span class="mem-growth">
+          {growth === "down" ? "cresce ↓" : "cresce ↑"}
+        </span>
+      )
+    }
+  </div>
+  <div class="mem-rows">
+    {
+      rows.map((row, index) => (
+        <div
+          class:list={["mem-row", row.gap && "mem-row--gap"]}
+          data-show={row.show}
+          data-focus={row.focus}
+          style={row.size ? `--mem-size:${row.size}` : undefined}
+        >
+          <span class="mem-addr">{row.addr}</span>
+          <span class="mem-cell">
+            {row.gap ? (
+              <span class="mem-value tone-muted">⋮</span>
+            ) : (
+              values(row.value).map((value) => (
+                <span
+                  class:list={[
+                    "mem-value",
+                    `tone-${value.tone ?? row.tone ?? "plain"}`,
+                  ]}
+                  data-show={value.always ? undefined : value.at}
+                  data-fx="fade"
+                >
+                  {value.text}
+                </span>
+              ))
+            )}
+          </span>
+          <span class="mem-pointers">
+            {pointers
+              .filter((pointer) => pointer.row === index)
+              .map((pointer) => (
+                <span class="mem-pointer" data-show={pointer.at} data-fx="fade">
+                  ← {pointer.name}
+                </span>
+              ))}
+          </span>
+          <span class="mem-label">
+            {values(row.label).map((label) => (
+              <span
+                data-show={label.always ? undefined : label.at}
+                data-fx="fade"
+              >
+                {label.text}
+              </span>
+            ))}
+          </span>
+        </div>
+      ))
+    }
+  </div>
+  <div class="mem-axis"><span>{low}</span></div>
+  {
+    captions.length > 0 && (
+      <div class="mem-captions">
+        {captions.map((caption) => (
+          <p class="mem-caption" data-show={caption.at} data-fx="fade">
+            {caption.text}
+          </p>
+        ))}
+      </div>
+    )
+  }
+</figure>

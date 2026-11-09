@@ -120,8 +120,23 @@ const honorsCollection = defineCollection({
   }),
 });
 
+const slidesCollection = defineCollection({
+  // Top-level files are decks; each deck's parts live in a same-named folder.
+  loader: glob({ pattern: "*.mdx", base: "./src/content/slides" }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    course: z.string().optional(),
+    lang: z.string().default("pt-PT"),
+    date: z.string(),
+    video: z.url().optional(),
+    draft: z.boolean().default(false),
+  }),
+});
+
 export const collections = {
   blog: blogCollection,
+  slides: slidesCollection,
   experience: experienceCollection,
   projects: projectsCollection,
   education: educationCollection,

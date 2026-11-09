@@ -1,0 +1,50 @@
+---
+export interface Preset {
+  at: number;
+  /** Calls applied from the initial state, e.g. ["seteuid(1000)"]. */
+  ops: string[];
+}
+
+export interface Props {
+  presets?: Preset[];
+}
+
+const { presets = [] } = Astro.props;
+const buttons = ["seteuid(1000)", "seteuid(0)", "setuid(1000)", "setuid(0)"];
+---
+
+<div
+  class="lab uid-lab"
+  data-widget="uid"
+  data-presets={JSON.stringify(presets)}
+  data-steps={presets.reduce((max, preset) => Math.max(max, preset.at), 0)}
+>
+  <p class="uid-context">
+    <code>rodrigo</code> (uid 1000) corre <code>/usr/bin/passwd</code>, um
+    binário
+    <strong>setuid root</strong>
+  </p>
+  <div class="uid-cards">
+    <div class="uid-card" data-uid="ruid">
+      <span>RUID</span><strong></strong><small>quem lançou</small>
+    </div>
+    <div class="uid-card" data-uid="euid">
+      <span>EUID</span><strong></strong><small>decide permissões</small>
+    </div>
+    <div class="uid-card" data-uid="suid">
+      <span>SUID</span><strong></strong><small>guardado p/ voltar</small>
+    </div>
+  </div>
+  <div class="uid-actions">
+    {
+      buttons.map((call) => (
+        <button type="button" data-uid-call={call}>
+          {call}
+        </button>
+      ))
+    }
+    <button type="button" class="uid-reset" data-uid-reset>reset</button>
+  </div>
+  <p class="lab-status" data-uid-status aria-live="polite"></p>
+  <ol class="uid-log" data-uid-log></ol>
+</div>

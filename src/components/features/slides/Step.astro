@@ -1,0 +1,26 @@
+---
+export interface Props {
+  /** Step range: "2" shows from step 2 on, "1-3" only during steps 1 to 3. */
+  at: number | string;
+  inline?: boolean;
+  /** "focus" keeps the element visible and highlights it during the range. */
+  fx?: "up" | "fade" | "focus";
+  class?: string;
+}
+
+const { at, inline = false, fx = "up", class: className } = Astro.props;
+const Tag = inline ? "span" : "div";
+const range = String(at);
+---
+
+{
+  fx === "focus" ? (
+    <Tag class:list={["step-focus", className]} data-focus={range}>
+      <slot />
+    </Tag>
+  ) : (
+    <Tag class:list={["step", className]} data-show={range} data-fx={fx}>
+      <slot />
+    </Tag>
+  )
+}

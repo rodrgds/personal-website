@@ -1,0 +1,46 @@
+---
+export interface Preset {
+  at: number;
+  user: string;
+  pass: string;
+  prepared?: boolean;
+}
+
+export interface Props {
+  presets?: Preset[];
+}
+
+const { presets = [] } = Astro.props;
+---
+
+<div
+  class="lab sql-lab"
+  data-widget="sql"
+  data-presets={JSON.stringify(presets)}
+  data-steps={presets.reduce((max, preset) => Math.max(max, preset.at), 0)}
+>
+  <div class="sql-form">
+    <label class="lab-field">
+      <span>utilizador</span>
+      <input type="text" spellcheck="false" autocomplete="off" data-sql-user />
+    </label>
+    <label class="lab-field">
+      <span>palavra-passe</span>
+      <input type="text" spellcheck="false" autocomplete="off" data-sql-pass />
+    </label>
+    <label class="lab-toggle">
+      <input type="checkbox" data-sql-prepared />
+      <span>prepared statement</span>
+    </label>
+  </div>
+  <pre class="sql-query" data-sql-query aria-live="polite"></pre>
+  <div class="sql-result">
+    <table>
+      <thead>
+        <tr><th>name</th><th>pass</th><th>role</th></tr>
+      </thead>
+      <tbody data-sql-rows></tbody>
+    </table>
+    <p class="lab-status" data-sql-status></p>
+  </div>
+</div>

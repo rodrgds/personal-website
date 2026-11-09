@@ -103,6 +103,27 @@ the former `/projects` page redirects there.
 - Preserve old shared URLs. In particular, legacy `?view=icons` resolves to the
   current Timeline view.
 
+## Slide decks (`/slides`)
+
+Decks are `src/content/slides/<slug>.mdx`; long decks import one MDX file per
+part from `src/content/slides/<slug>/`. Author with the components exported by
+`src/components/features/slides/index.ts`. The canvas, ink, speaker view
+(`?speaker`) and script view (`?script`) live in `.../slides/runtime/`.
+
+- Keep slides plain and typographic: a title and large text. No kicker labels
+  above titles, footers, boxed or tinted cards, left borders or pills.
+- Type must read on a phone: keep slide text at the CSS sizes and cut words
+  instead of shrinking. Titles fit on one line. Prefer `<Flow>`, lists and
+  `<MemoryStack>` over Mermaid flowcharts; keep `<Diagram>` for short sequence
+  diagrams.
+- After editing slides, check every slide at its last step for overflow,
+  clipped code and wrapped titles, then look at rendered screenshots.
+- `<Notes>` holds the full spoken script. Mark each click with `**[→]**`; the
+  count must equal the slide's steps, because the speaker view highlights
+  the next marker.
+- Drawings stay in the viewer's browser (`localStorage`); nothing is saved
+  server-side.
+
 ## Push-to-deploy maintenance
 
 Pushes to `main` are deployed by `.github/workflows/ci.yml`. The workflow path-filters application and CI changes, warms/restores the Nix/Devenv environment, caches Bun dependencies, runs the portable formatting/typecheck gate, and then signs a request to `https://webhooks.rgo.pt/hooks/deploy-personal-website`. Production is a VPS source build rather than a Docker image: the NixOS deploy service fetches the verified revision, runs the secret-dependent Astro build with declarative Typst, atomically updates the served site, and verifies the public URL. The server-side source of truth is `~/.config/home/modules/hosting/sites/personal.nix` and `~/.config/home/modules/hosting/deployments/default.nix`.

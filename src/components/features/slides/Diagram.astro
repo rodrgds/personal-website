@@ -1,0 +1,36 @@
+---
+import { renderMermaid } from "../../../lib/mermaid";
+
+export interface Props {
+  /** Mermaid source, rendered to SVG at build time. */
+  source: string;
+  alt: string;
+  /** Preferred width in slide pixels. */
+  width?: number;
+  /** Maximum height in slide pixels; the width shrinks to keep the ratio. */
+  height?: number;
+  fontSize?: number;
+  class?: string;
+}
+
+const {
+  source,
+  alt,
+  width,
+  height = 640,
+  fontSize = 22,
+  class: className,
+} = Astro.props;
+const diagram = renderMermaid(source, fontSize);
+const ratio = diagram.width / diagram.height;
+const preferred = width ?? diagram.width * 2;
+const rendered = Math.round(Math.min(preferred, height * ratio));
+---
+
+<figure
+  class:list={["diagram", className]}
+  role="img"
+  aria-label={alt}
+  style={`width:${rendered}px;max-width:100%`}
+  set:html={diagram.svg}
+/>

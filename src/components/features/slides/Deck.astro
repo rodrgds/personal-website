@@ -1,0 +1,344 @@
+---
+import {
+  ChevronLeft,
+  ChevronRight,
+  CircleHelp,
+  Eraser,
+  Highlighter,
+  LayoutGrid,
+  MousePointer2,
+  MoveUpRight,
+  Pen,
+  Presentation,
+  Square,
+  Type,
+  Wand,
+} from "lucide-astro";
+import "./deck.css";
+
+export interface Props {
+  slug: string;
+  title: string;
+  description: string;
+  lang: string;
+  video?: string;
+}
+
+const { slug, title, description, lang, video } = Astro.props;
+const canonical = new URL(`/slides/${slug}`, Astro.site ?? Astro.url);
+const colors = [
+  ["ink", "Tinta"],
+  ["red", "Vermelho"],
+  ["orange", "Laranja"],
+  ["yellow", "Amarelo"],
+  ["green", "Verde"],
+  ["cyan", "Ciano"],
+  ["blue", "Azul"],
+  ["purple", "Roxo"],
+].slice(0, 6);
+const tools = [
+  ["interact", "Mover e interagir", "V", MousePointer2],
+  ["pen", "Caneta", "P", Pen],
+  ["highlighter", "Marcador", "H", Highlighter],
+  ["arrow", "Seta", "A", MoveUpRight],
+  ["rect", "Retângulo", "R", Square],
+  ["text", "Texto", "T", Type],
+  ["eraser", "Borracha", "E", Eraser],
+  ["laser", "Laser", "L", Wand],
+] as const;
+const shortcuts = [
+  ["→ · espaço · PageDown", "avançar"],
+  ["← · PageUp", "recuar"],
+  ["Shift + → / ←", "saltar passos"],
+  ["M", "mapa de todos os slides"],
+  ["F · Esc", "voltar ao slide atual"],
+  ["W", "quadro branco"],
+  ["espaço + arrastar · roda", "mover a vista"],
+  ["Ctrl/⌘ + roda · pinça", "zoom"],
+  ["V", "mover e interagir"],
+  ["P · H", "caneta · marcador"],
+  ["A · R · O · T", "seta · retângulo · elipse · texto"],
+  ["E · L", "borracha · laser"],
+  ["1–8 · [ ]", "cor · espessura"],
+  ["⌘Z · ⇧⌘Z", "desfazer · refazer"],
+  ["C · Shift + C", "limpar slide · limpar tudo"],
+  ["S", "vista do orador (outra janela)"],
+  ["D · U", "tema · esconder interface"],
+];
+---
+
+<!doctype html>
+<html lang={lang} data-deck-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" type="image/webp" sizes="32x32" href="/favicon.webp" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <link
+      rel="preload"
+      href="/fonts/geist-latin-wght-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/jetbrains-mono-latin-variable-wghtOnly-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <script
+      is:inline
+      defer
+      src="https://cool.rgo.pt/script.js"
+      data-website-id="f8aa3433-d34d-4b3a-9eaa-4b828d2a5338"></script>
+    <script is:inline>
+      (() => {
+        let theme = "dark";
+        try {
+          const stored = window.localStorage.getItem("slides:theme");
+          if (stored === "light" || stored === "dark") theme = stored;
+        } catch {
+          // Default theme.
+        }
+        document.documentElement.dataset.deckTheme = theme;
+        document.documentElement.style.colorScheme = theme;
+      })();
+    </script>
+  </head>
+  <body class="deck-body">
+    <div
+      class="deck"
+      data-deck
+      data-slug={slug}
+      data-loading
+      data-tool="interact"
+    >
+      <div class="deck-viewport" data-viewport>
+        <div class="deck-world" data-world>
+          <div class="deck-map" data-map>
+            <slot />
+            <section class="deck-part deck-board" aria-label="Quadro branco">
+              <h2 class="deck-part-title">Quadro</h2>
+              <div class="deck-part-row">
+                <div class="board-frame" data-board-frame></div>
+                <div class="board-frame"></div>
+              </div>
+            </section>
+          </div>
+          <svg class="deck-ink" data-ink aria-hidden="true"></svg>
+        </div>
+        <div class="deck-input" data-input></div>
+        <svg class="deck-overlay" data-overlay aria-hidden="true"></svg>
+      </div>
+
+      <div
+        class="deck-toolbar"
+        data-toolbar
+        role="toolbar"
+        aria-label="Ferramentas"
+      >
+        <div class="tb-group">
+          <button
+            type="button"
+            data-action="prev"
+            title="Anterior (←)"
+            aria-label="Anterior"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <span class="tb-counter" data-counter aria-live="polite"></span>
+          <button
+            type="button"
+            data-action="next"
+            title="Seguinte (→)"
+            aria-label="Seguinte"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+        <div class="tb-group tb-draw">
+          {
+            tools.map(([tool, label, key, Icon]) => (
+              <button
+                type="button"
+                data-tool={tool}
+                title={`${label} (${key})`}
+                aria-label={label}
+              >
+                <Icon size={18} />
+              </button>
+            ))
+          }
+        </div>
+        <div class="tb-group tb-colors">
+          {
+            colors.map(([color, label], index) => (
+              <button
+                type="button"
+                class="tb-swatch"
+                data-color={color}
+                title={`${label} (${index + 1})`}
+                aria-label={label}
+              />
+            ))
+          }
+        </div>
+        <div class="tb-group">
+          <button
+            type="button"
+            data-action="overview"
+            title="Mapa (M)"
+            aria-label="Mapa de slides"
+          >
+            <LayoutGrid size={18} />
+          </button>
+          <button
+            type="button"
+            data-action="speaker"
+            class="tb-presenter"
+            title="Vista do orador (S)"
+            aria-label="Vista do orador"
+          >
+            <Presentation size={18} />
+          </button>
+          <button
+            type="button"
+            data-action="help"
+            title="Atalhos (?)"
+            aria-label="Atalhos de teclado"
+          >
+            <CircleHelp size={18} />
+          </button>
+        </div>
+      </div>
+
+      <div class="deck-help" data-help hidden>
+        <div
+          class="deck-help-panel"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="deck-help-title"
+        >
+          <header>
+            <h2 id="deck-help-title">Atalhos</h2>
+            <button type="button" data-help-close aria-label="Fechar">×</button>
+          </header>
+          <dl>
+            {
+              shortcuts.map(([keys, action]) => (
+                <>
+                  <dt>{keys}</dt>
+                  <dd>{action}</dd>
+                </>
+              ))
+            }
+          </dl>
+          <p>
+            Os desenhos ficam só neste browser.
+            {
+              video && (
+                <>
+                  {" "}
+                  <a href={video} target="_blank" rel="noreferrer">
+                    Ver o vídeo
+                  </a>
+                  .
+                </>
+              )
+            }
+            {" "}
+            <a href="?script">Guião completo</a> · <a href="/slides"
+              >Outras apresentações</a
+            >.
+          </p>
+        </div>
+      </div>
+
+      <div class="deck-speaker" data-speaker hidden>
+        <header class="speaker-bar">
+          <strong data-speaker-title></strong>
+          <span data-speaker-position></span>
+          <span class="speaker-clock" data-speaker-clock></span>
+        </header>
+        <section class="speaker-main">
+          <div class="speaker-frame" data-speaker-current></div>
+          <div class="speaker-controls">
+            <button
+              type="button"
+              data-speaker-action="prev"
+              aria-label="Anterior">←</button
+            >
+            <button
+              type="button"
+              class="speaker-timer"
+              data-speaker-action="timer"
+              title="Iniciar ou pausar (T)"
+            >
+              <span data-speaker-timer>00:00</span>
+            </button>
+            <button
+              type="button"
+              data-speaker-action="reset"
+              title="Repor cronómetro">repor</button
+            >
+            <button
+              type="button"
+              data-speaker-action="next"
+              aria-label="Seguinte">→</button
+            >
+          </div>
+        </section>
+        <section class="speaker-side">
+          <p class="speaker-label" data-speaker-next-label></p>
+          <div class="speaker-frame speaker-frame--next" data-speaker-next>
+          </div>
+          <div class="speaker-notes-bar">
+            <span class="speaker-label">Notas</span>
+            <span>
+              <button
+                type="button"
+                data-speaker-action="smaller"
+                aria-label="Letra mais pequena">A−</button
+              >
+              <button
+                type="button"
+                data-speaker-action="larger"
+                aria-label="Letra maior">A+</button
+              >
+              <button
+                type="button"
+                data-speaker-action="theme"
+                aria-label="Mudar tema">tema</button
+              >
+            </span>
+          </div>
+          <div class="speaker-notes" data-speaker-notes data-scrollable></div>
+        </section>
+      </div>
+
+      <div class="deck-script" data-script hidden>
+        <header>
+          <p class="script-kicker">Guião</p>
+          <h1>{title}</h1>
+          <p>{description}</p>
+          <p class="script-stats" data-script-stats></p>
+        </header>
+        <div data-script-list></div>
+      </div>
+    </div>
+
+    <script>
+      import { initDeck } from "./runtime/deck";
+
+      initDeck();
+    </script>
+  </body>
+</html>
