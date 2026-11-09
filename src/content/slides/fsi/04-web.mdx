@@ -1,0 +1,1091 @@
+import {
+  Chapter,
+  Cols,
+  CodeSteps,
+  CookieLab,
+  Diagram,
+  Mark,
+  Notes,
+  Part,
+  Quiz,
+  Reveal,
+  Slide,
+  SqlLab,
+  Step,
+} from "../../../components/features/slides";
+
+<Part title="4 · Web">
+
+{/* ------------------------------------------------------------ WS1 2–25 */}
+
+<Chapter title="O modelo da web" label="Web Security">
+
+<Slide title="HTTP e cookies">
+
+
+## HTTP: sem estado, mas com efeitos
+
+<Reveal>
+
+- **Métodos**: GET (buscar), POST (criar), PUT (substituir), PATCH (atualizar em parte), DELETE
+- **Semântica subvertida**: GET com efeitos laterais, parâmetros que ficam nos logs e no histórico, POST usado para tudo
+- **Cookies** dão estado: o servidor define, o browser guarda e envia em **todos** os pedidos a esse servidor. O cookie jar é **partilhado** entre separadores
+
+</Reveal>
+
+<Step at={4}>
+
+```http
+GET bank.com/transfer?to=attacker&amount=1000
+```
+
+</Step>
+
+<Notes>
+
+Começamos pelo básico, porque a segurança da web assenta em coisas que parecem inocentes. O HTTP não tem estado: cada pedido é independente.
+
+**[→]** Os métodos: GET para buscar, POST para criar, PUT para substituir, PATCH para atualizar em parte, DELETE para apagar. O servidor responde com um código de estado e, opcionalmente, um corpo.
+
+**[→]** Mas na prática a semântica é subvertida. Há GETs com efeitos laterais, e os parâmetros do URL ficam nos logs do servidor e no histórico do browser. E o POST acaba por ser usado para tudo.
+
+**[→]** Para ter estado, entram os cookies. O servidor define o cookie, por exemplo no login, o browser guarda-o e envia-o com cada pedido a esse servidor. Serve para sessões, personalização e tracking. E repara: o cookie jar é partilhado. Um cookie definido num separador para bank.com também é enviado pelo outro separador.
+
+**[→]** Este exemplo junta as duas coisas más: uma transferência bancária feita com um GET, com o valor no URL. Vamos voltar a isto no CSRF.
+
+</Notes>
+</Slide>
+
+<Slide title="Páginas são programas">
+
+
+## Uma página é um programa
+
+<Reveal>
+
+- **HTML, CSS, JS e plugins**: o browser executa-os, é uma virtualização para um domínio específico
+- **Frames e iFrames** delegam uma área do ecrã a outra origem, com isolamento: o pai sobrevive a um filho que falha ou é malicioso
+- O **DOM** é a árvore de objetos da página. O carregamento é recursivo e orientado a eventos
+
+</Reveal>
+
+<Step at={4}>
+
+<p class="big">O JavaScript lê e altera <strong>tudo</strong>. É <Mark at={4} type="underline" color="red">poderoso e perigoso</Mark>.</p>
+
+</Step>
+
+<Notes>
+
+Uma página web não é um documento, é um programa. Do lado do servidor tens CGI, PHP, SQL, sessões. Do lado do cliente, o browser.
+
+**[→]** O browser executa HTML, CSS, JavaScript e plugins. Podes vê-lo como uma virtualização para um domínio específico.
+
+**[→]** As frames e iframes servem para delegar uma área do ecrã a outra origem, com isolamento. A ideia é que, se o filho falhar ou for malicioso, o pai sobrevive.
+
+**[→]** O DOM é a árvore de objetos da página. O carregamento é recursivo e orientado a eventos. E os sites modernos puxam recursos, anúncios e cookies de muitas origens diferentes.
+
+**[→]** O ponto importante: o JavaScript lê e altera tudo isto. É isso que o torna muito poderoso e muito perigoso, e é a razão de quase tudo o que vem a seguir.
+
+</Notes>
+</Slide>
+
+<Slide title="Os três atacantes">
+
+
+## Quem é o atacante?
+
+<Step at={1}>
+
+<div class="cards" style="--n:3">
+<div class="card" data-color="blue">
+
+### Browser
+
+Exploits ou malware no browser. Assumimos o browser **confiável**: é matéria de software e sistemas.
+
+</div>
+<div class="card" data-color="orange">
+
+### Rede
+
+Controla o canal. Assumimos canais seguros: é matéria de segurança de redes.
+
+</div>
+<div class="card" data-color="red">
+
+### Web attacker
+
+Controla parte da aplicação, no cliente e/ou no servidor. **É o foco da cadeira.**
+
+</div>
+</div>
+
+</Step>
+
+<Step at={2}>
+
+<p class="lede">Controla o servidor: protege a <strong>máquina do cliente</strong>. Controla o cliente: protege os <strong>recursos do servidor</strong>.</p>
+
+</Step>
+
+<Notes>
+
+Antes de ver ataques, temos de dizer contra quem nos defendemos. São três modelos de atacante.
+
+**[→]** O atacante no browser, com exploits ou malware: aqui assumimos que o browser é confiável, porque isso foi tratado em software e sistemas. O atacante na rede, que controla o canal: assumimos canais seguros, e isso fica para segurança de redes. E o web attacker, que controla parte da aplicação web, no cliente ou no servidor. Este é o foco da cadeira.
+
+**[→]** Se o atacante controla o servidor, temos de proteger a máquina do cliente. Se controla o cliente, temos de proteger os recursos do servidor. O atacante também pode ser um simples utilizador que modifica o conteúdo da página, e aí contamos com as proteções do browser e do servidor. Ou pode ser uma página: a página A não pode interferir com a B nem observá-la, um anúncio numa sub-frame não pode interferir com a página que o aloja, e o anfitrião também não pode interferir com o objeto embebido, por exemplo para fazer phishing. Tudo isto depende do isolamento do browser.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+{/* ------------------------------------------------------------ WS1 26–43 */}
+
+<Chapter title="SOP, CORS e cookies" label="Web Security">
+
+<Slide title="Same-Origin Policy">
+
+
+## Same-Origin Policy
+
+<Step at={1}>
+
+<p class="lede">Origem = <strong>(scheme, domínio, porto)</strong>. O browser faz de sistema operativo: páginas são processos, cookies são ficheiros, <code>fetch</code> são sockets, frames são sub-processos.</p>
+
+</Step>
+
+<Step at={2}>
+
+| A página A **pode** | A página A **não pode** |
+| --- | --- |
+| carregar um script de B (corre no contexto de A) | ler o código fonte desse script |
+| carregar CSS de B | ler o texto do CSS |
+| carregar uma página de B numa iframe | aceder ao DOM da iframe |
+| carregar uma imagem de B | ler os pixels da imagem |
+| reproduzir um vídeo de B | capturar imagens do vídeo |
+
+</Step>
+
+<Notes>
+
+A Same-Origin Policy é a regra central. Pensa no browser como um sistema operativo: as páginas são os processos, os cookies e recursos são os ficheiros, o fetch são os sockets e as frames são sub-processos. A origem é o perímetro de segurança.
+
+**[→]** A origem é o triplo scheme, domínio e porto. A SOP dá confidencialidade, outra origem não consegue ler, e integridade, outra origem não consegue modificar. Isto é uma pergunta clássica: escreve sempre os três componentes.
+
+**[→]** Esta tabela está no slide 34 e vale a pena decorá-la. A página A pode carregar um script de B, e esse script corre no contexto de A, mas não consegue ler o código fonte. Pode carregar CSS mas não ler o texto. Pode pôr B numa iframe mas não chega ao DOM dela. Pode carregar uma imagem mas não lê os pixels, embora veja o tamanho, e isso pode vazar informação. Pode reproduzir um vídeo mas não capturar imagens. O padrão é: podes incluir, não podes inspecionar.
+
+</Notes>
+</Slide>
+
+<Slide title="CORS">
+
+
+## CORS: abrir uma exceção à SOP
+
+<Cols columns="1fr 1fr" gap={56} align="start">
+<div>
+
+### Simples
+
+<Diagram
+  fontSize={24}
+  alt="Pedido simples: A envia o pedido a B, B responde com Access-Control-Allow-Origin, e o browser decide se A pode ler a resposta."
+  source={`sequenceDiagram
+  participant A as Página A
+  participant B as Servidor B
+  A->>B: GET /dados
+  B-->>A: resposta + cabeçalho CORS
+  Note over A: browser verifica Allow-Origin`}
+/>
+
+</div>
+<div>
+
+<Step at={1}>
+
+### Preflighted
+
+<Diagram
+  fontSize={24}
+  alt="Pedido preflighted: A envia primeiro um pedido de teste, B responde que permite A, só depois A envia o pedido real."
+  source={`sequenceDiagram
+  participant A as Página A
+  participant B as Servidor B
+  A->>B: preflight
+  B-->>A: permito A
+  A->>B: pedido real
+  B-->>A: resposta`}
+/>
+
+</Step>
+
+</div>
+</Cols>
+
+<Step at={2}>
+
+<p class="lede">Risco de XS-Leak: tempo de resposta ou código de estado.</p>
+
+</Step>
+
+<Notes>
+
+O CORS relaxa a SOP para pedidos JavaScript entre origens. Há dois casos.
+
+À esquerda, o pedido simples. Só se usa quando não há efeitos laterais. O browser envia o pedido, e depois verifica se a resposta autoriza a origem A através do cabeçalho Access-Control-Allow-Origin. Se autoriza, A lê a resposta.
+
+**[→]** À direita, o preflighted, para pedidos que podem ter efeitos laterais. Aqui o browser primeiro envia um pedido inofensivo de teste, o preflight. Só se B responder que permite A é que o browser envia o pedido real. A diferença para o exame: no simples o pedido sai e a verificação é à resposta, no preflighted a verificação é antes.
+
+**[→]** Mesmo no simples há risco de XS-Leak, porque o atacante pode medir o tempo de resposta ou ver o código de estado. Já lá vamos.
+
+</Notes>
+</Slide>
+
+<Slide title="Regras dos cookies">
+
+
+## Quando é que o browser envia o cookie?
+
+<Reveal>
+
+- **Domain**: o domínio do cookie é **sufixo** do host do URL. Um site só define cookies para o seu domínio e pais, nunca para public suffixes
+- **Path**: o path do cookie é **prefixo** do path do URL
+- **SameSite**: **Strict** só se o pedido vem da página de topo com a mesma origem. **Lax** (por omissão) deixa passar alguns pedidos entre sites, como links explícitos. **None** como os browsers antigos faziam: envia sempre
+- **Secure** só em HTTPS. **HttpOnly**: o JavaScript não lê
+
+</Reveal>
+
+<Notes>
+
+Isto é matéria de exercício, por isso vamos devagar. Um cookie é enviado quando duas condições se cumprem.
+
+**[→]** Primeira, o Domain do cookie é sufixo do host do URL do pedido. Um site pode definir cookies para o seu domínio e para os pais, exceto os public suffixes, como .com ou .co.uk, que estão em publicsuffix.org.
+
+**[→]** Segunda, o Path do cookie é prefixo do path do URL.
+
+**[→]** Antigamente os browsers aplicavam só estas duas regras, mesmo em pedidos embebidos. Os browsers modernos só o fazem com SameSite igual a None. Com Strict, o cookie só vai se a origem do pedido for a da página de topo. Com Lax, que é o valor por omissão, passam alguns pedidos entre sites, como links explícitos.
+
+**[→]** Por fim, o atributo Secure obriga a HTTPS, e o HttpOnly impede que o JavaScript leia o cookie. O HttpOnly vai ser útil já a seguir.
+
+</Notes>
+</Slide>
+
+<Slide title="Tabela de envio de cookies">
+
+
+## O cookie é enviado?
+
+<table>
+<thead>
+<tr>
+<th>Pedido para</th>
+<th><code>Domain=login.site.com</code><br /><code>Path=/</code></th>
+<th><code>Domain=site.com</code><br /><code>Path=/</code></th>
+<th><code>Domain=site.com</code><br /><code>Path=/my/home</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>checkout.site.com</code></td>
+<td><Step at={1} inline>Não</Step></td>
+<td><Step at={1} inline>Sim</Step></td>
+<td><Step at={1} inline>Não</Step></td>
+</tr>
+<tr>
+<td><code>login.site.com</code></td>
+<td><Step at={2} inline>Sim</Step></td>
+<td><Step at={2} inline>Sim</Step></td>
+<td><Step at={2} inline>Não</Step></td>
+</tr>
+<tr>
+<td><code>login.site.com/my/home</code></td>
+<td><Step at={3} inline>Sim</Step></td>
+<td><Step at={3} inline>Sim</Step></td>
+<td><Step at={3} inline>Sim</Step></td>
+</tr>
+<tr>
+<td><code>site.com/my</code></td>
+<td><Step at={4} inline>Não</Step></td>
+<td><Step at={4} inline>Sim</Step></td>
+<td><Step at={4} inline>Não</Step></td>
+</tr>
+</tbody>
+</table>
+
+<Notes>
+
+Este tipo de tabela é provável no exame. A regra: o cookie é enviado se o Domain for sufixo do host e o Path for prefixo do path do URL. Tenta responder antes de eu revelar cada linha.
+
+**[→]** checkout.site.com. O primeiro cookie tem Domain login.site.com, que não é sufixo de checkout.site.com: não. O segundo, Domain site.com, é sufixo e o path barra é prefixo: sim. O terceiro falha no path: não.
+
+**[→]** login.site.com. O primeiro: domínio igual e path barra, sim. O segundo: site.com é sufixo, sim. O terceiro: o path do URL é só barra e o do cookie é barra my barra home, que não é prefixo: não.
+
+**[→]** login.site.com barra my barra home. Agora os três passam: sim, sim, sim.
+
+**[→]** site.com barra my. O primeiro: login.site.com não é sufixo de site.com, não. O segundo: sim. O terceiro: o path do URL é barra my, e o do cookie é barra my barra home, mais comprido, por isso não é prefixo: não.
+
+</Notes>
+</Slide>
+
+<Slide title="CookieLab">
+
+
+## Experimenta: o cookie vai?
+
+<CookieLab
+  presets={[
+    { at: 0, domain: "site.com", path: "/my/home", url: "checkout.site.com" },
+    { at: 1, domain: "site.com", path: "/my/home", url: "login.site.com" },
+    { at: 2, domain: "site.com", path: "/my/home", url: "login.site.com/my/home" },
+    { at: 3, domain: "site.com", path: "/my/home", url: "site.com/my" },
+  ]}
+/>
+
+<Notes>
+
+Aqui podes confirmar a tabela anterior com a terceira coluna, o cookie com Domain site.com e Path barra my barra home. Muda o pedido e vê as duas verificações, domínio e path.
+
+Primeiro pedido: checkout.site.com. O domínio passa, mas o path do URL é só barra, por isso o cookie não vai. **[→]** login.site.com: mesmo problema no path. **[→]** login.site.com barra my barra home: domínio e path passam, o cookie vai. **[→]** site.com barra my: o path do URL é mais curto do que o do cookie, por isso falha. Se te enganares numa destas, é quase sempre porque trocaste a direção do prefixo ou do sufixo.
+
+</Notes>
+</Slide>
+
+<Slide title="Colisões da SOP">
+
+
+## Colisões: o mesmo origin, cookies diferentes
+
+```js
+// em https://fsi.pt/evil
+const f = document.createElement("iframe");
+f.src = "https://fsi.pt/good";
+document.body.append(f);
+f.contentWindow.document.cookie; // lê o cookie de /good
+```
+
+<Reveal>
+
+- O cookie de `/good` tem **outro path**, por isso `/evil` não o vê diretamente
+- Mas `/evil` e `/good` têm a **mesma origem HTTP**: `evil` mete `good` numa iframe e lê o cookie
+- Uma **biblioteca maliciosa** na tua origem lê `document.cookie` e envia-o num URL de imagem: roubo de sessão. Defesa: cookies **HttpOnly**
+
+</Reveal>
+
+<Notes>
+
+Uma armadilha: os cookies têm origem própria, domínio mais path, mas a SOP das páginas só olha para scheme, domínio e porto. Isso cria colisões.
+
+Imagina fsi.pt barra evil e fsi.pt barra good. O código que mostrei está na página evil.
+
+**[→]** O cookie de good tem outro path, por isso evil não o consegue ler diretamente.
+
+**[→]** Mas as duas páginas partilham a origem HTTP. Então evil pode pôr good numa iframe e ler o cookie por iframe.contentWindow.document.cookie.
+
+**[→]** Pior ainda: uma biblioteca maliciosa carregada na tua origem lê document.cookie e exfiltra o valor por um URL de imagem. É roubo de sessão. A correção é marcar o cookie como HttpOnly, assim o JavaScript não o consegue ler.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+{/* ------------------------------------------------------------ WS2 */}
+
+<Chapter title="Injeção" label="Web Security">
+
+<Slide title="OWASP Top 10">
+
+
+## OWASP Top 10 (2021)
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+1. <Mark at={1} type="highlight" color="yellow">Broken Access Control</Mark>
+2. Cryptographic Failures
+3. <Mark at={1} type="highlight" color="yellow">Injection</Mark>
+4. <Mark at={1} type="highlight" color="yellow">Insecure Design</Mark>
+5. <Mark at={1} type="highlight" color="yellow">Security Misconfiguration</Mark>
+
+</div>
+<div>
+
+6. Vulnerable &amp; Outdated Components
+7. <Mark at={1} type="highlight" color="yellow">Identification &amp; Authentication Failures</Mark>
+8. Software &amp; Data Integrity Failures
+9. Security Logging &amp; Monitoring Failures
+10. SSRF
+
+</div>
+</Cols>
+
+<Step at={2}>
+
+<p class="lede">Injeção causada por: input **não validado** e **sem separação** entre input e código.</p>
+
+</Step>
+
+<Notes>
+
+Esta é a lista do OWASP de 2021. Não tens de decorar as dez, mas tens de saber quais demos nas aulas.
+
+**[→]** As cinco marcadas: A01 Broken Access Control, que subiu para o primeiro lugar, A03 Injection, que desceu para terceiro e agora inclui o XSS, A04 Insecure Design, que é uma categoria nova e foca a lógica da aplicação, A05 Security Misconfiguration e A07 Identification and Authentication Failures. Os bugs clássicos estão mitigados, mas continuam presentes.
+
+**[→]** A injeção tem duas causas: o input não é validado, e não há separação entre input e código. É a mesma ideia do buffer overflow, mas noutro nível tecnológico. Primeiro caso: a shell.
+
+</Notes>
+</Slide>
+
+<Slide title="Injeção na shell">
+
+
+## Command injection
+
+```c
+system("head -n 100 " + argv[1]);
+```
+
+<Cols columns="1fr 1fr" gap={56} align="start">
+<div>
+
+<Step at={1}>
+
+```http
+GET /ping?host=8.8.8.8;cat /etc/passwd
+```
+
+Também: `|`, `$(...)`, reverse shell
+
+</Step>
+
+</div>
+<div>
+
+<Step at={2}>
+
+```http
+User-Agent: () { :;}; do_evil
+```
+
+**ShellShock** (CVE-2014-6271): o CGI passa os cabeçalhos como variáveis de ambiente
+
+</Step>
+
+</div>
+</Cols>
+
+<Step at={3}>
+
+<p class="lede"><strong>Whitelist</strong> (o ping só precisa de dígitos e pontos) &gt; blacklist. O melhor: <strong>não chamar a shell</strong>.</p>
+
+</Step>
+
+<Notes>
+
+O exemplo base está em C: um programa que faz head dos primeiros 100 bytes de um ficheiro que o utilizador indica. Se o utilizador passar test.txt ponto e vírgula rm -rf barra home, a shell corre os dois comandos. Em Node é o eval, em PHP o system ou o exec.
+
+**[→]** Num servidor, o mesmo com um ping: host igual a 8.8.8.8, ponto e vírgula, cat etc passwd. Há variantes com pipe, com cifrão e parênteses, e até reverse shells.
+
+**[→]** O ShellShock, de 2014, é o caso famoso. O CGI passa os cabeçalhos HTTP como variáveis de ambiente, e o bash executava o lixo que vinha depois de uma definição de função. Bastava mandar isto no User-Agent.
+
+**[→]** Defesas. Nunca corras comandos com input não validado. A blacklist é fraca: há tantos caracteres perigosos que é muito difícil acertar. A whitelist é melhor, porque o ping só precisa de dígitos e pontos. E a melhor opção é nem chamar a shell.
+
+</Notes>
+</Slide>
+
+<Slide title="SqlLab">
+
+
+## SQL injection ao vivo
+
+<SqlLab
+  presets={[
+    { at: 0, user: "rodrigo", pass: "hunter2" },
+    { at: 1, user: "admin' --", pass: "x" },
+    { at: 2, user: "' OR 1=1 --", pass: "x" },
+    { at: 3, user: "x'; DROP TABLE users; --", pass: "x" },
+    { at: 4, user: "x'; DROP TABLE users; --", pass: "x", prepared: true },
+  ]}
+/>
+
+<Notes>
+
+Este é o login de um site, com a query construída por concatenação de strings. Começamos com um login normal: rodrigo, hunter2. A query devolve uma linha e entra.
+
+**[→]** Agora o utilizador admin, plica, dois hífenes. A plica fecha a string e os dois hífenes comentam o resto da query, incluindo a verificação da palavra-passe. Entras como admin sem saber a palavra-passe.
+
+**[→]** Sem sequer saber um nome válido: plica, OR 1 igual a 1, dois hífenes. A condição fica sempre verdadeira e a query devolve todos os utilizadores.
+
+**[→]** O ponto e vírgula termina uma instrução, e a seguir vem outra. Aqui, um DROP TABLE users. É o Bobby Tables do xkcd. Algumas bases de dados até deixam correr comandos do sistema operativo.
+
+**[→]** Mesmo input, mas agora com prepared statement ativado. O input é tratado como um valor, e já não consegue alterar a estrutura da query. Nada é executado.
+
+</Notes>
+</Slide>
+
+<Slide title="Blind SQLi e defesas">
+
+
+## Blind SQLi e defesas
+
+<Cols columns="1fr 1fr" gap={64} align="start">
+<div>
+
+<Reveal>
+
+- **Por resultado**: a operação teve sucesso? `AND role="admin"`
+- **Por tempo**: `; SLEEP(15)`
+- **Por tentativa**: `pin LIKE "0%"`, regex para reduzir a pesquisa
+
+</Reveal>
+
+<p class="small muted">Ferramenta: sqlmap</p>
+
+</div>
+<div>
+
+<Step at={4}>
+
+```sql
+INSERT INTO users (name, pass)
+VALUES (?, ?);
+```
+
+A estrutura da query fica fixa **antes** dos parâmetros.
+
+</Step>
+
+</div>
+</Cols>
+
+<Step at={5}>
+
+<p class="lede"><strong>ORM</strong> traz sanitização, mas pode ter bugs (ORM injection): defesa em profundidade. Não mostres erros ao cliente: regista e alerta.</p>
+
+</Step>
+
+<Notes>
+
+Blind SQL injection é quando não vês o resultado da query, só os efeitos. Há três tipos.
+
+**[→]** Por resultado: a operação teve sucesso ou não? Por exemplo acrescentas AND role igual a admin e vês se o login funciona. **[→]** Por tempo: metes um SLEEP de 15 segundos e medes a demora da resposta. **[→]** Por tentativa: adivinhas um valor, por exemplo um PIN que começa por zero, e usas regex para ir estreitando a pesquisa. Existe uma ferramenta, o sqlmap, que automatiza isto.
+
+**[→]** Defesas. Nunca construas queries como strings. A solução são queries parametrizadas, os prepared statements. A estrutura da query é fixada antes dos parâmetros, então o ponto e vírgula e o DROP TABLE são tratados como um valor. Como bónus, a query pode ser guardada em cache.
+
+**[→]** Sanitizar input ajuda, e whitelist é melhor do que blacklist. O problema de raiz é a falta de tipos: id igual a 52 OR 1 igual a 1 é um número que deixa de ser um número. Os ORMs trazem sanitização incluída, mas também têm bugs, a chamada ORM injection, por isso defesa em profundidade e testar as bibliotecas. E não mostres erros ao cliente: regista-os e alerta.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+{/* ------------------------------------------------------------ XSS */}
+
+<Chapter title="XSS" label="Web Security">
+
+<Slide title="Três tipos de XSS">
+
+
+## XSS: injeção do lado do cliente
+
+<Step at={1}>
+
+<div class="cards" style="--n:3">
+<div class="card" data-color="orange">
+
+### Refletido
+
+utilizador + servidor + atacante. O servidor devolve o payload do pedido. Precisa de engenharia social. **PayPal 2006**
+
+</div>
+<div class="card" data-color="red">
+
+### Armazenado
+
+O payload fica guardado no site. **Samy worm** (MySpace 2005): mais de 1 milhão de utilizadores em cerca de 20 h. **iCloud**: 5 000 $
+
+</div>
+<div class="card" data-color="blue">
+
+### DOM
+
+Só no cliente: nada chega ao servidor. O payload vem do URL.
+
+</div>
+</div>
+
+</Step>
+
+<Step at={2}>
+
+<p class="lede">O código corre na <strong>origem da vítima</strong>: contorna a SOP e o atacante vê a resposta.</p>
+
+</Step>
+
+<Notes>
+
+XSS é injeção do lado do cliente: o atacante consegue que o seu código corra dentro da página de um site legítimo. Há três tipos.
+
+**[→]** O refletido envolve o utilizador, o servidor e o atacante. O atacante engana o utilizador para fazer um pedido cujo payload o servidor reflete na resposta. Precisa de engenharia social: emails, anúncios, links curtos. O exemplo é o PayPal em 2006, em que um link para o site verdadeiro mostrava uma mensagem falsa de conta desativada e redirecionava para uma página de phishing.
+
+O armazenado envolve só o utilizador e o servidor: o payload fica guardado no site. O Samy worm, no MySpace em 2005, aproveitou que o HTML era permitido nos perfis e o filtro não verificava JavaScript dentro de CSS. Propagava-se sozinho e passou de um milhão de utilizadores em cerca de 20 horas, e o Samy teve uma visita do Serviço Secreto americano. Ainda é comum: a Apple pagou 5 000 dólares por um XSS armazenado no iCloud.
+
+O DOM XSS corre só no cliente. Por exemplo, user.html com id igual a um alert no URL: nada chega ao servidor.
+
+**[→]** Porque é que funciona tão bem? O código corre na origem da vítima, por isso contorna a SOP.
+
+</Notes>
+</Slide>
+
+<Slide title="XSS refletido: fluxo">
+
+
+## Fluxo do XSS refletido
+
+<Cols columns="1.3fr 1fr" gap={72} align="center">
+<div>
+
+1. **evil.com** → vítima: link para `naive.com/hello.cgi?name=<script>`
+2. **Vítima** → naive.com: pede a página
+3. **naive.com** → vítima: página que repete o script
+4. O script corre **como naive.com** e envia o cookie a evil.com
+
+</div>
+<div>
+
+<Step at={1}>
+
+<p class="lede">Engenharia social: emails, anúncios, links curtos, páginas de phishing.</p>
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+Vamos ver o fluxo passo a passo. A vítima visita evil.com, que carrega uma frame apontada para naive.com barra hello.cgi, com o parâmetro name a conter um script que envia o cookie para evil.com. O CGI de naive.com repete o nome na página. O browser da vítima executa o script, mas como naive.com, e por isso consegue ler o cookie de naive.com e enviá-lo ao atacante.
+
+**[→]** Em prática o atacante precisa de levar a vítima ao URL: emails, anúncios, links curtos, páginas de phishing. Se o utilizador desconfiar, falha.
+
+</Notes>
+</Slide>
+
+<Slide title="Defesas: CSP e SRI">
+
+
+## CSP e SRI
+
+<Step at={1}>
+
+```http
+Content-Security-Policy: default-src 'self'; img-src *; script-src cdn.jquery.com
+```
+
+</Step>
+
+<Step at={2}>
+
+```html
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"
+        integrity="sha384-…"
+        crossorigin="anonymous"></script>
+```
+
+</Step>
+
+<Step at={3}>
+
+<p class="lede">2013: os servidores MaxCDN do BootstrapCDN foram comprometidos e o JS do Bootstrap alterado para servir um exploit kit.</p>
+
+</Step>
+
+<Notes>
+
+Primeiro a sanitização do input: as blacklists são difíceis de manter completas, os atacantes disfarçam o código, e as frameworks ajudam mas não são perfeitas. Whitelist é melhor. Mas há defesas do lado do browser.
+
+**[→]** O CSP, Content-Security-Policy, é uma whitelist de origens de scripts. Os scripts inline ficam bloqueados. Aqui, tudo só da própria origem, imagens de qualquer sítio e scripts só do cdn.jquery.com.
+
+**[→]** E se esse CDN for comprometido? O SRI resolve: incluis o hash do script esperado, e o browser recusa o ficheiro se o hash não bater certo.
+
+**[→]** Aconteceu: em 2013 os servidores MaxCDN por trás do BootstrapCDN foram comprometidos, e o JavaScript do Bootstrap foi alterado para servir um exploit kit.
+
+</Notes>
+</Slide>
+
+<Slide title="Trusted Types">
+
+
+## DOM XSS e Trusted Types
+
+```js
+// https://example.com/#<img src=x onerror=alert('xss')>
+var foo = location.hash.slice(1);
+document.querySelector('#foo').innerHTML = foo;
+```
+
+<Step at={1}>
+
+<p class="lede">O fragmento (<code>#…</code>) nem chega ao servidor: <strong>CSP e SRI não ajudam</strong>.</p>
+
+</Step>
+
+<Step at={2}>
+
+```http
+Content-Security-Policy: trusted-types myPolicy
+```
+
+`innerHTML = location.hash.slice(1)` lança um **TypeError**.
+
+</Step>
+
+<Step at={3}>
+
+```js
+trustedHTML = SanitizingPolicy.createHTML(foo);
+```
+
+</Step>
+
+<Notes>
+
+O DOM XSS é diferente. O código vulnerável lê o fragmento do URL e mete-o em innerHTML. O payload é uma imagem com onerror, que executa o alert.
+
+**[→]** O fragmento, a parte a seguir ao cardinal, nunca é enviado ao servidor. Por isso CSP e SRI não ajudam neste caso.
+
+**[→]** A defesa são os Trusted Types. Com este cabeçalho CSP, o browser rejeita strings simples atribuídas a sinks perigosos do DOM, como o innerHTML. A atribuição direta lança um TypeError.
+
+**[→]** Só passa se o valor vier de uma função de sanitização de confiança, como createHTML da tua política.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+{/* ------------------------------------------------------------ WS3 */}
+
+<Chapter title="CSRF, sessões e o resto" label="Web Security">
+
+<Slide title="CSRF">
+
+
+## CSRF: o cookie vai, mesmo sem querer
+
+<Cols columns="1.3fr 1fr" gap={72} align="center">
+<div>
+
+1. **Vítima** → attacker.com: abre a página
+2. **attacker.com** → vítima: formulário escondido
+3. **Vítima** → bank.com: `POST /transfer` **com o cookie**
+4. **bank.com**: "Transfer complete!"
+
+</div>
+<div>
+
+<Step at={1}>
+
+<p class="big">A SOP impede o atacante de <strong>ler</strong> a resposta, mas a transferência <strong>já aconteceu</strong>.</p>
+
+</Step>
+
+<Step at={2}>
+
+<p class="lede"><strong>XS-Leaks</strong>: não lê a resposta, mas usa canais laterais (erros, tempo, frames, 200 vs 404).</p>
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+Autenticar com cookies não chega: o servidor não sabe de onde veio o pedido. O CSRF é isto. Passo um, o utilizador é levado a uma página do atacante. Passo dois, o browser envia um pedido não intencional com os cookies. Passo três, o site executa-o como se fosse o utilizador.
+
+Na lista, a página do atacante tem um formulário escondido para bank.com barra transfer, com POST, destinatário o atacante e 100 dólares. É submetido automaticamente com document.forms zero ponto submit, e o banco responde Transfer complete.
+
+**[→]** Muita gente pensa: a SOP não devia travar isto? A SOP só impede o atacante de ler a resposta. O efeito lateral já aconteceu. Por isso o CSRF precisa de defesas próprias. Há variantes: o login CSRF, em que a vítima é autenticada na conta do atacante e as pesquisas dela ficam no histórico do atacante, o CSRF em routers com credenciais por omissão, e aplicações locais em modo servidor, como o exploit do Zoom.
+
+**[→]** O XS-Leaks é o primo no lado do cliente. O atacante não consegue ler a resposta, mas usa canais laterais para inferir o estado do utilizador no site alvo: eventos de erro, tempo, número de frames, ou 200 contra 404. Funciona mesmo sem efeitos laterais no servidor.
+
+</Notes>
+</Slide>
+
+<Slide title="Defesas contra CSRF">
+
+
+## Como parar o CSRF
+
+<Cols columns="1.1fr 1fr" gap={56} align="start">
+<div>
+
+<Reveal class="small">
+
+- **CSRF token**: segredo dinâmico num campo escondido, que o atacante não adivinha
+- **SameSite**: Strict (nenhum cookie entre sites, até o link de um email te desliga) vs Lax (links sim, imagens e frames não)
+- **Origin/Referer**: se faltar, é ambíguo (privacidade)
+- **Fetch Metadata**: o servidor lê `Sec-Fetch-Site`
+- **Defesa em profundidade**: preflight com cabeçalhos custom, **COOP** (corta referências a popups de outras origens: trava XS-Leaks)
+
+</Reveal>
+
+</div>
+<div>
+
+<Step at={4}>
+
+```http
+# fetch() de site.example
+Sec-Fetch-Site: same-origin
+Sec-Fetch-Mode: cors
+
+# <img src="//site.example/foo.json">
+# em evil.example
+Sec-Fetch-Site: cross-site
+Sec-Fetch-Mode: no-cors
+```
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+Cinco defesas.
+
+**[→]** O CSRF token: um segredo dinâmico num campo escondido do formulário. O atacante não o consegue adivinhar.
+
+**[→]** SameSite. Strict: não vai cookie em nenhum pedido entre sites, nem ao seguir um link de um email, por isso ficas deslogado. Lax: vai nos links entre sites, mas não em imagens nem frames.
+
+**[→]** Validar Origin e Referer: se o Referer for bank.com, aceita, se for attacker.com, rejeita. E se faltar o cabeçalho? É ambíguo, porque as definições de privacidade podem removê-lo.
+
+**[→]** Fetch Metadata, cabeçalhos definidos pelo browser. O Sec-Fetch-Site diz se o pedido é same-origin, same-site, cross-site ou none, e há também o Sec-Fetch-Mode e o Sec-Fetch-User. No exemplo, um fetch do próprio site vem com same-origin e modo cors. Uma imagem em evil.example a apontar para o mesmo JSON vem com cross-site e no-cors, e o servidor pode rejeitá-la.
+
+**[→]** Como defesa em profundidade, já que confias num browser possivelmente antigo: forçar um preflight CORS com cabeçalhos custom, e o COOP, Cross-Origin-Opener-Policy, que remove referências a popups de outras origens e trava XS-Leaks.
+
+</Notes>
+</Slide>
+
+<Slide title="Pergunta: CSRF">
+
+<Quiz
+  source="Teste 1, 2023/24"
+  options={[
+    "Os tokens CSRF permitem ao servidor web receber uma lista branca de origens confiáveis.",
+    "Os cabeçalhos Fetch Metadata permitem ao servidor web receber uma lista branca de origens confiáveis.",
+    "Os cabeçalhos Fetch Metadata permitem ao servidor web decidir que pedidos de clientes aceitar com base na origem.",
+    "Os cookies SameSite=Strict permitem ao servidor web decidir que pedidos de clientes aceitar com base na origem.",
+  ]}
+  correct={2}
+>
+
+Sobre **CSRF**, qual destas afirmações é verdadeira?
+
+<div slot="answer">
+
+Os Fetch Metadata (`Sec-Fetch-Site`, `Sec-Fetch-Mode`) são **cabeçalhos do browser** que descrevem a origem do pedido: o servidor decide e rejeita o cross-site. O token prova que o pedido veio do próprio site. O SameSite é uma política do **browser** sobre cookies.
+
+</div>
+</Quiz>
+
+<Notes>
+
+Pausa o vídeo e tenta responder.
+
+**[→]** A resposta é a terceira. Os Fetch Metadata são cabeçalhos que o browser acrescenta, e o servidor usa o Sec-Fetch-Site para decidir se aceita o pedido. As duas primeiras trocam a ideia: nem o token nem o Fetch Metadata são uma lista branca de origens, o token prova que o pedido veio de uma página do próprio site. A quarta é a armadilha: o SameSite decide se o browser envia o cookie, não é o servidor a decidir.
+
+</Notes>
+</Slide>
+
+<Slide title="Sessões">
+
+
+## Gestão de sessões
+
+<Cols columns="1fr 1fr" gap={64} align="start">
+<div>
+
+<Step at={1}>
+
+### No servidor (recomendado)
+
+O cookie guarda só um **token aleatório**. Pede: alta entropia, IDs novos, armazenamento seguro, invalidar no logout e na inatividade.
+
+</Step>
+
+</div>
+<div>
+
+<Step at={2}>
+
+### No cliente (perigoso)
+
+O cliente edita o cookie (**cookie poisoning**). O mesmo vale para localStorage e campos escondidos (`price=150`). Mitigação: Secure e **MAC**.
+
+</Step>
+
+</div>
+</Cols>
+
+<Step at={3}>
+
+```text
+T = MACsign(k, (SID, name, value))
+Set-Cookie: NAME = value, T
+```
+
+</Step>
+
+<Notes>
+
+O HTTP não tem estado, os cookies só o simulam. Há duas formas de gerir sessões.
+
+**[→]** No servidor, que é a recomendada. O servidor guarda o estado e o cookie só tem um token aleatório. Exige alta entropia, IDs novos, armazenamento seguro, e invalidar a sessão no logout e na inatividade. Falhar qualquer uma destas abre ataques.
+
+**[→]** No cliente é flexível mas perigoso: o cliente pode editar o cookie, é o cookie poisoning. O mesmo acontece com o localStorage e com campos escondidos, como um preço igual a 150. Podes cifrar, mas nunca ponhas dados sensíveis em cookies, e usar cookies Secure. Para integridade, usas um MAC.
+
+**[→]** Funciona assim: o servidor calcula T com MACsign usando uma chave k, o identificador da sessão, o nome e o valor, e envia o valor e T no Set-Cookie. Em cada pedido verifica com MACverify. A chave k nunca sai do servidor.
+
+</Notes>
+</Slide>
+
+<Slide title="Pergunta: sessões">
+
+<Quiz
+  source="Teste 1, 2023/24"
+  options={[
+    "O servidor guarda todo o estado do cliente, associado a um token aleatório em cada cookie de sessão.",
+    "O servidor gere todo o estado do cliente, guardado num cookie de sessão cifrado e assinado com MAC.",
+    "O cliente gere todo o seu estado no seu cookie de sessão, que é guardado pelo servidor.",
+    "O servidor guarda todo o estado do cliente, associado ao mesmo identificador para todos os cookies de um cliente.",
+  ]}
+  correct={0}
+>
+
+Qual é a forma **mais segura** de gestão de sessões em aplicações web?
+
+<div slot="answer">
+
+Com o estado no servidor e só um **token aleatório** no cliente, o atacante não forja nem altera o estado, e a revogação é imediata. Estado no cookie, mesmo cifrado e com MAC, expõe mais.
+
+</div>
+</Quiz>
+
+<Notes>
+
+Outra para tentares.
+
+**[→]** A resposta é a primeira: o estado fica no servidor e o cookie só tem um token aleatório. Assim o cliente não consegue manipular os seus próprios privilégios. A segunda parece boa porque tem cifra e MAC, mas continua a pôr estado no cliente, e a pergunta quer a mais segura.
+
+</Notes>
+</Slide>
+
+<Slide title="Acesso, design e configuração">
+
+
+## Os outros erros que o exame gosta
+
+<div class="cards" style="--n:3">
+<div class="card" data-color="red">
+
+### A01 Acesso (IDOR)
+
+Não há controlo de acesso. Citibank 2011: mudar o número da conta em `/myacct/9725126314/summary` expôs <Mark at={1} type="circle" color="red">360 mil cartões</Mark>. Sinave, DGS, 2022.
+
+</div>
+<div class="card" data-color="orange">
+
+### A04 Design inseguro
+
+Falha de **lógica**: nenhuma implementação perfeita a resolve. Quantidade <Mark at={2} type="underline" color="orange">negativa</Mark> ou 0,1 TVs. Comunicados em URLs **sequenciais** (00014 → 00015).
+
+</div>
+<div class="card" data-color="blue">
+
+### A05 Configuração
+
+Ficheiros esquecidos, backups, erros que mostram a config, <Mark at={3} type="box" color="blue">.git público</Mark>. Uploads: webshells, zip bombs.
+
+</div>
+</div>
+
+<Notes>
+
+Três categorias do OWASP que aparecem em perguntas.
+
+**[→]** A01, controlo de acesso quebrado. O caso típico é o IDOR, Insecure Direct Object Reference, também chamado parameter tampering, em que simplesmente não há controlo de acesso. No Citibank em 2011, mudar o número da conta no URL expôs 360 mil cartões. Em Portugal, o caso do Sinave da DGS, em 2022.
+
+**[→]** A04, design inseguro, categoria nova. São falhas de lógica de negócio: difíceis de detetar, precisam de contexto, e não se resolvem com uma implementação perfeita nem com sanitização genérica. O servidor não pode confiar no cliente, e o cliente não pode confiar no servidor, por exemplo por causa do XSS armazenado. Exemplos: quantidade negativa ou 0,1 televisões, com preço vezes quantidade. E os comunicados de imprensa guardados em URLs sequenciais, 00014, 00015, que serviram num caso de fraude com valores mobiliários por hackers ucranianos.
+
+**[→]** A05, má configuração. Divulgação indesejada: ficheiros CGI esquecidos, endpoints privados, backups, erros não tratados que revelam a configuração, pastas .git públicas em produção. Ferramentas automáticas encontram isto. Os uploads também: todo o input é malicioso, e há risco de injeção, de webshells e de zip bombs. Contramedidas: nomes difíceis de adivinhar, sem acesso web direto, CDN externa e antivírus.
+
+</Notes>
+</Slide>
+
+<Slide title="Clickjacking e phishing">
+
+
+## Clickjacking e phishing
+
+<Cols columns="1fr 1fr" gap={64} align="start">
+<div>
+
+<Step at={1}>
+
+### Clickjacking
+
+Frames transparentes sobrepostas: o utilizador clica no que não vê.
+
+</Step>
+
+<Step at={2}>
+
+```http
+X-Frame-Options: DENY
+Content-Security-Policy:
+  frame-ancestors 'none'
+```
+
+</Step>
+
+</div>
+<div>
+
+<Step at={3}>
+
+### Phishing
+
+Uma mensagem falsa leva a um site falso. A **2FA** protege pouco: o utilizador entrega também o OTP.
+
+</Step>
+
+<Step at={4}>
+
+**U2F** (chave) resolve, **a não ser que** o atacante force um *downgrade* do método ("Try another way to sign in").
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+Para fechar, dois ataques sobre o utilizador.
+
+**[→]** Clickjacking: frames transparentes sobrepostas. Ou o utilizador vê a frame maliciosa mas clica na da vítima escondida, por exemplo num jogo, ou vê a da vítima mas clica numa maliciosa posta por cima de um elemento de interface.
+
+**[→]** Proteções: frames HTML5 com sandbox, que são tratadas como origem única, o cabeçalho X-Frame-Options com DENY ou SAMEORIGIN, e o CSP frame-ancestors. Com none, nenhuma página pode pôr a tua numa iframe. Com self, só o próprio site.
+
+**[→]** Phishing: uma mensagem fraudulenta leva o utilizador a um site falso onde entrega os dados. A Facebook e a Google já perderam 100 milhões de dólares assim. A defesa principal é o bom senso. A 2FA ajuda pouco: protege contra credenciais roubadas, mas o utilizador entrega também o OTP ao site falso.
+
+**[→]** O U2F, a chave de hardware, resolve, porque o atacante não consegue ficar no meio. Mas só se o atacante não conseguir forçar um downgrade do método de autenticação, como a opção Try another way to sign in do Google, que leva o utilizador para SMS ou códigos de backup, que são phishable. Ou se o utilizador não perder a chave.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+</Part>

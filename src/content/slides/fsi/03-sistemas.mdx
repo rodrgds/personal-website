@@ -1,0 +1,1176 @@
+import {
+  Flow,
+  Chapter,
+  Cols,
+  CodeSteps,
+  Diagram,
+  Mark,
+  Notes,
+  Part,
+  Quiz,
+  Reveal,
+  Slide,
+  Step,
+  UidLab,
+} from "../../../components/features/slides";
+
+<Part title="3 · Sistemas">
+
+{/* ------------------------------------------------------------ SyS1 2–13 */}
+
+<Chapter title="Princípios de Saltzer & Schroeder" label="Systems Security">
+
+<Slide title="Princípios (1/2)">
+
+
+## Saltzer & Schroeder: 1 a 5
+
+<div class="cards" style="--n:3">
+<div class="card" data-color="blue">
+
+### Economia de mecanismos
+
+Só as funcionalidades necessárias, os mecanismos mais simples.
+
+</div>
+<div class="card" data-color="green">
+
+### Fail-safe defaults
+
+Conservador por omissão. Falhou? **Fecha** (fail closed). Exemplo: o semáforo ferroviário cai para "Stop" se o cabo falhar.
+
+</div>
+<div class="card" data-color="orange">
+
+### Mediação completa
+
+Política para cada recurso, validada em **cada acesso**. Falha típica: IDOR (`?id=123`).
+
+</div>
+<div class="card" data-color="purple">
+
+### Desenho aberto
+
+A segurança não depende de esconder o mecanismo. Só as chaves são secretas.
+
+</div>
+<div class="card" data-color="red">
+
+### Separação de privilégio
+
+Compartimentos isolados, cada um no seu domínio de confiança.
+
+</div>
+</div>
+
+<Notes>
+
+Vamos às regras de desenho de sistemas seguros. São dez princípios, e convém saberes a lista toda. Neste slide vão os primeiros cinco, cada um com um exemplo.
+
+Economia de mecanismos: mantém simples. Só as funcionalidades de que precisas, nada de extras "porque dá jeito". Menos código, menos sítios onde falhar.
+
+Fail-safe defaults: o sistema é conservador por omissão. Um utilizador novo tem as permissões mínimas. E quando algo falha, o sistema deve voltar ao estado seguro, fail closed, e não ao permissivo, fail open. O exemplo do guia são os semáforos de caminho de ferro: o braço horizontal quer dizer "Stop", por isso se o cabo partir o braço cai por gravidade para Stop. Exemplos de más configurações por omissão: a VPN FortiGate, cujo SSL-VPN por omissão tinha um problema de certificado que permitia ataques MitM, e os routers Thomson e BT, cuja chave WEP ou WPA por omissão era previsível a partir do SSID ou do MAC.
+
+Mediação completa: tem de haver uma política para cada recurso e cada acesso é validado, sem caminhos que a contornem. Na web, o contra-exemplo é o IDOR: mudas o id no URL e vês dados de outro utilizador. No Linux, todo o acesso à memória passa pelo sistema operativo.
+
+Desenho aberto: a segurança não pode depender de esconder o mecanismo. Os segredos são só alguns parâmetros configuráveis, as chaves e as palavras-passe. Já volto a este princípio, que saiu num teste.
+
+Separação de privilégio: compartimenta. Cada compartimento fica isolado no seu domínio de confiança, e uma falha tem efeitos só locais.
+
+</Notes>
+</Slide>
+
+<Slide title="Princípios (2/2)">
+
+
+## Saltzer & Schroeder: 6 a 10
+
+<div class="cards" style="--n:3">
+<div class="card" data-color="orange">
+
+### Privilégio mínimo
+
+Só as permissões do papel. Contra-exemplo: **tudo a correr como root**. Bom exemplo: permissões por app no Android e iOS.
+
+</div>
+<div class="card" data-color="cyan">
+
+### Mecanismo menos comum
+
+Partilhar o mínimo. Não reutilizes a palavra-passe entre Facebook e Sigarra.
+
+</div>
+<div class="card" data-color="red">
+
+### Defesa em profundidade
+
+Qualquer mecanismo pode falhar. O castelo tem várias camadas, não só o perímetro.
+
+</div>
+<div class="card" data-color="blue">
+
+### Aceitabilidade psicológica
+
+Fácil de usar, para as pessoas o usarem bem.
+
+</div>
+<div class="card" data-color="purple">
+
+### Work factor e registo
+
+Custo do ataque face ao ganho. Registar as violações (compromise recording).
+
+</div>
+</div>
+
+<Notes>
+
+Os restantes cinco.
+
+Privilégio mínimo: cada papel só tem as permissões de que precisa. Senão, o impacto de uma violação é amplificado. O problema clássico é correr tudo como root. O bom exemplo são as permissões por app no Android e no iOS: câmara, contactos, localização, microfone, cada uma com o seu interruptor.
+
+Mecanismo menos comum: minimiza recursos e mecanismos partilhados, sobretudo entre níveis de privilégio. Exemplos do guia: não reutilizar a palavra-passe entre o Facebook e o Sigarra, ter sistemas de ficheiros separados por utilizador, e o servidor web e a base de dados não partilharem interfaces.
+
+Defesa em profundidade, a abordagem do castelo: qualquer mecanismo pode falhar, por isso não ponhas toda a confiança num só. O exemplo mau é um perímetro que assume que não há ameaças internas. Num serviço cloud as camadas são: informação crítica, proteção física, hardening do SO, acesso à informação com RBAC e auditoria, e acesso externo com redes de perímetro, VPN e PKI.
+
+Os três últimos, aceitabilidade psicológica, work factor e compromise recording, aparecem na lista mas o guia só diz que são usados ao longo das aulas seguintes. Basta saberes o nome e a ideia.
+
+</Notes>
+</Slide>
+
+<Slide title="Pergunta: desenho aberto">
+
+<Quiz source="Teste Intercalar, 2021/22">
+
+Enuncia o **princípio do desenho aberto** e apresenta uma motivação para a sua utilização.
+
+<div slot="answer">
+
+<Step at={1}>
+
+**Enunciado:** a segurança **não depende do segredo** do desenho ou da implementação, mas só das chaves ou palavras-passe.
+
+</Step>
+
+<Step at={2}>
+
+**Motivação:** os segredos de desenho acabam por ser descobertos, e o escrutínio público encontra e corrige falhas. Ex.: WhatsApp (proprietário) vs Signal (aberto).
+
+</Step>
+
+</div>
+</Quiz>
+
+<Notes>
+
+Pergunta de desenvolvimento do teste de 2021/22. Pausa e tenta responder.
+
+**[→]** O enunciado: a segurança de um sistema não deve depender do segredo do seu desenho ou implementação. Os únicos segredos são parâmetros configuráveis, como chaves e palavras-passe.
+
+**[→]** A motivação tem duas partes e convém dar as duas. Uma: mecanismos escondidos acabam por ser descobertos. Duas: um desenho público pode ser revisto por muita gente, que encontra e corrige falhas. E como o segredo é só a chave, podes mudá-la sem mudar o sistema. O exemplo do guia é o WhatsApp, proprietário, contra o Signal, aberto. Houve um bug de VoIP no WhatsApp usado pela NSO para o Pegasus, e o WhatsApp acabou por adotar o protocolo Signal em 2014. O oposto do desenho aberto chama-se security through obscurity, que nos slides é a avestruz com a cabeça na areia.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+{/* ------------------------------------------------------------ SyS1 14–25 */}
+
+<Chapter title="Controlo de acessos" label="Systems Security">
+
+<Slide title="Matriz de acessos, ACL e capabilities">
+
+
+## Matriz de acessos
+
+<Cols columns="1.15fr 1fr" gap={72} align="center">
+<div>
+
+| | ficheiro A | ficheiro B | ficheiro C |
+| --- | --- | --- | --- |
+| <Mark at={2} type="highlight" color="orange">Alice</Mark> | rw | <Mark at={1} type="highlight" color="blue">r</Mark> | - |
+| <Mark at={2} type="highlight" color="orange">Bob</Mark> | <Mark at={2} type="highlight" color="orange">r</Mark> | <Mark at={1} type="highlight" color="blue"><Mark at={2} type="box" color="orange">rw</Mark></Mark> | <Mark at={2} type="highlight" color="orange">r</Mark> |
+| <Mark at={2} type="highlight" color="orange">Carol</Mark> | - | <Mark at={1} type="highlight" color="blue">r</Mark> | rw |
+
+<p class="small muted">Valores ilustrativos. Atores nas linhas, recursos nas colunas.</p>
+
+</div>
+<div>
+
+<Step at={1}>
+
+### ACL: uma **coluna**
+
+Permissões por **recurso**, como uma lista de convidados. Entrada de acesso (inbound).
+
+</Step>
+
+<Step at={2}>
+
+### Capabilities: uma **linha**
+
+Permissões por **ator**, como um bilhete. Acesso de saída (outbound).
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+O controlo de acessos implementa privilégio mínimo, mediação completa e separação de privilégio. Os elementos são o ator, o recurso e a operação, e uma permissão é o par recurso mais operação.
+
+A forma mais direta de a representar é a matriz de acessos: atores nas linhas, recursos nas colunas. É clara e eficaz, mas o número de combinações explode e é difícil de centralizar. Os valores que aqui pus são ilustrativos.
+
+**[→]** Se guardares a matriz por colunas, tens uma ACL: as permissões ficam junto de cada recurso, como uma lista de convidados. Se o nome não está na lista, não entra: a omissão é "sem permissão". Dá localidade e isolamento por recurso. O custo é que para encontrar ou remover todas as permissões de um ator tens de percorrer todos os recursos. É controlo de acesso inbound, orientado ao que é acedido.
+
+**[→]** Se guardares por linhas, tens capabilities: cada ator transporta as suas permissões, como um bilhete. O custo é o inverso: para saber quem pode aceder a um recurso tens de verificar todos os atores. É outbound, orientado a quem acede. Armadilha de exame: ACL é por recurso, capabilities é por ator.
+
+</Notes>
+</Slide>
+
+<Slide title="RBAC e ABAC">
+
+
+## RBAC e ABAC
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+### RBAC
+
+<p class="big">Ator → <strong>Papel</strong> → Permissões</p>
+
+Papel → permissões: como uma **ACL**. Ator → papel: como **capabilities**. Exemplo: o sistema de ficheiros Unix.
+
+</div>
+<div>
+
+### ABAC
+
+<Step at={1}>
+
+<p class="big">Atributos do ator, do recurso e do ambiente → <strong>motor de política</strong> → PERMIT ou DENY</p>
+
+Mais expressivo: regras geográficas, temporais, hierárquicas. O RBAC é um caso especial.
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+Dois modelos mais práticos.
+
+RBAC, role-based: os atores têm papéis e os papéis têm permissões. A ligação papel para permissões é estável e gerida por quem gere os recursos, por isso é parecida com uma ACL. A ligação ator para papel é dinâmica e gerida por quem gere os utilizadores, parecida com capabilities. Uma pessoa pode ter vários papéis. O sistema de ficheiros Unix é um exemplo: dono, grupo e outros.
+
+**[→]** ABAC, attribute-based: a política usa atributos do ator, do recurso e do ambiente, e um motor dinâmico decide PERMIT ou DENY. Por exemplo, "para aceder a um recurso com o atributo A, o ator precisa do atributo B". É mais expressivo: permite regras geográficas, temporais ou hierárquicas. O RBAC é um caso especial do ABAC.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+{/* ------------------------------------------------------------ SyS1 26–31, SyS2 2–21 */}
+
+<Chapter title="SO, kernel e syscalls" label="Systems Security">
+
+<Slide title="Kernel e reference monitor">
+
+
+## Kernel mode, user mode
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+### Níveis de privilégio do CPU
+
+- **Intel:** Ring 0 kernel, Rings 1–2 drivers, Ring 3 aplicações
+- **ARM:** EL0 apps, EL1 kernel, EL2 hypervisor, EL3 firmware
+
+Na prática, só **kernel** vs **user**. A troca de dados entre níveis é superfície de ataque.
+
+</div>
+<div>
+
+### Reference monitor
+
+<Reveal>
+
+- Vigia o perímetro (**syscalls**): mediação completa e registo
+- Sempre presente: se morre, os processos vigiados morrem (**fail-safe**)
+- Tem de ser **simples** (economia de mecanismos)
+
+</Reveal>
+
+</div>
+</Cols>
+
+<Notes>
+
+O kernel vive em kernel mode, onde se pode fazer quase tudo. O CPU tem níveis de privilégio. Na Intel são os rings: ring 0 é o kernel, os rings 1 e 2 são os drivers, o ring 3 são as aplicações. Na ARM são os exception levels: EL0 apps, EL1 kernel, EL2 hypervisor, EL3 firmware, e ainda um mundo seguro à parte, o TrustZone. Na prática usam-se só dois: kernel e user. A troca de dados entre os níveis é superfície de ataque.
+
+O kernel tem memória própria e as instruções privilegiadas só correm em kernel mode: isso é separação de privilégio. Os processos de utilizador, drivers incluídos, usam syscalls: privilégio mínimo.
+
+O reference monitor tem três propriedades. **[→]** Vigia o perímetro, ou seja, as syscalls, e por isso concretiza a mediação completa e o registo. **[→]** Está sempre presente, e se morrer os processos vigiados morrem com ele: fail-safe. **[→]** E tem de ser simples, por economia de mecanismos, para ser fácil de validar. Repara como isto liga aos princípios que acabámos de ver.
+
+</Notes>
+</Slide>
+
+<Slide title="Syscall: getpid">
+
+
+## O caminho de um syscall
+
+<Cols columns="1.2fr 1fr" gap={56} align="center">
+<div>
+
+<Diagram
+  fontSize={24}
+  alt="Sequência do getpid: o programa chama a libc, que executa a instrução syscall, o kernel procura o handler, executa-o e regressa ao modo utilizador."
+  source={`sequenceDiagram
+  participant P as Programa
+  participant L as libc
+  participant K as Kernel
+  P->>L: getpid()
+  L->>K: syscall
+  K->>K: sys_call_table
+  K->>K: sys_getpid()
+  K-->>P: sysretq`}
+/>
+
+</div>
+<div>
+
+<Reveal>
+
+1. Prepara os argumentos
+2. Passa o controlo ao kernel
+3. Valida os argumentos
+4. Executa a operação
+5. Volta ao modo utilizador
+
+</Reveal>
+
+</div>
+</Cols>
+
+<Notes>
+
+Um syscall tem sempre cinco passos: preparar os argumentos, passar o controlo ao kernel com uma instrução especial, validar os argumentos, executar a operação, e voltar a user mode. Vejamos com o getpid.
+
+**[→]** O programa chama o wrapper getpid da libc. **[→]** O wrapper põe o número do syscall em rax, `mov rax, __NR_getpid`, e executa a instrução syscall, que passa o controlo ao kernel. **[→]** O kernel entra em `entry_SYSCALL_64`, que consulta a `sys_call_table` com esse número. Este é o ponto onde o reference monitor valida e medeia. **[→]** `sys_getpid` devolve `current->pid`. **[→]** E `sysretq` volta a user mode.
+
+Porque é que isto interessa? Há um conjunto limitado de pontos de entrada, e isso dá uma superfície de ataque bem definida. Os argumentos são ponteiros para memória do utilizador, e o kernel é totalmente responsável por os tratar com cuidado.
+
+</Notes>
+</Slide>
+
+<Slide title="Modelo de confiança indutivo">
+
+
+## Confiança por indução
+
+<Reveal>
+
+- BIOS, bootloader e kernel **frescos** são de confiança
+- O arranque **preserva** o estado de confiança
+- O kernel lança processos que **não o podem alterar**
+- Hibernação e updates também têm de o preservar
+
+</Reveal>
+
+<Step at={5}>
+
+<div class="cards" style="--n:3">
+<div class="card" data-color="blue">
+
+### TPM
+
+Guarda chaves e credenciais.
+
+</div>
+<div class="card" data-color="green">
+
+### UEFI Secure Boot
+
+Só arranca firmware e SO assinados pelo fabricante da motherboard.
+
+</div>
+<div class="card" data-color="purple">
+
+### OpenTitan
+
+Chip root-of-trust open source. Cada fase verifica a seguinte.
+
+</div>
+</div>
+
+</Step>
+
+<Notes>
+
+O modelo de confiança do SO é indutivo, como uma prova por indução. **[→]** Caso base: um BIOS, um bootloader e um kernel acabados de instalar são de confiança. **[→]** Passo: o arranque preserva esse estado. **[→]** O kernel lança processos que não o conseguem alterar. **[→]** E hibernação e atualizações também têm de preservar o estado. "De confiança" quer dizer que o sistema faz exatamente e só o que está especificado: não vaza dados, fala com quem deve, cifra o disco e limpa a memória ao desligar.
+
+Por isso o arranque é a âncora de confiança, e as ameaças são BIOS corrompido, ficheiros de hibernação, bootloader e cold boot attacks.
+
+**[→]** Para ancorar a confiança em hardware há três exemplos. O TPM guarda chaves e credenciais. O Secure Boot do UEFI só arranca firmware e SO assinados pelo fabricante da motherboard. E o OpenTitan, da Google, é um chip root-of-trust open source, com open design, que protege contra ataques à supply chain. No arranque verificado do OpenTitan, cada fase verifica criptograficamente a seguinte antes de saltar para ela: ROM, bootloader, firmware, aplicação. Se a assinatura falhar, tenta a outra cópia ou pára.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+{/* ------------------------------------------------------------ SyS2 22–35 */}
+
+<Chapter title="Memória virtual e ataques ao kernel" label="Systems Security">
+
+<Slide title="Paginação e KPTI">
+
+
+## Isolamento por memória virtual
+
+<Reveal>
+
+- **Páginas** de 4 KB, tabelas de páginas em árvore esparsa; page fault quando falta
+- A **TLB** guarda traduções e bits R/W/X (NX), como uma ACL
+- O kernel está **mapeado em todos os processos**, com permissões privilegiadas: os syscalls não precisam de trocar de tabela
+- **KPTI**: separa quase por completo as tabelas do utilizador e do kernel. Custa cerca de 5%, até 30%
+
+</Reveal>
+
+<Notes>
+
+A regra é: um processo não acede à memória de outro utilizador, e o kernel fica protegido do espaço de utilizador. Consegue-se com mediação em tempo de execução, hardware mais kernel.
+
+**[→]** A memória virtual é maior do que a física e dividida em páginas de 4 KB. As tabelas de páginas são uma árvore esparsa, e uma página em falta dá page fault. **[→]** A TLB guarda as traduções recentes e os bits R, W e X por página, o NX, que funcionam como uma ACL. As otimizações, como cache, especulação e paginação, deram eficiência mas tornaram-se vetores de ataque: Spectre e Meltdown.
+
+**[→]** Parte da memória do kernel está mapeada no espaço de endereços de cada processo, com permissões privilegiadas, para os syscalls não precisarem de trocar de tabela de páginas. Em Linux de 32 bits, o último 1 GB é do kernel e dá segmentation fault se o código de utilizador lhe tocar.
+
+**[→]** A defesa em profundidade para o kernel: o kernel não deve ter permissões totais sobre a memória do utilizador, nem ele escapa à regra W xor X. E o KPTI, Kernel Page-Table Isolation, quase separa as tabelas de utilizador e kernel. É a mitigação do Meltdown, e custa cerca de 5%, podendo chegar a 30%.
+
+</Notes>
+</Slide>
+
+<Slide title="Meltdown vs Spectre">
+
+
+## Meltdown vs Spectre
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+### Meltdown
+
+<Step at={1}>
+
+Corrida entre a **verificação de privilégio** e o acesso à memória.
+
+</Step>
+
+<Step at={2}>
+
+A execução fora de ordem faz o acesso e deixa-o na **cache**. O acesso é rejeitado, mas o **tempo** revela a cache. Lê qualquer endereço mapeado no teu processo.
+
+</Step>
+
+</div>
+<div>
+
+### Spectre
+
+<Step at={3}>
+
+O atacante **treina o preditor** especulativo do CPU para errar.
+
+</Step>
+
+<Step at={4}>
+
+Outros processos reutilizam a má previsão. O atacante leva-os a aceder a locais arbitrários e observa a cache.
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+Os dois quebram o isolamento e leem dados de outros programas, mas por vias diferentes.
+
+**[→]** Meltdown: há uma corrida entre a verificação de privilégio e o acesso à memória. **[→]** Com execução fora de ordem, o CPU faz o acesso e coloca o resultado em cache mesmo sem privilégio. O acesso acaba rejeitado, mas medindo tempos o atacante vê o estado da cache e assim lê qualquer endereço mapeado no seu processo, incluindo memória do kernel. Daí o KPTI.
+
+**[→]** Spectre: o atacante treina o preditor especulativo do CPU para fazer previsões erradas. **[→]** Outros processos reutilizam essa má previsão, o atacante engana outras apps para acederem a locais arbitrários e observa os tempos da cache.
+
+Para o teste: Meltdown é a corrida de privilégio com execução fora de ordem, Spectre é o treino do preditor. Ambos usam a cache como canal lateral.
+
+</Notes>
+</Slide>
+
+<Slide title="Dirty Pipe">
+
+
+## Dirty Pipe (CVE-2022-0847)
+
+<p class="lede">Sobrescrever **qualquer ficheiro que consigas ler**. Junta um bug nas flags dos pipes, a otimização `splice()` e a flag `PIPE_BUF_FLAG_CAN_MERGE`.</p>
+
+<Reveal>
+
+1. Abre o ficheiro só de leitura
+2. Cria um pipe com a flag `CAN_MERGE`
+3. Aponta o pipe para a secção do ficheiro
+4. Escreve dados: sobrescrevem a página em cache do ficheiro
+
+</Reveal>
+
+<Notes>
+
+O Dirty Pipe, de 2022, permite sobrescrever qualquer ficheiro que consigas ler, mesmo só de leitura. Vem da combinação de três coisas: um bug que deixa criar pipes com flags arbitrárias, a otimização do `splice()` e a flag `PIPE_BUF_FLAG_CAN_MERGE`.
+
+O ataque tem quatro passos. **[→]** Abres o ficheiro em modo só de leitura. **[→]** Crias um pipe com a flag CAN_MERGE. **[→]** Apontas o pipe para a secção do ficheiro que queres alterar. **[→]** Escreves dados no pipe, e eles sobrescrevem a página do ficheiro que está em cache.
+
+Voltamos a ele na secção de SCI: até haver patch, podes bloquear o `splice()` e limitar capabilities ou acesso a ficheiros.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+{/* ------------------------------------------------------------ SyS3 2–21 */}
+
+<Chapter title="Permissões Unix e setuid" label="Systems Security">
+
+<Slide title="Permissões Unix">
+
+
+## Permissões Unix
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+| | ficheiro | pasta |
+| --- | --- | --- |
+| `r` | ler | listar o conteúdo |
+| `w` | escrever | criar conteúdo |
+| `x` | executar | entrar na pasta |
+
+`-rwxrw-r--`: tipo, depois **dono**, **grupo**, **outros**.
+
+</div>
+<div>
+
+<Step at={1}>
+
+**DAC:** o dono muda as permissões (`chmod`).
+**MAC:** só o superutilizador ou a política (SELinux).
+
+</Step>
+
+<Step at={2}>
+
+**ACLs estendidas:** um `+` no `ls -l`, `setfacl -m u:nobody:rw file`. A **máscara** limita as permissões efetivas.
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+Os atores são utilizadores e processos, os recursos são ficheiros e pastas. As permissões r, w e x em ficheiros são ler, escrever e executar. Em pastas, r é listar o conteúdo, w é criar conteúdo e x é entrar na pasta. Armadilha: x numa pasta não é executar.
+
+Em `-rwxrw-r--` o primeiro carácter é o tipo, traço para ficheiro normal e d para diretoria. Depois vêm três tripletos: dono, grupo e outros. Os grupos dão uma forma de RBAC.
+
+**[→]** Quem pode mudar as permissões? Em DAC, controlo discricionário, o dono, com chmod. Em MAC, controlo obrigatório, só o superutilizador ou a política, por exemplo o SELinux. O chown é só do superutilizador, o chgrp é do dono ou do superutilizador.
+
+**[→]** Para além disto há as ACLs estendidas: aparece um sinal de mais no `ls -l`, e usas `getfacl` e `setfacl`, por exemplo `setfacl -m u:nobody:rw file`, para dar permissões a utilizadores e grupos nomeados. A máscara define o máximo de permissões efetivas.
+
+</Notes>
+</Slide>
+
+<Slide title="Bit setuid e os três UIDs">
+
+
+## O bit setuid
+
+<p class="lede">O processo corre como o **dono do ficheiro**, não como quem o chamou. Ex.: `passwd` é de root.</p>
+
+<div class="cards" style="--n:3">
+<div class="card" data-color="blue">
+
+### EUID
+
+*effective*: decide as **permissões**.
+
+</div>
+<div class="card" data-color="green">
+
+### RUID
+
+*real*: quem **lançou** o processo.
+
+</div>
+<div class="card" data-color="orange">
+
+### SUID
+
+*saved*: o utilizador anterior, para **transições**.
+
+</div>
+</div>
+
+<Step at={1}>
+
+<p class="big">`setuid(x)` como root: EUID = RUID = SUID = x. **Permanente.**<br/>`seteuid(x)`: só o EUID. **Temporário.**</p>
+
+</Step>
+
+<Notes>
+
+O bit setuid faz o processo correr com o UID do dono do ficheiro, e não com o de quem o lançou. É assim que o passwd, que é de root, consegue editar ficheiros que tu não podes. O risco é que um dono muito privilegiado abre a porta a escalada de privilégios. CVEs reais: o passwd em 2004 e o sudoedit em 2023.
+
+Cada processo tem três UIDs, e isto é muito provável no exame. O EUID, effective, é o que determina as permissões. O RUID, real, é quem lançou o processo. O SUID, saved, é o utilizador anterior, para poderes fazer transições.
+
+**[→]** Duas chamadas, e a diferença é a pergunta clássica. `setuid(x)` chamada por root põe os três a x: é uma descida permanente. Um utilizador normal só consegue pôr o EUID igual ao RUID ou ao SUID. É o que o Apache faz: corre como root para abrir a porta 80 e depois os workers largam os privilégios. `seteuid(x)` muda só o EUID e guarda RUID e SUID, por isso é temporário: baixas, corres o código, e restauras. O perigo é usar `seteuid` quando querias largar de vez: o processo recupera root através do SUID. Foi o CVE-2000-0525.
+
+</Notes>
+</Slide>
+
+<Slide title="Laboratório: UIDs">
+
+
+## RUID, EUID, SUID
+
+<UidLab
+  presets={[
+    { at: 0, ops: [] },
+    { at: 1, ops: ["seteuid(1000)"] },
+    { at: 2, ops: ["seteuid(1000)", "seteuid(0)"] },
+    { at: 3, ops: ["seteuid(1000)", "seteuid(0)", "setuid(1000)"] },
+    { at: 4, ops: ["seteuid(1000)", "seteuid(0)", "setuid(1000)", "seteuid(0)"] },
+  ]}
+/>
+
+<Notes>
+
+Um utilizador com UID 1000 lança um programa setuid de root.
+
+Estado inicial: EUID é root, RUID é 1000, SUID é root. É o que se vê agora.
+
+**[→]** Chamamos `seteuid(1000)`. O EUID passa a 1000, mas RUID e SUID não mudam: o SUID continua a ser root. É a quiz do slide 16 das aulas.
+
+**[→]** Como o SUID guarda root, o processo pode voltar com `seteuid(0)`. O EUID volta a root. Esse é o propósito do SUID.
+
+**[→]** Agora, já como root, chamamos `setuid(1000)`. Como o processo tem EUID root, muda os três: RUID, EUID e SUID ficam 1000. É a descida permanente.
+
+**[→]** Tentamos `seteuid(0)` outra vez e falha, com EPERM: o utilizador normal só pode pôr o EUID igual ao RUID ou ao SUID, e já nenhum é root. Perdeu o root de vez, que é o que queremos quando o privilégio já não é preciso. Experimenta tu na página.
+
+</Notes>
+</Slide>
+
+<Slide title="Pergunta: setuid vs seteuid">
+
+<Quiz
+  source="Teste 1, 2024/25"
+  options={[
+    "seteuid altera permanentemente os privilégios, modificando EUID, RUID e SUID.",
+    "setuid altera temporariamente os privilégios, modificando EUID e SUID, mas não o RUID.",
+    "setuid altera permanentemente os privilégios, modificando EUID e RUID mas não o SUID.",
+    "seteuid altera temporariamente os privilégios, modificando o EUID mas não o RUID nem o SUID.",
+  ]}
+  correct={3}
+>
+
+Qual destas afirmações é verdadeira?
+
+<div slot="answer">
+
+`seteuid` muda **só o EUID**, de forma temporária: volta atrás pelo SUID. `setuid` como root muda **os três**, de forma permanente.
+
+</div>
+</Quiz>
+
+<Notes>
+
+Pergunta do teste de 2024/25. Pausa e escolhe.
+
+**[→]** É a quarta. O `seteuid` altera temporariamente os privilégios, modificando só o EUID, e pode voltar atrás usando o SUID. As outras três erram em algo: a primeira diz que o seteuid é permanente, a segunda diz que o setuid é temporário, e a terceira diz que o setuid não muda o SUID. Quando chamado por root, o setuid muda os três.
+
+</Notes>
+</Slide>
+
+<Slide title="LSM e Android">
+
+
+## LSM: mais uma camada sobre o DAC
+
+<Flow
+  items={[
+    "Syscall",
+    "Validar",
+    "DAC",
+    "Hook LSM",
+    "Recurso",
+  ]}
+  highlight={[3]}
+/>
+
+<Reveal>
+
+- Qualquer passo que falhe **nega** o acesso: o LSM só **acrescenta** restrições
+- **Android:** Linux + SELinux (MAC). Cada app é um utilizador (`u1_a23`) e as permissões vêm do manifest
+- **Limites do Unix:** um bug no `passwd` ou `ssh` (euid 0) é catastrófico. Root é usado em excesso
+
+</Reveal>
+
+<Notes>
+
+Os Linux Security Modules, desde o kernel 2.6, deixam carregar modelos de controlo de acesso como módulos do kernel, por cima do DAC. É um reference monitor realmente genérico.
+
+A ordem de verificação é esta: chega o syscall, verificam-se erros de argumentos, depois o DAC, ou seja, as permissões Unix normais, depois o hook do LSM, onde o SELinux ou o AppArmor perguntam se a política permite, e só depois se acede ao recurso.
+
+**[→]** Se qualquer passo falhar, o acesso é negado, por isso o LSM só pode acrescentar restrições ao DAC, nunca dar mais. **[→]** O Android usa isto: é Linux com SELinux como MAC, cada app é o seu próprio utilizador, com nomes tipo `u1_a23`, e as permissões por app vêm do manifest.
+
+**[→]** A avaliação do guia: o controlo de acesso do Unix é basicamente ACLs com batching, ou seja, RBAC. É simples e funciona na prática, mas não é robusto nem flexível. Um bug no passwd ou no ssh com euid 0 é catastrófico, o root é usado em demasia, e depois de um atacante ter root já não o consegues rebaixar. As transições de estado são fáceis de errar, por isso o registo de eventos importa.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+{/* ------------------------------------------------------------ SyS3 22–35, SyS4 2–8 */}
+
+<Chapter title="Confinamento" label="Systems Security">
+
+<Slide title="Níveis de confinamento">
+
+
+## Confinar código não confiável
+
+<p class="lede">JavaScript, extensões, código legado, honeypots, análise de malware. Se se portar mal, **mata-se**.</p>
+
+<Reveal>
+
+- **Air gap:** hardware separado. Difícil de gerir
+- **Processos:** o SO dá a cada um uma vista virtual. Falha com processos do mesmo utilizador, de admin e bugs do SO
+- **VMs:** o hypervisor partilha o hardware entre SOs
+- **Sandbox:** dentro de uma app (JS e WebAssembly com monitorização)
+- **Contentores:** partilham o kernel do host e isolam o userland. Menos recursos que VMs, menos isolamento
+
+</Reveal>
+
+<Notes>
+
+Porquê confinar? Para correr código em que não confias: JavaScript, extensões, código legado, honeypots, análise de malware. Se se portar mal, matas o processo.
+
+Há vários níveis. **[→]** O mais forte é o air gap: separação física do hardware. É difícil de gerir. **[→]** Depois, os processos: o SO dá a cada um uma vista virtual dos recursos. Os desafios são os processos do mesmo utilizador, os de administração e bugs do SO. No Unix isto assenta em SFI mais SCI: isolamento de memória e separação kernel e userland com poucos syscalls ligados a controlo de acesso. **[→]** VMs: o hypervisor partilha o hardware entre sistemas operativos. **[→]** Sandboxing: o confinamento dentro de uma app, como os interpretadores de JavaScript e WebAssembly dos browsers com monitorização. **[→]** E contentores: partilham o kernel do host e isolam só o userland. Gastam menos recursos que VMs mas isolam menos.
+
+</Notes>
+</Slide>
+
+<Slide title="chroot, jails e LXC">
+
+
+## De chroot a contentores
+
+<Cols columns="1fr 1fr 1fr" gap={48} align="start">
+<div>
+
+### chroot (1979)
+
+<Step at={1}>
+
+Só root. Uma pasta passa a ser a raiz: `/etc/passwd` vira `/tmp/guest/etc/passwd`. Não restringe a rede.
+
+**Fugas:** `../../etc/passwd` (versões antigas); criar `/aaa/etc/passwd` e fazer `su root`. Dentro como root: criar device, sinais, reboot.
+
+</Step>
+
+</div>
+<div>
+
+### FreeBSD jails (2000)
+
+<Step at={2}>
+
+Restringem **rede e IPC** e limitam o root lá dentro. Políticas pouco flexíveis. As apps ainda tocam na rede e no kernel diretamente.
+
+</Step>
+
+</div>
+<div>
+
+### Linux LXC (2008)
+
+<Step at={3}>
+
+Contentores sem privilégios: root dentro é utilizador normal fora.
+
+**cgroups:** limitam **quanto** (CPU, memória, rede).
+**namespaces:** limitam **o que se vê** do kernel.
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+Evolução histórica dos contentores.
+
+**[→]** O chroot é de 1979 e só o root o pode usar. Torna uma pasta a raiz do sistema de ficheiros, e um `fopen` de `/etc/passwd` passa a ir a `/tmp/guest/etc/passwd`. O jailkit ajuda a montar o ambiente. Não restringe a rede. Fugas: caminhos relativos como `../../etc/passwd` nas versões iniciais; e no Ultrix 4.0, um utilizador sem privilégios que consiga correr chroot cria `/aaa/etc/passwd`, corre `chroot /aaa` e faz `su root` com a sua própria palavra-passe. E se és root dentro da jaula, crias um dispositivo de disco bruto, envias sinais a processos de fora, reinicias a máquina. O utilizador na jaula nunca pode tornar-se root.
+
+**[→]** As FreeBSD jails, de 2000, restringem rede e IPC e limitam o root lá dentro, evoluindo para quase-virtualização. Desvantagens: políticas inflexíveis e as apps ainda tocam na rede e no kernel diretamente.
+
+**[→]** O LXC, de 2008, tem contentores sem privilégios: root dentro é utilizador normal fora. E há que distinguir dois mecanismos, que é pergunta fácil: cgroups limitam quanto uma coisa usa de CPU, memória e rede, e a prioridade. Namespaces limitam quais recursos do kernel são visíveis.
+
+</Notes>
+</Slide>
+
+<Slide title="Docker">
+
+
+## Docker e a sandbox do Chromium
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+- Uma app por ambiente isolado e reproduzível
+- Construído sobre LXC, depois libcontainer (≥ 1.0). Imagens em camadas, padrão **OCI**
+- O **daemon corre como root**: risco
+
+<Step at={1}>
+
+**Shocker** (2014, CVE-2014-3519): um processo no contentor manteve `CAP_DAC_READ_SEARCH` e `open_by_handle_at` lia ficheiros do host. Corrigido no Docker 1.0.
+
+</Step>
+
+</div>
+<div>
+
+<Step at={2}>
+
+### Chromium: defesa em profundidade
+
+1. **SFI:** sem acesso a ficheiros, rede ou outros processos
+2. **SCI:** restringe os syscalls, a principal superfície de ataque
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+O Docker pôs um serviço por ambiente isolado e reproduzível. Tem Engine e Hub, foi construído sobre LXC e depois passou a libcontainer a partir da versão 1.0, tem imagens em camadas como o histórico do git, docker-compose, e foi normalizado como OCI. O ponto de segurança: o daemon corre como root.
+
+**[→]** O Shocker, em 2014, CVE-2014-3519: um processo dentro do contentor ficou com a capability CAP_DAC_READ_SEARCH, e por isso `open_by_handle_at` conseguia ler ficheiros do host. Foi corrigido no Docker 1.0. Houve muitos outros CVEs, de injeção de código, symlinks, capabilities, trojans, por isso mantém-no atualizado.
+
+**[→]** A sandbox do Chromium é defesa em profundidade com duas camadas. A primeira é SFI: o renderer não tem acesso a ficheiros, rede ou outros processos. A segunda é SCI: restringe a interface de syscalls, a principal superfície de ataque. Vamos ver ambas já a seguir.
+
+</Notes>
+</Slide>
+
+<Slide title="Tipo 1, Tipo 2 e contentores">
+
+
+## Hypervisors e contentores
+
+<Cols columns="1fr 1fr 1fr" gap={72}>
+<div>
+
+### Tipo 1 · bare metal
+
+<div class="layers"><span>App</span><span>SO convidado</span><span class="hot">Hypervisor</span><span>Hardware</span></div>
+
+</div>
+<div>
+
+### Tipo 2 · hosted
+
+<div class="layers"><span>App</span><span>SO convidado</span><span class="hot">Hypervisor</span><span>SO anfitrião</span><span>Hardware</span></div>
+
+</div>
+<div>
+
+### Contentores
+
+<div class="layers"><span>App</span><span>Ficheiros e runtime</span><span class="hot">SO anfitrião</span><span>Hardware</span></div>
+
+</div>
+</Cols>
+
+<Step at={1}>
+
+<p class="big">Tipo 1: clouds. Tipo 2: PCs. Contentores: **sem SO convidado**.</p>
+
+</Step>
+
+<Notes>
+
+Resumo visual. O Tipo 1, ou bare metal, é uma camada fina de hypervisor diretamente sobre o hardware. É o que se usa nas clouds. O Tipo 2, ou hosted, corre sobre um SO anfitrião, e é o que tens num PC com um programa de VMs. Nas VMs, a pilha é app, SO convidado, hypervisor, SO anfitrião.
+
+Os contentores são diferentes: a pilha é app, ficheiros de suporte e runtime, e o SO anfitrião. Não há SO convidado.
+
+**[→]** Para fixar: clouds usam Tipo 1, PCs usam Tipo 2, e contentores partilham o kernel do host. Daí gastarem menos e isolarem menos.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+{/* ------------------------------------------------------------ SyS4 9–23 */}
+
+<Chapter title="SCI, seccomp e SFI" label="Systems Security">
+
+<Slide title="ptrace e TOCTOU">
+
+
+## System Call Interposition: ptrace
+
+<Cols columns="1fr 1.3fr" gap={56} align="center">
+<div>
+
+A superfície de ataque são os **syscalls**: vigiam-se e bloqueiam-se os não autorizados.
+
+<Step at={1}>
+
+Um monitor, ligado por `ptrace`, é avisado a cada syscall e pode matar o processo.
+
+</Step>
+
+<Step at={2}>
+
+**TOCTOU:** verificar e usar não são atómicos.
+
+</Step>
+
+</div>
+<div>
+
+<Diagram
+  fontSize={24}
+  alt="O processo 1 chama open me, o monitor verifica e aprova, o processo 2 troca me por um symlink para etc passwd, e o open acede ao ficheiro errado."
+  source={`sequenceDiagram
+  participant P1 as Processo 1
+  participant M as Monitor
+  participant P2 as Processo 2
+  P1->>M: open me
+  M->>M: verifica: OK
+  P2->>P2: me → /etc/passwd
+  M->>P1: continua
+  P1->>P1: abre /etc/passwd`}
+/>
+
+</div>
+</Cols>
+
+<Notes>
+
+SCI, system call interposition: como a superfície de ataque são os syscalls, vigiam-se e bloqueiam-se os não autorizados. Pode ser feito no kernel, como o seccomp, em espaço de utilizador, o "program shepherding", ou de forma híbrida, como o Systrace.
+
+**[→]** Com o `ptrace`, um monitor liga-se a um processo filho e é notificado a cada syscall, podendo matá-lo. Um exemplo de política Janus: permitir `/tmp/*`, negar `/etc/passwd`, negar toda a rede. Limitações: interceta todas as chamadas, o que é ineficiente; tem de ser duplicado nos forks; abortar um syscall obriga a matar o processo.
+
+**[→]** E a pior: é vulnerável a TOCTOU, time-of-check versus time-of-use. O processo 1 chama `open("me")` e o monitor verifica e diz que está OK. Antes de a chamada executar, o processo 2 faz um symlink de `me` para `/etc/passwd`. O open executa e abre o ficheiro errado. A verificação e a execução não são atómicas. Isto é pergunta de exame.
+
+</Notes>
+</Slide>
+
+<Slide title="seccomp e seccomp-bpf">
+
+
+## seccomp
+
+<Cols columns="1fr 1.3fr" gap={64} align="start">
+<div>
+
+### Strict
+
+Depois de `prctl()`, só `exit`, `return` e ficheiros já abertos. Violação: o kernel **mata**.
+
+</div>
+<div>
+
+### seccomp-bpf
+
+<Reveal>
+
+- Regras BPF finas: syscall, argumentos, arquitetura
+- Resultados: `RET_KILL`, `RET_ERRNO`, `RET_ALLOW`
+- Filtros **herdados** (até por `execve`) e **irremovíveis**
+- **Imune a TOCTOU**
+- Chrome e Docker (perfil que bloqueia `ptrace`, entre outros)
+
+</Reveal>
+
+</div>
+</Cols>
+
+<Notes>
+
+O seccomp é SCI dentro do kernel, em dois modos.
+
+O modo strict: o processo chama `prctl()` e a partir daí só pode fazer exit, return e usar ficheiros já abertos. Se violar, o kernel mata-o.
+
+O seccomp-bpf é fino, usa regras Berkeley Packet Filter. **[→]** Os filtros olham para o syscall, os argumentos e a arquitetura. **[→]** O resultado é SECCOMP_RET_KILL, RET_ERRNO ou RET_ALLOW. **[→]** Podes instalar vários filtros, não os podes remover, e são herdados por todos os descendentes, mesmo através de `execve`. **[→]** É imune ao TOCTOU, ao contrário do ptrace. **[→]** E é usado pelo Chrome e pelo Docker. No Chrome, o renderer é lançado depois de o Chrome instalar a política com `prctl`. Se um renderer explorado chamar `fopen("/etc/passwd")`, o seccomp-bpf responde KILL. No Docker, os contentores são processos filho do engine e o perfil por omissão bloqueia muitos syscalls, incluindo o ptrace. Podes mudar com `--security-opt seccomp=profile.json`.
+
+Uma utilidade prática: o Dirty COW e o Dirty Pipe podem ser mitigados com SCI. Até teres patch, bloqueias `ptrace()` e o acesso a `/proc/self/mem` no primeiro, e o `splice()` no segundo.
+
+</Notes>
+</Slide>
+
+<Slide title="eBPF, SFI e NaCl">
+
+
+## eBPF e Software Fault Isolation
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+### eBPF (2014)
+
+<Step at={1}>
+
+Corre programas de utilizador **dentro do kernel**: SCI + SFI. Verificador (memória, fluxo de informação, terminação), JIT, hooks. Popular no Kubernetes.
+
+</Step>
+
+</div>
+<div>
+
+### SFI
+
+<Step at={2}>
+
+Confina a app ao seu segmento de memória, com **guardas** nas operações perigosas: loads, stores e saltos. Alternativa: espaços de endereços separados, com custo de IPC.
+
+</Step>
+
+<Step at={3}>
+
+**NaCl:** C/C++ nativo no Chrome com SFI + CFI. ~5% em ARM, ~7% em x86-64. Descontinuado em 2016 a favor de WebAssembly.
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+Para fechar esta secção, duas peças.
+
+**[→]** O eBPF, de 2014, popular com Kubernetes, corre programas de utilizador em segurança dentro do kernel. Combina SCI e SFI. Compilas um programa C com clang para bytecode, carregas por um syscall, o verificador valida memória, fluxo de informação e terminação, o JIT converte em código nativo, e fica ligado a hooks de syscalls e eventos. Os dados partilham-se através de maps.
+
+**[→]** SFI, Software Fault Isolation, é sandboxing de baixo custo que confina a app ao seu segmento de memória, ou seja, privilégio mínimo. Operações perigosas ganham guardas, por instrumentação binária ou em compilação. As operações perigosas são loads e stores, que verificam ou forçam o segmento, e também saltos, porque um salto podia saltar por cima das guardas. É difícil de fazer em x86. A alternativa, espaços de endereços separados, tem custo de IPC.
+
+**[→]** O exemplo é o Google NaCl: uma sandbox para C e C++ nativo no Chrome, com SFI e CFI, compilação antecipada, mais rápido que JavaScript com JIT, e com cerca de 5% de custo em ARM e 7% em x86-64. Foi descontinuado em 2016 em favor do WebAssembly.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+{/* ------------------------------------------------------------ SyS4 24–38 */}
+
+<Chapter title="Máquinas virtuais" label="Systems Security">
+
+<Slide title="Porque as VMs funcionam">
+
+
+## VMs: porquê e onde
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+### Porque funcionam
+
+<Reveal>
+
+- É provável comprometer o SO, e possível comprometer o hypervisor, mas **os dois ao mesmo tempo** é improvável
+- O hypervisor é **mais simples** que um SO: valida-se melhor
+- Suporte de hardware reduz o risco
+
+</Reveal>
+
+</div>
+<div>
+
+### Usos
+
+<Reveal start={4}>
+
+- **NSA NetTop:** classificado e não classificado no mesmo hardware (Tipo 2)
+- **Cloud:** Tipo 1, clientes diferentes no mesmo hardware
+- **Qubes OS:** Tipo 1, VMs separadas para o duvidoso, trabalho e pessoal
+
+</Reveal>
+
+</div>
+</Cols>
+
+<Notes>
+
+A história: nos anos 60 partilhavam-se poucos computadores, de 70 a 2000 houve PCs sem VMs, e depois de 2000 há muitos serviços e as VMs estão em todo o lado, nos PCs e nas clouds, para isolamento.
+
+Porque é que funcionam? **[→]** Um SO está provavelmente comprometido e um hypervisor pode estar, mas os dois ao mesmo tempo é pouco provável. **[→]** O hypervisor é mais simples do que um SO, logo é mais fácil de validar. **[→]** E o suporte de virtualização em hardware, com tradução de endereços em vários níveis, reduz o risco.
+
+Os usos. **[→]** O NetTop, da NSA, corre informação classificada e não classificada no mesmo hardware, é Tipo 2, e o risco são os side-channels. **[→]** A cloud é Tipo 1, sem SO anfitrião, com clientes diferentes no mesmo hardware, e o mesmo risco. **[→]** O Qubes OS é Tipo 1, com VMs separadas para o duvidoso, o trabalho e o pessoal. Os hypervisors também têm CVEs: o KVM, que está no kernel Linux, e o Xen, ambos com o QEMU para emular dispositivos.
+
+</Notes>
+</Slide>
+
+<Slide title="Side channels e Red Pill vs Blue Pill">
+
+
+## Quebrar o isolamento
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+### Side channels
+
+<Step at={1}>
+
+Observam efeitos laterais: tempos de memória, cache. Os CPUs **não garantem** isolamento total (Meltdown, Spectre).
+
+</Step>
+
+</div>
+<div>
+
+### Red Pill: estou numa VM?
+
+<Step at={2}>
+
+O malware quer fugir de sandboxes de análise. Deteta-se por instruções, hardware, latência e recursos. A virtualização **nunca é transparente**.
+
+</Step>
+
+<h3>Blue Pill</h3>
+
+<Step at={3}>
+
+Rootkit (Joanna Rutkowska) que mete o SO em execução dentro de uma VM do atacante.
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+Para acabar, os limites do isolamento.
+
+**[→]** Os side channels observam efeitos laterais, como atrasos de acesso à memória e efeitos na cache. Os CPUs modernos não conseguem garantir isolamento total: Meltdown e Spectre, via execução especulativa, são o exemplo.
+
+**[→]** Red Pill: um programa consegue saber que está dentro de uma VM? Interessa porque o malware evita ser analisado em sandboxes, porque os fabricantes exigem hardware real ou com chave, e por causa de DRM. A deteção usa instruções disponíveis, funcionalidades de hardware, perfil de latência da memória e recursos limitados. Na web, sites maliciosos detetam VMs de crawlers medindo a latência de renderização do ecrã. A conclusão do guia: os hypervisors oferecem compatibilidade e desempenho mas não transparência. A virtualização é sempre distinguível, por exemplo um conjunto de instruções "arcaico" com 8 GB de RAM.
+
+**[→]** Blue Pill, de Joanna Rutkowska, a fundadora do Qubes: o inverso. É um rootkit de virtualização que move o SO que já está a correr para uma VM controlada pelo atacante. Com isto fechamos a parte de sistemas.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+</Part>
