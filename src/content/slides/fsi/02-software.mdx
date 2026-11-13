@@ -19,28 +19,86 @@ import {
 
 {/* ------------------------------------------------------------ SS1 */}
 
-<Chapter title="Memória e stack overflow" label="Software Security 1">
+<Chapter title="Memory and stack overflows" label="Software Security 1">
 
-<Slide title="Layout de memória de um processo">
+<Slide title="Software against us">
 
 
-## Onde vive cada coisa
+## Software can turn against us
+
+<Flow items={["Weakness|in the process", "Vulnerability|a specific error", "Exploit|a concrete way in", "Attack"]} />
+
+<Reveal start={1}>
+
+- Mallory sends **input from outside the security perimeter**
+- Goal: break **control-flow integrity** and run her code
+- Stealing control = **write** malicious instructions, then **execute** them
+
+</Reveal>
+
+<Notes>
+
+Software runs on a platform: memory, disk, the OS, the hardware. Every program is a potential weapon against that platform. Alice is the honest user, Mallory exploits a bug in the program, the OS or the hardware.
+
+The chain from the lecture: weaknesses in development lead to vulnerabilities, specific errors that can cause damage. An exploit is a concrete way to cause that damage, and an attack is using it. We study old attacks because knowing about a flaw and not fixing it is negligence.
+
+**[→]** The threat model for this whole part: the program receives input from outside the security perimeter. Mallory controls those bytes. **[→]** Is crashing Word a vulnerability? Yes, a crash is already a denial of service. But the real prize is control: most of these bugs let the attacker change the control flow of the program. **[→]** And stealing control always takes two steps: get malicious instructions into memory, then get the program to jump to them.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: basic rule">
+
+<Quiz
+  source="First Test Resit, 2024/25"
+  options={[
+    "The operating system is untrusted.",
+    "The control flow of the program is untrusted.",
+    "User input is untrusted.",
+    "Program output is untrusted.",
+  ]}
+  correct={2}
+  columns={2}
+>
+
+Which is the basic rule in software security?
+
+<div slot="answer">
+
+Everything in this part starts from input crossing the security perimeter.
+
+</div>
+</Quiz>
+
+<Notes>
+
+Pause here if you want to answer first.
+
+**[→]** It's C, user input is untrusted. The control flow is what the attacker wants to take over, it's the victim, not the rule. And we do trust the OS in this model: it's what enforces protections.
+
+</Notes>
+</Slide>
+
+<Slide title="Process memory layout">
+
+
+## Where everything lives
 
 <Cols columns="860px 1fr" gap={80} align="center">
 <div>
 
 <MemoryStack
   width={860}
-  high="0xFFFFFFFF · endereços altos"
-  low="0x00000000 · endereços baixos"
+  high="0xFFFFFFFF · high addresses"
+  low="0x00000000 · low addresses"
   rows={[
-    { value: "argv, envp", tone: "muted", label: "argumentos e ambiente" },
-    { value: "stack  ↓", tone: "fp", label: "locais, argumentos, retornos", focus: "1-1" },
+    { value: "argv, envp", tone: "muted", label: "arguments, environment" },
+    { value: "stack  ↓", tone: "fp", label: "locals, arguments, returns", focus: "1-1" },
     { gap: true },
-    { value: "heap  ↑", tone: "buf", label: "malloc, a pedido", focus: "2-2" },
-    { value: "bss", tone: "data", label: "globais sem valor (a zero)", focus: "3-3" },
-    { value: "data", tone: "data", label: "globais com valor", focus: "3-3" },
-    { value: "text", tone: "code", label: "o código", focus: "4" },
+    { value: "heap  ↑", tone: "buf", label: "malloc, on demand", focus: "2-2" },
+    { value: "bss", tone: "data", label: "globals, no initial value", focus: "3-3" },
+    { value: "data", tone: "data", label: "globals with a value", focus: "3-3" },
+    { value: "text", tone: "code", label: "the code", focus: "4" },
   ]}
 />
 
@@ -53,7 +111,7 @@ import {
 int g = 7;        // data
 int z;            // bss
 int main(void) {
-  // código: text
+  // code: text
   int x;          // stack
   char *p = malloc(16);  // heap
 }
@@ -66,17 +124,15 @@ int main(void) {
 
 <Notes>
 
-Antes de partir memória, temos de saber como ela está organizada. Isto é Linux em x86, e a memória é virtual, gerida pelo sistema operativo.
+Before breaking memory, we need its layout. We assume Linux on Intel x86. Each process sees virtual memory managed by the OS.
 
-Dos endereços altos para os baixos: argumentos e variáveis de ambiente lá em cima, depois a stack, depois o heap, depois as globais e por fim o código.
+**[→]** The stack grows down, toward smaller addresses. It holds local variables, function arguments and return addresses. `x` lives here. Keep that in mind: the return address sits on the same stack as our buffers.
 
-**[→]** A stack cresce para baixo, para endereços mais pequenos. Guarda variáveis locais, argumentos de funções e endereços de retorno. O `x` vive aqui. Guarda esta ideia, porque é por isso que um overflow na stack chega ao endereço de retorno.
+**[→]** The heap grows up and is memory requested at run time with `malloc`. The block `p` points to is on the heap, but `p` itself is a local, so it's on the stack.
 
-**[→]** O heap cresce para cima e é memória pedida em tempo de execução, com `malloc`. O bloco para onde o `p` aponta está no heap; o próprio `p` está na stack.
+**[→]** Globals: `g` has an initial value, so it goes in data. `z` has none, so it goes in bss, which starts zeroed.
 
-**[→]** As globais: o `g` tem valor inicial, vai para data; o `z` não tem, vai para o bss, que o exec põe a zeros.
-
-**[→]** E o text é o código do programa, nos endereços baixos.
+**[→]** Text is the program code, at low addresses.
 
 </Notes>
 </Slide>
@@ -84,7 +140,7 @@ Dos endereços altos para os baixos: argumentos e variáveis de ambiente lá em 
 <Slide title="Stack frame">
 
 
-## Uma chamada, passo a passo
+## One call, step by step
 
 <Cols columns="1fr 1000px" gap={64} align="start">
 <div>
@@ -102,7 +158,7 @@ int main(void) {
 
 <Step at={5}>
 
-<p class="small">A partir do <code>%ebp</code>: offsets <strong>positivos</strong> são argumentos e retorno; <strong>negativos</strong> são locais.</p>
+<p class="small">From <code>%ebp</code>: <strong>positive</strong> offsets are arguments and the return address. <strong>Negative</strong> offsets are locals.</p>
 
 </Step>
 
@@ -113,12 +169,12 @@ int main(void) {
   width={1000}
   growth="down"
   rows={[
-    { value: "frame de main", tone: "muted" },
-    { value: "b = 2", tone: "arg", show: "1", label: "argumento", focus: "1-1" },
-    { value: "a = 1", tone: "arg", show: "1", label: "argumento", focus: "1-1" },
-    { value: "ret → main", tone: "ret", show: "2", label: "endereço de retorno", focus: "2-2" },
-    { value: "ebp de main", tone: "fp", show: "3", label: "frame pointer guardado", focus: "3-3" },
-    { value: "buf[16]", tone: "buf", show: "4", size: 2, label: "variáveis locais", focus: "4-4" },
+    { value: "main's frame", tone: "muted" },
+    { value: "b = 2", tone: "arg", show: "1", label: "argument", focus: "1-1" },
+    { value: "a = 1", tone: "arg", show: "1", label: "argument", focus: "1-1" },
+    { value: "ret → main", tone: "ret", show: "2", label: "return address", focus: "2-2" },
+    { value: "main's ebp", tone: "fp", show: "3", label: "saved frame pointer", focus: "3-3" },
+    { value: "buf[16]", tone: "buf", show: "4", size: 2, label: "local variables", focus: "4-4" },
   ]}
   pointers={[
     { name: "esp", row: 0, at: "0-0" },
@@ -129,10 +185,10 @@ int main(void) {
     { name: "esp", row: 5, at: "4" },
   ]}
   captions={[
-    { at: "1-1", text: "1. O caller empurra os argumentos, do último para o primeiro." },
-    { at: "2-2", text: "2. call empurra o endereço de retorno." },
-    { at: "3-3", text: "3. O callee guarda o ebp antigo e faz ebp = esp." },
-    { at: "4", text: "4. Reserva espaço para as locais: esp desce." },
+    { at: "1-1", text: "1. The caller pushes the arguments, last one first." },
+    { at: "2-2", text: "2. call pushes the return address." },
+    { at: "3-3", text: "3. The callee saves the old ebp and sets ebp = esp." },
+    { at: "4", text: "4. Space for locals: esp moves down." },
   ]}
 />
 
@@ -141,19 +197,17 @@ int main(void) {
 
 <Notes>
 
-Agora o que acontece numa chamada de função. O `main` chama `f(1, 2)`, e `f` tem um buffer de 16 bytes.
+Now a function call. `main` calls `f(1, 2)`, and `f` has a 16-byte buffer. Two registers matter: `esp`, the stack pointer, marks the end of the stack, and `ebp`, the frame pointer, marks the start of the current frame.
 
-Há dois registos importantes: o `esp`, stack pointer, que aponta para o fim da stack, e o `ebp`, frame pointer, que marca o início do frame atual.
+**[→]** The caller pushes the arguments, last to first, so `b` ends up above `a`.
 
-**[→]** Primeiro, o caller empurra os argumentos, do último para o primeiro. Por isso o `b` fica acima do `a`.
+**[→]** The `call` instruction pushes the return address: where to continue when `f` ends.
 
-**[→]** Depois a instrução `call` empurra o endereço de retorno: para onde o programa volta quando `f` acabar.
+**[→]** Inside `f`, the old `ebp` is saved and `ebp` now points here.
 
-**[→]** Já dentro de `f`, guarda-se o `ebp` antigo, o do main, e o `ebp` passa a apontar para aqui.
+**[→]** Then `esp` moves down to make room for the locals.
 
-**[→]** Por fim reserva-se espaço para as variáveis locais, o `buf`, e o `esp` desce.
-
-**[→]** Repara na ordem, de cima para baixo: argumentos, endereço de retorno, ebp guardado, buffer. O buffer está **abaixo** do endereço de retorno, e as cópias escrevem para **cima**. Já estás a ver onde isto vai dar.
+**[→]** Look at the order from top to bottom: arguments, return address, saved ebp, buffer. The buffer is **below** the return address, and copies write **upward**. You can see where this is going. When `f` returns it cleans its locals, `ret` pops the return address, and the caller cleans the arguments. That last detail matters later for ROP.
 
 </Notes>
 </Slide>
@@ -175,9 +229,9 @@ void f(char *str) {
 
 <Reveal start={1}>
 
-- `strcpy` copia **até ao `\0`**, sem olhar para o tamanho de `buf`
-- Se `str` vem de **fora do perímetro**, o atacante escolhe os bytes
-- Causa raiz: **não há separação entre código e dados**
+- `strcpy` copies **up to the `\0`**, ignoring the size of `buf`
+- If `str` comes from **outside the perimeter**, the attacker picks the bytes
+- Root cause: **no separation between code and data**
 
 </Reveal>
 
@@ -187,7 +241,7 @@ void f(char *str) {
 <MemoryStack
   width={1000}
   rows={[
-    { value: "str", tone: "arg", label: "argumento" },
+    { value: "str", tone: "arg", label: "argument" },
     {
       value: [
         { at: "0-4", text: "ret → main", tone: "ret" },
@@ -195,18 +249,18 @@ void f(char *str) {
         { at: "6", text: "&buf", tone: "code" },
       ],
       label: [
-        { at: "0-4", text: "endereço de retorno" },
+        { at: "0-4", text: "return address" },
         { at: "5-5", text: "ret = AAAA → crash" },
-        { at: "6", text: "ret → o nosso código" },
+        { at: "6", text: "ret → our code" },
       ],
       focus: "5",
     },
     {
       value: [
-        { at: "0-3", text: "ebp guardado", tone: "fp" },
+        { at: "0-3", text: "saved ebp", tone: "fp" },
         { at: "4", text: "0x41414141", tone: "bad" },
       ],
-      label: "frame pointer guardado",
+      label: "saved frame pointer",
     },
     {
       value: [
@@ -219,10 +273,10 @@ void f(char *str) {
     },
   ]}
   captions={[
-    { at: "1-3", text: "str com mais de 128 bytes: a cópia enche o buffer…" },
-    { at: "4-4", text: "…passa por cima do ebp guardado…" },
-    { at: "5-5", text: "…e do endereço de retorno. No ret: salto para 0x41414141." },
-    { at: "6", text: "Com bytes escolhidos: ret aponta para o buffer, que tem código." },
+    { at: "1-3", text: "str longer than 128 bytes: the copy fills the buffer…" },
+    { at: "4-4", text: "…runs over the saved ebp…" },
+    { at: "5-5", text: "…and the return address. On ret: jump to 0x41414141." },
+    { at: "6", text: "With chosen bytes: ret points into the buffer, which holds code." },
   ]}
 />
 
@@ -231,15 +285,15 @@ void f(char *str) {
 
 <Notes>
 
-Este é o ataque clássico. `f` tem um buffer de 128 bytes e faz `strcpy` de uma string que vem de fora.
+The classic attack. `f` has a 128-byte buffer and copies a string that comes from outside.
 
-**[→]** O `strcpy` copia até encontrar o byte zero. Não sabe nem quer saber o tamanho do destino. Se a string tiver mais de 128 bytes, a cópia enche o buffer e continua.
+**[→]** `strcpy` copies until it finds a zero byte. It doesn't know the size of the destination. If the string is longer than 128 bytes, the copy fills the buffer and keeps going upward.
 
-**[→]** Se essa string vem de fora do perímetro de segurança, quem a escolhe é o atacante. **[→]** E o problema de fundo é que na stack não há separação entre código e dados: o endereço de retorno, que controla o fluxo do programa, está ao lado de dados controlados pelo atacante.
+**[→]** If that string crosses the security perimeter, the attacker chooses every byte. **[→]** And the deeper problem: on the stack, the return address, which decides where the program goes next, sits right next to attacker data. Code pointers and data share the same memory.
 
-Continua a cópia: **[→]** passa por cima do ebp guardado, **[→]** e por cima do endereço de retorno. Quando a função faz `ret`, salta para 0x41414141, que é "AAAA". Crash.
+The copy goes on: **[→]** over the saved ebp, **[→]** and over the return address. When `f` returns, it jumps to 0x41414141, which is "AAAA". Crash.
 
-Mas o atacante não quer um crash, quer controlo. **[→]** Se em vez de A's meter código no buffer e escrever no endereço de retorno o endereço do buffer, o `ret` salta para o código dele. Isto é stack smashing.
+But the attacker wants control, not a crash. **[→]** So she puts machine code in the buffer and writes the buffer's address over the return address. Now `ret` jumps into her code. That's stack smashing.
 
 </Notes>
 </Slide>
@@ -247,7 +301,7 @@ Mas o atacante não quer um crash, quer controlo. **[→]** Se em vez de A's met
 <Slide title="Demo: buffer overflow">
 
 
-## Demo: enche o buffer
+## Demo: fill the buffer
 
 <OverflowLab
   presets={[
@@ -264,37 +318,62 @@ Mas o atacante não quer um crash, quer controlo. **[→]** Se em vez de A's met
 
 <Notes>
 
-Vamos ver isto a acontecer. Isto é uma simulação, mas segue as regras a sério: buffer de 16 bytes, little-endian, e o `strcpy` escreve sempre um `\0` no fim. Cada linha é uma palavra de 4 bytes, endereços a crescer para cima.
+Let's watch it happen. This is a simulation with the real rules: a 16-byte buffer, little-endian, and `strcpy` always writes a `\0` at the end. Each row is a 4-byte word, addresses growing upward.
 
-Com "rodrigo" está tudo bem: 7 bytes mais o zero cabem.
+"rodrigo" is fine: 7 bytes plus the zero.
 
-**[→]** 15 A's: 15 bytes mais o `\0` são exatamente 16. Ainda cabe.
+**[→]** 15 A's: 15 bytes plus `\0` is exactly 16. Still fits.
 
-**[→]** 16 A's: agora o `\0` já não cabe e vai parar ao primeiro byte do ebp guardado. Um único byte a mais! Isto parece inofensivo, mas é o "poisoned NUL byte": o ebp do caller fica a apontar para outro sítio, e quando o caller retornar, vai buscar o endereço de retorno a um sítio que o atacante controla.
+**[→]** 16 A's: now the `\0` lands on the first byte of the saved ebp. One byte too many. That's the off-by-one, or poisoned NUL byte: the caller's frame pointer now points somewhere else, and when the caller returns it reads its return address from a place the attacker controls. So one byte can be enough.
 
-**[→]** Agora 16 A's, BBBB e CCCC. O BBBB vai para o ebp e o CCCC para o endereço de retorno: 0x43434343. Quando a função retornar, salta para lá e crasha.
+**[→]** 16 A's, BBBB and CCCC. BBBB goes into the saved ebp, CCCC into the return address: 0x43434343. On return, it jumps there and crashes.
 
-**[→]** E agora a sério: começo com NOPs, 0x90, depois uns bytes de shellcode, BBBB para o ebp, e no fim o endereço do próprio buffer, escrito ao contrário por ser little-endian. O retorno aponta para o buffer: o CPU executa o nosso input.
+**[→]** Now for real: NOPs, 0x90, then shellcode bytes, BBBB for the ebp, and at the end the buffer's own address, written backwards because of little-endian. The return address points into the buffer, so the CPU runs our input.
 
-Se estiveres a ver isto no site, escreve tu na caixa. Podes usar `\x41` para meter bytes.
+If you're watching on the site, type into the box yourself. Use `\x41` to enter raw bytes.
 
 </Notes>
 </Slide>
 
-<Slide title="Shellcode e NOP sled">
+<Slide title="Question: off-by-one">
+
+<Quiz
+  source="Test 1, 2024/25"
+  options={["A stack canary.", "A local variable.", "A return address.", "A frame pointer."]}
+  correct={2}
+  columns={2}
+>
+
+A stack buffer overflow of 1 byte, known as off-by-1, will never directly allow to change:
+
+<div slot="answer">
+
+The return address is at least 4 bytes past the end of the buffer. One byte reaches only the next thing: a canary, another local or the saved frame pointer.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** C, the return address. One extra byte only touches whatever sits right after the buffer: a canary, another local, or the saved frame pointer, as in the demo. The saved ebp sits between the buffer and the return address, so it's never directly reachable. "Indirectly" is another story: the poisoned NUL byte corrupts the frame pointer and hijacks the caller's return. That's why the 2023/24 test asked how many bytes documented exploits needed: one byte can be enough.
+
+</Notes>
+</Slide>
+
+<Slide title="Shellcode and NOP sled">
 
 
-## Shellcode e NOP sled
+## Shellcode and NOP sled
 
 <Cols columns="1fr 960px" gap={64} align="start">
 <div>
 
 <Reveal class="small">
 
-- **Shellcode**: código máquina que abre uma shell, `execve("/bin/sh", …)`. O clássico tem 33 bytes.
-- O endereço exato do buffer **varia**: à frente vai um **NOP sled** (0x90). Cair em qualquer NOP serve.
-- **Sem `\0`** no payload: o `strcpy` parava no primeiro byte nulo.
-- Mais robusto: pôr o shellcode **acima** do ret e apontar o ret para um `jmp esp`.
+- **Shellcode**: machine code that opens a shell
+- The buffer address **varies**: put a **NOP sled** (0x90) in front. Landing on any NOP works.
+- **No `\0`** in the payload: `strcpy` would stop at the first zero byte
+- More robust: shellcode **above** the ret, ret pointing to a `jmp esp`
 
 </Reveal>
 
@@ -309,7 +388,7 @@ Se estiveres a ver isto no site, escreve tu na caixa. Podes usar `\x41` para met
         { at: "0-1", text: "≈ &buf + ?", tone: "bad" },
         { at: "2", text: "≈ &buf + ?", tone: "bad" },
       ],
-      label: "ret: um palpite",
+      label: "ret: a guess",
       focus: "2-2",
     },
     { value: "shellcode", tone: "code", label: "execve(\"/bin/sh\")", focus: "4" },
@@ -319,9 +398,9 @@ Se estiveres a ver isto no site, escreve tu na caixa. Podes usar `\x41` para met
     { value: "90 90 90 90", tone: "gadget", label: "NOP", show: "2", focus: "3-3" },
   ]}
   captions={[
-    { at: "2-2", text: "O ret só tem de acertar algures no sled." },
-    { at: "3-3", text: "Cada NOP só avança o program counter…" },
-    { at: "4", text: "…até chegar ao shellcode." },
+    { at: "2-2", text: "The ret only has to land somewhere in the sled." },
+    { at: "3-3", text: "Each NOP only moves the program counter forward…" },
+    { at: "4", text: "…until it reaches the shellcode." },
   ]}
 />
 
@@ -330,52 +409,139 @@ Se estiveres a ver isto no site, escreve tu na caixa. Podes usar `\x41` para met
 
 <Notes>
 
-O código que o atacante injeta chama-se shellcode, porque normalmente abre uma shell: chama `execve` com "/bin/sh". Compilado, o clássico tem 33 bytes.
+What code do we inject? Shellcode: assembly that runs shell commands, usually `execve` of "/bin/sh". It's the holy grail of remote code execution.
 
-**[→]** O problema: o atacante não sabe o endereço exato do buffer, porque varia com o ambiente, as variáveis de ambiente, etc. **[→]** Solução: antes do shellcode mete uma rampa de NOPs, o NOP sled. Se o retorno cair em qualquer sítio da rampa, **[→]** o CPU vai executando NOPs, que não fazem nada além de avançar, **[→]** até chegar ao shellcode.
+**[→]** The catch: the attacker doesn't know the exact buffer address, because it changes with the environment variables and the platform. **[→]** So in front of the shellcode she puts a NOP sled. If the return lands anywhere on it, **[→]** the CPU executes NOPs, which only advance the program counter, **[→]** until it reaches the shellcode. The bigger the sled, the worse the guess can be.
 
-Pormenor que sai: o payload não pode ter bytes zero, porque o `strcpy` parava aí e o resto não era copiado.
+The payload must not contain a zero byte, because `strcpy` stops copying at the first `\0` and the rest never arrives. That's the answer to the 2021 open question: 0x90 helps, 0x00 breaks the copy.
 
-E um truque para ser mais robusto: meter o shellcode acima do endereço de retorno e apontar o retorno para uma instrução `jmp esp` que já exista no programa. Assim não precisas de adivinhar endereço nenhum.
+And a trick from the lecture: put the shellcode right above the return address and point the return address at an existing `jmp esp` instruction. Then you don't guess any address.
 
 </Notes>
 </Slide>
 
-<Slide title="Pergunta: NOP">
+<Slide title="Question: NOP">
 
 <Quiz
-  source="Teste 1, 2023/24"
+  source="Test 1, 2023/24"
   options={[
-    "Limpa o registo %ebp.",
-    "Conta quantas vezes o NOP foi executado e guarda o valor num registo.",
-    "Aumenta o contador de programa sem alterar memória ou registos.",
-    "Nenhuma das outras opções.",
+    "Clearing the %ebp register.",
+    "Counting how many times NOP was executed and storing it in a register.",
+    "Increasing the program counter but not changing any memory or register.",
+    "None of the other options.",
   ]}
   correct={2}
 >
 
-Num ataque de buffer overflow, parte do payload foi preenchida com **0x90**, a instrução NOP. O seu objetivo é gastar ciclos de CPU enquanto:
+In the buffer overflow lab, part of the payload was filled with **0x90**, the NOP instruction. Its purpose is to spend CPU cycles, while:
 
 <div slot="answer">
 
-Um NOP **só avança o program counter**. É por isso que um sled de NOPs leva o CPU, byte a byte, até ao shellcode.
+A NOP **only moves the program counter**. That is why a sled carries the CPU to the shellcode.
 
 </div>
 </Quiz>
 
 <Notes>
 
-Pergunta do teste de 2023/24, sobre exatamente isto. Pausa.
-
-**[→]** É a c): aumenta o contador de programa sem alterar memória nem registos. É essa a definição de NOP, e é por isso que o sled funciona: o CPU vai escorregando até ao shellcode.
+**[→]** C. That's the definition of NOP, and it's exactly why the sled works. Nothing is cleared and nothing is counted.
 
 </Notes>
 </Slide>
 
-<Slide title="Morris worm e funções perigosas">
+<Slide title="Lab layouts">
 
 
-## 1988: o Morris worm
+## Will this payload work?
+
+<Cols columns="1fr 900px" gap={64} align="start">
+<div>
+
+```c
+int bof(char *str) {
+  char buffer[100];
+  strcpy(buffer, str);
+  return 1;
+}
+```
+
+<Reveal start={1} class="small">
+
+- The ret slot must hold **an address**, never NOPs
+- That address must land on **NOPs or the shellcode**
+- The address block is **not code**
+
+</Reveal>
+
+</div>
+<div>
+
+<MemoryStack
+  width={900}
+  rows={[
+    { value: "shellcode", tone: "code", label: "str[396]", focus: "3" },
+    { value: "NOP … NOP", tone: "gadget", label: "300 to 396", focus: "3" },
+    { value: "&buffer+300 × many", tone: "bad", label: "100 to 296", focus: "2-2" },
+    { value: "anything", tone: "buf", label: "0 to 96" },
+  ]}
+  captions={[
+    { at: "1-1", text: "The ret is somewhere in 100 to 200: fill that whole range." },
+    { at: "2-2", text: "Every copy points to buffer+300, inside the sled." },
+    { at: "3", text: "The sled slides into the shellcode." },
+  ]}
+/>
+
+</div>
+</Cols>
+
+<Notes>
+
+The tests love a lab question: `buffer[100]`, a long `str`, 20 bytes of shellcode, and four candidate layouts. Here's how to check any of them.
+
+**[→]** First, you don't know exactly where the return address is, only a range. So that whole range must be filled with copies of an address. If the layout puts NOPs there, the return address becomes 0x90909090 and it fails.
+
+**[→]** Second, the address you write must point into the NOP sled or the shellcode, and the sled must sit above the address block. If you jump to the start of the buffer and then slide upward, you reach the address block, which executes as garbage instructions.
+
+**[→]** Third, the sled leads to the shellcode. This picture is the correct answer from the 2025 resit: shellcode at 396, NOPs from 300 to 396, and `&buffer+300` from 100 to 296.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: payload">
+
+<Quiz
+  source="First Test Resit, 2024/25"
+  options={[
+    "Shellcode at str[496], 0x90 at 100 to 300, &buffer+100 at 300 to 396.",
+    "Shellcode at str[396], 0x90 at 300 to 396, &buffer+300 at 100 to 296.",
+    "Shellcode at str[496], 0x90 at 0 to 96 and 204 to 492, &buffer at 100 to 200.",
+    "Shellcode at str[396], 0x90 at 0 to 492.",
+  ]}
+  correct={1}
+>
+
+Same `bof`. `strlen(str)=516`, shellcode of 20 bytes, return address and saved frame pointer somewhere between 100 and 200, 4-byte aligned. Which input yields a successful attack?
+
+<div slot="answer">
+
+B fills the whole ret range with an address that lands in the sled.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** B. A puts NOPs over the 100 to 200 range, so the return address is 0x90909090. C jumps to the start of the buffer, slides through the NOPs and then runs into the address block from 100 to 200, which isn't code. D has no address at all.
+
+The 2024 resit asked a numeric version: buffer at 0xFFBB0030, return address slot at 0xFFBB0090, 0x200 bytes of NOPs with shellcode at the end. The working value is 0xFFBB0190: above the return slot, inside the sled. 0xFFBB0030 would slide into the return slot itself. And that's why we needed the buffer's address in the lab: the value written over the return address must itself be a valid address.
+
+</Notes>
+</Slide>
+
+<Slide title="Morris worm and unsafe functions">
+
+
+## 1988: the Morris worm
 
 <Cols columns="1fr 1fr" gap={72}>
 <div>
@@ -389,13 +555,13 @@ gets(line);
 
 <Step at={1}>
 
-O `gets` lê **tudo** o que o cliente enviar. 536 caracteres chegam ao endereço de retorno.
+`gets` reads **whatever** the client sends. 536 characters reach the return address.
 
 </Step>
 
 <Step at={2}>
 
-<p class="small muted">1972 conceito documentado · 1988 Morris worm · 1996 "Smashing the Stack for Fun and Profit" (Aleph One) · jailbreaks de consolas</p>
+<p class="small muted">1972 concept documented · 1988 Morris worm · 1996 "Smashing the Stack for Fun and Profit" · console jailbreaks</p>
 
 </Step>
 
@@ -404,17 +570,17 @@ O `gets` lê **tudo** o que o cliente enviar. 536 caracteres chegam ao endereço
 
 <Step at={3}>
 
-| função | problema |
+| function | problem |
 | --- | --- |
-| `strcpy`, `strcat` | não conhecem o tamanho do destino |
-| `gets`, `scanf("%s")` | leem até onde o input quiser |
-| `strncpy` | limita, mas **pode não terminar com `\0`** |
+| `strcpy`, `strcat` | no size check |
+| `gets`, `scanf("%s")` | read as much as the input sends |
+| `strncpy` | bounded, but **may skip the `\0`** |
 
 </Step>
 
 <Step at={4}>
 
-<p class="small">E código caseiro que <strong>assume input confiável</strong>: libpng 2004, off-by-one no realpath 2003, poisoned NUL byte 1998 e 2014.</p>
+<p class="small">And hand-written code that <strong>assumes trusted input</strong>: libpng 2004, realpath off-by-one 2003, poisoned NUL byte 1998 and 2014.</p>
 
 </Step>
 
@@ -423,47 +589,47 @@ O `gets` lê **tudo** o que o cliente enviar. 536 caracteres chegam ao endereço
 
 <Notes>
 
-O primeiro uso hostil de um buffer overflow foi o Morris worm, em 1988. O bug estava no `fingerd`, e é o "spot the vulnerability" da aula.
+The first documented hostile use of a buffer overflow was the Morris worm, 1988. It had no payload, it just spread itself. Its author went from Cornell student to convicted felon to MIT professor.
 
-**[→]** O buffer tem 512 bytes, mas o `gets` lê tudo o que o cliente mandar. O código assume que o input cabe. 536 caracteres chegam para reescrever o endereço de retorno.
+**[→]** The bug was in `fingerd`: a 512-byte buffer and `gets`, which reads everything the client sends. 536 characters were enough to overwrite the return address.
 
-**[→]** Um pouco de história: o conceito estava documentado desde 1972, o Morris worm é de 1988, e em 1996 o Aleph One publicou o "Smashing the Stack for Fun and Profit", que tornou isto mainstream.
+**[→]** Some history: the concept was documented in 1972. In 1996 Aleph One published "Smashing the Stack for Fun and Profit", which made the technique common knowledge. It's also how many Wii, PS2 and Xbox jailbreaks worked.
 
-**[→]** Porque é que continua a ser tão comum? Funções da libc que não sabem o tamanho do destino: `strcpy`, `strcat`, `gets`, `scanf`. E atenção ao `strncpy`: limita o tamanho, mas se a string for comprida demais não mete o `\0` no fim. Esta é uma rasteira clássica.
+**[→]** Why so common? libc string functions that don't know the destination size: `strcpy`, `strcat`, `gets`, `scanf`. And watch `strncpy`: it limits the length, but if the source is too long it doesn't write the `\0`. Classic trap.
 
-**[→]** E código feito à mão que assume que o input é confiável. A libpng em 2004 saltava a verificação de tamanho num caminho de erro, o realpath tinha um off-by-one, e o poisoned NUL byte que vimos na demo foi explorado em 1998 e outra vez em 2014.
+**[→]** And hand-written code that assumes input is trusted. libpng in 2004 lacked input validation, realpath had an off-by-one in 2003, and the poisoned NUL byte from the demo was exploited in 1998 and again in 2014.
 
 </Notes>
 </Slide>
 
-<Slide title="Porque não usar linguagens seguras">
+<Slide title="Why not safe languages">
 
 
-## "Porque não usamos só linguagens seguras?"
+## Why not just use safe languages?
 
 <Reveal>
 
-- As linguagens seguras **compilam para** ou **usam** bibliotecas em C / LLVM
-- VMs, browsers e sistemas operativos continuam escritos em **linguagens de baixo nível**
-- Código criptográfico é **otimizado à mão**
-- Os ataques **encadeiam** várias vulnerabilidades
-- O input é **sempre** potencialmente malicioso
+- Safe languages **compile to** or **call** C / LLVM libraries
+- VMs, browsers and OSes are written in **low-level languages**
+- Cryptographic code is **optimized by hand**
+- Attacks **chain** several vulnerabilities
+- Input is **always** potentially malicious
 
 </Reveal>
 
 <Step at={6}>
 
-<p class="big">Overflow = aceder fora da memória alocada. Está no <strong>CWE Top 25</strong>: #1 out-of-bounds write, #4 use-after-free, #7 out-of-bounds read.</p>
+<p class="big">2023 <strong>CWE Top 25</strong>: #1 out-of-bounds write, #4 use-after-free, #7 out-of-bounds read.</p>
 
 </Step>
 
 <Notes>
 
-Pergunta razoável: se C é assim tão perigoso, porque não usamos só linguagens seguras?
+Fair question: if C is this dangerous, why not use Java, Python, Rust?
 
-**[→]** Porque essas linguagens compilam para C ou usam bibliotecas em C e LLVM por baixo. **[→]** Porque as VMs, os browsers e os sistemas operativos continuam escritos em linguagens de baixo nível. **[→]** Porque o código de criptografia é otimizado à mão. **[→]** Porque os ataques encadeiam várias vulnerabilidades: basta uma peça insegura. **[→]** E porque o input é sempre potencialmente malicioso, seja qual for a linguagem.
+**[→]** Because those languages often compile to C or call C and LLVM libraries underneath. **[→]** Because the virtual machines, sandboxes, browsers and operating systems they run on are still written in low-level languages. **[→]** Because in fields like cryptography, humans still optimize code better than compilers. **[→]** Because attacks chain vulnerabilities, so one unsafe piece is enough. **[→]** And because input is always potentially malicious, whatever the language.
 
-**[→]** E não é um problema antigo: no CWE Top 25 de 2023, out-of-bounds write é o número 1, use-after-free o 4 e out-of-bounds read o 7.
+**[→]** And it's not old news: in the 2023 CWE Top 25, memory errors hold three places.
 
 </Notes>
 </Slide>
@@ -472,7 +638,7 @@ Pergunta razoável: se C é assim tão perigoso, porque não usamos só linguage
 
 {/* ------------------------------------------------------------ SS2 */}
 
-<Chapter title="Heap, UAF, inteiros e format strings" label="Software Security 2">
+<Chapter title="Heap, integers and format strings" label="Software Security 2">
 
 <Slide title="Heap overflow">
 
@@ -483,17 +649,17 @@ Pergunta razoável: se C é assim tão perigoso, porque não usamos só linguage
 <div>
 
 ```c
-char *a = malloc(5);
-char *b = malloc(5);
-strcpy(a, input);  // > 5 bytes
-free(b);
+char *b1 = malloc(40);
+char *b2 = malloc(40);
+gets(b1);   // > 40 bytes
+free(b1);
+exit(0);
 ```
 
 <Reveal start={3} class="small">
 
-- Alvos: **ponteiros para funções** (vtables, GOT)
-- Layout imprevisível: **mais difícil** que na stack
-- **Heap spraying**: encher a memória de NOP sled + shellcode
+- Targets: **function pointers**: C++ vtables, GOT, exception handlers, longjmp buffers
+- **Harder** than the stack: the layout varies
 
 </Reveal>
 
@@ -502,31 +668,31 @@ free(b);
 
 <MemoryStack
   width={960}
-  high="heap · endereços altos"
-  low="endereços baixos"
+  high="heap · high addresses"
+  low="low addresses"
   rows={[
-    { value: "dados de b", tone: "local", label: "chunk b" },
+    { value: "b2 data", tone: "local", label: "chunk b2" },
     {
       value: [
         { at: "0-0", text: "fd · bk", tone: "meta" },
-        { at: "1", text: "fd, bk falsos", tone: "bad" },
+        { at: "1", text: "fake fd, bk", tone: "bad" },
       ],
-      label: "metadados de b",
+      label: "b2 free-list pointers",
       focus: "1-2",
     },
-    { value: "prev_size · size", tone: "meta", label: "cabeçalho de b" },
+    { value: "prev_size · size", tone: "meta", label: "b2 header" },
     {
       value: [
-        { at: "0-0", text: "a: 5 bytes", tone: "buf" },
+        { at: "0-0", text: "b1: 40 bytes", tone: "buf" },
         { at: "1", text: "AAAAAAAAAAAA…", tone: "bad" },
       ],
-      label: "chunk a",
+      label: "chunk b1",
     },
-    { value: "prev_size · size", tone: "meta", label: "cabeçalho de a" },
+    { value: "prev_size · size", tone: "meta", label: "b1 header" },
   ]}
   captions={[
-    { at: "1-1", text: "O overflow de a escreve por cima dos ponteiros fd/bk de b." },
-    { at: "2", text: "free(b) faz unlink e escreve através desses ponteiros: o endereço de exit() passa a ser o shellcode." },
+    { at: "1-1", text: "The overflow of b1 overwrites b2's control data." },
+    { at: "2", text: "free unlinks and writes through those pointers: exit() now points to the shellcode." },
   ]}
 />
 
@@ -535,17 +701,129 @@ free(b);
 
 <Notes>
 
-No heap a ideia é a mesma: dois blocos de 5 bytes, e um `strcpy` de algo maior para o primeiro.
+On the heap the bug is the same: a block of 40 bytes and `gets` writing more into it.
 
-Mas no heap não há endereço de retorno. O que há? Cada bloco do malloc tem metadados: o tamanho e, quando está livre, dois ponteiros, `fd` e `bk`, para a lista de blocos livres.
+But there's no return address on the heap. What's there instead? Each malloc chunk has control data: `prev_size`, `size`, and when it's free, two pointers, `fd` and `bk`, that link it into the free list.
 
-**[→]** O overflow de `a` escreve por cima dos metadados do bloco seguinte. **[→]** Quando o programa faz `free`, o alocador mexe nessa lista ligada e escreve através de `fd` e `bk`. Como o atacante controla os dois, controla uma escrita: por exemplo, trocar o endereço de `exit()` na GOT pelo endereço do shellcode. Isto é o "smashing the heap".
+**[→]** The overflow of `b1` runs into the header of the next chunk. **[→]** When `free` runs, the allocator checks whether the neighbor is free and merges them. Merging unlinks a chunk from the list, which writes through `fd` and `bk`. The attacker controls both, so she controls one write to memory: for example, replacing the address of `exit()` with the address of her shellcode. Then the program calls `exit` and runs her code. That's "smashing the heap".
 
-**[→]** Outros alvos: o heap está cheio de ponteiros para funções, como as vtables dos objetos C++ ou a GOT das bibliotecas dinâmicas, e também handlers de exceções e buffers de longjmp.
+**[→]** Other targets: the heap is full of function pointers. A C++ object stores a pointer to its vtable, so `obj->foo()` is an indirect call. Dynamic libraries go through the global offset table. Exception handlers and `longjmp` buffers are also code addresses.
 
-**[→]** É mais difícil do que na stack, porque o C só garante que cada bloco é contíguo, e o layout depende do alocador, do SO e do hardware.
+**[→]** It's harder than the stack, because C only promises contiguous blocks. Where they land depends on the allocator, the OS and the hardware. To build an exploit you must predict the address you want to take over, predict where the shellcode will be, and avoid crashing first.
 
-**[→]** Nos browsers o layout é imprevisível, por isso usa-se heap spraying: JavaScript malicioso enche a memória com cópias de NOP sled mais shellcode, para que um ponteiro corrompido caia muito provavelmente numa delas.
+</Notes>
+</Slide>
+
+<Slide title="Question: heap exploit">
+
+<Quiz
+  source="Resit, 2023/24"
+  options={[
+    "Line 7 may abuse a use-after-free vulnerability in variable b1.",
+    "Line 5 leads to a stack overflow into variable b2.",
+    "An overflow in line 5 allows free to write to an arbitrary address.",
+    "It is not exploitable, since b1 and b2 are not used.",
+  ]}
+  correct={2}
+>
+
+The program on the previous slide (`gets(b1)` on line 5, `free(b1)` on line 6, `exit(0)` on line 7). Why is it exploitable?
+
+<div slot="answer">
+
+Smashing the heap: the overflow plants fake free-list pointers and `free` writes through them.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** C. Line 7 just calls `exit`, nothing is used after being freed. It's a heap overflow, not a stack one. And "not used" doesn't matter: the attack works through the allocator's own write during `free`.
+
+</Notes>
+</Slide>
+
+<Slide title="Heap spraying">
+
+
+## Heap spraying
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+<Reveal>
+
+- A malicious site runs **JavaScript** in your browser
+- The browser is almost an OS: its **layout is hard to predict**
+- So JavaScript allocates **many copies** of NOP sled + shellcode
+- A corrupted pointer now **probably** lands in one
+
+</Reveal>
+
+</div>
+<div>
+
+<Step at={3}>
+
+<MemoryStack
+  width={760}
+  compact
+  growth="none"
+  high=""
+  low=""
+  rows={[
+    { value: "NOP … NOP shellcode", tone: "code" },
+    { value: "NOP … NOP shellcode", tone: "code" },
+    { value: "NOP … NOP shellcode", tone: "code", focus: "4" },
+    { value: "NOP … NOP shellcode", tone: "code" },
+    { value: "NOP … NOP shellcode", tone: "code" },
+  ]}
+  pointers={[{ name: "f ptr", row: 2, at: "4" }]}
+/>
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+Now the browser case. A malicious web server wants control of client machines, for example to install malware. **[→]** It can run JavaScript on them.
+
+**[→]** The problem for the attacker: a browser behaves almost like a small OS. Its memory layout depends on many factors, so she can't predict where her code ends up.
+
+**[→]** So she cheats: JavaScript allocates huge amounts of heap memory, filling it with copies of NOP sled plus shellcode.
+
+**[→]** Then she triggers a heap overflow that corrupts a function pointer. She doesn't need the exact address: almost any address in the sprayed region hits a sled. Spraying is how attackers defeat address randomization, which we'll see later.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: spraying">
+
+<Quiz
+  source="First Test Resit, 2024/25"
+  options={[
+    "Forbidding heap accesses to prevent attacks.",
+    "Painting the heap with special characters to detect modifications.",
+    "Allocating large amounts of heap memory.",
+    "Enforcing single-use of heap addresses to prevent use-after-free.",
+  ]}
+  correct={2}
+>
+
+In software security, the **heap spraying** technique consists of:
+
+<div slot="answer">
+
+Allocate a lot, filled with copies of sled + shellcode. Test 1 2024/25 asked what spraying bypasses: **ASLR**.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** C. Spraying is an attack, so A, B and D, which are all defenses, are out. The 2023 resit phrased it as "creates multiple copies of the shellcode in the heap", same idea. And Test 1 2024/25 asked what spraying bypasses: address randomization, ASLR. You don't need to know the address if the shellcode is everywhere. It does not bypass W^X: sprayed data on the heap still isn't executable.
 
 </Notes>
 </Slide>
@@ -564,15 +842,15 @@ Mas no heap não há endereço de retorno. O que há? Cada bloco do malloc tem m
 char *ptr = malloc(100);
 free(ptr);
 char *ptr2 = malloc(100);
-strcpy(ptr2, "admin / S3cret!");
-puts(ptr);   // ptr ficou pendurado
+strcpy(ptr2, bad);
+puts(ptr);   // dangling pointer
 ```
 
 </CodeSteps>
 
 <Step at={5}>
 
-<p class="small">No Chrome, <strong>70%</strong> dos bugs de segurança são de memória. Só UAF: <strong>~36%</strong>.</p>
+<p class="small">In Chrome, <strong>70%</strong> of security bugs are memory bugs. UAF alone: <strong>~36%</strong>.</p>
 
 </Step>
 
@@ -587,10 +865,10 @@ puts(ptr);   // ptr ficou pendurado
     {
       addr: "0xabcd1234",
       value: [
-        { at: "0-0", text: "—", tone: "muted" },
-        { at: "1-1", text: "dados de ptr", tone: "local" },
-        { at: "2-2", text: "livre", tone: "free" },
-        { at: "3", text: "admin / S3cret!", tone: "bad" },
+        { at: "0-0", text: "…", tone: "muted" },
+        { at: "1-1", text: "ptr's data", tone: "local" },
+        { at: "2-2", text: "free", tone: "free" },
+        { at: "3", text: "attacker data", tone: "bad" },
       ],
       size: 2,
     },
@@ -600,9 +878,9 @@ puts(ptr);   // ptr ficou pendurado
     { name: "ptr, ptr2", row: 0, at: "3" },
   ]}
   captions={[
-    { at: "2-2", text: "free(ptr) liberta o bloco, mas ptr continua a apontar para lá." },
-    { at: "3-3", text: "O próximo malloc(100) devolve o mesmo endereço." },
-    { at: "4", text: "puts(ptr) lê os dados de outra pessoa." },
+    { at: "2-2", text: "free(ptr) releases the block, but ptr still points to it." },
+    { at: "3-3", text: "The next malloc(100) probably returns the same address." },
+    { at: "4", text: "puts(ptr) reads data someone else wrote." },
   ]}
 />
 
@@ -611,15 +889,85 @@ puts(ptr);   // ptr ficou pendurado
 
 <Notes>
 
-Use-after-free: usar memória que já foi libertada.
+Use-after-free: using memory after it was freed, or in C++, calling a method on an object that was already destroyed.
 
-**[→]** Pedimos 100 bytes, o `ptr` aponta para lá. **[→]** Fazemos `free`. O bloco volta para o alocador, mas o `ptr` não muda: continua a apontar para o mesmo endereço. É um dangling pointer.
+**[→]** We allocate 100 bytes. **[→]** We free them. The block goes back to the allocator, but `ptr` doesn't change: it's a dangling pointer.
 
-**[→]** O próximo `malloc(100)` devolve exatamente o mesmo bloco, e alguém mete lá credenciais. **[→]** Agora o `puts(ptr)` lê, através do ponteiro antigo, os dados de outra pessoa.
+**[→]** The next `malloc(100)` very likely returns the same block, and attacker data goes in. "Very likely", not "for sure": that's the lecture's question. **[→]** Now `puts(ptr)` reads it through the old pointer.
 
-Porque é que isto dá controlo, e não só uma fuga? Se o objeto libertado era um objeto C++ com vtable, e o atacante conseguir pôr dados seus nesse bloco reutilizado, a próxima chamada virtual através do ponteiro antigo salta para onde ele quiser. Pode nem crashar, o que o torna imprevisível.
+Why does this give control and not just a leak? If the freed block was a C++ object, its first word is a vtable pointer. The attacker fills the reused block with a fake vtable pointer, and the next virtual call through the old pointer jumps where she wants. It may not even crash, which makes the behavior unpredictable.
 
-**[→]** É muito comum em browsers: no Chrome, 70% dos bugs de segurança são de memória, e só use-after-free são uns 36%.
+**[→]** It's everywhere in browsers: in Chrome, 70% of security bugs are memory bugs, and use-after-free alone is around 36%.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: UAF">
+
+<Quiz
+  source="Resit, 2022/23"
+  options={["Pointers to functions.", "Exception handlers.", "Virtual function tables.", "All of the other choices."]}
+  correct={3}
+  columns={2}
+>
+
+In a use-after-free attack, the crucial information that is usually overwritten is:
+
+<div slot="answer">
+
+Any code pointer that the program later follows through the dangling pointer.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** D, all of them. These are the same targets as heap overflows: function pointers, exception handlers, vtables. What they have in common is that the program will later jump through them.
+
+</Notes>
+</Slide>
+
+<Slide title="Integer overflow: forms">
+
+
+## Integer overflow
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+<Reveal>
+
+- **Truncation**: `int` 0x12345678 into a `short` keeps 0x5678
+- **Bounded arithmetic**: 8-bit 0xff + 1 = 0, so `malloc(0)`
+- **Sign**: 0xffffffff is −1 signed, 4,294,967,295 unsigned
+- **Mixed widths**: 16-bit vs 64-bit
+
+</Reveal>
+
+</div>
+<div>
+
+<Step at={4}>
+
+```c
+unsigned short len = strlen(s);
+char buffer[100];
+if (len < sizeof buffer)
+  strcpy(buffer, s);
+```
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+Integer overflow: the machine's fixed-size integers lose information. Arithmetic is modulo 2 to the n.
+
+**[→]** Truncation: casting to a smaller type drops the high bytes. **[→]** Bounded arithmetic: in 8 bits, 0xff plus 1 is 0. If that's a size, you allocate 0 bytes instead of 256. **[→]** Sign: the same 32 bits are minus 1 or about 4 billion. A check like `x < 100` passes for minus 1, and then `x` is used as a huge unsigned size.
+
+**[→]** Mixed widths, from the lecture: the length is stored in an `unsigned short`, 16 bits, but `strlen` returns a 64-bit `size_t`. A string of 65,536 plus 50 characters is stored as length 50. The check `len < 100` passes, and `strcpy` copies the whole 65 KB into a 100-byte buffer.
 
 </Notes>
 </Slide>
@@ -627,7 +975,7 @@ Porque é que isto dá controlo, e não só uma fuga? Se o objeto libertado era 
 <Slide title="Integer overflow: OpenSSH">
 
 
-## Integer overflow: OpenSSH 3.3 (2002)
+## OpenSSH 3.3 (2002)
 
 <Cols columns="1.3fr 1fr" gap={64} align="start">
 <div>
@@ -650,27 +998,21 @@ if (nresp > 0) {
 
 <Step at={1}>
 
-O atacante envia `nresp = 0x40000000` (2³⁰)
+The attacker sends 2³⁰
 
 </Step>
 
 <Step at={2}>
 
-<p class="big">2³⁰ × 4 = 2³² → em 32 bits <Mark at={2} type="circle">= 0</Mark></p>
+<p class="big"><span style="white-space:nowrap">2³⁰ × 4 = 2³²</span></p>
 
-`xmalloc(0)`: buffer minúsculo
+<p class="big">In 32 bits:&nbsp;&nbsp;<Mark at={2} type="circle">0</Mark></p>
 
 </Step>
 
 <Step at={3}>
 
-O ciclo escreve 2³⁰ ponteiros nele: **heap overflow**
-
-</Step>
-
-<Step at={4}>
-
-<p class="small muted">Outras formas: truncar num cast (int → short), larguras misturadas (<code>unsigned short len</code> vs <code>size_t</code>), sinal: <code>0xffffffff</code> é −1 com sinal.</p>
+The loop writes 2³⁰ pointers into a tiny block: **heap overflow**
 
 </Step>
 
@@ -679,71 +1021,69 @@ O ciclo escreve 2³⁰ ponteiros nele: **heap overflow**
 
 <Notes>
 
-Integer overflow, e este código saiu em dois testes. O `nresp` vem do pacote de rede, portanto é controlado pelo atacante.
+The famous one, and it's been on four tests. `nresp` comes from the network packet, so the attacker controls it.
 
-**[→]** O atacante manda `nresp` igual a 2 elevado a 30.
+**[→]** She sends 2 to the 30.
 
-**[→]** O código multiplica pelo tamanho de um ponteiro, 4 bytes. 2 elevado a 30 vezes 4 é 2 elevado a 32, que em 32 bits dá a volta e fica zero. Aritmética modular. O `xmalloc` aloca zero bytes, ou quase.
+**[→]** The code multiplies by the size of a pointer, 4 bytes. 2 to the 30 times 4 is 2 to the 32, which wraps to 0 in 32 bits. `xmalloc` allocates nothing, or almost nothing.
 
-**[→]** E depois o ciclo, que confia no `nresp` original, escreve mais de mil milhões de ponteiros nesse buffer minúsculo. Heap buffer overflow.
+**[→]** Then the loop, which still trusts the original `nresp`, writes a billion pointers into that tiny buffer. Heap buffer overflow.
 
-A cadeia é: inteiro controlado pelo atacante, overflow num cálculo, buffer pequeno demais, buffer overflow, e daí execução de código ou crash. E um crash, um DoS, já é um ataque válido.
-
-**[→]** Outras formas de integer overflow: truncar num cast, comparar larguras diferentes, ou o sinal: 0xffffffff é −1 com sinal e 4 mil milhões sem sinal. Um `if (size < sizeof(x))` com um size negativo passa a verificação.
+The lecture's recipe: the attacker controls an integer, it overflows in an intermediate computation, the buffer is smaller than expected, a buffer overflow follows, and that gives code execution or a crash. A crash is a DoS, which is a valid attack.
 
 </Notes>
 </Slide>
 
-<Slide title="Pergunta: OpenSSH">
+<Slide title="Question: OpenSSH">
 
 <Quiz
-  source="Teste 1, 2023/24"
+  source="Test 1, 2023/24"
   options={[
-    "Um overflow de inteiros e um subsequente stack buffer overflow.",
-    "Um overflow de inteiros e um subsequente use after free.",
-    "Um overflow de inteiros e um subsequente heap buffer overflow.",
-    "Um heap overflow e um subsequente integer buffer overflow.",
+    "An integer overflow and a subsequent stack buffer overflow.",
+    "An integer overflow and a subsequent use after free.",
+    "An integer overflow and a subsequent heap buffer overflow.",
+    "An heap overflow and a subsequent integer buffer overflow.",
   ]}
   correct={2}
 >
 
-No código do OpenSSH em que o atacante controla `nresp`, ele consegue provocar um problema de gestão de memória porque consegue despoletar:
+An attacker controlling `nresp` can cause a memory management problem because it can trigger:
 
 <div slot="answer">
 
-Primeiro o **inteiro** dá a volta (o tamanho fica pequeno), depois o ciclo escreve para lá do bloco: **heap**, porque foi o `xmalloc` que o alocou.
+The **integer** wraps first, then the loop writes past a block that `xmalloc` put on the **heap**.
 
 </div>
 </Quiz>
 
 <Notes>
 
-Esta saiu tal e qual em 2023/24. Pausa.
+**[→]** C. Heap, not stack, because `xmalloc` allocates on the heap. And the order matters: integer first, then buffer. D swaps the order, that's the trap.
 
-**[→]** É a c): overflow de inteiros e depois heap buffer overflow. Heap e não stack, porque o buffer vem do `xmalloc`. E a ordem importa: primeiro o inteiro, depois o buffer. A d) troca a ordem, é a rasteira.
+Test 1 2024/25 flipped it: "the vulnerability is **not**: integer overflow, heap overflow, out-of-bounds write, stack overflow". Answer: stack overflow. The heap overflow is an out-of-bounds write, so that one is true.
 
 </Notes>
 </Slide>
 
-<Slide title="Out-of-bounds read e Heartbleed">
+<Slide title="Out-of-bounds read and Heartbleed">
 
 
-## Ler já chega: out-of-bounds read
+## Reading is enough
 
 <Cols columns="1fr 1fr" gap={72} align="start">
 <div>
 
 ```c
-// limite inferior: falta i >= 0
+// lower bound: no check for i >= 0
 if (i < len) return a[i];
 
-// limite superior: off-by-one
-for (i = 0; i <= 5; i++) a[i] = 0;
+// upper bound: off-by-one
+for (i = 0; i <= 5; i++) x = a[i];
 ```
 
 <Step at={2}>
 
-Ler fora dos limites pode **fugir dados sensíveis** ou dar os endereços que faltavam para executar código.
+Out-of-bounds reads **leak secrets** and the addresses an exploit needs.
 
 </Step>
 
@@ -755,17 +1095,17 @@ Ler fora dos limites pode **fugir dados sensíveis** ou dar os endereços que fa
 <Diagram
   width={760}
   fontSize={20}
-  alt="Heartbleed: o cliente pede 500 bytes de eco para uma palavra de 4 e recebe memória do servidor."
+  alt="Heartbleed: the client asks for a 500-byte echo of a 4-letter word and gets server memory back."
   source={`sequenceDiagram
-  participant C as Cliente
-  participant S as Servidor OpenSSL
+  participant C as Client
+  participant S as OpenSSL server
   C->>S: heartbeat "bird", length = 4
   S-->>C: "bird"
   C->>S: heartbeat "bird", length = 500
-  S-->>C: "bird" + 496 bytes de memória`}
+  S-->>C: "bird" + 496 bytes of memory`}
 />
 
-<p class="small"><strong>Heartbleed</strong> (2014): o servidor confiava no <code>length</code> do cliente e devolvia passwords e chaves.</p>
+<p class="small"><strong>Heartbleed</strong> (2014): OpenSSL trusted the client's <code>length</code>.</p>
 
 </Step>
 
@@ -774,13 +1114,42 @@ Ler fora dos limites pode **fugir dados sensíveis** ou dar os endereços que fa
 
 <Notes>
 
-Nem é preciso escrever: ler fora dos limites também é grave.
+You don't even need to write: reading out of bounds is serious too.
 
-Há dois sabores. Limite inferior: verificas `i < len` mas esqueces `i >= 0`, e um índice negativo lê antes do array. Limite superior: o off-by-one, `<=` em vez de `<`.
+Two flavors. Lower bound: you check `i < len` but forget `i >= 0`, so a negative index reads before the array. Upper bound: the off-by-one, `<=` instead of `<`.
 
-**[→]** O caso famoso é o Heartbleed, em 2014. O heartbeat do TLS é um eco: o cliente manda uma palavra e o tamanho dela, e o servidor devolve-a. O OpenSSL confiava no tamanho que o cliente dizia. Pedias "bird" com tamanho 500, e o servidor devolvia "bird" mais 496 bytes do que estivesse a seguir na memória: passwords, chaves privadas.
+**[→]** The famous case is Heartbleed, 2014. The TLS heartbeat keeps a session alive: the client sends some data and its length, and the server echoes it. OpenSSL reused the client's length to decide how many bytes to copy from memory. Ask for "bird" with length 500 and you get "bird" plus 496 bytes of whatever follows: passwords, private keys.
 
-**[→]** Por isso: ler já chega para ataques reais. Ou foges dados sensíveis, ou descobres endereços que depois usas para executar código, como vamos ver no ASLR.
+**[→]** So reading alone is enough for real attacks: you leak sensitive data, or you learn addresses that you then use to run code already in memory, which is how attackers beat ASLR.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: CrowdStrike">
+
+<Quiz
+  source="Test 1, 2024/25"
+  options={[
+    "Data Execution Prevention, so the overflow cannot write to the 21st input.",
+    "Control-Flow Integrity, so the interpreter cannot read the 21st input.",
+    "Code instrumentation when the interpreter is compiled, to check the number of inputs at runtime.",
+    "ARM Memory Tagging, to enforce that the overflow causes an exception.",
+  ]}
+  correct={2}
+>
+
+CrowdStrike outage: the Content Interpreter expected 20 input values, a template compared against a 21st, and the **out-of-bounds read** crashed the system. Conceptually, what could have helped?
+
+<div slot="answer">
+
+A runtime bounds check catches the bad read and lets the code handle it.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** C. It's a read, so DEP, which stops executing data, is irrelevant, and so is "write". CFI checks jumps, not array reads. Memory tagging would raise an exception, but an exception in the kernel is exactly the crash that happened. A check on the number of inputs, inserted at compile time, turns it into an error the interpreter can reject.
 
 </Notes>
 </Slide>
@@ -796,15 +1165,15 @@ Há dois sabores. Limite inferior: verificas `i < len` mas esqueces `i >= 0`, e 
 ```c
 char buf[64];
 fgets(buf, 64, stdin);
-printf(buf);  // input = formato
+printf(buf);  // input = format
 ```
 
 <Reveal start={1} class="small">
 
-- `%x` imprime o próximo valor da stack
-- `%s` usa-o como **ponteiro** e lê essa memória
-- `<endereço>%x%x%s`: leitura **arbitrária**, porque o formato está na stack
-- `%n` **escreve** quantos caracteres já imprimiu: escrita arbitrária
+- `%x` prints the next value on the stack
+- `%s` reads memory through it as a **pointer**
+- `<address>%x%x%s`: **arbitrary read**, since the format is on the stack
+- `%n` **writes** the count of printed characters: arbitrary write
 
 </Reveal>
 
@@ -814,22 +1183,22 @@ printf(buf);  // input = formato
 <MemoryStack
   width={920}
   rows={[
-    { value: "endereço + %x%x%s", tone: "buf", label: "buf (o formato)", focus: "2" },
-    { value: "0xdeadbeef", tone: "local", label: "outra local" },
-    { value: "0x00000005", tone: "local", label: "outra local", focus: "1-1" },
-    { value: "&buf", tone: "arg", label: "1.º argumento de printf" },
-    { value: "ret", tone: "ret", label: "retorno de printf" },
+    { value: "address + %x%x%s", tone: "buf", label: "buf (the format)", focus: "2" },
+    { value: "0xdeadbeef", tone: "local", label: "another local" },
+    { value: "0x00000005", tone: "local", label: "another local", focus: "1-1" },
+    { value: "&buf", tone: "arg", label: "printf's 1st argument" },
+    { value: "ret", tone: "ret", label: "printf's return" },
   ]}
   pointers={[
-    { name: "1.º %x", row: 2, at: "1" },
-    { name: "2.º %x", row: 1, at: "2" },
+    { name: "1st %x", row: 2, at: "1" },
+    { name: "2nd %x", row: 1, at: "2" },
     { name: "%s", row: 0, at: "2" },
   ]}
   captions={[
-    { at: "1-1", text: "printf acha que tem argumentos e vai buscá-los à stack: imprime 5." },
-    { at: "2-2", text: "O 2.º %x imprime deadbeef; o %s usa os primeiros bytes do buf como ponteiro." },
-    { at: "3-3", text: "O formato está na stack: escolhes o endereço (0x08403010) e lês o que lá estiver." },
-    { at: "4", text: "Com %n, o mesmo truque escreve nesse endereço." },
+    { at: "1-1", text: "printf thinks it has arguments and takes them from the stack: prints 5." },
+    { at: "2-2", text: "The 2nd %x prints deadbeef. %s uses the first bytes of buf as a pointer." },
+    { at: "3-3", text: "The format is on the stack: pick the address, read what is there." },
+    { at: "4", text: "With %n, the same trick writes to that address." },
   ]}
 />
 
@@ -838,15 +1207,75 @@ printf(buf);  // input = formato
 
 <Notes>
 
-Format strings. O `printf` é variádico: lê os argumentos da stack conforme o formato manda. O bug é passar o input do utilizador como formato.
+`printf` is variadic: it takes as many arguments as the format string asks for, and they're simply read from the stack above the format pointer. The bug is `printf(s)` instead of `printf("%s", s)`: the user's input becomes the format.
 
-**[→]** Se o utilizador escrever `%x`, o printf imprime o próximo valor da stack. Não há argumento nenhum, mas ele não sabe: vai buscar o que lá estiver. Aqui, o 5.
+**[→]** If the user types `%x`, printf prints the next value on the stack. There's no real argument, but printf can't know. Here it prints 5. More `%x` walks further up the stack.
 
-Mais um `%x` e é o valor seguinte. Estás a ler a stack.
+**[→]** `%s` is worse: it treats the value as a pointer and prints the memory it points to. **[→]** And since the format string itself is in a buffer on the stack, you can start the string with an address, add enough `%x` to walk up to it, and then `%s` reads that address. Arbitrary read. That's why in the lab you counted how many `%x` it takes to print the first 4 bytes of your own input.
 
-**[→]** O `%s` é pior: usa o valor como ponteiro e imprime a memória para onde ele aponta. **[→]** E como o próprio formato está num buffer na stack, se começares a string com um endereço e meteres `%x` suficientes para lá chegar, o `%s` lê esse endereço. Leitura arbitrária.
+**[→]** `%n` stores the number of characters printed so far at the address given by its argument: arbitrary write. To write a big value you'd need billions of characters, but there are tricks like `%*`. Most platforms disable `%n` today, and printf with `%n` is even Turing-complete. One more variant: `sprintf(dst, src)` after checking `strlen(src)` fits. If `src` contains `%s`, the output can be far longer than `src`.
 
-**[→]** E o `%n` escreve o número de caracteres impressos até ali no endereço do argumento. Isso é escrita arbitrária. Está desativado na maioria das plataformas hoje, mas é o que os slides querem que saibas. Há também o caso do `sprintf(dst, src)`, em que um `%s` no `src` escreve mais do que a verificação de tamanho esperava.
+</Notes>
+</Slide>
+
+<Slide title="Question: printf crash">
+
+<Quiz
+  source="Resit, 2022/23"
+  options={[
+    "`int n=1; printf(\"%n%f\",&n);`",
+    "`int n=1; printf(\"%s%d\",n);`",
+    "`int n=0; printf(\"%f%d\",n);`",
+    "`int n=0; printf(\"%s%x\",&n);`",
+  ]}
+  correct={1}
+  columns={2}
+>
+
+Certain format strings make a program crash with very high probability. Which is very likely to crash?
+
+<div slot="answer">
+
+`%s` dereferences its argument: the integer 1 is not a valid address.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** B. `%s` treats its argument as a pointer, and 1 points into unmapped memory, so it segfaults. In D, `%s` gets `&n`, a valid address holding zero, so it prints an empty string. In A, `%n` writes 0 into `n`, fine. C prints garbage numbers but reads no pointer.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: format string lab">
+
+<Quiz
+  source="Test 1, 2024/25"
+  options={[
+    "To overwrite the return address.",
+    "To write to any higher stack address.",
+    "To read from any lower stack address.",
+    "To read from any user-provided address.",
+  ]}
+  correct={3}
+  columns={2}
+>
+
+In the format string lab (`fread` into `buf[1500]`, then `printf(buf)`), why was it important to know how many `%x` specifiers were needed to print the first 4 bytes of the input?
+
+<div slot="answer">
+
+Then the next `%s` uses **your** 4 bytes as the pointer.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** D. Once you know that, say, the 10th `%x` prints your first 4 bytes, you put an address there and replace that `%x` with `%s`, and printf reads from your address. Or `%n` writes there.
+
+That makes the 2025 resit question easy: an attacker with that `printf(buf)` can "read a stack canary, overwrite the return address, and put back the original canary". Yes: arbitrary read and write. And the 2023/24 question combining a big buffer overflow with a format string bug: "all the other options" were possible.
 
 </Notes>
 </Slide>
@@ -855,54 +1284,85 @@ Mais um `%x` e é o valor seguinte. Estás a ler a stack.
 
 {/* ------------------------------------------------------------ SS3 */}
 
-<Chapter title="Reutilizar código: ret2libc e ROP" label="Software Security 3">
+<Chapter title="Code reuse: ret2libc and ROP" label="Software Security 3">
 
-<Slide title="DEP, ASLR e reutilização de código">
+<Slide title="DEP, ASLR and JIT spraying">
 
 
-## Já não dá para injetar código
+## Injecting code got harder
 
 <div class="cards">
 <div class="card" data-color="blue">
 
 ### DEP / W^X
 
-Uma página é **escrevível ou executável**, nunca as duas. O shellcode na stack já não corre.
+A page is **writable or executable**, never both. Shellcode on the stack no longer runs.
 
 </div>
 <div class="card" data-color="green">
 
 ### ASLR
 
-Os endereços são **baralhados** em cada execução. Já não sabes onde está o buffer.
+Addresses are **shuffled** on each run. You no longer know where the buffer is.
 
 </div>
 <div class="card" data-color="orange">
 
 ### JIT spraying
 
-Constantes do atacante compiladas pelo JIT são instruções válidas a meio. O código do JIT é executável (contorna DEP) e espalhado (contorna ASLR).
+Constants compiled by the JIT are valid instructions if you jump mid-way. JIT code is executable (beats DEP) and sprayed (beats ASLR).
 
 </div>
 </div>
 
 <Step at={1}>
 
-<p class="big"><strong>Reutilização de código</strong>: usa o que já é executável. A libc tem <code>system()</code> (corre um comando) e <code>mprotect()</code> (muda permissões de memória).</p>
+<p class="big"><strong>Code reuse</strong>: use what is already executable. libc has <code>system()</code> and <code>mprotect()</code>.</p>
 
 </Step>
 
 <Notes>
 
-As defesas modernas tornam a injeção de código difícil. Duas principais.
+Modern OSes make both steps of stealing control harder.
 
-DEP, ou W^X: uma página de memória ou é escrevível ou é executável, nunca as duas. A stack é escrevível, logo não é executável: o shellcode lá metido já não corre.
+DEP, or W^X, write xor execute: a page can be written or executed, never both. The stack is writable, so it's not executable, and shellcode there won't run. The exception is just-in-time compilers.
 
-ASLR: os endereços da stack, do heap e das bibliotecas mudam em cada execução. Já não sabes para onde apontar.
+ASLR: the locations of the stack, heap, libraries and code are shuffled on each run.
 
-Uma forma de dar a volta aos dois é JIT spraying. Os JITs de JavaScript ou Flash compilam constantes do atacante para código. Se saltares para o meio de uma instrução, os bytes da constante são lidos como NOPs e outras instruções. Esse código é executável, por isso passa o DEP, e está espalhado pela memória, por isso passa o ASLR.
+JIT spraying abuses that exception. Java, JavaScript and Flash compile hot code to machine code on the fly. The attacker writes harmless-looking code full of constants. The JIT turns each constant into bytes inside instructions. Jump into the middle of an instruction, a "half address", and those bytes decode as the attacker's instructions. That code is executable, so DEP doesn't help, and the attacker can make the JIT produce many copies, so ASLR doesn't help.
 
-**[→]** A ideia geral, porém, é: se não podes injetar código, usa o código que já lá está. As bibliotecas estão em memória executável, e a libc tem tudo o que precisas: `system` para correr comandos e `mprotect` para mudar permissões de memória.
+**[→]** The general idea, though: if you can't inject code, reuse code that's already in executable memory. Linked libraries. Chrome uses around a hundred, and almost every program links libc, which has `system` to run a shell command and `mprotect` to change memory permissions. Library addresses are also easier to predict.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: JIT spraying">
+
+<Quiz
+  source="Test 1, 2023/24"
+  options={[
+    "The JIT compiler disables address randomisation, so the attacker can predict the shellcode addresses.",
+    "The JIT compiler relaxes Write Or Execute restrictions, so the attacker can inject many copies of the shellcode.",
+    "The attacker can reuse code generated just-in-time to build a shellcode and spray memory to make it executable.",
+    "The code is compiled on the fly with no stack protections or run-time instrumentation.",
+  ]}
+  correct={2}
+>
+
+Why is a JIT spraying attack particularly effective?
+
+<div slot="answer">
+
+The JIT itself writes the attacker's bytes into **executable** memory, many times over.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** C. The JIT doesn't disable ASLR, the spraying works around it. B is close, but the attacker doesn't inject anything directly: the JIT produces the code. D is made up.
+
+The 2023 resit asked why JIT is a security problem in general: because it violates W^X. The JIT has to write code and then run it.
 
 </Notes>
 </Slide>
@@ -917,15 +1377,15 @@ Uma forma de dar a volta aos dois é JIT spraying. Os JITs de JavaScript ou Flas
 
 <Reveal start={1}>
 
-- O overflow troca o ret por **`&system`**
-- Acima dele, uma **chamada falsa**: o "ret" de system e o seu argumento
-- `&exit` como retorno: o programa acaba **limpo**, sem crash que dê nas vistas
+- The overflow replaces ret with **`&system`**
+- Above it, a **fake call**: a "ret", then the argument
+- `&exit` as that ret: the program ends **cleanly**, no telltale crash
 
 </Reveal>
 
 <Step at={4}>
 
-<p class="small muted">Nenhum byte é executado na stack. O DEP não tem nada a dizer.</p>
+<p class="small muted">No byte runs on the stack. DEP has nothing to say.</p>
 
 </Step>
 
@@ -940,14 +1400,14 @@ Uma forma de dar a volta aos dois é JIT spraying. Os JITs de JavaScript ou Flas
         { at: "0-0", text: "…", tone: "muted" },
         { at: "1", text: "\"sh\"", tone: "data" },
       ],
-      label: [{ at: "1", text: "a string do comando" }],
+      label: [{ at: "1", text: "the command string" }],
     },
     {
       value: [
         { at: "0-0", text: "…", tone: "muted" },
         { at: "1", text: "&\"sh\"", tone: "arg" },
       ],
-      label: [{ at: "2", text: "argumento de system" }],
+      label: [{ at: "2", text: "system's argument" }],
       focus: "2-2",
     },
     {
@@ -956,8 +1416,8 @@ Uma forma de dar a volta aos dois é JIT spraying. Os JITs de JavaScript ou Flas
         { at: "1", text: "&exit", tone: "gadget" },
       ],
       label: [
-        { at: "0-1", text: "argumento de f" },
-        { at: "2", text: "\"ret\" de system" },
+        { at: "0-1", text: "f's argument" },
+        { at: "2", text: "system's \"ret\"" },
       ],
       focus: "3-3",
     },
@@ -966,11 +1426,11 @@ Uma forma de dar a volta aos dois é JIT spraying. Os JITs de JavaScript ou Flas
         { at: "0-0", text: "ret → main", tone: "ret" },
         { at: "1", text: "&system", tone: "bad" },
       ],
-      label: "ret de f",
+      label: "f's ret",
     },
     {
       value: [
-        { at: "0-0", text: "ebp guardado", tone: "fp" },
+        { at: "0-0", text: "saved ebp", tone: "fp" },
         { at: "1", text: "AAAA", tone: "bad" },
       ],
     },
@@ -987,9 +1447,9 @@ Uma forma de dar a volta aos dois é JIT spraying. Os JITs de JavaScript ou Flas
     { name: "esp", row: 2, at: "2" },
   ]}
   captions={[
-    { at: "1-1", text: "f faz ret: tira &system da stack e salta para lá." },
-    { at: "2-2", text: "Para system, &exit é o endereço de retorno e &\"sh\" o 1.º argumento." },
-    { at: "3", text: "system(\"sh\") abre a shell; quando sai, volta para exit()." },
+    { at: "1-1", text: "f returns: pops &system and jumps there." },
+    { at: "2-2", text: "To system, &exit is its return address and &\"sh\" its 1st argument." },
+    { at: "3", text: "system(\"sh\") opens the shell. When it exits, it returns into exit()." },
   ]}
 />
 
@@ -998,34 +1458,136 @@ Uma forma de dar a volta aos dois é JIT spraying. Os JITs de JavaScript ou Flas
 
 <Notes>
 
-return-to-libc: em vez de saltar para código nosso, saltamos para o `system` da libc.
+return-to-libc: instead of jumping to our code, we jump to libc's `system`.
 
-**[→]** O overflow escreve `&system` por cima do endereço de retorno. Quando `f` faz `ret`, salta para o início de `system`.
+**[→]** The overflow writes `&system` over the return address. When `f` returns, it jumps to the start of `system`.
 
-**[→]** Mas `system` precisa de um argumento. Lembra-te da convenção de chamada: quando uma função começa, espera ver na stack o endereço de retorno e por cima dele os argumentos. Então o atacante monta uma chamada falsa: logo acima de `&system` mete o que vai ser o endereço de retorno de `system`, e acima disso o ponteiro para a string "sh".
+**[→]** But `system` needs an argument. Recall the calling convention: when a function starts, it expects its return address at the top of the stack and its arguments right above. So the attacker builds a fake call: right above `&system`, the word that `system` will treat as its return address, and above that, a pointer to the string "sh". The string itself goes somewhere safe, far from the frame.
 
-**[→]** Como endereço de retorno usa `&exit`. Assim, quando a shell termina, o programa acaba de forma limpa, sem crash, o que ajuda a não ser detetado.
+**[→]** For the return address she uses `&exit`. When the shell ends, the program exits normally, no crash, which helps avoid detection.
 
-**[→]** Repara: não se executou um único byte da stack. Só se escreveram endereços. Por isso o DEP não trava isto. O ASLR já dificulta, porque precisas de saber onde está a libc.
+**[→]** Notice that not one byte on the stack was executed. Only addresses were written. That's why DEP doesn't stop this. ASLR does make it harder, because you need to know where libc is.
 
 </Notes>
 </Slide>
 
-<Slide title="ROP">
+<Slide title="Question: ret2libc">
+
+<Quiz
+  source="Test 1, 2024/25"
+  options={[
+    "0 = \"sh\"; 2 = &system; 3 = &exit; 4 = 0x000000",
+    "2 = &system; 4 = &exit; 5 = 0x000090; 6 = \"sh\"",
+    "1 = &exit; 2 = &system; 3 = \"sh\"; 4 = 0x000088",
+    "1 = &system; 2 = &exit; 3 = 0x00008C; 4 = \"sh\"",
+  ]}
+  correct={0}
+>
+
+Turn `strcpy(buf, evil)` into `system("sh"); exit();`. Slots: **0** = `buf` at 0x000000, **1** = saved frame pointer at 0x000080, **2** = return address at 0x000084, then **3**, **4**, **5**, **6** at 0x88, 0x8C, 0x90, 0x94.
+
+<div slot="answer">
+
+Ret = `&system`, the next word is system's return (`&exit`), the next is its argument: the address of "sh".
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** A. Read it like the slide before: slot 2 is the return address, so `&system` goes there. Slot 3 is what `system` sees as its return address: `&exit`. Slot 4 is its first argument, a pointer to the command, and 0x000000 is the start of `buf`, where slot 0 put "sh". D puts `&system` in the frame pointer slot. C puts `&exit` in the frame pointer and the string itself where system expects its return address. B skips slot 3, so system would return to whatever is there and take `&exit` as its argument.
+
+</Notes>
+</Slide>
+
+<Slide title="ROP: no arguments">
 
 
-## ROP: encadear gadgets
+## Chaining returns
+
+<Cols columns="1.3fr 1fr" gap={72} align="start">
+<div>
+
+<MemoryStack
+  width={1000}
+  rows={[
+    { value: "…", tone: "muted" },
+    { value: "&f3", tone: "gadget", focus: "3" },
+    { value: "&f2", tone: "gadget", focus: "2-2" },
+    { value: "&f1", tone: "gadget", label: "the overwritten ret", focus: "1-1" },
+  ]}
+  pointers={[
+    { name: "esp", row: 3, at: "1-1" },
+    { name: "esp", row: 2, at: "2-2" },
+    { name: "esp", row: 1, at: "3" },
+  ]}
+/>
+
+</div>
+<div>
+
+<Reveal start={1}>
+
+- Each `ret` pops the **next** address
+- First function = **lowest** address
+- Only the **last** one takes arguments easily
+
+</Reveal>
+
+</div>
+</Cols>
+
+<Notes>
+
+If one libc function works, why not N in a row? That's return-oriented programming. Start with the simple case.
+
+**[→]** A function with no parameters only uses its return address, and `ret` always removes it. So the overwritten return address is `&f1`: `f1` runs, and when it returns it pops the next word. **[→]** That's `&f2`. **[→]** Then `&f3`. The functions go in the stack in reverse order: the first to run at the lowest address.
+
+Now arguments. A function's arguments sit right after its own return address. So after a run of functions without arguments, you can call one function `fn` with arguments: `&fn`, then `&fn+1` as its return address, then its parameters. But `fn+1` must take no arguments, because the slots after its return address are `fn`'s parameters. That's the 2021 question: with f1 to f5, the easy one to give arguments is the last one.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: ROP order">
+
+<Quiz
+  source="Resit, 2022/23"
+  options={["2, 4, 5, 1, 3", "ROP does not use the stack.", "ROP can return to at most one function.", "3, 1, 5, 4, 2"]}
+  correct={0}
+  columns={2}
+>
+
+From the higher address down, the stack holds `&f3`, `&f1`, `&f5`, `&f4`, `&f2`. In which order do the functions run?
+
+<div slot="answer">
+
+Execution starts at the **lowest** address and moves up.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** A, 2, 4, 5, 1, 3. The lowest address is the overwritten return address, so `f2` runs first, then each `ret` pops the next word up. D is the trap: it reads top to bottom.
+
+</Notes>
+</Slide>
+
+<Slide title="ROP gadgets">
+
+
+## ROP: chaining gadgets
 
 <Cols columns="1fr 940px" gap={64} align="start">
 <div>
 
-- **Gadget**: instruções que acabam em `ret`
-- Cada `ret` salta para o próximo: a stack **é o programa**
-- `pop; ret` **limpa os argumentos**
+- **Gadget**: a few instructions that end in `ret`
+- Each `ret` jumps to the next: the stack **is the program**
+- `pop; ret` **cleans up arguments**
 
 <Step at={6}>
 
-<p class="small muted">"ROP é como uma carta de resgate, mas em vez de recortar letras de revistas, recortas instruções." · Dino Dai Zovi</p>
+<p class="small muted">Found in a "letter soup" of existing code. Turing-complete.</p>
 
 </Step>
 
@@ -1036,14 +1598,14 @@ return-to-libc: em vez de saltar para código nosso, saltamos para o `system` da
   width={940}
   compact
   rows={[
-    { value: "&fun3", tone: "gadget", focus: "5" },
+    { value: "&f3", tone: "gadget", focus: "5" },
     { value: "v", tone: "arg" },
     { value: "u", tone: "arg" },
     { value: "pop ebx; pop ebp; ret", tone: "code", focus: "4-4" },
-    { value: "&fun2", tone: "gadget", focus: "3-3" },
+    { value: "&f2", tone: "gadget", focus: "3-3" },
     { value: "t", tone: "arg", focus: "2-2" },
     { value: "pop ebp; ret", tone: "code", focus: "1-1" },
-    { value: "&fun1", tone: "gadget", focus: "0-0" },
+    { value: "&f1", tone: "gadget", focus: "0-0" },
   ]}
   pointers={[
     { name: "esp", row: 7, at: "0-0" },
@@ -1054,12 +1616,12 @@ return-to-libc: em vez de saltar para código nosso, saltamos para o `system` da
     { name: "esp", row: 0, at: "5" },
   ]}
   captions={[
-    { at: "0-0", text: "ret tira &fun1: fun1 corre." },
-    { at: "1-1", text: "O \"retorno\" de fun1 é um gadget; o argumento dela é t." },
-    { at: "2-2", text: "pop ebp tira t da stack…" },
-    { at: "3-3", text: "…e ret salta para fun2(u, v)." },
-    { at: "4-4", text: "fun2 volta para pop; pop; ret, que tira u e v…" },
-    { at: "5", text: "…e salta para fun3. Sem uma linha de código injetado." },
+    { at: "0-0", text: "ret pops &f1: f1 runs." },
+    { at: "1-1", text: "f1's \"return\" is a gadget. Its argument is t." },
+    { at: "2-2", text: "pop ebp removes t…" },
+    { at: "3-3", text: "…and ret jumps to f2(u, v)." },
+    { at: "4-4", text: "f2 returns to pop; pop; ret, which removes u and v…" },
+    { at: "5", text: "…and jumps to f3. No injected code at all." },
   ]}
 />
 
@@ -1068,48 +1630,152 @@ return-to-libc: em vez de saltar para código nosso, saltamos para o `system` da
 
 <Notes>
 
-Return-oriented programming. Generalizamos o return-to-libc: em vez de uma função, encadeamos muitas.
+Now `f1(t); f2(u, v); f3(w, x, y)`. Why is this harder? In a real call, the caller cleans the arguments off the stack after the call returns. In ROP there's no real caller: nothing removes `t`, so when we enter `f2`, the stack still has garbage from `f1`.
 
-Um gadget é uma sequência curta de instruções que acaba em `ret`. O truque: cada `ret` tira o próximo endereço da stack e salta para lá. Então se a stack tiver uma lista de endereços, cada gadget, ao terminar, salta para o seguinte. A stack passa a ser o programa, e o esp faz de program counter.
+The fix: between `f1` and `f2`, put the address of a little piece of code that pops the right number of words, or moves `esp` directly, and then returns. That's a gadget.
 
-Vamos seguir o esp. Ao início o `ret` tira `&fun1`. **[→]** A `fun1` corre; para ela, o endereço de retorno é o gadget `pop ebp; ret` e o argumento é `t`. **[→]** Quando `fun1` retorna, entra o gadget: o `pop` tira o `t` da stack, para o limpar. **[→]** E o `ret` salta para `fun2`, com argumentos `u` e `v`. **[→]** A `fun2` retorna para um gadget com dois pops, que limpa `u` e `v`, **[→]** e salta para `fun3`.
+Follow `esp`. At the start, `ret` pops `&f1`. **[→]** `f1` runs. To it, the return address is the gadget `pop ebp; ret`, and its argument is `t`. **[→]** When `f1` returns, the gadget pops `t` off the stack, **[→]** and its `ret` jumps to `f2`, with arguments `u` and `v`. **[→]** `f2` returns into a two-pop gadget that removes `u` and `v`, **[→]** and jumps to `f3`.
 
-**[→]** É por isso que se diz que é como uma carta de resgate: recortas instruções que já existem no binário e colas uma atrás da outra. É Turing-completo, até dá para fazer condições mexendo no stack pointer.
+**[→]** In general, any sequence that ends in `ret`, or more recently `jmp` or `call`, is a gadget. You treat the program and libraries as a letter soup: search for gadgets automatically, then chain them into the behavior you want. Straight-line code is easy, conditionals are possible by changing the stack pointer, so ROP is Turing-complete.
 
-Hoje o PIE, executáveis independentes da posição, torna o ROP bem mais difícil, por isso os atacantes procuram gadgets em tempo de execução.
+History: before DEP, attackers just injected code. After DEP, around 2007, libc gadgets. After ASLR, gadgets from code at predictable addresses. Today compilers produce position-independent executables, PIE, loaded at random addresses, which makes ROP much harder, so attackers find gadgets at run time.
 
 </Notes>
 </Slide>
 
-<Slide title="Encontrar e divulgar">
+<Slide title="Question: ROP arguments">
+
+<Quiz
+  source="Test 1, 2023/24"
+  options={[
+    "The caller to each called function does not clean the passed parameters from the stack.",
+    "We can only call functions with arguments already present in the original stack.",
+    "We are writing over the stack frames of the calling functions.",
+    "Each called function does not clean its parameters from the stack as it should.",
+  ]}
+  correct={0}
+>
+
+Why is it more complicated to simulate the sequential call to multiple functions **with parameters** in a ROP attack?
+
+<div slot="answer">
+
+Arguments are the **caller's** job to clean, and in ROP there is no real caller.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** A. D is the trap: functions never clean their own parameters, that's the caller's job in this convention, so they're not failing to do anything "as they should". There's no caller to clean up, so we add `pop; ret` gadgets. B is false because we write the arguments ourselves.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: ROP with arguments">
+
+<Quiz
+  source="Resit, 2023/24"
+  options={["`&f2; x; &f1; y; &f3`", "`&f3; x; &f2; &f1; y`", "None of the other options.", "`&f1; x; &f2; &f3; y`"]}
+  correct={2}
+  columns={2}
+>
+
+Run `f1(x)`, `f2()`, `f3(y)` in that order. From low to high addresses, starting at the return address, how do you prepare the stack?
+
+<div slot="answer">
+
+`f1`'s argument must sit **after its return address**, so it needs a gadget: `&f1; G; x; &f2; &f3; &exit; y`.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** C, none of them. A and B call the functions in the wrong order. D looks right but put it through the rule: when `f1` starts, the next word is its return address and the one after is its argument. In D, `f1` would return to `x` and take `&f2` as its argument. A working chain: `&f1`, a `pop; ret` gadget, `x`, `&f2`, `&f3`, then `f3`'s return address, then `y`.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: gadget G">
+
+<Cols columns="1fr 360px" gap={64} align="start">
+<div>
+
+<Quiz
+  source="First Test Resit, 2024/25"
+  options={["`f(a); g(b); h(c);`", "`f(a);`", "`f(a); h(b,c);`", "`f(a); g(); h(b,c);`"]}
+  correct={0}
+  columns={2}
+>
+
+`G` is a gadget that moves the stack pointer. For a suitable `G`, which sequence (ending in `exit` with no arguments) is **not** possible?
+
+<div slot="answer">
+
+`g` returns to `&h`, so its argument slot holds `&exit`, not `b`.
+
+</div>
+</Quiz>
+
+</div>
+<div>
+
+<MemoryStack
+  width={360}
+  compact
+  growth="none"
+  rows={[
+    { value: "c" },
+    { value: "b" },
+    { value: "&exit" },
+    { value: "&h" },
+    { value: "&g" },
+    { value: "a" },
+    { value: "G", tone: "code" },
+    { value: "&f", tone: "gadget" },
+  ]}
+  pointers={[{ name: "esp", row: 7 }]}
+/>
+
+</div>
+</Cols>
+
+<Notes>
+
+**[→]** A. Walk it. `f` runs with return address `G` and argument `a`. `G` pops `a`, then returns to `g`. For `g`, the next word, `&h`, is its return address, and the word after is `&exit`, so `g` can't receive `b`. Then `h` runs with return address `&exit` and arguments `b, c`. So D, `f(a); g(); h(b,c)` works. C works if `G` skips two words and lands on `&h`. B works if `G` skips straight to `&exit`.
+
+</Notes>
+</Slide>
+
+<Slide title="Finding and disclosing">
 
 
-## Encontrar e divulgar
+## Finding and disclosing
 
 <Cols columns="1fr 1fr" gap={72}>
 <div>
 
-### Encontrar
+### Finding
 
 <Reveal start={1}>
 
-- **Fuzzing**: inputs aleatórios, investigar crashes
-- Erro de memória = **vulnerabilidade potencial**; o exploit dá muito mais trabalho
-- Um crash vale ouro (relatórios de crash do iPhone)
+- **Fuzzing**: feed random inputs
+- Memory error = **potential vulnerability**. The exploit is much more work.
+- Even a crash has value
 
 </Reveal>
 
 </div>
 <div>
 
-### Divulgar
+### Disclosing
 
 <Reveal start={4}>
 
-- Bug bounties e **divulgação coordenada** evitam zero-days
-- **SQL Slammer**: falha já corrigida, exploit publicado, infeções a duplicar a cada **8,5 s**
-- **Blaster**: engenharia reversa do patch
-- **40%+** dos zero-days de 2022: variantes de falhas já reportadas
+- Bug bounties and **coordinated disclosure** avoid zero-days
+- **SQL Slammer**: bug already fixed, exploit published, systems unpatched
+- **Blaster**: built by reverse engineering the patch
 
 </Reveal>
 
@@ -1118,13 +1784,41 @@ Hoje o PIE, executáveis independentes da posição, torna o ROP bem mais difíc
 
 <Notes>
 
-Resumindo os dois tipos de erro: uma escrita fora dos limites pode desviar o fluxo e correr código arbitrário. Uma leitura fora dos limites pode fugir segredos e ajudar a correr código que já está em memória.
+Wrapping up memory errors: an out-of-bounds write can change the control flow and run arbitrary code. An out-of-bounds read can leak secrets and help run code already in memory.
 
-Como se encontram? **[→]** Fuzzing: atiras inputs aleatórios ao programa e investigas os crashes. **[→]** Um erro de memória confirmado é uma vulnerabilidade potencial; transformá-lo num exploit que funciona é muito mais trabalho. **[→]** Mas um crash tem valor: os jailbreakers chegaram a intercetar os relatórios de crash do iPhone que iam para a Apple.
+How are these found? **[→]** The general pattern: a memory error shows up as a crash. A fuzzer throws many arbitrary inputs at the program and you investigate every crash. **[→]** A confirmed memory error is immediately treated as a potential vulnerability, but building a working exploit is much more work. **[→]** Still, a crash is worth something: jailbreakers once intercepted iPhone crash reports sent to Apple to find bugs.
 
-E depois de encontrar? **[→]** Bug bounties e divulgação coordenada evitam que vire um zero-day. **[→]** Mas reportar não é o fim. O SQL Slammer usou uma falha do SQL Server que já estava corrigida; alguém publicou como explorá-la e muita gente não tinha atualizado. As infeções duplicavam a cada 8,5 segundos e houve multibancos do Bank of America offline.
+Then disclosure. **[→]** We need experts searching for bugs, and care in how bugs are disclosed. Bug bounties and reporting platforms exist so that reported bugs don't become working zero-days. **[→]** But reporting isn't the end. SQL Slammer, 2002 to 2003: a buffer overflow in SQL Server had already been found and fixed. A researcher published a write-up showing how to turn it into a worm, and that became the basis of Slammer. A huge number of servers hadn't installed the patch.
 
-**[→]** O Blaster foi parecido: o patch estava cá fora há um mês, e fizeram engenharia reversa dele para construir o ataque. **[→]** E a Google viu que mais de 40% dos zero-days explorados em 2022 eram variantes de falhas já reportadas. Patches incompletos não resolvem.
+**[→]** Blaster, 2003, same story with Windows: attackers reverse engineered the published patch to find the bug. And Google found that over 40% of the zero-days exploited in 2022 were variants of bugs already reported. Incomplete patches don't end the problem.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: Slammer">
+
+<Quiz
+  options={[
+    "The bug was a zero-day that nobody knew about.",
+    "The patch existed, an exploit write-up was public, and many servers were unpatched.",
+    "DEP was not available in SQL Server.",
+    "The worm used ROP to bypass ASLR.",
+  ]}
+  correct={1}
+>
+
+Why did SQL Slammer spread so fast?
+
+<div slot="answer">
+
+Disclosure is not the end: patches must be **applied**, and public details help attackers too.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** B. It was not a zero-day: the fix already existed. The lesson is about patching and disclosure, not about DEP or ROP.
 
 </Notes>
 </Slide>
@@ -1133,83 +1827,140 @@ E depois de encontrar? **[→]** Bug bounties e divulgação coordenada evitam q
 
 {/* ------------------------------------------------------------ SS4 */}
 
-<Chapter title="Defesas contra ataques de memória" label="Software Security 4">
+<Chapter title="Defenses against memory attacks" label="Software Security 4">
 
-<Slide title="Defesa em profundidade, por nível">
+<Slide title="Defense in depth by layer">
 
 
-## Defesa em profundidade, por nível
+## Defense in depth, by layer
 
-| nível | exemplos |
+| layer | examples |
 | --- | --- |
-| **Linguagem** | linguagens memory-safe (Java, Haskell, Go, Rust), verificação, compilação segura |
-| **Compilador / aplicação** | canários, PIE, instrumentação: <Mark at={1} type="highlight">o exploit vira DoS</Mark> |
-| **Sistema operativo** | DEP / W^X, ASLR |
-| **Hardware** | bit NX, shadow stack (Intel CET), MTE, TEEs, secure boot |
+| **Language** | memory-safe languages, program verification, secure compilation |
+| **Compiler / app** | canaries, PIE, instrumentation: <Mark at={1} type="highlight">exploit becomes DoS</Mark> |
+| **Operating system** | DEP / W^X, ASLR |
+| **Hardware** | NX bit, shadow stack, MTE, TEEs, secure boot |
 
 <Step at={2}>
 
-<p class="big">A raiz comum: <strong>dados de fora do perímetro interferem com o fluxo de controlo</strong> (um buffer ao lado de um endereço de retorno).</p>
+<p class="big">The common root: <strong>data from outside the perimeter interferes with control flow</strong>.</p>
 
 </Step>
 
 <Notes>
 
-Agora as defesas. A ideia é defesa em profundidade: várias camadas, porque qualquer uma pode falhar. Os slides organizam-nas por nível.
+Every attack so far, stack and heap overflows, use-after-free, format strings, integer overflows, shares one root. We'll see it again in web security.
 
-Na linguagem: usar linguagens memory-safe, verificação de programas, compilação segura. No compilador e na aplicação: detetar o desvio de controlo, com canários ou instrumentação. **[→]** E repara no efeito: estas defesas transformam execução de código em DoS, porque o programa aborta. Continua a ser um ataque, mas muito menos grave.
+Defense in depth: several layers, because any one can fail. In the language: memory-safe languages like Java, Haskell, Go and Rust, program verification, which is more effort but the only option for critical legacy code, and secure compilation. In the compiler and the application: detect hijacking attempts by monitoring the stack or tagging memory. **[→]** The effect matters: these defenses turn code execution into a DoS, because the program aborts. Still an attack, but much less serious.
 
-No sistema operativo: impedir a execução de código malicioso, com DEP e ASLR. No hardware: o bit NX, shadow stacks, memory tagging, ambientes de execução confiáveis, secure boot.
+In the operating system: prevent malicious code from running, with DEP and ASLR. In the hardware: the instruction set, trusted execution environments, secure boot.
 
-**[→]** E a raiz de tudo isto é sempre a mesma: dados que vêm de fora do perímetro conseguem interferir com o fluxo de controlo.
+**[→]** And the root cause: data from outside the security perimeter can interfere with the program's control flow, like a buffer stored next to a return address. Even with good principles, one implementation error can break every guarantee.
 
 </Notes>
 </Slide>
 
-<Slide title="DEP e ASLR, e como se contornam">
+<Slide title="Question: DEP layer">
+
+<Quiz
+  source="Test 1, 2023/24"
+  options={["The running application.", "The programming language.", "The operating system.", "The hypervisor hardware."]}
+  correct={2}
+  columns={2}
+>
+
+Data Execution Prevention (W^X) is a defense at which layer?
+
+<div slot="answer">
+
+The OS enforces it with page permissions, using the hardware NX bit.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** C, the operating system. It's tempting to say hardware because of the NX bit, but the option is "hypervisor hardware", and the lecture puts DEP under OS countermeasures: the OS sets the page permissions, the hardware only checks them.
+
+</Notes>
+</Slide>
+
+<Slide title="DEP, ASLR, PIE and bypasses">
 
 
-## DEP e ASLR, e como se contornam
+## How each is bypassed
 
-| defesa | impede | contorna-se com |
+| defense | prevents | bypassed by |
 | --- | --- | --- |
-| **DEP / W^X** (bit NX) | executar código injetado | <Step at={1} inline>ROP, return-to-libc · problemas com JIT</Step> |
-| **ASLR** | prever endereços | <Step at={2} inline>fuga de **um** endereço, spraying, força bruta no mesmo processo</Step> |
-| **KASLR** | saber onde está o kernel | <Step at={3} inline>só baralha no arranque: basta a base do kernel</Step> |
+| **DEP / W^X** | running injected code | <Step at={1} inline>ret2libc, ROP · trouble with JIT</Step> |
+| **ASLR** | predicting addresses | <Step at={2} inline>leaking **one** address, spraying, brute force</Step> |
+| **KASLR** | locating the kernel | <Step at={3} inline>shuffled only at boot: find the base</Step> |
+| **PIE** | code at a fixed address | <Step at={4} inline>leaking the code's base address</Step> |
 
-<Step at={4}>
+<Step at={5}>
 
-<p class="big">O ponto fraco do ASLR: cada região tem um offset aleatório, mas o <Mark at={4} type="underline">layout dentro dela é fixo</Mark>. Um leak revela o resto.</p>
+<p class="big">ASLR's weakness: each region gets a random offset, but its <Mark at={5} type="underline">internal layout is fixed</Mark>.</p>
 
 </Step>
 
 <Notes>
 
-DEP, ou W^X, ou executable space protection: a memória nunca é escrevível e executável ao mesmo tempo. Há suporte de hardware, o bit NX, por página. **[→]** Não trava reutilização de código: aliás, foi a motivação do ROP. E dá problemas aos JITs, que precisam de escrever código e executá-lo.
+DEP, also called executable space protection or W^X: memory is never writable and executable at the same time. It can be done in hardware with the NX bit, per page, on AMD, Intel and ARM, or emulated in software. Popular OSes have had it since the 2000s. **[→]** Its limits: it doesn't stop code reuse, in fact it's what motivated ROP. And it causes trouble for JIT compilers, which must write code and then run it.
 
-O ASLR baralha a stack, o heap, as bibliotecas e o código em cada execução. A entropia passou de 8 para 24 bits. **[→]** Contorna-se com uma fuga de endereço através de outra vulnerabilidade, com spraying, ou à força bruta dentro do mesmo processo.
+ASLR places the stack, heap, shared libraries and code at random each run, and entropy went from 8 to 24 bits. **[→]** Bypasses: leak an address through another bug, spray, or guess many times inside the same process. A research fix is runtime re-randomization, which reshuffles on forks.
 
-**[→]** O KASLR faz o mesmo ao kernel, mas só baralha no arranque, por isso basta descobrir a base do kernel.
+**[→]** Kernel ASLR does the same for the kernel, but only at boot, so the attacker just needs the kernel base. KARL, in OpenBSD, goes further and shuffles the kernel code itself.
 
-**[→]** E o ponto que mais interessa: o ASLR dá um offset aleatório a cada região, mas dentro da região o layout é fixo. Se correres `cat /proc/self/maps` duas vezes, a libc muda de sítio mas os segmentos dela mantêm as mesmas distâncias. Basta saberes um endereço da libc e sabes todos.
+**[→]** PIE: the compiler emits code that doesn't depend on absolute addresses, so the program itself can be loaded anywhere. The attacker still just needs the base address of that code.
+
+**[→]** The key weakness: run `cat /proc/self/maps` twice and libc moves, but its parts keep the same distances. Leak one libc address and you know them all.
 
 </Notes>
 </Slide>
 
-<Slide title="Canários">
+<Slide title="Question: DEP limitation">
+
+<Quiz
+  source="Resit, 2023/24"
+  options={[
+    "It does not prevent against return-oriented programming attacks.",
+    "It is only emulated in software, and hard to implement with hardware support.",
+    "An attacker can greatly increase its success rate by using spraying techniques.",
+    "It is rendered useless if an attacker finds the base address of the stack or the heap.",
+  ]}
+  correct={0}
+>
+
+Which can be seen as a limitation of Data Execution Prevention, also called W^X?
+
+<div slot="answer">
+
+ROP executes only code that is **already** executable.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** A. B is backwards, there's the NX bit. C and D describe ASLR weaknesses, not DEP: knowing an address doesn't make the stack executable. Related: the 2023 resit asked which technique makes it impossible to run shellcode on the stack. DEP. A canary only detects overwriting the return address, and ASLR only hides addresses. And the 2025 resit: classical ASLR randomizes on each execution of the program, not at boot, not on each fork.
+
+</Notes>
+</Slide>
+
+<Slide title="Stack canaries">
 
 
-## Canários de stack
+## Stack canaries
 
 <Cols columns="1fr 1000px" gap={64} align="start">
 <div>
 
 <Reveal start={3}>
 
-- **Aleatório**: precisa de boa aleatoriedade
-- **Terminador**: `\0`, `\n`, EOF, para as funções de strings pararem aí
-- GCC `-fstack-protector-strong`, MS BufferSecurityCheck
-- Simples, mas custa uma palavra por chamada e **~10%** de desempenho
+- **Random**: needs a good RNG
+- **Terminator**: `\0`, `\n`, EOF, where string functions stop
+- GCC StackGuard, MS BufferSecurityCheck
+- Simple, but costs a word per call, **~10%** speed
 
 </Reveal>
 
@@ -1219,26 +1970,26 @@ O ASLR baralha a stack, o heap, as bibliotecas e o código em cada execução. A
 <MemoryStack
   width={1000}
   rows={[
-    { value: "argumentos", tone: "arg" },
+    { value: "arguments", tone: "arg" },
     {
       value: [
         { at: "0-0", text: "ret → main", tone: "ret" },
         { at: "1", text: "0x41414141", tone: "bad" },
       ],
-      label: "endereço de retorno",
+      label: "return address",
     },
     {
       value: [
-        { at: "0-0", text: "ebp guardado", tone: "fp" },
+        { at: "0-0", text: "saved ebp", tone: "fp" },
         { at: "1", text: "0x41414141", tone: "bad" },
       ],
     },
     {
       value: [
-        { at: "0-0", text: "canário 0x3a7f9c00", tone: "canary" },
+        { at: "0-0", text: "canary 0x3a7f9c00", tone: "canary" },
         { at: "1", text: "0x41414141", tone: "bad" },
       ],
-      label: "verificado antes do ret",
+      label: "checked before ret",
       focus: "1-2",
     },
     {
@@ -1250,9 +2001,9 @@ O ASLR baralha a stack, o heap, as bibliotecas e o código em cada execução. A
     },
   ]}
   captions={[
-    { at: "0-0", text: "Um valor secreto entre as locais e o ebp/ret." },
-    { at: "1-1", text: "Para chegar ao ret, o overflow tem de passar pelo canário." },
-    { at: "2", text: "No epílogo: canário ≠ valor guardado → abort. O exploit vira DoS." },
+    { at: "0-0", text: "A secret value between the locals and the saved ebp and ret." },
+    { at: "1-1", text: "To reach ret, the overflow must cross the canary." },
+    { at: "2", text: "On exit: canary ≠ saved value → abort. The exploit becomes a DoS." },
   ]}
 />
 
@@ -1261,30 +2012,113 @@ O ASLR baralha a stack, o heap, as bibliotecas e o código em cada execução. A
 
 <Notes>
 
-Os canários de stack, o nome vem dos canários nas minas de carvão.
+Stack canaries, named after the canaries miners took into coal mines. The goal: detect stack modification before it's used.
 
-O compilador mete um valor secreto entre as variáveis locais e o ebp guardado mais o endereço de retorno. **[→]** Para um overflow chegar ao endereço de retorno, tem de passar por cima do canário. **[→]** Antes de retornar, a função compara o canário com o valor original. Se mudou, aborta. Atenção à pergunta de teste: o que impede o smash é verificar se o **valor** mudou quando a função vai saltar para o endereço de retorno. A posição não é segredo.
+The compiler instruments the entry and exit of each function. On entry it places a value between the local variables and the saved frame pointer and return address. **[→]** A contiguous overflow that wants the return address has to run over the canary first. **[→]** Before using the return address, the function compares the canary with the original. If it changed, the program terminates. So the canary sits just below the saved frame pointer and return address, not below the locals, and it's checked before jumping to the return address, not after.
 
-**[→]** Há dois tipos. Aleatório, que precisa de boa aleatoriedade. **[→]** E terminador, feito de `\0`, `\n` e EOF: as funções de strings param nesses caracteres, por isso não o conseguem reescrever com o valor certo.
+**[→]** Two variants. Random: at startup the program picks random bytes and uses them for all canaries, so it needs good randomness. **[→]** Terminator: made of `\0`, `\n`, EOF. String functions always stop at those, so a string overflow can't write them back correctly.
 
-**[→]** No GCC é o `-fstack-protector-strong`. **[→]** É simples, mas custa espaço, uma palavra por chamada, e uns 10% de desempenho.
+**[→]** GCC calls it StackGuard, `-fstack-protector-strong`. In the buffer overflow lab you compiled with it turned off. **[→]** It's simple and practical, but costs one word per call and around 10% performance.
 
 </Notes>
 </Slide>
 
-<Slide title="Contornar canários">
+<Slide title="Question: canary">
+
+<Quiz
+  source="Test 1, 2024/25"
+  options={[
+    "Without guessing the canary's position.",
+    "Without reading the canary's value.",
+    "If the canary's value has changed when calling the next function.",
+    "If the canary's value has changed when jumping to the return address.",
+  ]}
+  correct={3}
+>
+
+A canary seeks to prevent stack modification. It is impossible to "smash the stack":
+
+<div slot="answer">
+
+The check runs **right before** the function uses its return address.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** D. The check is in the function epilogue, right before the `ret`. C has the wrong moment: calling the next function. A is wrong because the position isn't secret. B is an attack, not a guarantee: reading the value is one way around it. The 2024 resit asked the same: "before jumping to the return address". And the 2023/24 test asked where it sits: immediately below the return address.
+
+</Notes>
+</Slide>
+
+<Slide title="Compiler stack layout">
 
 
-## Contornar canários
+## Where the compiler puts things
+
+<Cols columns="1fr 960px" gap={64} align="start">
+<div>
+
+<Reveal start={1}>
+
+- Buffers sit **under the canary**
+- Function pointers and other locals go **below the buffers**
+- Arguments are **copied below** the buffers and used from there
+
+</Reveal>
+
+</div>
+<div>
+
+<MemoryStack
+  width={960}
+  rows={[
+    { value: "arguments", tone: "arg", label: "original, unused" },
+    { value: "ret · saved ebp", tone: "ret" },
+    { value: "canary", tone: "canary", focus: "1-1" },
+    { value: "buffer", tone: "buf", focus: "1-1" },
+    { value: "function pointer", tone: "code", focus: "2-2" },
+    { value: "copy of arguments", tone: "arg", focus: "3" },
+  ]}
+  captions={[
+    { at: "1-1", text: "Any overflow hits the canary first." },
+    { at: "2-2", text: "Overflows write upward: they never reach these." },
+    { at: "3", text: "The function reads the safe copies." },
+  ]}
+/>
+
+</div>
+</Cols>
+
+<Notes>
+
+The canary only protects what's above it. So compilers like GCC also change the stack layout. The 2021 test asked you to draw exactly this.
+
+**[→]** Local buffers go right below the canary, so any overflow from a buffer hits the canary before anything else.
+
+**[→]** Other locals, especially function pointers, go below the buffers. An overflow writes upward, so it can't reach them. If a function pointer were above the buffer, the attacker could change it without ever touching the canary.
+
+**[→]** And the function arguments are copied to the bottom of the stack, below the buffers. The function uses those copies, so overwriting the originals above the return address does nothing.
+
+There's one more extra protection: a shadow stack, which we'll see in a moment.
+
+</Notes>
+</Slide>
+
+<Slide title="Defeating canaries">
+
+
+## Defeating canaries
 
 <Cols columns="1fr 1fr" gap={72}>
 <div>
 
 <Reveal start={1}>
 
-- Heap overflow e integer overflow **nem passam pela stack**
-- **Ler** o canário com outro bug e escrevê-lo de volta igual
-- **Ponteiro na stack**: o overflow muda `ptr` e `value` sem tocar no canário, e o próprio código faz `*ptr = value`
+- Heap and integer overflows **skip it**
+- **Read** the canary with another bug, write it back unchanged
+- **Pointer on the stack**: change `ptr` and `value`, and the code does `*ptr = value`
 
 </Reveal>
 
@@ -1293,13 +2127,13 @@ O compilador mete um valor secreto entre as variáveis locais e o ebp guardado m
 
 <Step at={4}>
 
-### Força bruta byte a byte
+### Byte-by-byte brute force
 
-Se o canário se mantém entre **forks**, escreve só o 1.º byte: crasha? Tenta o seguinte. Não crashou? Acertaste. Passa ao 2.º.
+If the canary survives **forks**, overwrite only byte 1: crash? Try the next value. No crash? Move to byte 2.
 
-<p class="huge"><Mark at={5} type="box" color="green">4 × 256</Mark></p>
+<p class="huge" style="margin-bottom:32px"><Mark at={5} type="box" color="green">4 × 256</Mark></p>
 
-<p class="big muted">tentativas, em vez de 2³²</p>
+<p class="big muted">tries instead of 2³²</p>
 
 </Step>
 
@@ -1308,144 +2142,286 @@ Se o canário se mantém entre **forks**, escreve só o 1.º byte: crasha? Tenta
 
 <Notes>
 
-Como se contornam os canários? **[→]** Primeiro, heap overflows e integer overflows nem passam pela stack, por isso o canário é irrelevante.
+How do attackers get past canaries? **[→]** First, heap and integer overflows don't go through the stack frame, so the canary doesn't matter.
 
-**[→]** Segundo, se tiveres outro bug que deixe ler memória, lês o canário e escreves o mesmo valor por cima. Ele nunca nota.
+**[→]** Second, with another bug that reads memory, like a format string, read the canary and write the same value back during the overflow. The check never notices.
 
-**[→]** Terceiro, o truque do ponteiro: se houver um ponteiro e um valor na stack entre o buffer e o canário, o overflow muda os dois sem chegar ao canário, e depois o próprio código faz `*ptr = value`. Escreves onde quiseres, por exemplo num endereço de retorno.
+**[→]** Third, existing pointers. If the code has a pointer `ptr` on the stack and writes another local `value` through it, an overflow that changes both, without reaching the canary, gives an arbitrary write. The program does the write for you, for example onto a return address.
 
-**[→]** E força bruta byte a byte. Num servidor que faz fork para cada pedido, o canário do filho é igual ao do pai. Escreves só o primeiro byte do canário. Se crashar, estava errado, tentas o seguinte. Se não crashar, acertaste, e passas ao segundo byte. **[→]** São no máximo 256 tentativas por byte: para 4 bytes, mil e tal tentativas, em vez de 2 elevado a 32.
+**[→]** And brute force. A server that forks for each request gives every child the same canary as the parent. Overwrite just the first canary byte. Crash means wrong, try the next value. No crash means right, move on. **[→]** At most 256 tries per byte, about a thousand for 4 bytes, instead of 2 to the 32. This is also why the lecture warns that restarting after a crash with the same state helps brute force.
 
 </Notes>
 </Slide>
 
-<Slide title="Pergunta: canário">
+<Slide title="Question: brute force">
 
 <Quiz
-  source="Teste 1, 2024/25"
+  source="First Test Resit, 2024/25"
   options={[
-    "Sem adivinhar a posição do canário.",
-    "Sem ler o valor do canário.",
-    "Se o valor do canário tiver mudado ao saltar para o endereço de retorno.",
-    "Ao chamar a função seguinte.",
+    "An attacker can easily guess the value of a 32-bit address.",
+    "An attacker may invoke the program many times with the same canary.",
+    "The same canary value may be used, e.g., by forks of a process.",
+    "The error for modifying a canary reveals how many bytes differ.",
   ]}
   correct={2}
 >
 
-Um canário procura impedir a modificação da stack. É impossível fazer "smash the stack":
+The stack canary is susceptible to brute force attacks because:
 
 <div slot="answer">
 
-A verificação acontece **no retorno**: se o valor mudou, o programa aborta antes do `ret`. A posição não é segredo, e ler o valor é precisamente uma forma de o contornar.
+Forks keep the parent's canary, so every failed guess teaches you something.
 
 </div>
 </Quiz>
 
 <Notes>
 
-Pergunta de 2024/25. Pausa.
-
-**[→]** É a c). O canário é verificado quando a função vai retornar; se o valor mudou, aborta. A a) está errada porque a posição não é secreta. A b) é um ataque, não uma condição de impossibilidade: se leres o valor, consegues contornar.
+**[→]** C. B is the trap: each new run of a program picks a new random canary, so running it again resets your progress. Forks copy the parent's memory, canary included. D is false: the program just aborts, the byte-by-byte trick comes from overwriting one byte at a time.
 
 </Notes>
 </Slide>
 
-<Slide title="Shadow stack, MTE e CFI">
+<Slide title="Shadow stack, MTE and CFI">
 
 
-## Mais defesas: shadow stack, MTE, CFI
+## Shadow stack, MTE, CFI
 
 <div class="cards">
 <div class="card" data-color="cyan">
 
 ### Shadow stack
 
-Uma segunda stack só com dados de controlo (ret, ebp). Compara antes de retornar. **Intel CET**: só `call`/`ret` lhe escrevem.
+A second stack with only ret and ebp, compared before returning. **Intel CET**: only `call`/`ret` write it.
 
 </div>
 <div class="card" data-color="purple">
 
-### Memory tagging (ARM MTE)
+### Memory tagging
 
-Ponteiro e memória partilham uma tag de 4 bits. Overflow → exceção. `free` muda a tag → **UAF** também dá exceção.
+ARM MTE: pointer and memory share a 4-bit tag. An overflow or a **UAF** raises an exception.
 
 </div>
 <div class="card" data-color="orange">
 
 ### CFI
 
-Grafo de controlo calculado na compilação, verificado em execução. Só **chamadas indiretas, saltos e retornos**.
+Control-flow graph built at compile time, checked at run time. Only **indirect** calls, jumps and returns.
 
 </div>
 </div>
 
 <Step at={1}>
 
-<p class="small"><strong>CFI básico</strong>: qualquer início de função serve (não trava chamadas pela ordem errada, como saltar a autenticação) · <strong>clássico</strong>: CFG sobre-aproximado (Clang, MS CFG) · <strong>CCFI</strong>: MAC em cada endereço, chave num registo. Custo alto: precisa de hardware.</p>
+<p class="small"><strong>Basic CFI</strong>: any function entry is valid, so calls in the wrong order pass · <strong>classic</strong>: over-approximated CFG (Clang, MS Control Flow Guard) · <strong>CCFI</strong>: a MAC on each address</p>
 
 </Step>
 
 <Notes>
 
-Três defesas mais recentes.
+Three newer defenses.
 
-Shadow stack: uma segunda stack redundante que só guarda dados de controlo, o endereço de retorno e o frame pointer. Antes de retornar compara as duas. Com Intel CET, a shadow stack só pode ser escrita pelas instruções `call` e `ret`.
+Shadow stack: a redundant stack that holds only control data, the return address and frame pointer. Before returning, the function checks that both stacks agree. With Intel CET, the shadow stack lives in memory that only `call` and `ret` can write. It stops return address overwrites, so it stops ROP chains built from returns.
 
-Memory tagging, no ARM: cada ponteiro e cada região de memória têm uma tag de 4 bits, e cada acesso verifica se batem certo. Um overflow para o bloco vizinho apanha uma tag diferente e dá exceção. E o `free` muda a tag do bloco, por isso um use-after-free também dá exceção.
+Memory tagging, ARM MTE: new instructions bind each pointer to its memory region with the same 4-bit tag, compared on every access. An overflow into a neighbor finds a different tag and raises an exception. `free` changes the block's tag, so use-after-free also raises one. It was designed for debugging and extra protection.
 
-Control-flow integrity: na compilação calcula-se o grafo de controlo, e em execução verifica-se que cada salto o respeita. Chamadas diretas não precisam de proteção; as indiretas, os saltos e os retornos sim.
+Control-flow integrity: the earlier defenses protect memory, CFI protects control flow. At compile time, compute a control-flow graph, the set of valid sources for each target. At run time, check each transfer against it. Direct calls need no check, their target is fixed in the code and the attacker can't change compiled code. Indirect calls, jumps and returns, including function pointers, do.
 
-**[→]** Há variantes. A básica aceita qualquer início de função como destino, por isso não trava chamar funções pela ordem errada, como saltar a autenticação. A clássica usa um grafo sobre-aproximado, como o Clang ou o Control Flow Guard da Microsoft; o difícil é calcular um grafo preciso estaticamente. E a CCFI guarda um MAC com cada endereço, com a chave num registo, nunca em memória. Tudo isto custa desempenho, por isso o suporte de hardware é essencial.
+**[→]** Variants. Basic: any function entry is a valid target, and every function entry must come from a call. It doesn't stop calling functions in a different order, like jumping over an authentication function. Classic: an over-approximated CFG, as in Clang or Microsoft Control Flow Guard. The challenge is computing a precise graph statically. CCFI: store a cryptographic MAC with every address written and check it on use, with the key in a register, never in memory. Many proposals, significant overhead, so hardware support is vital.
 
 </Notes>
 </Slide>
 
-<Slide title="Memory safety e a cadeia do Pegasus">
+<Slide title="Question: countermeasures">
+
+<Quiz
+  source="Test 1, 2023/24"
+  options={[
+    "Memory tagging checks in hardware that pointers to allocated memory regions do not overflow.",
+    "A shadow stack keeps copies of control structures and checks at run time that the original stack was not compromised.",
+    "Position-independent executables ensure that the relative positions of generated code can be randomised on each execution.",
+    "Control-flow integrity enforces that direct calls to system calls follow a pre-determined control-flow graph.",
+  ]}
+  correct={3}
+>
+
+Which of these statements about countermeasures is **not** true?
+
+<div slot="answer">
+
+CFI checks **indirect** transfers. Direct calls have a fixed target in the code.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** D. CFI protects indirect calls, jumps and returns. The word "direct" is the trap. The 2025 resit defined CFI the right way: "builds a control-flow graph of valid function calls and checks at run time that function calls follow paths in the graph". The other option there, "keeps copies of control structures", is the shadow stack. And the 2023 resit's one-liner for a shadow stack: "uses two copies of the stack".
+
+</Notes>
+</Slide>
+
+<Slide title="Which defense stops what">
 
 
-## Mesmo assim: Trident → Pegasus (iOS)
+## Which defense stops what
+
+| defense | stops | does not stop |
+| --- | --- | --- |
+| **Canary** | stack overflow up to ret | heap, integer, `%n` writes, leaks |
+| **DEP / W^X** | injected shellcode | ret2libc, ROP, JIT spraying |
+| **ASLR / PIE** | hard-coded addresses | leaks, spraying, brute force |
+| **Shadow stack** | changed return addresses | function pointer hijacks |
+| **CFI** | jumps off the CFG | valid edges in a bad order |
+| **MTE** | overflows, UAF | bugs within one tag |
+
+<Notes>
+
+This table is the one to memorize for the multiple-choice questions.
+
+A canary only catches a contiguous stack overflow that crosses it on the way to the return address. A format string `%n` writes straight to the return address and never touches it.
+
+DEP only cares whether bytes being executed live in a writable page. Code reuse runs existing code, so it passes.
+
+ASLR and PIE only hide addresses, so anything that reveals or doesn't need an address passes.
+
+A shadow stack protects returns, the backward edges. A hijacked function pointer is a forward edge, that's CFI's job. And basic CFI accepts any legal edge, even in the wrong order.
+
+Memory tagging catches overflows and use-after-free as long as the tags differ. With only 4 bits, two regions can share a tag.
+
+</Notes>
+</Slide>
+
+<Slide title="Trident and Pegasus">
+
+
+## Still possible: Trident → Pegasus
 
 <Flow
   items={[
-    "UAF no Safari",
-    "Leak do kernel",
-    "Bug no JIT",
-    "Bug no kernel",
+    "Safari UAF|read/write memory",
+    "Kernel leak|find the kernel",
+    "JIT bug|inject shellcode",
+    "Kernel bug|jailbreak",
     "Pegasus",
   ]}
   highlight={[4]}
 />
 
-<Cols columns="1fr 1fr" gap={72}>
-<div>
-
 <Step at={1}>
 
-**Memory safety** ⊂ program safety. **Espacial**: depende do sítio. **Temporal**: depende do tempo de vida (UAF).
+<p class="big">No <strong>holes</strong> in processing malicious input.</p>
 
 </Step>
-
-</div>
-<div>
-
-<Step at={2}>
-
-Além disso: **taint analysis** (input "sujo" não entra em `strcpy`, `printf`), código **constant-time** contra timing, TPM, SGX, TrustZone, secure boot.
-
-</Step>
-
-</div>
-</Cols>
 
 <Notes>
 
-Com isto tudo, ainda há ataques? Há. O Trident, que instalava o Pegasus no iOS, encadeou quatro falhas: um use-after-free no garbage collector do Safari, para ganhar memória de leitura e escrita; uma fuga de informação para saber onde estava o kernel, que é o contorno do KASLR; um bug no JIT do Safari para injetar shellcode; e um bug no kernel para o jailbreak e para não ser detetado. Atribuído à NSO. A lição: não pode haver buracos no processamento de input malicioso.
+With all these defenses, are attacks still possible? Yes, just more elaborate. The Trident exploit installed the Pegasus spyware on iPhones remotely. It was found in the wild and attributed to the NSO Group.
 
-**[→]** Memory safety é um subconjunto de program safety. Segurança espacial depende do sítio onde acedes, que é o overflow. Segurança temporal depende do tempo de vida do objeto, que é o use-after-free. Linguagens fortemente tipadas verificam na compilação, o Python verifica em execução, e o Rust mistura os dois.
+It chained bugs in the browser and the kernel. A use-after-free in Safari's garbage collector changed the size of an array, giving read and write access to a large memory area. A kernel bug leaked the kernel's location, which defeats KASLR. A bug in Safari's JIT injected shellcode, the JIT exception to W^X again. The earlier bugs helped estimate addresses. And a final kernel bug jailbroke the phone and hid the spyware.
 
-**[→]** Para lá disso: taint analysis, em que o input do utilizador fica marcado como sujo e as funções críticas só aceitam dados limpos; código em tempo constante, porque uma comparação de passwords que sai ao primeiro caractere errado revela quantos acertaste; e hardware: TPM, enclaves como o SGX e a TrustZone, e secure boot.
+**[→]** The takeaway from the lecture: there must be no holes in the processing of potentially malicious input. One link is all a chain needs.
 
-E porque é que as vulnerabilidades continuam a existir? Os programadores erram, as linguagens não foram desenhadas para segurança, e um estudo mostrou que quem usa assistentes de IA escreve código menos seguro e fica mais confiante de que é seguro.
+</Notes>
+</Slide>
+
+<Slide title="Program and memory safety">
+
+
+## Program safety
+
+<Reveal>
+
+- **Program safety**: execution never leaves the language's **defined behavior**
+- **Memory safety** ⊂ program safety: no invalid reads, writes or execution
+- **Spatial**: depends on location (overflow) · **Temporal**: on lifetime (UAF)
+- Strong types check at **compile time**, Python and Java at **run time**: attacks become DoS
+
+</Reveal>
+
+<Step at={5}>
+
+<p class="small">Tools: <strong>dynamic</strong>, automatic, incomplete (valgrind, fuzzing, symbolic execution) · <strong>static</strong>, complete, mostly manual (Frama-C, Dafny)</p>
+
+</Step>
+
+<Notes>
+
+Back to the language layer.
+
+**[→]** Program safety, from programming languages: the program's execution stays within the behavior the language semantics define, for example the C standard. The standard says what happens when you access valid memory and says nothing about the rest. A program that goes there is unsafe. Same for integers: C arithmetic matches real integers only within a range. A program that assumes otherwise is unsafe.
+
+**[→]** Memory safety is a subset: no undefined reads, writes or execution of invalid memory or instructions. **[→]** Spatial safety depends on where you access, that's overflows. Temporal safety depends on the object's lifetime, that's use-after-free.
+
+**[→]** How to get it: strongly typed languages like Java, Haskell and Rust check types and bounds at compile time. Python checks at run time. Interpreted languages raise an exception on a bad access, so a control attack becomes a DoS. Rust mixes static and dynamic checks. The White House and CISA now push memory-safe languages.
+
+**[→]** Even C and assembly can get guarantees with verification tools. Dynamic tools are automatic but incomplete. Static ones are complete but largely manual.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: memory safety">
+
+<Quiz
+  source="First Test Resit, 2024/25"
+  options={[
+    "Can be vulnerable to a use-after-free.",
+    "Can be vulnerable to an integer overflow.",
+    "Can be vulnerable to an off-by-1 overflow.",
+    "Is invulnerable to control flow attacks.",
+  ]}
+  correct={1}
+>
+
+A **memory safe** program:
+
+<div slot="answer">
+
+Integer wrap-around is a **program** safety issue. Memory safety alone does not forbid it.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** B. Use-after-free breaks temporal safety and off-by-one breaks spatial safety, so a memory-safe program has neither. Integer overflow is a program safety problem: a memory-safe language can still wrap an integer, it just can't use it to write out of bounds. D is too strong.
+
+Two cousins. The 2024 resit defined program safety: "program execution never encounters non-standardized, undefined behavior". Not "no warnings", not "has countermeasures". And it showed `if (!aFlag && n < 100) return tab[n];` and asked which CERT rule it breaks: memory safety, because a negative `n` reads before the array.
+
+</Notes>
+</Slide>
+
+<Slide title="Beyond safety">
+
+
+## Beyond safety
+
+<Reveal>
+
+- **Defensive programming**: CERT C Coding Standard
+- **Taint analysis**: input is tainted; `printf`, `strcpy` only take untainted data
+- **Constant time**: compare all bytes, or timing leaks the password
+- **Hardware**: TPM, Intel SGX, ARM TrustZone, UEFI Secure Boot
+
+</Reveal>
+
+<Step at={5}>
+
+<p class="big">Every defense can fail. A crash is still a DoS.</p>
+
+</Step>
+
+<Notes>
+
+**[→]** Defensive programming, like the CERT C Coding Standard, which past tests quote.
+
+**[→]** Taint analysis, a form of information flow analysis: data from `fgets` on the network is marked tainted, and critical functions like `printf`'s format or `strcpy` only accept untainted arguments. Passing user input as a format string becomes a type error.
+
+**[→]** Constant-time analysis against timing side channels. The lecture's password check stops at the first wrong character, so the response time tells you how many characters you got right. Also secure compilation: proving the compiler adds no security bugs.
+
+**[→]** Hardware: a TPM is a secure crypto-processor, SGX and TrustZone are trusted execution environments, and UEFI Secure Boot only runs firmware trusted by the manufacturer.
+
+**[→]** Why do vulnerabilities still exist? Programmers make mistakes and often don't see the consequences, and general-purpose languages weren't designed for security. One study even found that people using AI assistants wrote less secure code while feeling more confident. Defense in depth means many layers, but all can fail, and there's no final fallback. Even when they work, we're still exposed to DoS. And recovering from a crash by restoring the same state makes brute force easier, as with forked canaries.
 
 </Notes>
 </Slide>

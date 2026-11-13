@@ -1,7 +1,6 @@
 import {
   Chapter,
   Cols,
-  CodeSteps,
   CookieLab,
   Diagram,
   Mark,
@@ -16,107 +15,137 @@ import {
 
 <Part title="4 · Web">
 
-{/* ------------------------------------------------------------ WS1 2–25 */}
+{/* ------------------------------------------------------------ WS1 */}
 
-<Chapter title="O modelo da web" label="Web Security">
+<Chapter title="The web model" label="Web Security 1">
 
-<Slide title="HTTP e cookies">
+<Slide title="HTTP and cookies">
 
 
-## HTTP: sem estado, mas com efeitos
+## HTTP and cookies
 
-<Reveal>
-
-- **Métodos**: GET (buscar), POST (criar), PUT (substituir), PATCH (atualizar em parte), DELETE
-- **Semântica subvertida**: GET com efeitos laterais, parâmetros que ficam nos logs e no histórico, POST usado para tudo
-- **Cookies** dão estado: o servidor define, o browser guarda e envia em **todos** os pedidos a esse servidor. O cookie jar é **partilhado** entre separadores
-
-</Reveal>
-
-<Step at={4}>
-
-```http
-GET bank.com/transfer?to=attacker&amount=1000
+```text
+https://sigarra.up.pt:443/fcup/en/cur_view?pv_ano=2022#objectives
+scheme  domain       port path             query      fragment
 ```
 
-</Step>
+<Reveal>
+
+- **Stateless**. Methods: GET reads, POST creates, PUT replaces, PATCH changes part, DELETE
+- In practice **GET has side effects**, and its parameters land in **server logs and browser history**
+- **Cookies** add state: the server sets one, the browser stores it and sends it on **every** request to that server
+- The cookie jar is **shared**: tab 2 sends the cookie that tab 1 got at login
+
+</Reveal>
 
 <Notes>
 
-Começamos pelo básico, porque a segurança da web assenta em coisas que parecem inocentes. O HTTP não tem estado: cada pedido é independente.
+Web security sits on top of things that look harmless, so I start with HTTP. A URL has a scheme, a domain with an optional port, a path, the query and the fragment. Keep this picture: an origin will be the first three parts.
 
-**[→]** Os métodos: GET para buscar, POST para criar, PUT para substituir, PATCH para atualizar em parte, DELETE para apagar. O servidor responde com um código de estado e, opcionalmente, um corpo.
+**[→]** HTTP is stateless: every request stands alone. The server answers with a status code and an optional body.
 
-**[→]** Mas na prática a semântica é subvertida. Há GETs com efeitos laterais, e os parâmetros do URL ficam nos logs do servidor e no histórico do browser. E o POST acaba por ser usado para tudo.
+**[→]** GET was never supposed to change server state, but it often does: a bank transfer as a GET with the amount in the URL, and those parameters end up in the server log and the browser history. Meanwhile POST got used for almost everything with side effects.
 
-**[→]** Para ter estado, entram os cookies. O servidor define o cookie, por exemplo no login, o browser guarda-o e envia-o com cada pedido a esse servidor. Serve para sessões, personalização e tracking. E repara: o cookie jar é partilhado. Um cookie definido num separador para bank.com também é enviado pelo outro separador.
+**[→]** Servers need to know that two requests belong together, so we got cookies. The server sends a cookie, for example after a successful login, the browser stores it, and sends it back every time a URL on that server is accessed. Uses: sessions, customization, tracking.
 
-**[→]** Este exemplo junta as duas coisas más: uma transferência bancária feita com um GET, com o valor no URL. Vamos voltar a isto no CSRF.
+**[→]** And the jar is shared across tabs. Log in to the bank in one tab, and requests to the bank from any other tab carry the same cookie. That is the root of CSRF, which comes later. HTTP/2 and HTTP/3 changed transport and performance, but the attacks we study are mostly independent of that.
 
 </Notes>
 </Slide>
 
-<Slide title="Páginas são programas">
+<Slide title="Quiz: GET side effects">
+
+<Quiz
+  source="Test 1, 2023/24"
+  options={[
+    "All the other options.",
+    "Not pre-flighted according to the CORS.",
+    "Not blocked by the Same Origin Policy.",
+    "Kept in server logs and browser history.",
+  ]}
+  correct={0}
+  columns={2}
+>
+
+It is dangerous for `GET` requests to have side effects. Because they are typically:
+
+<div slot="answer">
+
+All three hold: a cross-origin GET is a **simple** request (no preflight), the SOP **lets it leave** (it only hides the response), and its URL is **logged**.
+
+</div>
+</Quiz>
+
+<Notes>
+
+Pause and try it.
+
+**[→]** All the other options. A GET counts as a simple CORS request, so the browser sends it without asking first. The SOP does not stop a page from sending a request to another origin, it only stops the page from reading the answer. And the parameters live in the URL, so they are logged. The 2023 resit asked the same idea the other way round: why is it not recommended for GETs to change server state? Because, by default, they are allowed across any origin. Not because the attacker sees the response, he does not.
+
+</Notes>
+</Slide>
+
+<Slide title="Pages are programs">
 
 
-## Uma página é um programa
+## A page is a program
 
 <Reveal>
 
-- **HTML, CSS, JS e plugins**: o browser executa-os, é uma virtualização para um domínio específico
-- **Frames e iFrames** delegam uma área do ecrã a outra origem, com isolamento: o pai sobrevive a um filho que falha ou é malicioso
-- O **DOM** é a árvore de objetos da página. O carregamento é recursivo e orientado a eventos
+- The browser renders HTML and CSS, runs **JavaScript**, fetches sub-resources: a **domain-specific virtualization** system
+- **Frames and iframes** give a screen area to another origin, isolated: the parent survives a broken or malicious child
+- The **DOM** is the object tree of the page. Loading is recursive and driven by events
 
 </Reveal>
 
 <Step at={4}>
 
-<p class="big">O JavaScript lê e altera <strong>tudo</strong>. É <Mark at={4} type="underline" color="red">poderoso e perigoso</Mark>.</p>
+<p class="big">JavaScript reads and changes <Mark at={4} type="underline" color="red">everything</Mark>.</p>
 
 </Step>
 
 <Notes>
 
-Uma página web não é um documento, é um programa. Do lado do servidor tens CGI, PHP, SQL, sessões. Do lado do cliente, o browser.
+A web page is not a document, it is a program.
 
-**[→]** O browser executa HTML, CSS, JavaScript e plugins. Podes vê-lo como uma virtualização para um domínio específico.
+**[→]** Each browser window renders HTML and CSS, runs JavaScript or WebAssembly, requests sub-resources like images and scripts, and reacts to user events.
 
-**[→]** As frames e iframes servem para delegar uma área do ecrã a outra origem, com isolamento. A ideia é que, se o filho falhar ou for malicioso, o pai sobrevive.
+**[→]** A window can mix content from different origins with frames and iframes. Why use them? To hand a screen area to another origin, and to get the browser's frame isolation for free: if the child fails, or is malicious, the parent keeps working.
 
-**[→]** O DOM é a árvore de objetos da página. O carregamento é recursivo e orientado a eventos. E os sites modernos puxam recursos, anúncios e cookies de muitas origens diferentes.
+**[→]** The DOM is the tree of objects that represents the page. Loading is recursive, and may never finish.
 
-**[→]** O ponto importante: o JavaScript lê e altera tudo isto. É isso que o torna muito poderoso e muito perigoso, e é a razão de quase tudo o que vem a seguir.
+**[→]** JavaScript can read and change all of it: manipulate the DOM, make requests, read browser data, even learn about the hardware. Exceptionally powerful and dangerous.
 
 </Notes>
 </Slide>
 
-<Slide title="Os três atacantes">
+<Slide title="Who is the attacker?">
 
 
-## Quem é o atacante?
+## Who is the attacker?
 
 <Step at={1}>
 
 <div class="cards" style="--n:3">
 <div class="card" data-color="blue">
 
-### Browser
+### In the browser
 
-Exploits ou malware no browser. Assumimos o browser **confiável**: é matéria de software e sistemas.
+Exploits or malware. We assume the browser is **trusted**.
 
 </div>
 <div class="card" data-color="orange">
 
-### Rede
+### Network
 
-Controla o canal. Assumimos canais seguros: é matéria de segurança de redes.
+Controls the channel. We assume **secure channels**.
 
 </div>
 <div class="card" data-color="red">
 
 ### Web attacker
 
-Controla parte da aplicação, no cliente e/ou no servidor. **É o foco da cadeira.**
+Controls part of the web app, client or server. **Our focus.**
 
 </div>
 </div>
@@ -125,57 +154,298 @@ Controla parte da aplicação, no cliente e/ou no servidor. **É o foco da cadei
 
 <Step at={2}>
 
-<p class="lede">Controla o servidor: protege a <strong>máquina do cliente</strong>. Controla o cliente: protege os <strong>recursos do servidor</strong>.</p>
+<p class="lede">The attacker can be the <strong>server</strong>, the <strong>user</strong>, a <strong>page</strong>, or part of a page. We rely on <strong>browser isolation</strong>.</p>
 
 </Step>
 
 <Notes>
 
-Antes de ver ataques, temos de dizer contra quem nos defendemos. São três modelos de atacante.
+Who do we defend against? Server and user can be malicious, and the browser can have bugs or malicious extensions.
 
-**[→]** O atacante no browser, com exploits ou malware: aqui assumimos que o browser é confiável, porque isso foi tratado em software e sistemas. O atacante na rede, que controla o canal: assumimos canais seguros, e isso fica para segurança de redes. E o web attacker, que controla parte da aplicação web, no cliente ou no servidor. Este é o foco da cadeira.
+**[→]** Three attacker models. The attacker in the browser: we assume the browser itself is trusted, because that was software and systems security. The network attacker, who controls the channel: we assume secure channels, that is network security later. And the web attacker, who controls part of the web application: that is this whole part.
 
-**[→]** Se o atacante controla o servidor, temos de proteger a máquina do cliente. Se controla o cliente, temos de proteger os recursos do servidor. O atacante também pode ser um simples utilizador que modifica o conteúdo da página, e aí contamos com as proteções do browser e do servidor. Ou pode ser uma página: a página A não pode interferir com a B nem observá-la, um anúncio numa sub-frame não pode interferir com a página que o aloja, e o anfitrião também não pode interferir com o objeto embebido, por exemplo para fazer phishing. Tudo isto depende do isolamento do browser.
+**[→]** The web attacker has variants. If he controls the server, we protect the client machine. If he is a user, he can change the page content, so we trust only browser and server protections. If he is a web page, page A must not interfere with or observe page B. If he controls part of a page, like an ad in a sub-frame, it must not interfere with the host page. And the host page must not interfere with the object it embeds, for example for phishing. In every page case, what we trust is browser isolation.
+
+</Notes>
+</Slide>
+
+<Slide title="Quiz: web security model">
+
+<Quiz
+  source="Test 1, 2024/25"
+  options={[
+    "The security policy for pages, frames, objects and cookies is always the same.",
+    "The browser is always trusted by users and servers.",
+    "Users can never modify the JavaScript running in a web page.",
+    "An HTTP request may always have side effects on the server.",
+  ]}
+  correct={3}
+>
+
+In the web security model:
+
+<div slot="answer">
+
+Any request **may** change server state, whatever its method. Cookies have their **own** origin rules, the browser can be buggy, and a user can edit the page.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The last one. We just saw that GET is supposed to be safe but often is not, so the model assumes any request may have side effects. The first is false: cookies use domain and path, pages use scheme, domain and port. The second: the browser can have vulnerabilities or malware, we only assume it is trusted to scope the course. The third: the "attacker is a user" model is exactly a user changing the page and its JavaScript.
 
 </Notes>
 </Slide>
 
 </Chapter>
 
-{/* ------------------------------------------------------------ WS1 26–43 */}
+{/* ------------------------------------------------------------ WS1 SOP */}
 
-<Chapter title="SOP, CORS e cookies" label="Web Security">
+<Chapter title="Same-Origin Policy" label="Web Security 1">
 
-<Slide title="Same-Origin Policy">
+<Slide title="The browser is an OS">
 
 
-## Same-Origin Policy
+## The browser is an OS
+
+<Cols columns="1fr 1.2fr" gap={80} align="center">
+<div>
+
+| OS | Browser |
+| --- | --- |
+| processes | **pages** |
+| files | **resources** (DOM), cookies |
+| sockets | **fetch** / HTTP |
+| sub-processes | **frames** |
+
+</div>
+<div>
 
 <Step at={1}>
 
-<p class="lede">Origem = <strong>(scheme, domínio, porto)</strong>. O browser faz de sistema operativo: páginas são processos, cookies são ficheiros, <code>fetch</code> são sockets, frames são sub-processos.</p>
+<p class="lede">Origin = <strong>(scheme, domain, port)</strong></p>
+
+<p class="lede">Isolation is the <strong>Same-Origin Policy</strong>: code from one origin cannot <strong>read</strong> (confidentiality) or <strong>change</strong> (integrity) data of another.</p>
 
 </Step>
 
-<Step at={2}>
+</div>
+</Cols>
 
-| A página A **pode** | A página A **não pode** |
+<Notes>
+
+The lecture's model: the browser is an operating system. Pages are the processes. The resources, meaning the DOM elements of a page, and the cookies are the files. Fetch and HTTP are the sockets. Frames and iframes are sub-processes.
+
+**[→]** The security perimeter is the origin: the triple scheme, domain, port. The isolation mechanism is the Same-Origin Policy. Confidentiality: data from one origin cannot be read by code from another. Integrity: it cannot be altered by code from another. Modern browsers also treat JavaScript as a threat and sandbox it. Problem solved? No: the browser leaks through side channels, the XS-Leaks we will meet with CSRF.
+
+</Notes>
+</Slide>
+
+<Slide title="Quiz: the OS analogy">
+
+<Quiz
+  source="Resit, 2023/24"
+  options={[
+    "1=DOM, 2=Cookies, 3=iFrames, 4=HTTP",
+    "1=Frames, 2=DOM, 3=Images, 4=Sub-frames",
+    "1=Pages, 2=DOM, 3=Fetch, 4=Frames",
+    "1=Pages, 2=HTML, 3=JavaScript, 4=Popups",
+  ]}
+  correct={2}
+  columns={2}
+>
+
+Which assignment is a valid analogy? Systems security to web security: processes = **1**, files = **2**, sockets = **3**, sub-processes = **4**.
+
+<div slot="answer">
+
+Pages are processes, DOM resources are files, fetch is the socket, frames are sub-processes.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** Pages, DOM, Fetch, Frames. The traps put DOM in the process slot, or HTTP and iFrames in the wrong places. If you remember "pages run, resources are stored, fetch talks to the network, frames are children", you get it.
+
+</Notes>
+</Slide>
+
+<Slide title="Quiz: what is an origin?">
+
+<Quiz
+  source="Resit, 2023/24"
+  options={[
+    "`http://sigarra.up.pt:80/feup`",
+    "`sigarra.up.pt/feup`",
+    "`https://moodle.up.pt:443`",
+    "`fsi@moodle.up.pt:80`",
+  ]}
+  correct={2}
+  columns={2}
+>
+
+Which is a valid SOP origin for requests between two pages?
+
+<div slot="answer">
+
+An origin is **scheme + domain + port**, nothing else. A path makes it a URL, and a missing scheme or a user part is not an origin.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** https, moodle.up.pt, 443. The first has a path, slash feup, and the path is not part of a page's origin. The second has no scheme and has a path. The fourth has a user name and no scheme. So the same host with http and https, or with port 80 and 8080, gives two different origins.
+
+</Notes>
+</Slide>
+
+<Slide title="Embed, but do not inspect">
+
+
+## Embed, but do not inspect
+
+| Page A **can** | Page A **cannot** |
 | --- | --- |
-| carregar um script de B (corre no contexto de A) | ler o código fonte desse script |
-| carregar CSS de B | ler o texto do CSS |
-| carregar uma página de B numa iframe | aceder ao DOM da iframe |
-| carregar uma imagem de B | ler os pixels da imagem |
-| reproduzir um vídeo de B | capturar imagens do vídeo |
+| run a script from B (in A's context) | read or change that script's code |
+| show a page from B in an iframe | read or change the iframe's DOM |
+| show an image from B | read its pixels (but sees its **size**) |
+| load CSS and fonts from B | read their text |
+
+<Step at={1}>
+
+<p class="lede">Frames can talk with <code>postMessage</code>: the receiver must check <code>event.origin</code>.</p>
 
 </Step>
 
 <Notes>
 
-A Same-Origin Policy é a regra central. Pensa no browser como um sistema operativo: as páginas são os processos, os cookies e recursos são os ficheiros, o fetch são os sockets e as frames são sub-processos. A origem é o perímetro de segurança.
+What does the SOP allow when a page pulls in content from another origin? The rule of thumb: you can include, you cannot inspect.
 
-**[→]** A origem é o triplo scheme, domínio e porto. A SOP dá confidencialidade, outra origem não consegue ler, e integridade, outra origem não consegue modificar. Isto é uma pergunta clássica: escreve sempre os três componentes.
+A script from a CDN runs inside your origin, with your powers, but your code cannot read its source. That is how your newspaper runs Google Analytics with full access to its DOM. You can frame another origin, but you cannot touch its DOM. When you can, that is Cross-Frame Scripting, XFS, for example stealing keystrokes from a framed bank page. You can show an image, but not read its pixels. Yet you can see its size, and that leaks: a profile photo that has a different size when the user is logged in tells you the user's state. So public resources are not automatically harmless.
 
-**[→]** Esta tabela está no slide 34 e vale a pena decorá-la. A página A pode carregar um script de B, e esse script corre no contexto de A, mas não consegue ler o código fonte. Pode carregar CSS mas não ler o texto. Pode pôr B numa iframe mas não chega ao DOM dela. Pode carregar uma imagem mas não lê os pixels, embora veja o tamanho, e isso pode vazar informação. Pode reproduzir um vídeo mas não capturar imagens. O padrão é: podes incluir, não podes inspecionar.
+**[→]** Frames from different origins can still exchange messages. The receiver must check event.origin and drop anything from an origin it does not expect.
+
+</Notes>
+</Slide>
+
+<Slide title="Requests across origins">
+
+
+## Requests across origins
+
+| From origin A to B | Send? | Read the response? |
+| --- | --- | --- |
+| HTML link, image or form | <Step at={1} inline>yes</Step> | <Step at={1} inline>no</Step> |
+| JavaScript GET | <Step at={2} inline>yes</Step> | <Step at={2} inline>only with CORS</Step> |
+| JavaScript POST | <Step at={3} inline>same origin only</Step> | <Step at={3} inline>no</Step> |
+
+<Step at={4}>
+
+<p class="lede">The SOP protects the <strong>response</strong>, not the <strong>request</strong>.</p>
+
+</Step>
+
+<Notes>
+
+This table answers several test questions.
+
+**[→]** HTML on page A can make requests to any origin: a link, an image, a form that posts. The side effects are allowed, so you can send data to an external service. The browser may process the response, for example to draw the image or the frame, but A's code cannot analyze it.
+
+**[→]** JavaScript with XMLHttpRequest, fetch or jQuery's ajax can send a GET to any origin, but it only sees the response if it is the same origin, or if the other server opts in with CORS.
+
+**[→]** And by default, a JavaScript POST can only go to the same origin. That is the lecture's rule, and the tests use it: a page in A can post to B with a form, but script in A cannot post to B.
+
+**[→]** The one sentence to keep: the SOP protects the response, not the request. The request leaves, with its cookies, and that is exactly what CSRF abuses.
+
+</Notes>
+</Slide>
+
+<Slide title="Quiz: what the SOP allows">
+
+<Quiz
+  source="Resit, 2022/23"
+  options={[
+    "JavaScript code in frame with origin A can manipulate the HTML code of page with origin B.",
+    "JavaScript code in page with origin A can send a GET request to page with origin B.",
+    "JavaScript code in page with origin A can send a POST request to frame with origin B.",
+    "HTML code in frame with origin A can inspect the HTML code of sub-frame with origin B.",
+  ]}
+  correct={1}
+>
+
+According to the Same-Origin Policy (SOP), which of the following is allowed?
+
+<div slot="answer">
+
+A cross-origin GET from JavaScript is **sent**; only the response is hidden. Manipulating or inspecting another origin's HTML is blocked, and a JavaScript POST is same-origin only.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The second, JavaScript in A sending a GET to B. Options one and four are inspecting or changing another origin's content, which is the core of what the SOP forbids. Option three is the JavaScript POST from the third row of the table.
+
+</Notes>
+</Slide>
+
+<Slide title="Quiz: default SOP">
+
+<Quiz
+  source="Test 1, 2024/25"
+  options={[
+    "JavaScript in origin A can make POST requests to origin B.",
+    "A page in origin A cannot send messages to a sub-frame in origin B.",
+    "A page in origin A can make POST requests to origin B.",
+    "JavaScript in origin A cannot download scripts from origin B.",
+  ]}
+  correct={2}
+>
+
+According to the default Same Origin Policy (SOP):
+
+<div slot="answer">
+
+A **page** (an HTML form) can post anywhere. **JavaScript** cannot. Frames can exchange messages, and loading scripts from other origins is allowed.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The third. Read carefully: "a page" means HTML, like a form, and forms post across origins. The first says JavaScript, and JavaScript POSTs are same-origin only. The second is false because of postMessage. The fourth is false: every CDN library is a script downloaded from another origin.
+
+</Notes>
+</Slide>
+
+<Slide title="Quiz: SOP and AJAX">
+
+<Quiz
+  source="Resit, 2024/25"
+  options={[
+    "Always disallow inline JavaScript scripts.",
+    "Never download inline JavaScript scripts.",
+    "Accept HTTP GET cross-origin requests arising from HTML but reject AJAX POST cross-origin requests coming from JavaScript.",
+    "Reject HTTP POST cross-origin requests arising from HTML and accept AJAX GET cross-origin requests coming from JavaScript.",
+  ]}
+  correct={2}
+>
+
+According to the default Same Origin Policy (SOP), the web browser shall:
+
+<div slot="answer">
+
+Same table: HTML requests go anywhere, a JavaScript POST does not. Blocking inline scripts is **CSP**, not the SOP.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The third. The fourth flips it, HTML POSTs across origins are allowed. The first two are about inline scripts, and that is the job of the Content Security Policy, which we will see with XSS. The default SOP runs inline scripts happily.
 
 </Notes>
 </Slide>
@@ -183,22 +453,22 @@ A Same-Origin Policy é a regra central. Pensa no browser como um sistema operat
 <Slide title="CORS">
 
 
-## CORS: abrir uma exceção à SOP
+## CORS: relaxing the SOP
 
 <Cols columns="1fr 1fr" gap={56} align="start">
 <div>
 
-### Simples
+### Simple
 
 <Diagram
   fontSize={24}
-  alt="Pedido simples: A envia o pedido a B, B responde com Access-Control-Allow-Origin, e o browser decide se A pode ler a resposta."
+  alt="Simple request: page A sends the request to server B, B answers with Access-Control-Allow-Origin, and the browser decides whether A may read the response."
   source={`sequenceDiagram
-  participant A as Página A
-  participant B as Servidor B
-  A->>B: GET /dados
-  B-->>A: resposta + cabeçalho CORS
-  Note over A: browser verifica Allow-Origin`}
+  participant A as Page A
+  participant B as Server B
+  A->>B: GET /data
+  B-->>A: response + Allow-Origin
+  Note over A: browser checks it`}
 />
 
 </div>
@@ -210,14 +480,14 @@ A Same-Origin Policy é a regra central. Pensa no browser como um sistema operat
 
 <Diagram
   fontSize={24}
-  alt="Pedido preflighted: A envia primeiro um pedido de teste, B responde que permite A, só depois A envia o pedido real."
+  alt="Preflighted request: A first sends a harmless test request, B answers that it allows A, and only then A sends the real request."
   source={`sequenceDiagram
-  participant A as Página A
-  participant B as Servidor B
-  A->>B: preflight
-  B-->>A: permito A
-  A->>B: pedido real
-  B-->>A: resposta`}
+  participant A as Page A
+  participant B as Server B
+  A->>B: preflight (no effects)
+  B-->>A: A is allowed
+  A->>B: real request
+  B-->>A: response`}
 />
 
 </Step>
@@ -225,107 +495,126 @@ A Same-Origin Policy é a regra central. Pensa no browser como um sistema operat
 </div>
 </Cols>
 
-<Step at={2}>
+<Notes>
 
-<p class="lede">Risco de XS-Leak: tempo de resposta ou código de estado.</p>
+Cross-Origin Resource Sharing lets server B relax the SOP, mostly for requests that JavaScript makes. Two kinds.
+
+On the left, a simple request, meant for requests without side effects on B. The browser sends it first, then checks whether the response lets code from A read it. B lists the allowed origins in the Access-Control-Allow-Origin header. Even here there is a risk: response time or status code can leak, an XS-Leak.
+
+**[→]** On the right, a preflighted request, for requests that may have side effects. The browser first sends a dummy request with no side effects and checks whether B allows A. Only if it does, the browser sends the real request. The exam difference: simple means request first, check after; preflighted means check first, request after.
+
+</Notes>
+</Slide>
+
+<Slide title="Quiz: CORS">
+
+<Quiz
+  options={[
+    "Before sending it, with a preflight.",
+    "After sending it, by reading Access-Control-Allow-Origin in the response.",
+    "Never: simple requests ignore the SOP.",
+    "The server checks the Origin and drops the request.",
+  ]}
+  correct={1}
+>
+
+For a **simple** CORS request from page A to server B, when does the browser decide whether A may read the result?
+
+<div slot="answer">
+
+The request is already sent and processed by B; the browser only decides whether A **reads** the response.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** After sending it. That is why simple requests are only meant for requests without side effects: if B changed state, it already happened. The preflight is for the other kind. And the decision is made by the browser, using a header the server provided.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+{/* ------------------------------------------------------------ WS1 cookies */}
+
+<Chapter title="Cookies" label="Web Security 1">
+
+<Slide title="When is a cookie sent?">
+
+
+## When is a cookie sent?
+
+<p class="lede">A cookie's origin is <strong>(domain, path)</strong>. Scheme and port are optional.</p>
+
+<Reveal>
+
+- **Domain**: the cookie's domain is a **suffix** of the URL's host
+- **Path**: the cookie's path is a **prefix** of the URL's path
+- A site sets cookies for its domain and **parent domains**, never a **public suffix** like `.com` or `.co.uk`
+
+</Reveal>
+
+<Step at={4}>
+
+<p class="lede"><code>Domain=fsi.pt</code> goes to <code>login.fsi.pt</code>, and <code>Path=/my</code> goes to <code>/my/home</code>.</p>
 
 </Step>
 
 <Notes>
 
-O CORS relaxa a SOP para pedidos JavaScript entre origens. Há dois casos.
+Cookies have their own notion of origin, and it differs from pages: domain and path, with scheme and port optional. Old browsers sent every cookie that matched two rules, even for requests made by embedded elements. Today that happens only with SameSite equals None, which the tests call the traditional configuration.
 
-À esquerda, o pedido simples. Só se usa quando não há efeitos laterais. O browser envia o pedido, e depois verifica se a resposta autoriza a origem A através do cabeçalho Access-Control-Allow-Origin. Se autoriza, A lê a resposta.
+**[→]** Rule one: the cookie's domain must be a suffix of the host in the URL. Cookie for fsi.pt, request to login.fsi.pt: fsi.pt is the end of login.fsi.pt, so it matches.
 
-**[→]** À direita, o preflighted, para pedidos que podem ter efeitos laterais. Aqui o browser primeiro envia um pedido inofensivo de teste, o preflight. Só se B responder que permite A é que o browser envia o pedido real. A diferença para o exame: no simples o pedido sai e a verificação é à resposta, no preflighted a verificação é antes.
+**[→]** Rule two: the cookie's path must be a prefix of the URL's path. Cookie path slash my matches slash my slash home. The reverse is the usual mistake: a cookie for slash my slash home is not sent to slash my.
 
-**[→]** Mesmo no simples há risco de XS-Leak, porque o atacante pode medir o tempo de resposta ou ver o código de estado. Já lá vamos.
+**[→]** Which domains can a site set? Its own and its parents: login.fsi.pt can set a cookie for fsi.pt. But never a public suffix, like dot com or dot co dot uk, listed at publicsuffix.org, or one site could set cookies for every other site.
 
-</Notes>
-</Slide>
-
-<Slide title="Regras dos cookies">
-
-
-## Quando é que o browser envia o cookie?
-
-<Reveal>
-
-- **Domain**: o domínio do cookie é **sufixo** do host do URL. Um site só define cookies para o seu domínio e pais, nunca para public suffixes
-- **Path**: o path do cookie é **prefixo** do path do URL
-- **SameSite**: **Strict** só se o pedido vem da página de topo com a mesma origem. **Lax** (por omissão) deixa passar alguns pedidos entre sites, como links explícitos. **None** como os browsers antigos faziam: envia sempre
-- **Secure** só em HTTPS. **HttpOnly**: o JavaScript não lê
-
-</Reveal>
-
-<Notes>
-
-Isto é matéria de exercício, por isso vamos devagar. Um cookie é enviado quando duas condições se cumprem.
-
-**[→]** Primeira, o Domain do cookie é sufixo do host do URL do pedido. Um site pode definir cookies para o seu domínio e para os pais, exceto os public suffixes, como .com ou .co.uk, que estão em publicsuffix.org.
-
-**[→]** Segunda, o Path do cookie é prefixo do path do URL.
-
-**[→]** Antigamente os browsers aplicavam só estas duas regras, mesmo em pedidos embebidos. Os browsers modernos só o fazem com SameSite igual a None. Com Strict, o cookie só vai se a origem do pedido for a da página de topo. Com Lax, que é o valor por omissão, passam alguns pedidos entre sites, como links explícitos.
-
-**[→]** Por fim, o atributo Secure obriga a HTTPS, e o HttpOnly impede que o JavaScript leia o cookie. O HttpOnly vai ser útil já a seguir.
+**[→]** So, the two directions in one line: the domain grows to the left, the path grows to the right.
 
 </Notes>
 </Slide>
 
-<Slide title="Tabela de envio de cookies">
+<Slide title="Cookie table">
 
 
-## O cookie é enviado?
+## Is the cookie sent?
 
 <table>
 <thead>
 <tr>
-<th>Pedido para</th>
-<th><code>Domain=login.site.com</code><br /><code>Path=/</code></th>
-<th><code>Domain=site.com</code><br /><code>Path=/</code></th>
-<th><code>Domain=site.com</code><br /><code>Path=/my/home</code></th>
+<th>Request to</th>
+<th><code>login.fsi.pt</code> <code>/</code></th>
+<th><code>fsi.pt</code> <code>/</code></th>
+<th><code>fsi.pt</code> <code>/my/home</code></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>checkout.site.com</code></td>
-<td><Step at={1} inline>Não</Step></td>
-<td><Step at={1} inline>Sim</Step></td>
-<td><Step at={1} inline>Não</Step></td>
+<td><code>checkout.fsi.pt</code></td>
+<td><Step at={1} inline>No</Step></td>
+<td><Step at={1} inline>Yes</Step></td>
+<td><Step at={1} inline>No</Step></td>
 </tr>
 <tr>
-<td><code>login.site.com</code></td>
-<td><Step at={2} inline>Sim</Step></td>
-<td><Step at={2} inline>Sim</Step></td>
-<td><Step at={2} inline>Não</Step></td>
-</tr>
-<tr>
-<td><code>login.site.com/my/home</code></td>
-<td><Step at={3} inline>Sim</Step></td>
-<td><Step at={3} inline>Sim</Step></td>
-<td><Step at={3} inline>Sim</Step></td>
-</tr>
-<tr>
-<td><code>site.com/my</code></td>
-<td><Step at={4} inline>Não</Step></td>
-<td><Step at={4} inline>Sim</Step></td>
-<td><Step at={4} inline>Não</Step></td>
+<td><code>login.fsi.pt/my/home</code></td>
+<td><Step at={2} inline>Yes</Step></td>
+<td><Step at={2} inline>Yes</Step></td>
+<td><Step at={2} inline>Yes</Step></td>
 </tr>
 </tbody>
 </table>
 
+<p class="small muted">Columns: cookie Domain and Path. SameSite=None.</p>
+
 <Notes>
 
-Este tipo de tabela é provável no exame. A regra: o cookie é enviado se o Domain for sufixo do host e o Path for prefixo do path do URL. Tenta responder antes de eu revelar cada linha.
+This is the 2023/24 resit question. Each column is a cookie, Domain then Path. Try each row before I reveal it.
 
-**[→]** checkout.site.com. O primeiro cookie tem Domain login.site.com, que não é sufixo de checkout.site.com: não. O segundo, Domain site.com, é sufixo e o path barra é prefixo: sim. O terceiro falha no path: não.
+**[→]** checkout.fsi.pt, path slash. First cookie: login.fsi.pt is not a suffix of checkout.fsi.pt, no. Second: fsi.pt is a suffix and slash is a prefix of everything, yes. Third: the domain matches, but the request path is just slash, and slash my slash home is not a prefix of slash: no.
 
-**[→]** login.site.com. O primeiro: domínio igual e path barra, sim. O segundo: site.com é sufixo, sim. O terceiro: o path do URL é só barra e o do cookie é barra my barra home, que não é prefixo: não.
-
-**[→]** login.site.com barra my barra home. Agora os três passam: sim, sim, sim.
-
-**[→]** site.com barra my. O primeiro: login.site.com não é sufixo de site.com, não. O segundo: sim. O terceiro: o path do URL é barra my, e o do cookie é barra my barra home, mais comprido, por isso não é prefixo: não.
+**[→]** login.fsi.pt slash my slash home. First: same domain, path slash, yes. Second: yes. Third: fsi.pt is a suffix, and slash my slash home is a prefix of itself: yes. So the answer was No, Yes, No, Yes, Yes, Yes.
 
 </Notes>
 </Slide>
@@ -333,67 +622,196 @@ Este tipo de tabela é provável no exame. A regra: o cookie é enviado se o Dom
 <Slide title="CookieLab">
 
 
-## Experimenta: o cookie vai?
+## Try it: is the cookie sent?
 
 <CookieLab
   presets={[
-    { at: 0, domain: "site.com", path: "/my/home", url: "checkout.site.com" },
-    { at: 1, domain: "site.com", path: "/my/home", url: "login.site.com" },
-    { at: 2, domain: "site.com", path: "/my/home", url: "login.site.com/my/home" },
-    { at: 3, domain: "site.com", path: "/my/home", url: "site.com/my" },
+    { at: 0, domain: "fsi.pt", path: "/my/home", url: "login.fsi.pt" },
+    { at: 1, domain: "fsi.pt", path: "/my/home", url: "fsi.pt/my" },
+    { at: 2, domain: "login.fsi.pt", path: "/", url: "fsi.pt/my" },
+    { at: 3, domain: "fsi.pt", path: "/my", url: "login.fsi.pt/my/home" },
   ]}
 />
 
 <Notes>
 
-Aqui podes confirmar a tabela anterior com a terceira coluna, o cookie com Domain site.com e Path barra my barra home. Muda o pedido e vê as duas verificações, domínio e path.
+Here you can check any pair live. Two checks: the domain suffix and the path prefix. Cookie for fsi.pt, path slash my slash home, request to login.fsi.pt: the domain passes, the path fails.
 
-Primeiro pedido: checkout.site.com. O domínio passa, mas o path do URL é só barra, por isso o cookie não vai. **[→]** login.site.com: mesmo problema no path. **[→]** login.site.com barra my barra home: domínio e path passam, o cookie vai. **[→]** site.com barra my: o path do URL é mais curto do que o do cookie, por isso falha. Se te enganares numa destas, é quase sempre porque trocaste a direção do prefixo ou do sufixo.
+**[→]** Request to fsi.pt slash my: the domain passes, but slash my slash home is longer than slash my, so it is not a prefix. Not sent.
+
+**[→]** A cookie for login.fsi.pt, request to fsi.pt: the cookie's domain is longer than the host. A subdomain cookie never goes to the parent. Not sent.
+
+**[→]** Cookie for fsi.pt, path slash my, request to login.fsi.pt slash my slash home: both pass. If you get one of these wrong, you almost always flipped the direction of suffix or prefix.
 
 </Notes>
 </Slide>
 
-<Slide title="Colisões da SOP">
+<Slide title="Quiz: cookie table">
+
+<Quiz
+  source="Test 1, 2023/24"
+  options={[
+    "1=Yes, 2=No, 3=No, 4=Yes, 5=Yes, 6=Yes",
+    "1=Yes, 2=Yes, 3=No, 4=No, 5=No, 6=Yes",
+    "1=Yes, 2=Yes, 3=No, 4=No, 5=Yes, 6=No",
+    "1=No, 2=No, 3=Yes, 4=No, 5=No, 6=Yes",
+  ]}
+  correct={2}
+  columns={2}
+>
+
+With `SameSite=None`, is the cookie sent?
+
+| Request to | `login.fsi.pt` `/` | `fsi.pt` `/` | `fsi.pt` `/my/home` |
+| --- | --- | --- | --- |
+| `login.fsi.pt` | 1 | 2 | 3 |
+| `fsi.pt/my` | 4 | 5 | 6 |
+
+<div slot="answer">
+
+Row 1: Yes, Yes, No (path `/` is shorter than `/my/home`). Row 2: No (subdomain cookie), Yes, No (`/my` is shorter than `/my/home`).
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** Yes, Yes, No, No, Yes, No. Cell 3 and cell 6 fail on the path: the request path is shorter than the cookie's. Cell 4 fails on the domain: a cookie for login.fsi.pt does not go to the parent fsi.pt. The others pass both checks.
+
+</Notes>
+</Slide>
+
+<Slide title="SameSite, Secure, HttpOnly">
 
 
-## Colisões: o mesmo origin, cookies diferentes
+## SameSite, Secure, HttpOnly
 
-```js
-// em https://fsi.pt/evil
-const f = document.createElement("iframe");
-f.src = "https://fsi.pt/good";
-document.body.append(f);
-f.contentWindow.document.cookie; // lê o cookie de /good
+```http
+Set-Cookie: sid=8f3a; SameSite=Lax; Secure; HttpOnly
 ```
 
 <Reveal>
 
-- O cookie de `/good` tem **outro path**, por isso `/evil` não o vê diretamente
-- Mas `/evil` e `/good` têm a **mesma origem HTTP**: `evil` mete `good` numa iframe e lê o cookie
-- Uma **biblioteca maliciosa** na tua origem lê `document.cookie` e envia-o num URL de imagem: roubo de sessão. Defesa: cookies **HttpOnly**
+- **SameSite=Strict**: sent only if the request has the **same origin as the top-level page**
+- **SameSite=Lax** (default): also sent when following a cross-site **link**, not for images or frames
+- **SameSite=None**: the old behavior, always sent
+- **Secure**: HTTPS only. **HttpOnly**: JavaScript cannot read it
 
 </Reveal>
 
 <Notes>
 
-Uma armadilha: os cookies têm origem própria, domínio mais path, mas a SOP das páginas só olha para scheme, domínio e porto. Isso cria colisões.
+All these attributes are set by the server, in the Set-Cookie header of the response that creates the cookie. The browser then enforces them. Tests ask exactly who defines them.
 
-Imagina fsi.pt barra evil e fsi.pt barra good. O código que mostrei está na página evil.
+**[→]** SameSite Strict: the browser sends the cookie only when the request has the same origin as the top-level page. Even clicking a link in an email to your bank arrives without the cookie, so you look logged out.
 
-**[→]** O cookie de good tem outro path, por isso evil não o consegue ler diretamente.
+**[→]** Lax, the current default, opens some cross-site exceptions, like explicit links you click. But a cross-site image or frame does not carry the cookie.
 
-**[→]** Mas as duas páginas partilham a origem HTTP. Então evil pode pôr good numa iframe e ler o cookie por iframe.contentWindow.document.cookie.
+**[→]** None is the traditional behavior: only domain and path matter.
 
-**[→]** Pior ainda: uma biblioteca maliciosa carregada na tua origem lê document.cookie e exfiltra o valor por um URL de imagem. É roubo de sessão. A correção é marcar o cookie como HttpOnly, assim o JavaScript não o consegue ler.
+**[→]** Secure means the cookie only travels over HTTPS, which protects it from the network attacker. HttpOnly means document.cookie cannot see it, which protects it from scripts. Keep them apart: Secure is about the network, HttpOnly about JavaScript, SameSite about cross-site requests.
+
+</Notes>
+</Slide>
+
+<Slide title="Quiz: blocking a link">
+
+<Quiz
+  source="Resit, 2022/23"
+  options={[
+    "Defining cookies as being HTTPOnly.",
+    "Defining SameSite=Strict.",
+    "Defining SameSite=Lax.",
+    "Using only secure (HTTPS) cookies.",
+  ]}
+  correct={1}
+  columns={2}
+>
+
+According to the Same-Origin Policy (SOP), how can a web developer prevent a cookie from being sent by an HTML **link** from origin A that makes a request to origin B?
+
+<div slot="answer">
+
+Only **Strict** drops the cookie on a cross-site link. Lax allows links. HttpOnly and Secure do not affect whether a link carries it.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** SameSite Strict. The trap is Lax: Lax is precisely the setting that still sends the cookie when you follow a link. HttpOnly hides the cookie from JavaScript, and Secure only forces HTTPS, neither one stops it from being sent.
+
+</Notes>
+</Slide>
+
+<Slide title="Quiz: who sets SameSite?">
+
+<Quiz
+  source="Test 1, 2024/25"
+  options={[
+    "The web browser when following cross-site links.",
+    "The web server when answering the request that creates the cookie.",
+    "The web browser when sending cross-origin requests.",
+    "The web server when establishing the HTTP/HTTPS connection.",
+  ]}
+  correct={1}
+>
+
+There are various HTTP headers used for web security. Who defines SameSite cookie headers?
+
+<div slot="answer">
+
+SameSite is an attribute in the server's `Set-Cookie`. The browser **enforces** it later, but does not define it.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The server, in the response that creates the cookie. The browser options are tempting because the browser is the one that decides, request by request, whether to attach the cookie. But it follows what the server wrote. And there is no "establishing the connection" step for cookies.
+
+</Notes>
+</Slide>
+
+<Slide title="Cookie collisions">
+
+
+## Cookie collisions
+
+```js
+// on https://fsi.pt/evil
+const f = document.createElement("iframe");
+f.src = "https://fsi.pt/good";
+document.body.appendChild(f);
+alert(f.contentWindow.document.cookie); // /good's cookie
+```
+
+<Reveal>
+
+- Cookie origin differs (`/good` vs `/evil`), page origin is **the same**
+- A malicious library in your origin reads `document.cookie` and sends it in an image URL: **session hijacking**
+- Defense: **HttpOnly** cookies
+
+</Reveal>
+
+<Notes>
+
+Two different notions of origin, one for cookies and one for pages, can collide. Take fsi.pt slash evil and fsi.pt slash good. A cookie with path slash good is not visible to slash evil.
+
+**[→]** But for the page SOP both have the same origin: same scheme, domain and port. So evil creates an iframe on good, and reads the iframe's document.cookie. The path did not protect anything.
+
+**[→]** The same goes for any script you load into your origin. A malicious library reads document.cookie and creates an image whose URL is evil.com with the cookies in the query string. The attacker now has your session. That is session hijacking.
+
+**[→]** The fix is HttpOnly: the cookie still goes with requests, but JavaScript cannot read it. Also remember that cookies inside a cross-origin frame are hidden from the parent page, but not from the network if the channel is open, and the parent can still force a request with them. That is CSRF.
 
 </Notes>
 </Slide>
 
 </Chapter>
 
-{/* ------------------------------------------------------------ WS2 */}
+{/* ------------------------------------------------------------ WS2 injection */}
 
-<Chapter title="Injeção" label="Web Security">
+<Chapter title="Injection" label="Web Security 2">
 
 <Slide title="OWASP Top 10">
 
@@ -416,35 +834,37 @@ Imagina fsi.pt barra evil e fsi.pt barra good. O código que mostrei está na p�
 7. <Mark at={1} type="highlight" color="yellow">Identification &amp; Authentication Failures</Mark>
 8. Software &amp; Data Integrity Failures
 9. Security Logging &amp; Monitoring Failures
-10. SSRF
+10. Server-Side Request Forgery
 
 </div>
 </Cols>
 
 <Step at={2}>
 
-<p class="lede">Injeção causada por: input **não validado** e **sem separação** entre input e código.</p>
+<p class="lede">Injection: input is <strong>not validated</strong>, and input is <strong>not separated</strong> from code.</p>
 
 </Step>
 
 <Notes>
 
-Esta é a lista do OWASP de 2021. Não tens de decorar as dez, mas tens de saber quais demos nas aulas.
+Classic bugs are mitigated, so attacks are harder but still common, and the focus moved to application logic, hence the new Insecure Design.
 
-**[→]** As cinco marcadas: A01 Broken Access Control, que subiu para o primeiro lugar, A03 Injection, que desceu para terceiro e agora inclui o XSS, A04 Insecure Design, que é uma categoria nova e foca a lógica da aplicação, A05 Security Misconfiguration e A07 Identification and Authentication Failures. Os bugs clássicos estão mitigados, mas continuam presentes.
+**[→]** The five we cover: A01 Broken Access Control, now first. A03 Injection, which now includes XSS. A04 Insecure Design. A05 Security Misconfiguration. And A07 Identification and Authentication Failures, where session management lives.
 
-**[→]** A injeção tem duas causas: o input não é validado, e não há separação entre input e código. É a mesma ideia do buffer overflow, mas noutro nível tecnológico. Primeiro caso: a shell.
+**[→]** Injection has two causes. The input is not validated, and there is no separation between input and code, so malicious input changes what runs. It is the same idea as a buffer overflow injecting code, one technology level up.
 
 </Notes>
 </Slide>
 
-<Slide title="Injeção na shell">
+<Slide title="Command injection">
 
 
-## Command injection
+## Shell command injection
 
 ```c
-system("head -n 100 " + argv[1]);
+strcpy(cmd, "head -n 100 ");
+strcat(cmd, argv[1]);   // "test.txt; rm -rf /home"
+system(cmd);
 ```
 
 <Cols columns="1fr 1fr" gap={56} align="start">
@@ -456,7 +876,7 @@ system("head -n 100 " + argv[1]);
 GET /ping?host=8.8.8.8;cat /etc/passwd
 ```
 
-Também: `|`, `$(...)`, reverse shell
+Also `|`, `$(...)`, reverse shells
 
 </Step>
 
@@ -469,7 +889,7 @@ Também: `|`, `$(...)`, reverse shell
 User-Agent: () { :;}; do_evil
 ```
 
-**ShellShock** (CVE-2014-6271): o CGI passa os cabeçalhos como variáveis de ambiente
+**ShellShock** (CVE-2014-6271)
 
 </Step>
 
@@ -478,19 +898,52 @@ User-Agent: () { :;}; do_evil
 
 <Step at={3}>
 
-<p class="lede"><strong>Whitelist</strong> (o ping só precisa de dígitos e pontos) &gt; blacklist. O melhor: <strong>não chamar a shell</strong>.</p>
+<p class="lede"><strong>Whitelist</strong> beats blacklist. Best: do not call the shell.</p>
 
 </Step>
 
 <Notes>
 
-O exemplo base está em C: um programa que faz head dos primeiros 100 bytes de um ficheiro que o utilizador indica. Se o utilizador passar test.txt ponto e vírgula rm -rf barra home, a shell corre os dois comandos. Em Node é o eval, em PHP o system ou o exec.
+The base example is C: a program that prints the first 100 lines of a file by building "head minus n 100" plus the file name and calling system. If the file name is test.txt, semicolon, rm minus rf slash home, the shell runs both commands. Is it input or code? Validate before executing. Server-side languages have the same sinks: eval in Node.js, system or exec in PHP.
 
-**[→]** Num servidor, o mesmo com um ping: host igual a 8.8.8.8, ponto e vírgula, cat etc passwd. Há variantes com pipe, com cifrão e parênteses, e até reverse shells.
+**[→]** On the web: a page that pings a host for you. Client sends host equals 8.8.8.8, server runs ping 8.8.8.8. Add a semicolon and cat etc passwd, and the server runs that too. There are many variants: a pipe, dollar IFS to replace spaces, dollar parentheses, even a reverse shell back to the attacker.
 
-**[→]** O ShellShock, de 2014, é o caso famoso. O CGI passa os cabeçalhos HTTP como variáveis de ambiente, e o bash executava o lixo que vinha depois de uma definição de função. Bastava mandar isto no User-Agent.
+**[→]** ShellShock, CVE-2014-6271. With CGI, the web server runs scripts to handle requests, and the HTTP headers are loaded into environment variables. A bug in bash's environment parser executed whatever came after a function definition. So a User-Agent of empty parentheses, braces, colon, then do evil, ran do evil on the server.
 
-**[→]** Defesas. Nunca corras comandos com input não validado. A blacklist é fraca: há tantos caracteres perigosos que é muito difícil acertar. A whitelist é melhor, porque o ping só precisa de dígitos e pontos. E a melhor opção é nem chamar a shell.
+**[→]** Defenses: never put unvalidated input in a command. A blacklist, like OWASP's list of characters, is hard to get complete. A whitelist is better: ping only needs digits and dots. Best of all, avoid shelling out.
+
+</Notes>
+</Slide>
+
+<Slide title="SQL injection">
+
+
+## SQL injection
+
+```js
+uName = getRequestString("username");
+uPass = getRequestString("userpassword");
+sql = 'SELECT * FROM Users WHERE Name ="' + uName +
+      '" AND Pass ="' + uPass + '"';
+```
+
+<Reveal>
+
+- `--` or `#` start a **comment**, `;` **ends** a command
+- Input `" OR ""="` makes the `WHERE` always true
+- Some engines run OS commands: `'; exec xp_cmdshell 'net user add bad455 badpwd'--`
+
+</Reveal>
+
+<Notes>
+
+Web apps build SQL commands on the server, send them to the database, and those commands usually include client input. If the input can change the meaning of the command, that is SQL injection. This code is the one from the tests: the query is glued together with string concatenation.
+
+**[→]** Three bits of SQL syntax are all you need: two dashes or a hash start a comment that eats the rest of the line, a semicolon ends a command so you can start another, and AND, OR, NOT build conditions.
+
+**[→]** Type quote OR quote quote equals quote as name and password, and the condition becomes Name equals empty OR empty equals empty, always true. Every row comes back.
+
+**[→]** And some database engines even allow system calls from SQL. Here the attacker closes the string, ends the statement, and runs xp_cmdshell to add a user on the server's OS.
 
 </Notes>
 </Slide>
@@ -498,13 +951,13 @@ O exemplo base está em C: um programa que faz head dos primeiros 100 bytes de u
 <Slide title="SqlLab">
 
 
-## SQL injection ao vivo
+## SQL injection, live
 
 <SqlLab
   presets={[
     { at: 0, user: "rodrigo", pass: "hunter2" },
     { at: 1, user: "admin' --", pass: "x" },
-    { at: 2, user: "' OR 1=1 --", pass: "x" },
+    { at: 2, user: "' OR TRUE # ", pass: "x" },
     { at: 3, user: "x'; DROP TABLE users; --", pass: "x" },
     { at: 4, user: "x'; DROP TABLE users; --", pass: "x", prepared: true },
   ]}
@@ -512,106 +965,230 @@ O exemplo base está em C: um programa que faz head dos primeiros 100 bytes de u
 
 <Notes>
 
-Este é o login de um site, com a query construída por concatenação de strings. Começamos com um login normal: rodrigo, hunter2. A query devolve uma linha e entra.
+A login whose query is built by concatenation. A normal login first: rodrigo, hunter2. One row, you are in.
 
-**[→]** Agora o utilizador admin, plica, dois hífenes. A plica fecha a string e os dois hífenes comentam o resto da query, incluindo a verificação da palavra-passe. Entras como admin sem saber a palavra-passe.
+**[→]** User admin, quote, dash dash. The quote closes the string, and the dashes comment out the rest, including the password check. You are admin without the password.
 
-**[→]** Sem sequer saber um nome válido: plica, OR 1 igual a 1, dois hífenes. A condição fica sempre verdadeira e a query devolve todos os utilizadores.
+**[→]** Without knowing any user: quote, OR TRUE, hash. The condition is always true and you get every user. This is the payload from the 2023/24 test.
 
-**[→]** O ponto e vírgula termina uma instrução, e a seguir vem outra. Aqui, um DROP TABLE users. É o Bobby Tables do xkcd. Algumas bases de dados até deixam correr comandos do sistema operativo.
+**[→]** A semicolon ends the statement and starts another: DROP TABLE users. This is the Bobby Tables xkcd comic.
 
-**[→]** Mesmo input, mas agora com prepared statement ativado. O input é tratado como um valor, e já não consegue alterar a estrutura da query. Nada é executado.
+**[→]** Same input with a prepared statement. The query is fixed first, and the input travels as a plain value, so it cannot change the structure. Nothing runs, nobody logs in.
 
 </Notes>
 </Slide>
 
-<Slide title="Blind SQLi e defesas">
+<Slide title="Quiz: listing all users">
+
+<Quiz
+  source="Test 1, 2023/24"
+  options={[
+    "Username=`admin` and Password=`' OR 1=1 # `",
+    "Username=`' OR 1=1 ` and Password=`' OR TRUE # `",
+    "It is only possible to list one or less users.",
+    "Username=`' OR TRUE # ` and Password=`' OR TRUE # `",
+  ]}
+  correct={3}
+>
+
+From the SQL Injection Lab. How could we change the query to list all users?
+
+```php
+$hashed_pwd = sha1($input_pwd);
+$sql = "SELECT id, name, ... FROM credential
+  WHERE name='$input_uname' and Password='$hashed_pwd'";
+```
+
+<div slot="answer">
+
+The password is **hashed**, so only the user name can inject. `' OR TRUE #` closes the string, makes the condition true and comments out the rest.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The last one. The key detail is sha1: whatever you type as password is hashed into hex digits, so injecting through the password does nothing. Option one injects only in the password, so it fails. Option two puts the injection in the user name but without a comment, so the leftover quote and the password clause break the syntax. Option three is false because injection through the name works. Whatever is in the password field of the last option is harmless, the hash eats it.
+
+</Notes>
+</Slide>
+
+<Slide title="Blind SQL injection">
 
 
-## Blind SQLi e defesas
+## Blind SQL injection
+
+<p class="lede">You change the query but do not see its output. You watch <strong>side effects</strong>.</p>
+
+<Reveal>
+
+- **Result-based**: did it work? `name="Alice" AND role="admin"`
+- **Time-based**: how long did it take? `id=1; SLEEP(15)`
+- **Guess-based**: `pin LIKE "0%"`, one character at a time
+
+</Reveal>
+
+<Step at={4}>
+
+<p class="lede">Tools like <strong>sqlmap</strong> automate it.</p>
+
+</Step>
+
+<Notes>
+
+Often the injected query's output is never shown to you. That is blind SQL injection: you infer data from side effects.
+
+**[→]** Result-based: was the operation allowed? Add AND role equals admin. If the login works for Alice and fails for Bob, you just learned Alice is an admin.
+
+**[→]** Time-based: append SLEEP 15. If the response takes 15 seconds, your injection ran.
+
+**[→]** Guess-based: you could try all 10,000 PINs, but with LIKE or a regex you test one digit at a time: does it start with 0? With 1? That takes at most 40 tries instead of 10,000.
+
+**[→]** sqlmap does all this automatically. Note that "blind SQL" is an attack, not a protection: a wrong option in one test calls it a feature of SQL engines.
+
+</Notes>
+</Slide>
+
+<Slide title="SQL injection defenses">
+
+
+## SQL injection defenses
 
 <Cols columns="1fr 1fr" gap={64} align="start">
 <div>
 
 <Reveal>
 
-- **Por resultado**: a operação teve sucesso? `AND role="admin"`
-- **Por tempo**: `; SLEEP(15)`
-- **Por tentativa**: `pin LIKE "0%"`, regex para reduzir a pesquisa
+- **Never build queries as strings**
+- **Sanitize** input: whitelist, proper escaping. The real issue is **lack of typing**: `id = 52 OR 1=1`
+- **ORM** libraries sanitize for you, but can have bugs: defense in depth
+- Hide errors from clients; **log and alert**
 
 </Reveal>
-
-<p class="small muted">Ferramenta: sqlmap</p>
 
 </div>
 <div>
 
-<Step at={4}>
+<Step at={5}>
 
 ```sql
-INSERT INTO users (name, pass)
+INSERT INTO products (name, price)
 VALUES (?, ?);
 ```
 
-A estrutura da query fica fixa **antes** dos parâmetros.
+<p class="lede"><strong>Prepared statement</strong>: the query is fixed before the parameters. <code>); DROP TABLE</code> is just a value.</p>
 
 </Step>
 
 </div>
 </Cols>
 
-<Step at={5}>
+<Notes>
 
-<p class="lede"><strong>ORM</strong> traz sanitização, mas pode ter bugs (ORM injection): defesa em profundidade. Não mostres erros ao cliente: regista e alerta.</p>
+**[→]** Rule one: never create SQL queries dynamically as strings.
 
-</Step>
+**[→]** Input sanitization: accept only safe input. But what is unsafe? Quotes, spaces and dashes can all be legitimate, so whitelists beat blacklists, and use your language's escaping libraries. Sanitize on the server: client checks can be skipped. The root problem is lack of typing: id equals 52 OR 1 equals 1 was supposed to be a number.
+
+**[→]** ORM libraries map objects to queries and sanitize inputs, typically with parameterized queries underneath. But the ORM itself can be vulnerable, ORM injection, so defense in depth and test your libraries.
+
+**[→]** Do not show database errors to clients, they help the attacker. Log them and alert on suspicious activity.
+
+**[→]** The real fix: parameterized queries, or prepared statements. The SQL is fixed in the server's code with question-mark placeholders. The command and the parameters are sent separately, and the database builds the query before it sees the parameters. So a semicolon DROP TABLE is treated as a value. Bonus: the query plan can be cached.
+
+</Notes>
+</Slide>
+
+<Slide title="Quiz: preventing SQLi">
+
+<Quiz
+  source="Resit, 2023/24"
+  options={[
+    "Rewriting the query to use an ORM, which is immune to SQL injection attacks.",
+    "Using blind SQL, a feature of SQL engines that prevents attackers to see query results.",
+    "Blacklisting the `;` character to disallow injection of other SQL statements.",
+    "Using parameterised queries to not parse the `uid` argument with the query.",
+  ]}
+  correct={3}
+>
+
+`sql = "SELECT * FROM Users WHERE UserId = " + uid;` is vulnerable. How could we prevent SQL injection?
+
+<div slot="answer">
+
+Parameterized queries. ORMs are **not** immune, blind SQL is an **attack**, and blocking `;` still allows `52 OR 1=1`.
+
+</div>
+</Quiz>
 
 <Notes>
 
-Blind SQL injection é quando não vês o resultado da query, só os efeitos. Há três tipos.
+**[→]** Parameterized queries. Each wrong option has a specific flaw. ORMs reduce the risk but are not immune. Blind SQL is the attack we just saw. And blacklisting the semicolon fails here because uid is a number without quotes: 52 OR 1 equals 1 needs no semicolon. The 2022/23 resit asked the same: prepared statements, not Trusted Types, which is a browser feature.
 
-**[→]** Por resultado: a operação teve sucesso ou não? Por exemplo acrescentas AND role igual a admin e vês se o login funciona. **[→]** Por tempo: metes um SLEEP de 15 segundos e medes a demora da resposta. **[→]** Por tentativa: adivinhas um valor, por exemplo um PIN que começa por zero, e usas regex para ir estreitando a pesquisa. Existe uma ferramenta, o sqlmap, que automatiza isto.
+</Notes>
+</Slide>
 
-**[→]** Defesas. Nunca construas queries como strings. A solução são queries parametrizadas, os prepared statements. A estrutura da query é fixada antes dos parâmetros, então o ponto e vírgula e o DROP TABLE são tratados como um valor. Como bónus, a query pode ser guardada em cache.
+<Slide title="Quiz: ORM">
 
-**[→]** Sanitizar input ajuda, e whitelist é melhor do que blacklist. O problema de raiz é a falta de tipos: id igual a 52 OR 1 igual a 1 é um número que deixa de ser um número. Os ORMs trazem sanitização incluída, mas também têm bugs, a chamada ORM injection, por isso defesa em profundidade e testar as bibliotecas. E não mostres erros ao cliente: regista-os e alerta.
+<Quiz
+  source="Resit, 2024/25"
+  options={[
+    "ORM typically relies on parameterized queries to prevent SQL injection attacks.",
+    "ORM ensures by design that there can be no SQL injection vulnerabilities.",
+    "ORM ensures that any SQL injection vulnerability can only be exploited via blind attacks.",
+    "ORM typically relies on Content Security Policy (CSP) to prevent injecting system calls in SQL queries.",
+  ]}
+  correct={0}
+>
+
+ORM (Object Relational Mapping) libraries are often used to connect an application with its database. Which is true?
+
+<div slot="answer">
+
+ORMs sanitize by generating parameterized queries. They can still have bugs (ORM injection), and CSP is a browser header.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The first. The second is the "are we done?" trap from the lecture: no, ORMs can introduce vulnerabilities themselves. The third has nothing to support it. The fourth mixes in CSP, which is a browser policy for scripts and has nothing to do with the database.
 
 </Notes>
 </Slide>
 
 </Chapter>
 
-{/* ------------------------------------------------------------ XSS */}
+{/* ------------------------------------------------------------ WS2 XSS */}
 
-<Chapter title="XSS" label="Web Security">
+<Chapter title="Cross-Site Scripting" label="Web Security 2">
 
-<Slide title="Três tipos de XSS">
+<Slide title="Three kinds of XSS">
 
 
-## XSS: injeção do lado do cliente
+## XSS: injection on the client
 
 <Step at={1}>
 
 <div class="cards" style="--n:3">
 <div class="card" data-color="orange">
 
-### Refletido
+### Reflected
 
-utilizador + servidor + atacante. O servidor devolve o payload do pedido. Precisa de engenharia social. **PayPal 2006**
+User, server, attacker. The server echoes the payload from the request. Needs social engineering.
 
 </div>
 <div class="card" data-color="red">
 
-### Armazenado
+### Stored
 
-O payload fica guardado no site. **Samy worm** (MySpace 2005): mais de 1 milhão de utilizadores em cerca de 20 h. **iCloud**: 5 000 $
+User, server. The payload is **saved** on the site and served to every visitor.
 
 </div>
 <div class="card" data-color="blue">
 
 ### DOM
 
-Só no cliente: nada chega ao servidor. O payload vem do URL.
+User only. Page script puts URL data into the DOM; nothing reaches the server.
 
 </div>
 </div>
@@ -620,68 +1197,156 @@ Só no cliente: nada chega ao servidor. O payload vem do URL.
 
 <Step at={2}>
 
-<p class="lede">O código corre na <strong>origem da vítima</strong>: contorna a SOP e o atacante vê a resposta.</p>
+<p class="lede">The code runs in the <strong>victim site's origin</strong>: the SOP does not apply, and the attacker sees the response.</p>
 
 </Step>
 
 <Notes>
 
-XSS é injeção do lado do cliente: o atacante consegue que o seu código corra dentro da página de um site legítimo. Há três tipos.
+Cross-site scripting is injection on the client side: the attacker gets the victim's browser to run his code inside the page of a legitimate site.
 
-**[→]** O refletido envolve o utilizador, o servidor e o atacante. O atacante engana o utilizador para fazer um pedido cujo payload o servidor reflete na resposta. Precisa de engenharia social: emails, anúncios, links curtos. O exemplo é o PayPal em 2006, em que um link para o site verdadeiro mostrava uma mensagem falsa de conta desativada e redirecionava para uma página de phishing.
+**[→]** Three kinds, told apart by who is involved. Reflected: user, server and attacker. The attacker tricks the user into sending a request whose payload the server reflects back into the page. Stored: just user and server. The payload is saved in the site, in a profile or a comment, and served to whoever views it. DOM: just the user. The page's own JavaScript takes something from the URL and writes it into the DOM, and nothing is sent to the server.
 
-O armazenado envolve só o utilizador e o servidor: o payload fica guardado no site. O Samy worm, no MySpace em 2005, aproveitou que o HTML era permitido nos perfis e o filtro não verificava JavaScript dentro de CSS. Propagava-se sozinho e passou de um milhão de utilizadores em cerca de 20 horas, e o Samy teve uma visita do Serviço Secreto americano. Ainda é comum: a Apple pagou 5 000 dólares por um XSS armazenado no iCloud.
-
-O DOM XSS corre só no cliente. Por exemplo, user.html com id igual a um alert no URL: nada chega ao servidor.
-
-**[→]** Porque é que funciona tão bem? O código corre na origem da vítima, por isso contorna a SOP.
+**[→]** Why it is so powerful: the script runs as the legitimate site. The SOP does not protect anything, because from the browser's point of view it is the site's own code. It reads cookies and the DOM, and it can read responses from the site.
 
 </Notes>
 </Slide>
 
-<Slide title="XSS refletido: fluxo">
+<Slide title="Reflected XSS">
 
 
-## Fluxo do XSS refletido
+## Reflected XSS
 
-<Cols columns="1.3fr 1fr" gap={72} align="center">
-<div>
+<Reveal>
 
-1. **evil.com** → vítima: link para `naive.com/hello.cgi?name=<script>`
-2. **Vítima** → naive.com: pede a página
-3. **naive.com** → vítima: página que repete o script
-4. O script corre **como naive.com** e envia o cookie a evil.com
+1. evil.com gets the victim to open `naive.com/hello.cgi?name=<script>…`
+2. naive.com's CGI writes the name into the page
+3. The script runs **as naive.com** and sends the cookie to evil.com
 
-</div>
-<div>
+</Reveal>
 
-<Step at={1}>
+<Step at={4}>
 
-<p class="lede">Engenharia social: emails, anúncios, links curtos, páginas de phishing.</p>
+<p class="lede"><strong>PayPal</strong>: a link to the real site showed a fake "account disabled" message and led to phishing.</p>
 
 </Step>
 
-</div>
-</Cols>
-
 <Notes>
 
-Vamos ver o fluxo passo a passo. A vítima visita evil.com, que carrega uma frame apontada para naive.com barra hello.cgi, com o parâmetro name a conter um script que envia o cookie para evil.com. O CGI de naive.com repete o nome na página. O browser da vítima executa o script, mas como naive.com, e por isso consegue ler o cookie de naive.com e enviá-lo ao atacante.
+**[→]** The victim visits evil.com, or gets an email, and opens a link to naive.com's hello CGI, with a script in the name parameter.
 
-**[→]** Em prática o atacante precisa de levar a vítima ao URL: emails, anúncios, links curtos, páginas de phishing. Se o utilizador desconfiar, falha.
+**[→]** The CGI processes the request on the server and greets you by name, so it copies the script into the HTML it returns.
+
+**[→]** The victim's browser runs it with naive.com's origin, so it can read naive.com's cookie and send it to evil.com.
+
+Why would anyone click? Social engineering: phishing pages, links in emails, links in banner ads, short links like bit.ly on Twitter.
+
+**[→]** A real case against PayPal: the link pointed to the genuine PayPal site, which made it convincing. The reflected payload showed a message saying the account was disabled and sent the user to a phishing page.
 
 </Notes>
 </Slide>
 
-<Slide title="Defesas: CSP e SRI">
+<Slide title="Stored XSS">
 
 
-## CSP e SRI
+## Stored XSS
+
+<Reveal>
+
+- **PayPal**: a user put a script in his own data. When an **administrator** viewed the record, it ran
+- **Samy worm** (MySpace, 2005): HTML allowed in profiles, filter **forgot JavaScript in CSS**
+- Each viewer got infected and spread it: **1M+ users in 20 hours**
+- Still common: stored XSS in **iCloud**
+
+</Reveal>
+
+<Notes>
+
+Stored XSS needs no link to click: the site itself serves the payload.
+
+**[→]** PayPal again: input sanitization failed, a user stored a script in his own account data, and when an administrator opened that user's record, the script ran with the admin's privileges.
+
+**[→]** The Samy worm on MySpace in 2005. MySpace let users put HTML in their profiles and filtered scripts, but forgot JavaScript inside CSS styles. Samy's profile added him as a friend and, crucially, copied the code into the visitor's profile.
+
+**[→]** So every infected profile infected its visitors. Over a million users in the first 20 hours, and a visit from the US Secret Service.
+
+**[→]** And it is still trendy: Apple paid a bug bounty for a stored XSS in icloud.com.
+
+</Notes>
+</Slide>
+
+<Slide title="Quiz: which XSS? (1)">
+
+<Quiz
+  source="Resit, 2022/23"
+  options={[
+    "A DOM-based XSS attack.",
+    "A reflected XSS attack.",
+    "A stored XSS attack.",
+    "A subtype called a Cross-Frame Scripting (XFS) attack.",
+  ]}
+  correct={2}
+  columns={2}
+>
+
+A figure shows: **1** the hacker injects the trusted website with a malicious script. **2** The victim visits the trusted website and triggers the script. **3** The victim's browser runs it and sends the session token or cookies to the hacker. This is:
+
+<div slot="answer">
+
+The script **lives on the website** before the victim arrives: stored XSS.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** Stored. The giveaway is step one: the attacker puts the script into the website first, and the victim just visits a normal page. In reflected XSS the attacker would have to send the victim a crafted link. XFS is about frames, not this.
+
+</Notes>
+</Slide>
+
+<Slide title="Quiz: which XSS? (2)">
+
+<Quiz
+  source="Test 1, 2023/24"
+  options={[
+    "A DOM-based XSS subtype.",
+    "A Cross-Frame Scripting (XFS) subtype.",
+    "A stored XSS subtype.",
+    "A reflected XSS subtype.",
+  ]}
+  correct={0}
+  columns={2}
+>
+
+**1** The attacker crafts a URL with a malicious string. **2** The user requests it, **without the malicious string**, from the website. **3** The site responds with a legitimate script. **4** That script inserts the string into the page, where it runs. This is:
+
+<div slot="answer">
+
+The server never sees the payload (it is in the fragment, after `#`); the site's **own script** writes it into the DOM.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** DOM-based. The phrase to spot is "without the malicious string". The payload stays in the browser, typically in the fragment, and the website's legitimate JavaScript moves it into the page. If the server had copied it into the response, it would be reflected. Nothing is stored, so not stored either.
+
+</Notes>
+</Slide>
+
+<Slide title="CSP and SRI">
+
+
+## Defenses: CSP and SRI
+
+<p class="lede">Sanitizing input with a blacklist is hard to keep complete. <strong>Whitelists</strong> are safer.</p>
 
 <Step at={1}>
 
 ```http
-Content-Security-Policy: default-src 'self'; img-src *; script-src cdn.jquery.com
+Content-Security-Policy: default-src 'self'; img-src *;
+  script-src cdn.jquery.com
 ```
 
 </Step>
@@ -690,75 +1355,145 @@ Content-Security-Policy: default-src 'self'; img-src *; script-src cdn.jquery.co
 
 ```html
 <script src="https://code.jquery.com/jquery-2.1.4.min.js"
-        integrity="sha384-…"
+        integrity="sha384-R4/ztc4ZlRqWjqIuvf6RX5yb..."
         crossorigin="anonymous"></script>
 ```
 
 </Step>
 
-<Step at={3}>
-
-<p class="lede">2013: os servidores MaxCDN do BootstrapCDN foram comprometidos e o JS do Bootstrap alterado para servir um exploit kit.</p>
-
-</Step>
-
 <Notes>
 
-Primeiro a sanitização do input: as blacklists são difíceis de manter completas, os atacantes disfarçam o código, e as frameworks ajudam mas não são perfeitas. Whitelist é melhor. Mas há defesas do lado do browser.
+For a long time the only defense was input sanitization: check every header, cookie and field for dangerous strings. Hard to cover everything, and attackers keep disguising code. Frameworks filter, imperfectly.
 
-**[→]** O CSP, Content-Security-Policy, é uma whitelist de origens de scripts. Os scripts inline ficam bloqueados. Aqui, tudo só da própria origem, imagens de qualquer sítio e scripts só do cdn.jquery.com.
+**[→]** Content Security Policy is a whitelist of script origins, sent by the site as a header. Inline scripts do not run at all, only scripts from whitelisted origins. default-src self restricts everything to the site's own origin. This one also allows images from anywhere and scripts from the jQuery CDN. Inline script blocking kills most reflected and stored XSS.
 
-**[→]** E se esse CDN for comprometido? O SRI resolve: incluis o hash do script esperado, e o browser recusa o ficheiro se o hash não bater certo.
-
-**[→]** Aconteceu: em 2013 os servidores MaxCDN por trás do BootstrapCDN foram comprometidos, e o JavaScript do Bootstrap foi alterado para servir um exploit kit.
+**[→]** But what if a whitelisted site is compromised? It happened to BootstrapCDN in 2013, serving an exploit kit. Subresource Integrity: the page includes the hash of the exact script it expects, in the integrity attribute of its own HTML. If the downloaded file does not match, the browser refuses to run it.
 
 </Notes>
 </Slide>
 
-<Slide title="Trusted Types">
+<Slide title="Quiz: SRI">
+
+<Quiz
+  source="Resit, 2024/25"
+  options={[
+    "Are digitally signed by other trusted sites.",
+    "Match a hash stored in the site's code.",
+    "Match a hash given by the script's provider.",
+    "Are digitally signed by the same site.",
+  ]}
+  correct={1}
+  columns={2}
+>
+
+Subresource Integrity (SRI) is a web protection that ensures that downloaded scripts:
+
+<div slot="answer">
+
+The hash sits in **your page's** `integrity` attribute. A hash from the provider would be useless if the provider is the one compromised.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** A hash stored in the site's code. Option three is the trap: if the CDN gave you the hash at download time, a compromised CDN would just send a matching hash. The point is that the expected hash comes from your own page. There are no signatures involved.
+
+</Notes>
+</Slide>
+
+<Slide title="DOM XSS and Trusted Types">
 
 
-## DOM XSS e Trusted Types
+## DOM XSS and Trusted Types
 
 ```js
 // https://example.com/#<img src=x onerror=alert('xss')>
 var foo = location.hash.slice(1);
-document.querySelector('#foo').innerHTML = foo;
+document.querySelector("#foo").innerHTML = foo;
 ```
 
 <Step at={1}>
 
-<p class="lede">O fragmento (<code>#…</code>) nem chega ao servidor: <strong>CSP e SRI não ajudam</strong>.</p>
+<p class="lede">The DOM API itself is unsafe, and <strong>CSP and SRI do not help</strong>.</p>
 
 </Step>
 
 <Step at={2}>
 
 ```http
-Content-Security-Policy: trusted-types myPolicy
+Content-Security-Policy: require-trusted-types-for 'script'
 ```
 
-`innerHTML = location.hash.slice(1)` lança um **TypeError**.
-
-</Step>
-
-<Step at={3}>
-
-```js
-trustedHTML = SanitizingPolicy.createHTML(foo);
-```
+Plain strings into `innerHTML` throw a **TypeError**. Only a trusted sanitizing policy makes valid values.
 
 </Step>
 
 <Notes>
 
-O DOM XSS é diferente. O código vulnerável lê o fragmento do URL e mete-o em innerHTML. O payload é uma imagem com onerror, que executa o alert.
+DOM XSS runs entirely in the browser. This page reads the fragment of the URL and assigns it to innerHTML. The payload is an image with a broken source and an onerror handler, so the handler runs.
 
-**[→]** O fragmento, a parte a seguir ao cardinal, nunca é enviado ao servidor. Por isso CSP e SRI não ajudam neste caso.
+**[→]** The client-side DOM API is insecure by design: innerHTML turns any string into live HTML. CSP and SRI do not protect the DOM from itself: the script doing the damage is the site's own legitimate script.
 
-**[→]** A defesa são os Trusted Types. Com este cabeçalho CSP, o browser rejeita strings simples atribuídas a sinks perigosos do DOM, como o innerHTML. A atribuição direta lança um TypeError.
+**[→]** The latest protection is Trusted Types, enabled through CSP. The browser rejects plain string assignments to dangerous DOM sinks like innerHTML: they throw a TypeError. Only values produced by a trusted function, a policy that sanitizes input, have the right type. So the browser makes the developer pass everything through the sanitizer.
 
-**[→]** Só passa se o valor vier de uma função de sanitização de confiança, como createHTML da tua política.
+</Notes>
+</Slide>
+
+<Slide title="Quiz: XSS without the server?">
+
+<Quiz
+  source="Resit, 2024/25"
+  options={[
+    "No, because in a DOM XSS attack the browser automatically interprets the request's parameters.",
+    "Yes, because the browser will store the request, but only execute eventual malicious payloads when it processes the response.",
+    "Yes, because the malicious JavaScript needs to be provided by the server.",
+    "No, because the browser may interpret JavaScript code injected in parameters before sending the request.",
+  ]}
+  correct={1}
+>
+
+Does the client always need to communicate with the web server for a successful XSS attack?
+
+<div slot="answer">
+
+Even DOM XSS needs the **page** from the server: the payload stays in the URL, but it only runs while the browser processes the response's script.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The official answer is the second. It feels odd after "nothing is sent to the server", but think about it: the vulnerable script has to come from the site, so the browser loads the page, keeps the URL with the payload, and the payload only runs when that response's JavaScript copies it into the DOM. Option one is wrong because the browser never interprets parameters by itself, a script does. Option three is wrong because the payload itself does not come from the server in DOM XSS. Option four: nothing runs before the request is sent.
+
+</Notes>
+</Slide>
+
+<Slide title="Quiz: not a defense">
+
+<Quiz
+  source="Test 1, 2024/25"
+  options={[
+    "The browser requiring inputs to critical JavaScript functions to have specific types.",
+    "The server whitelisting only necessary input characters, e.g. for the format of an IP address.",
+    "The browser blacklisting dangerous characters, e.g. those typically used in HTML code.",
+    "The server enforcing that only HTTPS connections are accepted.",
+  ]}
+  correct={3}
+>
+
+Which is **not** a valid countermeasure against web injection attacks?
+
+<div slot="answer">
+
+HTTPS protects the **channel**, not what the input does. The others are Trusted Types, a whitelist, and a (weak but real) blacklist.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** HTTPS. An injected payload sent over HTTPS is just as dangerous: encryption stops the network attacker, not the web attacker. Option one is Trusted Types. Option two is the ping whitelist. Option three is a blacklist, weaker, but still a countermeasure the lecture lists.
 
 </Notes>
 </Slide>
@@ -767,33 +1502,98 @@ O DOM XSS é diferente. O código vulnerável lê o fragmento do URL e mete-o em
 
 {/* ------------------------------------------------------------ WS3 */}
 
-<Chapter title="CSRF, sessões e o resto" label="Web Security">
+<Chapter title="Access control and CSRF" label="Web Security 3">
 
-<Slide title="CSRF">
+<Slide title="IDOR">
 
 
-## CSRF: o cookie vai, mesmo sem querer
+## Broken access control: IDOR
+
+```http
+GET https://citi.com/myacct/9725126314/summary
+```
+
+<Reveal>
+
+- **Insecure Direct Object Reference**, or web parameter tampering: there is **no access check**
+- **Citibank, 2011**: change the account number in the URL, **360,000 cards** exposed
+- **Sinave** platform of the DGS, Portugal, 2022
+
+</Reveal>
+
+<Notes>
+
+A01, Broken Access Control, and its simplest form.
+
+**[→]** IDOR: the URL or a parameter names an object directly, and the server never checks whether you may see it. It is also called web parameter tampering.
+
+**[→]** Citibank in 2011: logged in users saw their summary at a URL with their account number. Change the number and you saw someone else's account. 360 thousand credit cards were exposed.
+
+**[→]** In Portugal, the DGS Sinave platform in 2022 exposed names, addresses and phone numbers the same way. IDOR is a server-side flaw: the server should check every access, which is the principle of complete mediation.
+
+</Notes>
+</Slide>
+
+<Slide title="Quiz: IDOR principle">
+
+<Quiz
+  source="Resit, 2023/24"
+  options={[
+    "Least common mechanism",
+    "Complete mediation",
+    "Separation of privilege",
+    "Least privilege",
+  ]}
+  correct={1}
+  columns={2}
+>
+
+A web IDOR attack, attributed to lack of authentication on an endpoint, is an example of a violation of which principle?
+
+<div slot="answer">
+
+Complete mediation: **every** access to every object must be checked. The endpoint skipped the check.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** Complete mediation. The server checked you at login, but not when you asked for a specific account. Least privilege is about giving each component only the rights it needs, which is not the failure here: the check was simply missing.
+
+</Notes>
+</Slide>
+
+<Slide title="Cookies are not enough">
+
+
+## Cookies are not enough
 
 <Cols columns="1.3fr 1fr" gap={72} align="center">
 <div>
 
-1. **Vítima** → attacker.com: abre a página
-2. **attacker.com** → vítima: formulário escondido
-3. **Vítima** → bank.com: `POST /transfer` **com o cookie**
-4. **bank.com**: "Transfer complete!"
+```html
+<!-- on attacker.com -->
+<form action="https://bank.com/transfer"
+      method="POST">
+  <input name="to" value="attacker">
+  <input name="amount" value="100">
+</form>
+<script>document.forms[0].submit()</script>
+```
 
 </div>
 <div>
 
 <Step at={1}>
 
-<p class="big">A SOP impede o atacante de <strong>ler</strong> a resposta, mas a transferência <strong>já aconteceu</strong>.</p>
+<p class="lede">The browser attaches the bank's <strong>cookie</strong>. The server cannot tell where the request came from.</p>
 
 </Step>
 
 <Step at={2}>
 
-<p class="lede"><strong>XS-Leaks</strong>: não lê a resposta, mas usa canais laterais (erros, tempo, frames, 200 vs 404).</p>
+<p class="lede">The SOP hides the <strong>response</strong>, but the transfer <strong>already happened</strong>.</p>
 
 </Step>
 
@@ -802,47 +1602,227 @@ O DOM XSS é diferente. O código vulnerável lê o fragmento do URL e mete-o em
 
 <Notes>
 
-Autenticar com cookies não chega: o servidor não sabe de onde veio o pedido. O CSRF é isto. Passo um, o utilizador é levado a uma página do atacante. Passo dois, o browser envia um pedido não intencional com os cookies. Passo três, o site executa-o como se fosse o utilizador.
+Cross-Site Request Forgery. Step one, the attacker tricks a logged in user into opening his page, for example by social engineering. Step two, the user's browser makes a request the user never meant to make. Step three, the legitimate site executes it in the user's name. Here a hidden form posts a transfer to the bank and submits itself with JavaScript.
 
-Na lista, a página do atacante tem um formulário escondido para bank.com barra transfer, com POST, destinatário o atacante e 100 dólares. É submetido automaticamente com document.forms zero ponto submit, e o banco responde Transfer complete.
+**[→]** Whoever has the cookie can make requests, and the browser attaches it automatically. The bank sees a valid session cookie and has no idea the request came from attacker.com. Cookie authentication is not enough for requests with side effects.
 
-**[→]** Muita gente pensa: a SOP não devia travar isto? A SOP só impede o atacante de ler a resposta. O efeito lateral já aconteceu. Por isso o CSRF precisa de defesas próprias. Há variantes: o login CSRF, em que a vítima é autenticada na conta do atacante e as pesquisas dela ficam no histórico do atacante, o CSRF em routers com credenciais por omissão, e aplicações locais em modo servidor, como o exploit do Zoom.
-
-**[→]** O XS-Leaks é o primo no lado do cliente. O atacante não consegue ler a resposta, mas usa canais laterais para inferir o estado do utilizador no site alvo: eventos de erro, tempo, número de frames, ou 200 contra 404. Funciona mesmo sem efeitos laterais no servidor.
+**[→]** Does the SOP save us? Only half: the attacker cannot read "Transfer complete", but he does not need to. The side effect happened.
 
 </Notes>
 </Slide>
 
-<Slide title="Defesas contra CSRF">
+<Slide title="CSRF variants">
 
 
-## Como parar o CSRF
+## CSRF beyond the bank
 
-<Cols columns="1.1fr 1fr" gap={56} align="start">
+<Reveal>
+
+- **Login CSRF**: the attacker logs you into **his** account on Google, then reads your search history
+- **Home router**: the page tries the **default credentials** on `192.168.1.1` and changes DNS: phishing, traffic theft
+- **Local apps in server mode**: the **Zoom** exploit changed camera settings
+- **Email image**: `<img src="http://bank.com/transfer?to=attacker">`
+
+</Reveal>
+
+<Notes>
+
+CSRF is not only about bank transfers and session cookies.
+
+**[→]** Login CSRF: the malicious site creates a session in the attacker's own name on a target site like Google. Now everything you search is recorded in the attacker's account.
+
+**[→]** Routers: a hidden script on a malicious page sends requests to your home router's local address. If it is there, it tries the default username and password. If they work, it changes settings like DNS or firmware, so your bank's name resolves to a phishing copy, or traffic goes to the attacker's ads.
+
+**[→]** Many desktop apps use web technology and run a local server. Pages you visit can send requests to it. The Zoom exploit changed camera settings this way.
+
+**[→]** And a classic: an email with an image whose source is a bank transfer URL. If your client renders it, it is tracking, since the attacker knows you opened the email. It is CSRF if you are logged in and the bank transfers on a GET. And it is HTML injection, because the attacker got HTML rendered in your mail client. A test asked which: all of them.
+
+</Notes>
+</Slide>
+
+<Slide title="Quiz: not CSRF">
+
+<Quiz
+  source="Resit, 2022/23"
+  options={[
+    "A hidden JavaScript script in a malicious site tries to log in into the user's web router, using default credentials, to install spyware.",
+    "The source of an image in a malicious site sends a login request in a legitimate site with the attacker's credentials.",
+    "The submit button of an HTML form in a malicious site sends a money wiring request to the bank where the user is logged in.",
+    "The submit button of an HTML form in a malicious site sends, alongside a request to a legitimate site, a malicious JavaScript whose execution steals the user's cookies.",
+  ]}
+  correct={3}
+>
+
+Which is **not** an example of a Cross-Site Request Forgery (CSRF) attack?
+
+<div slot="answer">
+
+CSRF **uses** the cookie without reading it. Running script that **steals** cookies on the legitimate site is XSS.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The last one. Router login, login CSRF with the attacker's credentials, and the money wire are the three variants we just listed. Injecting JavaScript that executes in the legitimate site and steals cookies is cross-site scripting. Remember the difference: CSRF never sees the cookie, it just makes the browser send it.
+
+</Notes>
+</Slide>
+
+<Slide title="Quiz: router attack">
+
+<Quiz
+  source="Resit, 2023/24"
+  options={[
+    "Blacklisting JavaScript input in the router's web frontend to prevent scripts injected by malicious.com.",
+    "Defining SameSite=Strict in all requests processed by the router's web backend, to limit cookies.",
+    "Changing the default credentials (username and password) of the router's web frontend (192.168.1.1).",
+    "Using CSRF tokens to protect sensitive operations in the bank's webpage (bank.com).",
+  ]}
+  correct={2}
+>
+
+A figure shows a page on malicious.com making the user's browser log in to the home router at `192.168.1.1` and change its DNS settings, so `bank.com` resolves to a fake bank. How could it be mitigated?
+
+<div slot="answer">
+
+The attack only works because the router accepts the **default credentials**. Change them and the forged login fails.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** Change the default credentials. Blacklisting JavaScript in the router does nothing, the script runs on malicious.com, not in the router. SameSite is a cookie attribute, and the attack does not depend on an existing cookie, it logs in from scratch. And tokens on bank.com cannot help, because the user ends up on the fake bank, not the real one.
+
+</Notes>
+</Slide>
+
+<Slide title="XS-Leaks">
+
+
+## XS-Leaks
+
+```html
+<img src="https://medium.com/m/login-redirect?redirectUrl=
+          https%3A%2F%2Fmedium.com%2Ffavicon.ico"
+     onload="alert('logged in')"
+     onerror="alert('Not logged in')">
+```
+
+<Reveal>
+
+- Like CSRF, but **in the browser**: requests in the user's name, response unreadable
+- **Side channels**: error events, timing, frame count, 200 vs 404
+- Works even **without side effects**. Repeat it to pull out a receipt history
+
+</Reveal>
+
+<Notes>
+
+XS-Leaks, cross-site leaks, are related to CSRF. This is the Medium example from two tests. If the user is logged in, the URL redirects to Medium's icon, a valid image, and onload fires. If not, it redirects to the login page, which is not an image, and onerror fires. The attacker never reads the response, yet learns whether you are logged in.
+
+**[→]** Like CSRF the attacker makes requests in the user's name and cannot see the response. But it is a client-side attack, at the level of the browser.
+
+**[→]** He uses side channels instead: error events, response time, the number of frames in a window, a 200 versus a 404.
+
+**[→]** No side effect is needed on the server, a harmless GET is enough. Repeating requests can extract a lot, for example a transaction history.
+
+</Notes>
+</Slide>
+
+<Slide title="Quiz: the Medium image">
+
+<Quiz
+  source="Test 1, 2024/25"
+  options={[
+    "Cross-Frame Scripting (XFS)",
+    "Cross-Site Request Forgery (CSRF)",
+    "Cross-Site Leaks (XS-Leaks)",
+    "Cross-Site Scripting (XSS)",
+  ]}
+  correct={2}
+  columns={2}
+>
+
+A malicious page contains the Medium image above: if the user is logged in, `onload` fires, otherwise `onerror`. This attack can be catalogued as:
+
+<div slot="answer">
+
+It **learns state** through an error event, without reading the response and without a side effect: XS-Leak.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** XS-Leaks. It is not CSRF, because nothing is forged to change state: the aim is to learn something. It is not XSS, no code runs inside Medium. And no frames are involved. A related 2023/24 question asked which is a class of client-side attacks: XS-Leaks. IDOR is a server-side flaw, and XSS is not server-side.
+
+</Notes>
+</Slide>
+
+<Slide title="CSRF tokens and SameSite">
+
+
+## Stopping CSRF: secrets
+
+```html
+<form action="https://bank.com/transfer" method="post">
+  <input type="hidden" name="csrf_token" value="434ec7e838ec3167ef5">
+  <input type="text" name="to">
+  <input type="text" name="amount">
+</form>
+```
+
+<Reveal>
+
+- **CSRF token**: a fresh secret in the form, which the attacker cannot guess when forging the POST
+- **SameSite=Strict**: no cookie on any cross-site request, links included
+- **SameSite=Lax**: links carry it; cross-site images and frames do not
+
+</Reveal>
+
+<Notes>
+
+The defenses fall into two groups. The first lets the server know the request came from a trusted page.
+
+**[→]** The CSRF token: a dynamic secret that the bank puts as a hidden field in its own form. The real form sends it back. The attacker's forged form cannot include it, because he cannot read the bank's page, thanks to the SOP. No valid token, the bank refuses.
+
+**[→]** SameSite Strict: the cookie is never sent on cross-site requests, so the forged request arrives logged out. The price: following a link from an email, you are not authenticated.
+
+**[→]** Lax: following a cross-site link works, but loading images or frames from another site does not carry the cookie. So the image-based CSRF is blocked, while a top-level link still works.
+
+</Notes>
+</Slide>
+
+<Slide title="Origin checks">
+
+
+## Stopping CSRF: check the origin
+
+<Cols columns="1fr 1fr" gap={56} align="start">
 <div>
 
-<Reveal class="small">
+<Reveal>
 
-- **CSRF token**: segredo dinâmico num campo escondido, que o atacante não adivinha
-- **SameSite**: Strict (nenhum cookie entre sites, até o link de um email te desliga) vs Lax (links sim, imagens e frames não)
-- **Origin/Referer**: se faltar, é ambíguo (privacidade)
-- **Fetch Metadata**: o servidor lê `Sec-Fetch-Site`
-- **Defesa em profundidade**: preflight com cabeçalhos custom, **COOP** (corta referências a popups de outras origens: trava XS-Leaks)
+- **Referer and Origin**: the server checks them. If missing, it is ambiguous: privacy settings strip them
+- **Fetch Metadata**, set by the **browser**: `Sec-Fetch-Site`, `Sec-Fetch-Mode`, `Sec-Fetch-User`
+- **Defense in depth**: force a CORS **preflight** with custom headers. **COOP** cuts popup references: stops XS-Leaks
 
 </Reveal>
 
 </div>
 <div>
 
-<Step at={4}>
+<Step at={2}>
 
 ```http
-# fetch() de site.example
+# fetch() from site.example
 Sec-Fetch-Site: same-origin
 Sec-Fetch-Mode: cors
 
 # <img src="//site.example/foo.json">
-# em evil.example
+# on evil.example
 Sec-Fetch-Site: cross-site
 Sec-Fetch-Mode: no-cors
 ```
@@ -854,65 +1834,152 @@ Sec-Fetch-Mode: no-cors
 
 <Notes>
 
-Cinco defesas.
+The second group lets the server decide based on where the request came from.
 
-**[→]** O CSRF token: um segredo dinâmico num campo escondido do formulário. O atacante não o consegue adivinhar.
+**[→]** Referer and Origin validation: a transfer whose Referer is bank.com is fine, attacker.com is rejected. But who controls these headers? The browser sets them, the user's privacy settings can remove them, and the site can limit them with Referrer-Policy. So a missing header is ambiguous.
 
-**[→]** SameSite. Strict: não vai cookie em nenhum pedido entre sites, nem ao seguir um link de um email, por isso ficas deslogado. Lax: vai nos links entre sites, mas não em imagens nem frames.
+**[→]** Fetch Metadata are newer headers, always set by the browser. Sec-Fetch-Site says which site started the request: same-origin, same-site, cross-site or none. Sec-Fetch-Mode says what kind of request. Sec-Fetch-User says whether the user clicked. In the example, the site's own fetch arrives as same-origin, the image on evil.example arrives as cross-site, and the server simply refuses it.
 
-**[→]** Validar Origin e Referer: se o Referer for bank.com, aceita, se for attacker.com, rejeita. E se faltar o cabeçalho? É ambíguo, porque as definições de privacidade podem removê-lo.
-
-**[→]** Fetch Metadata, cabeçalhos definidos pelo browser. O Sec-Fetch-Site diz se o pedido é same-origin, same-site, cross-site ou none, e há também o Sec-Fetch-Mode e o Sec-Fetch-User. No exemplo, um fetch do próprio site vem com same-origin e modo cors. Uma imagem em evil.example a apontar para o mesmo JSON vem com cross-site e no-cors, e o servidor pode rejeitá-la.
-
-**[→]** Como defesa em profundidade, já que confias num browser possivelmente antigo: forçar um preflight CORS com cabeçalhos custom, e o COOP, Cross-Origin-Opener-Policy, que remove referências a popups de outras origens e trava XS-Leaks.
+**[→]** Remember we always trust the client's browser, which may be old. So add defense in depth: force a CORS preflight by requiring a custom header, which a plain form cannot send. And the Cross-Origin-Opener-Policy header makes a page lose its reference to a cross-origin page it opened, like a popup, which stops XS-Leaks through that window.
 
 </Notes>
 </Slide>
 
-<Slide title="Pergunta: CSRF">
+<Slide title="Quiz: CSRF statements">
 
 <Quiz
-  source="Teste 1, 2023/24"
+  source="Test 1, 2023/24"
   options={[
-    "Os tokens CSRF permitem ao servidor web receber uma lista branca de origens confiáveis.",
-    "Os cabeçalhos Fetch Metadata permitem ao servidor web receber uma lista branca de origens confiáveis.",
-    "Os cabeçalhos Fetch Metadata permitem ao servidor web decidir que pedidos de clientes aceitar com base na origem.",
-    "Os cookies SameSite=Strict permitem ao servidor web decidir que pedidos de clientes aceitar com base na origem.",
+    "CSRF tokens allow a web server to receive a whitelist of trustworthy origins.",
+    "Fetch Metadata headers allow a web server to receive a whitelist of trustworthy origins.",
+    "Fetch Metadata headers allow a web server to take decisions on which client requests to accept based on their origin.",
+    "SameSite=Strict cookies allow a web server to take decisions on which client requests to accept based on their origin.",
   ]}
   correct={2}
 >
 
-Sobre **CSRF**, qual destas afirmações é verdadeira?
+CSRF is a classical web security attack that many web proposals seek to mitigate. Which statement is true?
 
 <div slot="answer">
 
-Os Fetch Metadata (`Sec-Fetch-Site`, `Sec-Fetch-Mode`) são **cabeçalhos do browser** que descrevem a origem do pedido: o servidor decide e rejeita o cross-site. O token prova que o pedido veio do próprio site. O SameSite é uma política do **browser** sobre cookies.
+Fetch Metadata tells the **server** where each request came from. Tokens prove the page was the site's own; SameSite is enforced by the **browser**.
 
 </div>
 </Quiz>
 
 <Notes>
 
-Pausa o vídeo e tenta responder.
-
-**[→]** A resposta é a terceira. Os Fetch Metadata são cabeçalhos que o browser acrescenta, e o servidor usa o Sec-Fetch-Site para decidir se aceita o pedido. As duas primeiras trocam a ideia: nem o token nem o Fetch Metadata são uma lista branca de origens, o token prova que o pedido veio de uma página do próprio site. A quarta é a armadilha: o SameSite decide se o browser envia o cookie, não é o servidor a decidir.
+**[→]** The third. Nothing here is a whitelist of origins, so the first two are out. The last is the trap: SameSite Strict does block cross-site cookies, but the browser decides that, not the server. Fetch Metadata is the one where the server reads a header and decides.
 
 </Notes>
 </Slide>
 
-<Slide title="Sessões">
+<Slide title="Quiz: who sets Sec-Fetch?">
+
+<Quiz
+  source="Resit, 2024/25"
+  options={[
+    "Always the server when answering requests.",
+    "Depending on Sec-Fetch-Mode, the browser for cors requests and the server for non-cors requests.",
+    "The browser defines Sec-Fetch-Site, the server defines Sec-Fetch-Mode and the user defines Sec-Fetch-User.",
+    "Always the browser when sending requests.",
+  ]}
+  correct={3}
+>
+
+There are various HTTP headers used for web security. Who defines `Sec-Fetch-*` headers?
+
+<div slot="answer">
+
+All Fetch Metadata headers are **request** headers set by the browser. The page cannot forge them.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** Always the browser. Compare with SameSite, which the server defines. Fetch Metadata goes the other way: the browser describes the request, the server reads it. Sec-Fetch-User reflects whether the user clicked, but the browser still writes it.
+
+</Notes>
+</Slide>
+
+<Slide title="Quiz: never mitigates">
+
+<Quiz
+  source="Resit, 2024/25"
+  options={[
+    "The Medium server defining SameSite=Strict cookies.",
+    "The browser setting the request's Referrer and Origin headers.",
+    "The Medium server defining CSRF tokens on the login page.",
+    "The browser defining Sec-Fetch-Site=same-origin in the request.",
+  ]}
+  correct={2}
+>
+
+Back to the Medium image XS-Leak. Which countermeasure could **never** be used to mitigate it?
+
+<div slot="answer">
+
+The leak is a plain cross-site **GET** of a redirect; no form is submitted, so a token never comes into play.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** CSRF tokens on the login page. The attack loads a URL as an image, it never submits the login form, so the token is never checked. SameSite Strict works: the cross-site image arrives without the cookie, so it always looks logged out. Referer, Origin and Sec-Fetch-Site all let the Medium server see that the request is cross-site and refuse to redirect.
+
+</Notes>
+</Slide>
+
+<Slide title="Quiz: XSS plus CSRF">
+
+<Quiz
+  source="Resit, 2023/24"
+  options={[
+    "Use XSS to forge a request to another site, and CSRF to send the user's cookies.",
+    "Use XSS to inject and submit an HTML form, and CSRF to make a request to another site.",
+    "Use CSRF to inject an HTML button and click on it, and XSS to load a frame on click.",
+    "Use CSRF to inject an HTML form, and XSS to submit data to the form.",
+  ]}
+  correct={1}
+>
+
+Remember the XSS + CSRF CTF. How could a working exploit be constructed?
+
+<div slot="answer">
+
+XSS is how you **run code** in the page; that code submits a form, and the forged request with the victim's cookie is the CSRF.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The second. Each attack has a role. XSS injects: it gets your code running. CSRF forges: it makes the victim's browser send a request with their cookies. So the XSS injects and submits a form, and the request it makes is the CSRF. The other options give injection to CSRF, which cannot inject anything.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+{/* ------------------------------------------------------------ WS3 rest */}
+
+<Chapter title="Sessions, design, users" label="Web Security 3">
+
+<Slide title="Session management">
 
 
-## Gestão de sessões
+## Session management
 
 <Cols columns="1fr 1fr" gap={64} align="start">
 <div>
 
 <Step at={1}>
 
-### No servidor (recomendado)
+### Server-side (recommended)
 
-O cookie guarda só um **token aleatório**. Pede: alta entropia, IDs novos, armazenamento seguro, invalidar no logout e na inatividade.
+The cookie holds only a **random token**. Needs high entropy, fresh IDs, safe storage, expiry on logout and idle.
 
 </Step>
 
@@ -921,9 +1988,9 @@ O cookie guarda só um **token aleatório**. Pede: alta entropia, IDs novos, arm
 
 <Step at={2}>
 
-### No cliente (perigoso)
+### Client-side (dangerous)
 
-O cliente edita o cookie (**cookie poisoning**). O mesmo vale para localStorage e campos escondidos (`price=150`). Mitigação: Secure e **MAC**.
+The client can edit the cookie: **cookie poisoning**. Same for `localStorage` and hidden fields (`price=150`).
 
 </Step>
 
@@ -932,139 +1999,111 @@ O cliente edita o cookie (**cookie poisoning**). O mesmo vale para localStorage 
 
 <Step at={3}>
 
-```text
-T = MACsign(k, (SID, name, value))
-Set-Cookie: NAME = value, T
-```
+<p class="lede">If you must: no secrets in cookies, <strong>Secure</strong> only, and a <strong>MAC</strong> with a server key <code>k</code> for integrity.</p>
 
 </Step>
 
 <Notes>
 
-O HTTP não tem estado, os cookies só o simulam. Há duas formas de gerir sessões.
+A07, Identification and Authentication Failures. HTTP is stateless, cookies only simulate state, and any party can drop the simulation at any time.
 
-**[→]** No servidor, que é a recomendada. O servidor guarda o estado e o cookie só tem um token aleatório. Exige alta entropia, IDs novos, armazenamento seguro, e invalidar a sessão no logout e na inatividade. Falhar qualquer uma destas abre ataques.
+**[→]** Server-side sessions: the server stores all the state and gives the client a random token as a reference. It is the recommended, most secure option. But it has overhead, and every requirement matters: high entropy, fresh session IDs, secure storage, invalidation after logout or idle time. If any fails, there is an attack, like guessing or reusing a session ID.
 
-**[→]** No cliente é flexível mas perigoso: o cliente pode editar o cookie, é o cookie poisoning. O mesmo acontece com o localStorage e com campos escondidos, como um preço igual a 150. Podes cifrar, mas nunca ponhas dados sensíveis em cookies, e usar cookies Secure. Para integridade, usas um MAC.
+**[→]** Client-side sessions: the client stores all the state in its cookie. Flexible, but much more dangerous: the client can edit the cookie or the Cookie header, which is cookie poisoning. Same for localStorage and hidden form fields: set price to 1 instead of 150.
 
-**[→]** Funciona assim: o servidor calcula T com MACsign usando uma chave k, o identificador da sessão, o nome e o valor, e envia o valor e T no Set-Cookie. Em cada pedido verifica com MACverify. A chave k nunca sai do servidor.
+**[→]** Encrypting gives confidentiality, but you really should not put sensitive data in a cookie anyway, and always use Secure cookies. For integrity, the server signs the cookie with a MAC under a secret key k that never leaves the server, and verifies it on every request.
 
 </Notes>
 </Slide>
 
-<Slide title="Pergunta: sessões">
+<Slide title="Quiz: sessions">
 
 <Quiz
-  source="Teste 1, 2023/24"
+  source="Test 1, 2023/24"
   options={[
-    "O servidor guarda todo o estado do cliente, associado a um token aleatório em cada cookie de sessão.",
-    "O servidor gere todo o estado do cliente, guardado num cookie de sessão cifrado e assinado com MAC.",
-    "O cliente gere todo o seu estado no seu cookie de sessão, que é guardado pelo servidor.",
-    "O servidor guarda todo o estado do cliente, associado ao mesmo identificador para todos os cookies de um cliente.",
+    "The server stores all client state, bound to a random token in each session cookie.",
+    "The server manages all client state, stored in an encrypted and MAC-signed session cookie.",
+    "The client manages all its state in its session cookie, which is stored by the server.",
+    "The server stores all client state, bound to the same identifier for all cookies of a client.",
   ]}
   correct={0}
 >
 
-Qual é a forma **mais segura** de gestão de sessões em aplicações web?
+Which is the **most secure** form of session management in web applications?
 
 <div slot="answer">
 
-Com o estado no servidor e só um **token aleatório** no cliente, o atacante não forja nem altera o estado, e a revogação é imediata. Estado no cookie, mesmo cifrado e com MAC, expõe mais.
+State on the server, a **random token** in the cookie. The client cannot forge or edit state, and the server can revoke it at once.
 
 </div>
 </Quiz>
 
 <Notes>
 
-Outra para tentares.
-
-**[→]** A resposta é a primeira: o estado fica no servidor e o cookie só tem um token aleatório. Assim o cliente não consegue manipular os seus próprios privilégios. A segunda parece boa porque tem cifra e MAC, mas continua a pôr estado no cliente, e a pergunta quer a mais segura.
+**[→]** The first. The second sounds strong, with encryption and a MAC, but the state still lives on the client, and the question asks for the most secure. The third mixes up who stores what. The fourth reuses one identifier for every cookie, which breaks the "fresh session IDs" rule.
 
 </Notes>
 </Slide>
 
-<Slide title="Acesso, design e configuração">
+<Slide title="Insecure design">
 
 
-## Os outros erros que o exame gosta
+## A04: insecure design
 
-<div class="cards" style="--n:3">
-<div class="card" data-color="red">
+<Reveal>
 
-### A01 Acesso (IDOR)
+- **Business logic** flaws: need context, not fixed by a perfect implementation or sanitization
+- The server cannot trust the client: checks **only in the frontend**, errors that leak **versions**
+- The client cannot trust the server: **stored XSS**, insecurely stored credentials
+- `Total = Price × Quantity`: order **−1 books**, or **0.1 TVs**
+- Press releases staged at **sequential URLs**: `00014.html` → `00015.html`
 
-Não há controlo de acesso. Citibank 2011: mudar o número da conta em `/myacct/9725126314/summary` expôs <Mark at={1} type="circle" color="red">360 mil cartões</Mark>. Sinave, DGS, 2022.
-
-</div>
-<div class="card" data-color="orange">
-
-### A04 Design inseguro
-
-Falha de **lógica**: nenhuma implementação perfeita a resolve. Quantidade <Mark at={2} type="underline" color="orange">negativa</Mark> ou 0,1 TVs. Comunicados em URLs **sequenciais** (00014 → 00015).
-
-</div>
-<div class="card" data-color="blue">
-
-### A05 Configuração
-
-Ficheiros esquecidos, backups, erros que mostram a config, <Mark at={3} type="box" color="blue">.git público</Mark>. Uploads: webshells, zip bombs.
-
-</div>
-</div>
+</Reveal>
 
 <Notes>
 
-Três categorias do OWASP que aparecem em perguntas.
+Insecure Design is new in 2021; the goal is secure by design.
 
-**[→]** A01, controlo de acesso quebrado. O caso típico é o IDOR, Insecure Direct Object Reference, também chamado parameter tampering, em que simplesmente não há controlo de acesso. No Citibank em 2011, mudar o número da conta no URL expôs 360 mil cartões. Em Portugal, o caso do Sinave da DGS, em 2022.
+**[→]** It covers business logic errors. They are hard to detect, you need to understand the application, and no perfect implementation or general countermeasure like sanitization fixes them. Automated tools usually miss them.
 
-**[→]** A04, design inseguro, categoria nova. São falhas de lógica de negócio: difíceis de detetar, precisam de contexto, e não se resolvem com uma implementação perfeita nem com sanitização genérica. O servidor não pode confiar no cliente, e o cliente não pode confiar no servidor, por exemplo por causa do XSS armazenado. Exemplos: quantidade negativa ou 0,1 televisões, com preço vezes quantidade. E os comunicados de imprensa guardados em URLs sequenciais, 00014, 00015, que serviram num caso de fraude com valores mobiliários por hackers ucranianos.
+**[→]** Web apps are split between client and server. The server cannot trust the client: validating input only in the frontend is a typical bug, because the client can send any request. Error messages with versions also help the attacker.
 
-**[→]** A05, má configuração. Divulgação indesejada: ficheiros CGI esquecidos, endpoints privados, backups, erros não tratados que revelam a configuração, pastas .git públicas em produção. Ferramentas automáticas encontram isto. Os uploads também: todo o input é malicioso, e há risco de injeção, de webshells e de zip bombs. Contramedidas: nomes difíceis de adivinhar, sem acesso web direto, CDN externa e antivírus.
+**[→]** The client cannot trust the server either: it may be serving stored XSS, or storing credentials badly.
+
+**[→]** The store example: total is price times quantity. Order minus one books, do you get money back? Order 0.1 TVs, do you pay 10 percent?
+
+**[→]** And a press release site that publishes company earnings at a scheduled time. The files were uploaded early, just not linked. But the URLs were sequential, so you could guess the next one. Ukrainian hackers used it for securities fraud.
 
 </Notes>
 </Slide>
 
-<Slide title="Clickjacking e phishing">
+<Slide title="Misconfiguration">
 
 
-## Clickjacking e phishing
+## A05: security misconfiguration
 
 <Cols columns="1fr 1fr" gap={64} align="start">
 <div>
 
-<Step at={1}>
+### Undesired disclosure
 
-### Clickjacking
+<Reveal>
 
-Frames transparentes sobrepostas: o utilizador clica no que não vê.
+- Forgotten CGI files, "private" API endpoints
+- Site or database **backups**
+- Error messages showing the configuration
+- A public **.git** folder in production
 
-</Step>
-
-<Step at={2}>
-
-```http
-X-Frame-Options: DENY
-Content-Security-Policy:
-  frame-ancestors 'none'
-```
-
-</Step>
+</Reveal>
 
 </div>
 <div>
 
-<Step at={3}>
+<Step at={5}>
 
-### Phishing
+### File uploads
 
-Uma mensagem falsa leva a um site falso. A **2FA** protege pouco: o utilizador entrega também o OTP.
-
-</Step>
-
-<Step at={4}>
-
-**U2F** (chave) resolve, **a não ser que** o atacante force um *downgrade* do método ("Try another way to sign in").
+Webshells, injection. Use hard-to-guess names, no direct access, a CDN for media, an antivirus. Watch archives: **zip bombs**, embedded paths.
 
 </Step>
 
@@ -1073,15 +2112,137 @@ Uma mensagem falsa leva a um site falso. A **2FA** protege pouco: o utilizador e
 
 <Notes>
 
-Para fechar, dois ataques sobre o utilizador.
+A05. Web apps often expose sensitive data by accident.
 
-**[→]** Clickjacking: frames transparentes sobrepostas. Ou o utilizador vê a frame maliciosa mas clica na da vítima escondida, por exemplo num jogo, ou vê a da vítima mas clica numa maliciosa posta por cima de um elemento de interface.
+**[→]** Forgotten vulnerable CGI files, and "private" API endpoints that are not meant for the public but are reachable.
 
-**[→]** Proteções: frames HTML5 com sandbox, que são tratadas como origem única, o cabeçalho X-Frame-Options com DENY ou SAMEORIGIN, e o CSP frame-ancestors. Com none, nenhuma página pode pôr a tua numa iframe. Com self, só o próprio site.
+**[→]** Backups of the site or of the database left in the web root.
 
-**[→]** Phishing: uma mensagem fraudulenta leva o utilizador a um site falso onde entrega os dados. A Facebook e a Google já perderam 100 milhões de dólares assim. A defesa principal é o bom senso. A 2FA ajuda pouco: protege contra credenciais roubadas, mas o utilizador entrega também o OTP ao site falso.
+**[→]** Unhandled errors that reveal the system or database configuration.
 
-**[→]** O U2F, a chave de hardware, resolve, porque o atacante não consegue ficar no meio. Mas só se o atacante não conseguir forçar um downgrade do método de autenticação, como a opção Try another way to sign in do Google, que leva o utilizador para SMS ou códigos de backup, que são phishable. Ou se o utilizador não perder a chave.
+**[→]** And public version control in production: download the .git folder, and you have the source code. Automated tools find all of these. Countermeasures: proper access control and exception handling, and disable directory listing.
+
+**[→]** File uploads, and fetching files for clients, are a threat because all input is potentially malicious: injection, a webshell that gives the attacker full access. So give uploads hard-to-guess names, never serve them directly, push media to an external CDN, scan them with an antivirus, and take care with archives: zip bombs, often aimed at the antivirus itself, and absolute or relative paths inside the archive.
+
+</Notes>
+</Slide>
+
+<Slide title="Clickjacking">
+
+
+## Clickjacking
+
+<Reveal>
+
+- Frames can **overlap** and be **transparent**
+- You see the malicious frame (a game), but click the **victim frame** under it
+- Or you see the victim frame, but click a malicious button on top
+
+</Reveal>
+
+<Step at={4}>
+
+```http
+X-Frame-Options: DENY
+Content-Security-Policy: frame-ancestors 'none'
+```
+
+</Step>
+
+<Notes>
+
+**[→]** Page components can overlap and can be transparent.
+
+**[→]** Attack one: you see the attacker's frame, for example a game that makes you click around the screen, but you are really clicking an invisible victim frame underneath.
+
+**[→]** Attack two: you see the victim frame, but a malicious frame sits right on top of a specific button.
+
+**[→]** Protections. HTML5 sandboxed frames are treated as a unique origin. X-Frame-Options with deny or sameorigin stops the page from being rendered in a frame of another origin. And CSP frame-ancestors none means no site can frame you at all.
+
+</Notes>
+</Slide>
+
+<Slide title="Phishing">
+
+
+## Phishing
+
+<Reveal>
+
+- A fraudulent message leads to a **copy** of a trusted site, where the user gives away login or card data
+- **2FA** helps little: the user also types the **code** into the fake site
+- **U2F**: a small device stores the user's **keys**, so the attacker cannot sit in the middle
+- Unless the attacker forces a **downgrade** ("Try another way")
+
+</Reveal>
+
+<Notes>
+
+**[→]** Phishing is one of the most common social engineering attacks, and almost all of it happens on the web, where it is hard to know you are in the right place.
+
+**[→]** The main protection is good sense. Two-factor authentication mostly protects against stolen credentials. Against phishing it does little, because the user hands the one-time code to the fake site too.
+
+**[→]** Universal 2nd Factor solves it: a small portable device stores the user's secret keys, and the attacker cannot play the man in the middle.
+
+**[→]** But only if the attacker cannot downgrade the authentication method, for example by picking "try another way to sign in" and falling back to SMS. And what happens when the user loses the token?
+
+</Notes>
+</Slide>
+
+<Slide title="Quiz: U2F">
+
+<Quiz
+  source="Test 1, 2024/25"
+  options={[
+    "Requiring more than one authentication mechanism for user login.",
+    "Storing user cookies both in the server and in the browser's local storage.",
+    "Storing user cryptographic keys in a portable hardware device.",
+    "Ensuring that the user has at least two authentication mechanisms available.",
+  ]}
+  correct={2}
+>
+
+Universal 2nd Factor (U2F) consists in:
+
+<div slot="answer">
+
+A hardware device holding the user's **keys**. Option one describes 2FA in general.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** Storing keys in a portable hardware device. Option one is two-factor authentication in general, which U2F is one kind of, but not what defines it. Option four describes having fallbacks, which is exactly the downgrade risk.
+
+</Notes>
+</Slide>
+
+<Slide title="Quiz: browser as an OS">
+
+<Quiz
+  source="Test 1, 2024/25"
+  options={[
+    "Pages and frames are typically isolated using OS sandboxing mechanisms for processes.",
+    "Access to page resources is always made via OS system calls.",
+    "Pages from the same domain are not isolated.",
+    "As for an OS kernel, a browser may be vulnerable to side-channel attacks.",
+  ]}
+  correct={1}
+>
+
+A browser can be seen as a domain-specific OS. Which sentence is **not** true?
+
+<div slot="answer">
+
+The **browser** mediates access to page resources (the DOM), not the OS. Sandboxing, same-origin sharing and XS-Leaks are all real.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The second. Pages reach the DOM and cookies through the browser, which plays the kernel here, not through OS system calls. The others are true: modern browsers sandbox pages in processes, same-origin pages can reach each other, as in the cookie collision, and XS-Leaks are the browser's side channels. A good last check of the whole part.
 
 </Notes>
 </Slide>
