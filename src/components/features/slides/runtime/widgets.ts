@@ -131,20 +131,19 @@ function initOverflow(lab: HTMLElement): void {
     const retTouched = written.length > RET_WORD * 4;
     const ebpTouched = written.length > EBP_WORD * 4;
     const extra = Math.max(0, written.length - BYTE_COUNT);
-    count.textContent = `${copied.length} bytes + \\0 → buf tem 16${extra ? ` · +${extra} bytes acima do diagrama` : ""}`;
+    count.textContent = `${copied.length} bytes + \\0 → buf holds 16${extra ? ` · +${extra} bytes above the diagram` : ""}`;
 
     let tone = "ok";
-    let message = `✓ ret intacto (${hex(ret)}): volta para main`;
+    let message = `✓ ret intact (${hex(ret)}): returns to main`;
     if (retTouched && ret >= BUF_ADDRESS && ret < BUF_ADDRESS + 16) {
       tone = "pwned";
-      message = `⚠ ret = ${hex(ret)} aponta para buf → o CPU executa o input: shellcode!`;
+      message = `⚠ ret = ${hex(ret)} points into buf → the CPU runs the input: shellcode!`;
     } else if (retTouched) {
       tone = "bad";
-      message = `✗ ret = ${hex(ret)} → salta para lixo → Segmentation fault`;
+      message = `✗ ret = ${hex(ret)} → jumps to garbage → Segmentation fault`;
     } else if (ebpTouched) {
       tone = "warn";
-      message =
-        "⚠ ebp guardado corrompido: o caller passa a usar um frame errado";
+      message = "⚠ saved ebp corrupted: the caller now uses a wrong frame";
     }
     status.dataset.tone = tone;
     status.textContent = message;
@@ -288,13 +287,13 @@ function evaluateWhere(tokensIn: Token[], row: User): boolean {
 
   const primary = (): SqlValue => {
     const token = list[position];
-    if (!token) throw new SqlError("fim inesperado");
+    if (!token) throw new SqlError("unexpected end");
     position += 1;
     if (token.kind === "string") return token.value;
     if (token.kind === "number") return Number(token.text);
     if (token.kind === "op" && token.text === "(") {
       const value = or();
-      if (list[position]?.text !== ")") throw new SqlError("falta )");
+      if (list[position]?.text !== ")") throw new SqlError("missing )");
       position += 1;
       return value;
     }
@@ -305,9 +304,9 @@ function evaluateWhere(tokensIn: Token[], row: User): boolean {
       if (column === "role") return row.role;
       if (column === "true") return true;
       if (column === "false") return false;
-      throw new SqlError(`coluna desconhecida: ${token.text}`);
+      throw new SqlError(`unknown column: ${token.text}`);
     }
-    throw new SqlError(`perto de "${token.text}"`);
+    throw new SqlError(`near "${token.text}"`);
   };
 
   const comparison = (): SqlValue => {
@@ -372,7 +371,7 @@ function evaluateWhere(tokensIn: Token[], row: User): boolean {
 
   const result = or();
   if (position < list.length)
-    throw new SqlError(`perto de "${list[position].text}"`);
+    throw new SqlError(`near "${list[position].text}"`);
   return truthy(result);
 }
 
@@ -398,7 +397,7 @@ function runQuery(sql: string): SqlOutcome {
   const whereIndex = first.findIndex(
     (token) => token.kind === "word" && token.text.toUpperCase() === "WHERE",
   );
-  if (whereIndex === -1) return { rows: [], error: "sem WHERE", stacked };
+  if (whereIndex === -1) return { rows: [], error: "no WHERE", stacked };
   const condition = first.slice(whereIndex + 1);
   try {
     return {
@@ -406,7 +405,7 @@ function runQuery(sql: string): SqlOutcome {
       stacked,
     };
   } catch (error) {
-    const message = error instanceof SqlError ? error.message : "erro";
+    const message = error instanceof SqlError ? error.message : "error";
     return { rows: [], error: message, stacked };
   }
 }
@@ -509,21 +508,21 @@ function initSql(lab: HTMLElement): void {
     let message: string;
     let tone = "ok";
     if (outcome.error) {
-      message = `✗ erro de SQL (${outcome.error}). Mostrar este erro ao cliente já é uma fuga de informação.`;
+      message = `✗ SQL error (${outcome.error}). Showing this error to the client already leaks information.`;
       tone = "warn";
     } else if (outcome.rows.length === 0) {
-      message = "login falhou: 0 linhas";
+      message = "login failed: 0 rows";
     } else {
       const [first] = outcome.rows;
-      message = `login como ${first.name} (${first.role}) · ${outcome.rows.length} linha(s)`;
+      message = `logged in as ${first.name} (${first.role}) · ${outcome.rows.length} row${outcome.rows.length === 1 ? "" : "s"}`;
       if (injected) tone = "bad";
     }
     if (outcome.stacked.length > 0) {
-      message += ` · ⚠ segunda instrução: ${outcome.stacked.join("; ")}`;
+      message += ` · ⚠ second statement: ${outcome.stacked.join("; ")}`;
       tone = "bad";
     }
     if (prepared.checked)
-      message += " · o input é sempre um valor, nunca código";
+      message += " · the input is always a value, never code";
     status.dataset.tone = tone;
     status.textContent = message;
   };
@@ -593,10 +592,10 @@ function initUid(lab: HTMLElement): void {
     status.dataset.tone = state.euid === 0 ? "bad" : canRegain ? "warn" : "ok";
     status.textContent =
       state.euid === 0
-        ? "a correr com privilégios de root"
+        ? "running with root privileges"
         : canRegain
-          ? "sem root agora, mas pode voltar: o SUID ainda é 0"
-          : "drop permanente: já não há forma de voltar a root";
+          ? "no root now, but it can go back: SUID is still 0"
+          : "permanent drop: there is no way back to root";
     log.replaceChildren(
       ...history.map(({ call, ok }) => {
         const item = document.createElement("li");
@@ -677,7 +676,7 @@ function initCookie(lab: HTMLElement): void {
       parsed = null;
     }
     if (!parsed) {
-      verdict.textContent = "URL inválido";
+      verdict.textContent = "Invalid URL";
       verdict.dataset.tone = "warn";
       return;
     }
@@ -691,14 +690,14 @@ function initCookie(lab: HTMLElement): void {
       (requestPath.startsWith(cookiePath) &&
         (cookiePath.endsWith("/") || requestPath[cookiePath.length] === "/"));
     domainCheck.dataset.ok = String(domainOk);
-    domainCheck.textContent = `${domainOk ? "✓" : "✗"} domínio: "${cookieDomain}" ${domainOk ? "é" : "não é"} sufixo de "${host}"`;
+    domainCheck.textContent = `${domainOk ? "✓" : "✗"} domain: "${cookieDomain}" ${domainOk ? "is" : "is not"} a suffix of "${host}"`;
     pathCheck.dataset.ok = String(pathOk);
-    pathCheck.textContent = `${pathOk ? "✓" : "✗"} caminho: "${cookiePath}" ${pathOk ? "é" : "não é"} prefixo de "${requestPath}"`;
+    pathCheck.textContent = `${pathOk ? "✓" : "✗"} path: "${cookiePath}" ${pathOk ? "is" : "is not"} a prefix of "${requestPath}"`;
     const sent = domainOk && pathOk;
     verdict.dataset.tone = sent ? "ok" : "bad";
-    verdict.textContent = sent ? "cookie enviado" : "cookie não enviado";
+    verdict.textContent = sent ? "cookie sent" : "cookie not sent";
     const port = parsed.port || (parsed.protocol === "https:" ? "443" : "80");
-    origin.textContent = `origem SOP do pedido = (${parsed.protocol.replace(":", "")}, ${host}, ${port})`;
+    origin.textContent = `the request's SOP origin = (${parsed.protocol.replace(":", "")}, ${host}, ${port})`;
   };
 
   for (const field of [domain, path, url])

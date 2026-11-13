@@ -26,45 +26,43 @@ export interface Props {
 
 const { slug, title, description, lang, video } = Astro.props;
 const canonical = new URL(`/slides/${slug}`, Astro.site ?? Astro.url);
+const shortcuts = [
+  ["→ · space · PageDown", "next"],
+  ["← · PageUp", "back"],
+  ["Shift + → / ←", "skip steps"],
+  ["M", "map of every slide"],
+  ["F · Esc", "back to the current slide"],
+  ["W", "whiteboard"],
+  ["space + drag · wheel", "move the view"],
+  ["Ctrl/⌘ + wheel · pinch", "zoom"],
+  ["V", "move and interact"],
+  ["P · H", "pen · highlighter"],
+  ["A · R · O · T", "arrow · rectangle · ellipse · text"],
+  ["E · L", "eraser · laser"],
+  ["1–8 · [ ]", "colour · thickness"],
+  ["⌘Z · ⇧⌘Z", "undo · redo"],
+  ["C · Shift + C", "clear slide · clear all"],
+  ["S", "speaker view (new window)"],
+  ["D · U", "theme · hide the interface"],
+];
 const colors = [
-  ["ink", "Tinta"],
-  ["red", "Vermelho"],
-  ["orange", "Laranja"],
-  ["yellow", "Amarelo"],
-  ["green", "Verde"],
-  ["cyan", "Ciano"],
-  ["blue", "Azul"],
-  ["purple", "Roxo"],
-].slice(0, 6);
+  ["ink", "Ink"],
+  ["red", "Red"],
+  ["orange", "Orange"],
+  ["yellow", "Yellow"],
+  ["green", "Green"],
+  ["cyan", "Cyan"],
+] as const;
 const tools = [
-  ["interact", "Mover e interagir", "V", MousePointer2],
-  ["pen", "Caneta", "P", Pen],
-  ["highlighter", "Marcador", "H", Highlighter],
-  ["arrow", "Seta", "A", MoveUpRight],
-  ["rect", "Retângulo", "R", Square],
-  ["text", "Texto", "T", Type],
-  ["eraser", "Borracha", "E", Eraser],
+  ["interact", "Move and interact", "V", MousePointer2],
+  ["pen", "Pen", "P", Pen],
+  ["highlighter", "Highlighter", "H", Highlighter],
+  ["arrow", "Arrow", "A", MoveUpRight],
+  ["rect", "Rectangle", "R", Square],
+  ["text", "Text", "T", Type],
+  ["eraser", "Eraser", "E", Eraser],
   ["laser", "Laser", "L", Wand],
 ] as const;
-const shortcuts = [
-  ["→ · espaço · PageDown", "avançar"],
-  ["← · PageUp", "recuar"],
-  ["Shift + → / ←", "saltar passos"],
-  ["M", "mapa de todos os slides"],
-  ["F · Esc", "voltar ao slide atual"],
-  ["W", "quadro branco"],
-  ["espaço + arrastar · roda", "mover a vista"],
-  ["Ctrl/⌘ + roda · pinça", "zoom"],
-  ["V", "mover e interagir"],
-  ["P · H", "caneta · marcador"],
-  ["A · R · O · T", "seta · retângulo · elipse · texto"],
-  ["E · L", "borracha · laser"],
-  ["1–8 · [ ]", "cor · espessura"],
-  ["⌘Z · ⇧⌘Z", "desfazer · refazer"],
-  ["C · Shift + C", "limpar slide · limpar tudo"],
-  ["S", "vista do orador (outra janela)"],
-  ["D · U", "tema · esconder interface"],
-];
 ---
 
 <!doctype html>
@@ -125,8 +123,8 @@ const shortcuts = [
         <div class="deck-world" data-world>
           <div class="deck-map" data-map>
             <slot />
-            <section class="deck-part deck-board" aria-label="Quadro branco">
-              <h2 class="deck-part-title">Quadro</h2>
+            <section class="deck-part deck-board" aria-label="Whiteboard">
+              <h2 class="deck-part-title">Board</h2>
               <div class="deck-part-row">
                 <div class="board-frame" data-board-frame></div>
                 <div class="board-frame"></div>
@@ -139,18 +137,13 @@ const shortcuts = [
         <svg class="deck-overlay" data-overlay aria-hidden="true"></svg>
       </div>
 
-      <div
-        class="deck-toolbar"
-        data-toolbar
-        role="toolbar"
-        aria-label="Ferramentas"
-      >
+      <div class="deck-toolbar" data-toolbar role="toolbar" aria-label="Tools">
         <div class="tb-group">
           <button
             type="button"
             data-action="prev"
-            title="Anterior (←)"
-            aria-label="Anterior"
+            title={`Previous (←)`}
+            aria-label="Previous"
           >
             <ChevronLeft size={18} />
           </button>
@@ -158,8 +151,8 @@ const shortcuts = [
           <button
             type="button"
             data-action="next"
-            title="Seguinte (→)"
-            aria-label="Seguinte"
+            title={`Next (→)`}
+            aria-label="Next"
           >
             <ChevronRight size={18} />
           </button>
@@ -195,8 +188,8 @@ const shortcuts = [
           <button
             type="button"
             data-action="overview"
-            title="Mapa (M)"
-            aria-label="Mapa de slides"
+            title={`Map (M)`}
+            aria-label="Slide map"
           >
             <LayoutGrid size={18} />
           </button>
@@ -204,16 +197,16 @@ const shortcuts = [
             type="button"
             data-action="speaker"
             class="tb-presenter"
-            title="Vista do orador (S)"
-            aria-label="Vista do orador"
+            title={`Speaker view (S)`}
+            aria-label="Speaker view"
           >
             <Presentation size={18} />
           </button>
           <button
             type="button"
             data-action="help"
-            title="Atalhos (?)"
-            aria-label="Atalhos de teclado"
+            title={`Shortcuts (?)`}
+            aria-label="Keyboard shortcuts"
           >
             <CircleHelp size={18} />
           </button>
@@ -228,8 +221,8 @@ const shortcuts = [
           aria-labelledby="deck-help-title"
         >
           <header>
-            <h2 id="deck-help-title">Atalhos</h2>
-            <button type="button" data-help-close aria-label="Fechar">×</button>
+            <h2 id="deck-help-title">Shortcuts</h2>
+            <button type="button" data-help-close aria-label="Close">×</button>
           </header>
           <dl>
             {
@@ -242,21 +235,21 @@ const shortcuts = [
             }
           </dl>
           <p>
-            Os desenhos ficam só neste browser.
+            Drawings stay in this browser.
             {
               video && (
                 <>
                   {" "}
                   <a href={video} target="_blank" rel="noreferrer">
-                    Ver o vídeo
+                    Watch the video
                   </a>
                   .
                 </>
               )
             }
             {" "}
-            <a href="?script">Guião completo</a> · <a href="/slides"
-              >Outras apresentações</a
+            <a href="?script">Full script</a> · <a href="/slides"
+              >Other presentations</a
             >.
           </p>
         </div>
@@ -274,25 +267,23 @@ const shortcuts = [
             <button
               type="button"
               data-speaker-action="prev"
-              aria-label="Anterior">←</button
+              aria-label="Previous">←</button
             >
             <button
               type="button"
               class="speaker-timer"
               data-speaker-action="timer"
-              title="Iniciar ou pausar (T)"
+              title="Start or pause (T)"
             >
               <span data-speaker-timer>00:00</span>
             </button>
             <button
               type="button"
               data-speaker-action="reset"
-              title="Repor cronómetro">repor</button
+              title="Reset the timer">reset</button
             >
-            <button
-              type="button"
-              data-speaker-action="next"
-              aria-label="Seguinte">→</button
+            <button type="button" data-speaker-action="next" aria-label="Next"
+              >→</button
             >
           </div>
         </section>
@@ -301,22 +292,22 @@ const shortcuts = [
           <div class="speaker-frame speaker-frame--next" data-speaker-next>
           </div>
           <div class="speaker-notes-bar">
-            <span class="speaker-label">Notas</span>
+            <span class="speaker-label">Notes</span>
             <span>
               <button
                 type="button"
                 data-speaker-action="smaller"
-                aria-label="Letra mais pequena">A−</button
+                aria-label="Smaller text">A−</button
               >
               <button
                 type="button"
                 data-speaker-action="larger"
-                aria-label="Letra maior">A+</button
+                aria-label="Larger text">A+</button
               >
               <button
                 type="button"
                 data-speaker-action="theme"
-                aria-label="Mudar tema">tema</button
+                aria-label="Change theme">theme</button
               >
             </span>
           </div>
@@ -326,7 +317,7 @@ const shortcuts = [
 
       <div class="deck-script" data-script hidden>
         <header>
-          <p class="script-kicker">Guião</p>
+          <p class="script-kicker">Script</p>
           <h1>{title}</h1>
           <p>{description}</p>
           <p class="script-stats" data-script-stats></p>

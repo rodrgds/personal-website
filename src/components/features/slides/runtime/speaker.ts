@@ -22,7 +22,7 @@ function mountPreview(
   if (!slide) {
     const end = document.createElement("p");
     end.className = "speaker-end";
-    end.textContent = "Fim";
+    end.textContent = "End";
     frame.append(end);
     return;
   }
@@ -101,12 +101,12 @@ export function initSpeaker({ root, slides, channel }: DeckContext): void {
     );
     if (upcomingLabel) {
       upcomingLabel.textContent = moreSteps
-        ? `A seguir: passo ${step + 1} de ${lastStep(slide)}`
-        : "A seguir: próximo slide";
+        ? `Up next: step ${step + 1} of ${lastStep(slide)}`
+        : "Up next: next slide";
     }
     const source = slide.querySelector("[data-notes]");
     notes.innerHTML =
-      source?.innerHTML ?? "<p class='speaker-empty'>Sem notas.</p>";
+      source?.innerHTML ?? `<p class='speaker-empty'>No notes.</p>`;
     // Each "[→]" in the script is one click: dim what was said, mark the next.
     const clicks = [...notes.querySelectorAll<HTMLElement>("strong")].filter(
       (element) => element.textContent?.trim() === "[→]",
@@ -122,7 +122,7 @@ export function initSpeaker({ root, slides, channel }: DeckContext): void {
       title.textContent = `${slide.dataset.chapter ?? ""} · ${slide.dataset.title ?? ""}`;
     if (position) {
       const steps = lastStep(slide);
-      position.textContent = `${index + 1} / ${slides.length}${steps ? ` · passo ${step}/${steps}` : ""}`;
+      position.textContent = `${index + 1} / ${slides.length}${steps ? ` · step ${step}/${steps}` : ""}`;
     }
     if (broadcast) {
       if (!running && elapsed === 0) toggleTimer();
@@ -277,7 +277,7 @@ export function initScript({ root, slides }: DeckContext): void {
   const stats = root.querySelector<HTMLElement>("[data-script-stats]");
   if (!script || !list) return;
   script.hidden = false;
-  document.title = `Guião · ${document.title}`;
+  document.title = `Script · ${document.title}`;
   let words = 0;
   let chapter = "";
   for (const slide of slides) {
@@ -294,7 +294,7 @@ export function initScript({ root, slides }: DeckContext): void {
     frame.href = `${window.location.pathname}#${Number(slide.dataset.index) + 1}`;
     frame.setAttribute(
       "aria-label",
-      `Abrir slide ${Number(slide.dataset.index) + 1}`,
+      `Open slide ${Number(slide.dataset.index) + 1}`,
     );
     const body = document.createElement("div");
     body.className = "script-notes";
@@ -316,7 +316,7 @@ export function initScript({ root, slides }: DeckContext): void {
     observer.observe(frame);
   }
   if (stats) {
-    stats.textContent = `${slides.length} slides · ${words.toLocaleString("pt-PT")} palavras · cerca de ${Math.round(words / 150)} min a 150 palavras/min`;
+    stats.textContent = `${slides.length} slides · ${words.toLocaleString("en-GB")} words · about ${Math.round(words / 150)} min at 150 words/min`;
   }
   window.addEventListener("resize", () => {
     list.querySelectorAll<HTMLElement>(".script-preview").forEach(rescale);

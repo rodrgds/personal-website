@@ -13,17 +13,17 @@ const { presets = [] } = Astro.props;
 const CODE = [
   '<span class="tok-k">void</span> <span class="tok-f">greet</span>(<span class="tok-k">char</span> *s) {',
   '  <span class="tok-k">char</span> buf[<span class="tok-n">16</span>];',
-  '  <span class="tok-f">strcpy</span>(buf, s); <span class="tok-c">// sem limite!</span>',
+  `  <span class="tok-f">strcpy</span>(buf, s); <span class="tok-c">// no bound!</span>`,
   "}",
 ].join("\n");
 const words = [
-  { name: "s", note: "argumento (char *)", kind: "arg" },
-  { name: "ret", note: "endereço de retorno", kind: "ret" },
-  { name: "ebp", note: "frame pointer guardado", kind: "fp" },
+  { name: "s", note: "argument (char *)", kind: "arg" },
+  { name: "ret", note: "return address", kind: "ret" },
+  { name: "ebp", note: "saved frame pointer", kind: "fp" },
   { name: "buf[12..15]", note: "", kind: "buf" },
   { name: "buf[8..11]", note: "", kind: "buf" },
   { name: "buf[4..7]", note: "", kind: "buf" },
-  { name: "buf[0..3]", note: "← strcpy começa aqui", kind: "buf" },
+  { name: "buf[0..3]", note: "← strcpy starts here", kind: "buf" },
 ];
 ---
 
@@ -42,14 +42,14 @@ const words = [
         spellcheck="false"
         autocomplete="off"
         data-overflow-input
-        aria-label="Input copiado para buf"
+        aria-label="Input copied into buf"
       />
     </label>
     <p class="lab-meta" data-overflow-count></p>
     <p class="lab-status" data-overflow-status aria-live="polite"></p>
   </div>
   <div class="overflow-stack" data-overflow-stack>
-    <div class="mem-axis"><span>endereços altos</span></div>
+    <div class="mem-axis"><span>high addresses</span></div>
     {
       words.map((word, index) => (
         <div class={`overflow-word kind-${word.kind}`} data-word={6 - index}>
@@ -66,6 +66,6 @@ const words = [
         </div>
       ))
     }
-    <div class="mem-axis"><span>endereços baixos · cópia escreve ↑</span></div>
+    <div class="mem-axis"><span>low addresses · the copy writes ↑</span></div>
   </div>
 </div>

@@ -1,25 +1,37 @@
 ---
 export interface Props {
-  /** Where the question comes from, e.g. "Teste 1, 2023/24". */
-  source: string;
+  /** Test the question comes from, e.g. "Test 1, 2024/25". Omit for practice. */
+  source?: string;
+  /** Answer options. Text between backticks renders as code. */
   options?: string[];
   /** Index of the correct option. */
   correct?: number;
   /** Step that reveals the answer. */
   at?: number;
+  /** Lay short options out in two columns. */
+  columns?: 1 | 2;
 }
 
-const { source, options = [], correct, at = 1 } = Astro.props;
+const { source, options = [], correct, at = 1, columns = 1 } = Astro.props;
+const label = source ? `Past test · ${source}` : "Practice question";
 ---
 
 <div class="quiz">
-  <p class="quiz-source">Pergunta de teste · {source}</p>
+  <p class="quiz-source">{label}</p>
   <div class="quiz-prompt"><slot /></div>
   {
     options.length > 0 && (
-      <ol class="quiz-options">
+      <ol class:list={["quiz-options", columns === 2 && "quiz-options--2"]}>
         {options.map((option, index) => (
-          <li data-correct={index === correct ? "" : undefined}>{option}</li>
+          <li data-correct={index === correct ? "" : undefined}>
+            <span>
+              {option
+                .split("`")
+                .map((part, part_index) =>
+                  part_index % 2 === 1 ? <code>{part}</code> : part,
+                )}
+            </span>
+          </li>
         ))}
       </ol>
     )

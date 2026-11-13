@@ -67,8 +67,8 @@ const {
   pointers = [],
   captions = [],
   title,
-  high = "endereços altos",
-  low = "endereços baixos",
+  high = "high addresses",
+  low = "low addresses",
   width,
   growth = "none",
   compact = false,
@@ -97,7 +97,7 @@ function values(
     {
       growth !== "none" && (
         <span class="mem-growth">
-          {growth === "down" ? "cresce ↓" : "cresce ↑"}
+          {growth === "down" ? "grows ↓" : "grows ↑"}
         </span>
       )
     }

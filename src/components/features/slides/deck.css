@@ -857,6 +857,32 @@ body.deck-body {
   transform: translateX(-50%);
 }
 
+/* ------------------------------------------------------------ cycle */
+
+/* A ring of nodes (b) and arrow labels (i), filled row by row. */
+.cycle {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 3), auto);
+  justify-content: start;
+  gap: 22px 28px;
+  align-items: center;
+  justify-items: center;
+}
+
+.cycle b {
+  font-size: 42px;
+  font-weight: 650;
+  color: var(--fg-strong);
+  white-space: nowrap;
+}
+
+.cycle i {
+  font-size: 32px;
+  font-style: normal;
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+
 /* ------------------------------------------------------------ quiz */
 
 .slide-body:has(> .quiz) {
@@ -899,6 +925,12 @@ body.deck-body {
   transition:
     opacity 0.35s,
     color 0.35s;
+}
+
+.slide .quiz-options--2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 56px;
 }
 
 .quiz-options li::before {

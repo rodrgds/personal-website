@@ -20,19 +20,18 @@ const buttons = ["seteuid(1000)", "seteuid(0)", "setuid(1000)", "setuid(0)"];
   data-steps={presets.reduce((max, preset) => Math.max(max, preset.at), 0)}
 >
   <p class="uid-context">
-    <code>rodrigo</code> (uid 1000) corre <code>/usr/bin/passwd</code>, um
-    binário
-    <strong>setuid root</strong>
+    <code>rodrigo</code> (uid 1000) runs <code>/usr/bin/passwd</code>, a binary
+    that is <strong>setuid root</strong>
   </p>
   <div class="uid-cards">
     <div class="uid-card" data-uid="ruid">
-      <span>RUID</span><strong></strong><small>quem lançou</small>
+      <span>RUID</span><strong></strong><small>who launched it</small>
     </div>
     <div class="uid-card" data-uid="euid">
-      <span>EUID</span><strong></strong><small>decide permissões</small>
+      <span>EUID</span><strong></strong><small>decides permissions</small>
     </div>
     <div class="uid-card" data-uid="suid">
-      <span>SUID</span><strong></strong><small>guardado p/ voltar</small>
+      <span>SUID</span><strong></strong><small>kept to go back</small>
     </div>
   </div>
   <div class="uid-actions">

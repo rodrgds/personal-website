@@ -1,0 +1,100 @@
+import { Chapter, Cols, Notes, Part, Slide } from "../../../components/features/slides";
+
+<Part title="Wrap-up">
+<Chapter title="Last-minute checklist" label="Checklist">
+
+<Slide title="Checklist: concepts and software">
+
+## Checklist: concepts and software
+
+<Cols columns="1fr 1fr" gap={72}>
+<div>
+
+### Concepts
+
+- CIA, plus authenticity and privacy
+- Vulnerability, attack, threat; MOM
+- Binary vs risk management words
+- Risk matrix: probability × impact
+- Policy (what) vs mechanism (how)
+
+</div>
+<div>
+
+### Software
+
+- Draw a stack frame; NOP sled, no `\0`
+- Heap, UAF, integer, OOB read, `%n`
+- ret2libc and ROP stack layouts
+- What DEP, ASLR, canaries, CFI stop
+- …and what gets past each one
+
+</div>
+</Cols>
+
+<Notes>
+
+If you only have ten minutes before the test, this is it. Read each line and check you could explain it out loud.
+
+Concepts: the CIA triad and how to classify a scenario by what the attacker did to the data. The difference between a vulnerability, an attack and a threat, and how to sort the steps of an incident like log4j. Which words belong to the binary model, proofs and secure by design, and which to risk management, resilience and mitigation. The two axes of the risk matrix. And policy versus mechanism.
+
+Software: be able to draw a stack frame and say where the return address, saved frame pointer and canary sit. Why the sled is there, and why the payload can't contain a zero byte. One example of each memory bug, with the OpenSSH integer overflow and format strings in particular. How to lay out a ret2libc or ROP chain, lowest address first. And the defense table: what each defense stops, and the attack that gets past it.
+
+</Notes>
+</Slide>
+
+<Slide title="Checklist: systems and web">
+
+## Checklist: systems and web
+
+<Cols columns="1fr 1fr" gap={72}>
+<div>
+
+### Systems
+
+- Saltzer and Schroeder, one example each
+- ACL vs capabilities; RBAC vs ABAC
+- Reference monitor, syscalls, KPTI
+- RUID, EUID, SUID; `setuid` vs `seteuid`
+- chroot, namespaces vs cgroups, SCI vs SFI, VMs
+
+</div>
+<div>
+
+### Web
+
+- SOP origin vs cookie origin
+- Which requests the SOP lets through
+- SameSite, Secure, HttpOnly
+- SQL injection: parameterized queries
+- XSS types; CSRF tokens; sessions
+
+</div>
+</Cols>
+
+<Notes>
+
+Systems: the ten design principles, each with an example, because tests give you a scenario and ask which principle it breaks. Access control lists versus capabilities: who holds the list. RBAC versus ABAC. What the reference monitor must be: always invoked, simple, fail-safe. Kernel mapping and KPTI. The three UIDs and the difference between `setuid` and `seteuid`: this comes up almost every year. Then confinement: what chroot does and how it's escaped, namespaces limit what you see and cgroups how much you use, system call interposition versus software fault isolation, and why a VM can always be detected.
+
+Web: the SOP origin is scheme, domain and port. A cookie's is domain and path, so practice the "is the cookie sent?" tables. The SOP stops reading the response, not sending the request. The cookie attributes and which attack each one helps against. Prepared statements for SQL injection. The three kinds of XSS and how to tell them apart. CSRF and its defenses, and why server-side sessions with a random token are the safe choice.
+
+</Notes>
+</Slide>
+
+<Slide layout="title" title="End">
+
+# Good luck!
+
+<p class="lede">The slides, demos and whiteboard are at <strong>rgo.pt/slides/fsi</strong>.</p>
+
+<Notes>
+
+That's it. The slides are at rgo.pt/slides/fsi: you can go back to the demos, zoom in and draw on them, and your drawings stay in your browser.
+
+If the video helped, leave a like, and tell me in the comments what was most confusing. Good luck on the test!
+
+</Notes>
+</Slide>
+
+</Chapter>
+</Part>

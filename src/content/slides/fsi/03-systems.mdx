@@ -1,0 +1,2645 @@
+import {
+  Flow,
+  Chapter,
+  Cols,
+  Diagram,
+  Mark,
+  Notes,
+  Part,
+  Quiz,
+  Reveal,
+  Slide,
+  Step,
+  UidLab,
+} from "../../../components/features/slides";
+
+<Part title="3 · Systems">
+
+{/* ------------------------------------------------------------ Systems Security 1: principles */}
+
+<Chapter title="Security principles" label="Systems Security 1">
+
+<Slide title="Principles (1/2)">
+
+## Saltzer and Schroeder, 1 to 5
+
+<div class="cards" style="--n:3">
+<div class="card" data-color="blue">
+
+### Economy of mechanism
+
+Only the functions you need, and the simplest mechanisms.
+
+</div>
+<div class="card" data-color="green">
+
+### Fail-safe defaults
+
+Conservative by default. On failure, **fail closed**, not open.
+
+</div>
+<div class="card" data-color="orange">
+
+### Complete mediation
+
+A policy for every resource, checked on **every access**. Web failure: IDOR.
+
+</div>
+<div class="card" data-color="purple">
+
+### Open design
+
+Security must not depend on hiding the mechanism. Only keys are secret.
+
+</div>
+<div class="card" data-color="red">
+
+### Separation of privilege
+
+Isolated compartments, each in its own trust domain.
+
+</div>
+</div>
+
+<Notes>
+
+These are Saltzer and Schroeder's ten principles, from 1975. The test asks you to recognize the names, so learn the list.
+
+Economy of mechanism: no "nice to have" features or extra services. Less code, fewer bugs, easier validation.
+
+Fail-safe defaults: a new user starts with minimum permissions, and on failure the system falls back to its locked state. The lecture's bad defaults: the FortiGate VPN default config allowed man-in-the-middle attacks, and Thomson and BT routers had a default Wi-Fi key you could compute.
+
+Complete mediation: validate every access against the policy. The web counterexample is IDOR: change `id=123` in the URL and see someone else's account. In Linux, the OS mediates every memory access.
+
+Open design: the mechanism is public; the only secrets are keys and passwords. Its opposite is security through obscurity.
+
+Separation of privilege: compartments, so a compromise stays local.
+
+</Notes>
+</Slide>
+
+<Slide title="Principles (2/2)">
+
+## Saltzer and Schroeder, 6 to 10
+
+<div class="cards" style="--n:3">
+<div class="card" data-color="orange">
+
+### Least privilege
+
+Only what the role needs. Bad: **every service as root**. Good: app permissions on Android.
+
+</div>
+<div class="card" data-color="cyan">
+
+### Least common mechanism
+
+Share as little as possible, above all between privilege levels.
+
+</div>
+<div class="card" data-color="red">
+
+### Defense in depth
+
+Any mechanism can fail, so stack several. The "castle approach".
+
+</div>
+<div class="card" data-color="blue">
+
+### Psychological acceptability
+
+Easy enough that people use it correctly.
+
+</div>
+<div class="card" data-color="purple">
+
+### Work factor, compromise recording
+
+Attack cost versus gain. Log every breach.
+
+</div>
+</div>
+
+<Notes>
+
+Least privilege: every user, compartment or program gets only what its role needs. Breaking it amplifies the damage of any breach. Running every service as root is the classic sin.
+
+Least common mechanism: minimize shared resources and shared access mechanisms, especially between users with different privilege levels. The examples: don't reuse your Facebook password on Sigarra, keep each user's data on a different file system, and don't let the web server and the database server share interfaces.
+
+Defense in depth: never put all your trust in one mechanism. The bad example is a strong perimeter that assumes there are no internal threats.
+
+The last three only get a name in the lecture. Compromise recording comes back later as logging and the reference monitor.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: two principles">
+
+<Quiz source="Midterm, 2021/22" at={1}>
+
+(a) State the principle of **open design** and give one motivation for it.<br/>
+(b) Explain **fail-safe defaults** and give an example of applying it correctly.
+
+<div slot="answer">
+
+<Step at={1}>
+
+**(a)** Security must not depend on the secrecy of the design, only on keys or passwords. Motivation: public scrutiny finds flaws, and keys can change without changing the system.
+
+</Step>
+
+<Step at={2}>
+
+**(b)** By default the system is conservative, and on failure it **fails closed**. Example: a new account starts with minimum permissions.
+
+</Step>
+
+</div>
+</Quiz>
+
+<Notes>
+
+Two short-answer questions from 2021/22. Pause and try them.
+
+**[→]** Open design. Give both halves: the statement and a reason. The lecture's two reasons are that scrutiny makes it more likely you find out where you're vulnerable, and that secrets can be adjusted without changing the system. Its example is WhatsApp, proprietary, versus Signal, open source. A WhatsApp VoIP bug was used by NSO to inject Pegasus, and WhatsApp moved to the Signal end-to-end protocol in 2014.
+
+**[→]** Fail-safe defaults. A good example is the default for a new user, or a firewall that denies everything not explicitly allowed. You could also use the railway semaphore: if the cable breaks, the arm falls to "stop".
+
+</Notes>
+</Slide>
+
+<Slide title="Question: which principle?">
+
+<Quiz
+  source="Test 1, 2024/25"
+  options={[
+    "Economy of mechanism.",
+    "Complete mediation.",
+    "Least privilege.",
+    "Least common mechanism.",
+  ]}
+  correct={3}
+  columns={2}
+>
+
+Ensuring **different access control mechanisms** for users with **different privilege levels** is an example of which fundamental security principle?
+
+<div slot="answer">
+
+Least common mechanism: don't share mechanisms across privilege levels.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** Least common mechanism. The key words are "different mechanisms" and "different privilege levels", which is almost the definition. Least privilege is the tempting wrong answer, but it is about how many permissions you get, not whether mechanisms are shared. Complete mediation is about checking every access.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: spot the impostor">
+
+<Quiz
+  source="Test 1, 2023/24"
+  options={[
+    "Fail-safe defaults",
+    "Work factor",
+    "Sharing of privilege",
+    "Least common mechanism",
+  ]}
+  correct={2}
+  columns={2}
+>
+
+Which is **not** a systems security principle that we studied in class?
+
+<div slot="answer">
+
+"Sharing of privilege" is made up. The real one is **separation** of privilege.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** Sharing of privilege. The test likes this trick: take a real name and swap one word. The 2023 resit did the same with "economy of privilege", which mixes economy of mechanism and separation of privilege. Work factor sounds odd, but it is on the list.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: IDOR">
+
+<Quiz
+  source="Resit, 2023/24"
+  options={[
+    "Least common mechanism",
+    "Complete mediation",
+    "Separation of privilege",
+    "Least privilege",
+  ]}
+  correct={1}
+  columns={2}
+>
+
+A web **IDOR** attack, attributed to lack of authentication on an endpoint, is an example of a violation of which principle?
+
+<div slot="answer">
+
+Complete mediation: some accesses are not checked against the policy.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** Complete mediation. IDOR is the lecture's own example: the endpoint serves `id=123` without checking that you may see account 123. An access that skips the check is exactly what complete mediation forbids.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+{/* ------------------------------------------------------------ Systems Security 1: access control */}
+
+<Chapter title="Access control" label="Systems Security 1">
+
+<Slide title="Matrix, ACLs and capabilities">
+
+## Access control matrix
+
+<Cols columns="1.15fr 1fr" gap={72} align="center">
+<div>
+
+| | R1 | R2 | R3 |
+| --- | --- | --- | --- |
+| <Mark at={2} type="highlight" color="orange">A1</Mark> | r | <Mark at={1} type="highlight" color="blue">rw</Mark> | - |
+| <Mark at={2} type="highlight" color="orange">A2</Mark> | <Mark at={2} type="highlight" color="orange">rw</Mark> | <Mark at={1} type="highlight" color="blue"><Mark at={2} type="box" color="orange">-</Mark></Mark> | <Mark at={2} type="highlight" color="orange">r</Mark> |
+| <Mark at={2} type="highlight" color="orange">A3</Mark> | r | <Mark at={1} type="highlight" color="blue">r</Mark> | r |
+
+<p class="small muted">Actors in rows, resources in columns.</p>
+
+</div>
+<div>
+
+<Step at={1}>
+
+### ACL: one **column**
+
+Stored next to each **resource**. A guest list. Inbound.
+
+</Step>
+
+<Step at={2}>
+
+### Capabilities: one **row**
+
+Stored next to each **actor**. A ticket. Outbound.
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+Access control puts least privilege, complete mediation and separation of privilege into practice. An actor performs an operation on a resource, and the pair resource plus operation is a permission.
+
+The matrix lists every possible access. Advantage: clarity, you can set any permission of any actor on any resource. Problem: the number of combinations, and it doesn't scale centrally.
+
+**[→]** Store it by column and you get an access control list, a guest list: not on it, not in. Advantages: locality, permissions sit next to the resource, and isolation, few actors per resource. Disadvantage: to remove an actor, you must check every resource. Inbound, oriented to what is accessed.
+
+**[→]** Store it by row and you get capabilities, a ticket each actor carries. The mirror image: to find who can reach a resource, you must check every actor. Outbound, oriented to who accesses.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: safe deposit boxes">
+
+<Quiz
+  source="Test 1, 2023/24"
+  options={[
+    "The bank teller checking client access to boxes is an example of Capabilities.",
+    "Each client having a card which opens a set of boxes is an example of Capabilities.",
+    "A set of shared cards which open a family's box is an example of Access Control Lists.",
+    "With Access Control Lists, two clients cannot have access to the same box.",
+  ]}
+  correct={1}
+>
+
+A bank has safe deposit boxes that store clients' valuables. Which is true?
+
+<div slot="answer">
+
+A card the client carries is a **ticket**: capabilities.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The second one. The card travels with the client and lists what it opens, so it's a capability. The teller checking a list at the box is the ACL, not capabilities, so the first is swapped. Shared cards are still tickets carried by people, so the third is wrong. And an ACL can list as many clients as you like for one box.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: why a matrix?">
+
+<Quiz
+  source="Test 1, 2024/25"
+  options={[
+    "It allows full configuration of the permissions of actors on resources.",
+    "It allows local storage next to each resource.",
+    "It allows local storage next to each actor.",
+    "It allows aggregating actor and resources using roles.",
+  ]}
+  correct={0}
+>
+
+Which is an advantage of using an **Access Control Matrix**?
+
+<div slot="answer">
+
+Full, fine-grained control: one cell per actor and resource.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The first one. Each wrong option is the advantage of a different model: storage next to the resource is the ACL, storage next to the actor is capabilities, and aggregating with roles is RBAC. The 2024 resit asked the same thing with the words "fine-grained control".
+
+</Notes>
+</Slide>
+
+<Slide title="RBAC and ABAC">
+
+## RBAC and ABAC
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+### RBAC
+
+<p class="big">Actor → <strong>role</strong> → permissions</p>
+
+Role to permissions: stable, like an **ACL**. Actor to role: dynamic, like **capabilities**.
+
+</div>
+<div>
+
+<Step at={1}>
+
+### ABAC
+
+<p class="big">Attributes → <strong>engine</strong> → decision</p>
+
+Actors and resources get attributes. The policy can use place, time or hierarchy. RBAC is a special case.
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+RBAC, role-based access control, separates managing resources from managing actors by adding roles in the middle. The link from roles to permissions rarely changes and is run by whoever manages the resources, so it looks like an ACL. The link from actors to roles changes often and is run by whoever manages the users, so it looks like capabilities. The Unix file system is an example, as we'll see.
+
+**[→]** ABAC, attribute-based access control. Actors and resources carry attributes, and a rule says, for example, "to access a resource with attribute A, you need attribute B". A dynamic engine receives both attributes and decides using the policy. That lets you write geographic, time-based or hierarchical policies. RBAC is the special case where the only attribute is the role.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: RBAC">
+
+<Quiz
+  source="Resit, 2022/23"
+  options={[
+    "Unlike access control lists, it allows defining the permissions that each actor has on every resource.",
+    "It is a more general form than access control lists, capabilities or attribute-based access control.",
+    "It allows a flexible management of access control policies according to dynamic user attributes.",
+    "It allows decoupling access control policies into a relation between actors and roles and a relation between resources and roles.",
+  ]}
+  correct={3}
+>
+
+Which of the following is an advantage of **role-based** access control?
+
+<div slot="answer">
+
+Roles split one policy into two relations that different people manage.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The last one: the decoupling into actor-role and role-resource. The first is the matrix. The second is backwards, because ABAC is the more general one. The third, dynamic attributes, describes ABAC.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: ABAC">
+
+<Quiz
+  source="Resit, 2024/25"
+  options={[
+    "Actor permissions, called attributes, are stored locally on each resource.",
+    "A central authorization engine defines the permissions of actors on resources, called attributes.",
+    "Access to resources, called attributes, is stored locally on each actor.",
+    "Attributes are independently assigned to actors or to resources, and access is granted based on the attributes.",
+  ]}
+  correct={3}
+>
+
+In the case of **Attribute-Based Access Control**, which is true?
+
+<div slot="answer">
+
+Attributes describe actors and resources. They are not permissions.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The last one. The trap in the other three is calling permissions "attributes". An attribute is a property, like department or clearance, and the engine turns attributes into a decision. The first and third are just ACLs and capabilities renamed.
+
+</Notes>
+</Slide>
+
+<Slide title="The OS security model">
+
+## The OS security model
+
+<Reveal>
+
+- Honest users and processes run **isolated** applications
+- Attackers impersonate them to **escalate** permissions, break isolation or take resources
+- The OS gives each one **virtual isolation**, despite shared hardware, by **mediating** every access
+- Administering an OS means **configuring** that mediation well
+
+</Reveal>
+
+<Notes>
+
+The OS shares storage, CPU, memory and network across many users and apps.
+
+**[→]** Alice and Bob are honest. **[→]** Mallory and Darth try to pass as them, controlling users, processes or malicious files. Users and applications are both potential threats, and protection must hold even for programs that aren't running, since their state sits on shared disk and RAM.
+
+**[→]** The OS keeps its isolation promise through access mediation. **[→]** The principles you just learned are the guide to configuring it.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+{/* ------------------------------------------------------------ Systems Security 2: kernel and processes */}
+
+<Chapter title="Kernel and processes" label="Systems Security 2">
+
+<Slide title="Kernel mode, user mode">
+
+## Kernel mode, user mode
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+### CPU privilege levels
+
+- **Intel rings:** ring 0 kernel, ring 3 apps
+- **ARM:** EL0 apps, EL1 kernel, EL2 hypervisor, EL3 firmware
+
+In practice two: **kernel** and **user**.
+
+</div>
+<div>
+
+### Reference monitor
+
+<Reveal>
+
+- Guards the perimeter, the **syscalls**: complete mediation and recording
+- Always present: if it dies, monitored processes die (**fail-safe**)
+- **Simple**, so it can be validated (economy of mechanism)
+
+</Reveal>
+
+</div>
+</Cols>
+
+<Notes>
+
+In kernel mode code can do almost anything; in user mode it has no direct access to resources. The hardware enforces this with privilege levels, defense in depth. Intel has four rings, but most systems use only 0 and 3. Any data crossing between the levels is attack surface.
+
+The kernel has its own memory and only it runs privileged instructions: separation of privilege. User processes, drivers included, ask through system calls: least privilege. So the syscall entry points are the perimeter, guarded by a reference monitor. **[→]** It sees every syscall, so it gives complete mediation and compromise recording. **[→]** It is always present: if it terminates, every monitored process must terminate too, which is fail-safe defaults. **[→]** And it must be simpler than the whole system so you can analyze it, economy of mechanism.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: privilege levels">
+
+<Quiz
+  source="Test 1, 2024/25"
+  options={[
+    "They allow separating kernel operation from user applications.",
+    "They allow detecting when the OS misbehaves.",
+    "They restrict inter-process communication to system calls.",
+    "They enforce filesystem access control policies.",
+  ]}
+  correct={0}
+>
+
+What are the **hardware privilege levels** offered by a modern processor used for?
+
+<div slot="answer">
+
+Rings and exception levels separate the kernel from user code.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The first one. The hardware only knows "privileged instruction or not". It doesn't watch the OS, it doesn't know about files, and the restriction to syscalls is a consequence enforced by the kernel, not what the levels are for.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: reference monitor">
+
+<Quiz
+  source="Test 1, 2023/24"
+  options={[
+    "There should be a large number of system calls, with the most sharing of mechanisms.",
+    "The ptrace system call offers a possible way to implement a reference monitor.",
+    "If the reference monitor crashes, all monitored processes have to be killed.",
+    "The design of the reference monitor shall be simpler to validate than that of the OS.",
+  ]}
+  correct={0}
+>
+
+A critical component of an OS is its **reference monitor**, which controls process invocations of system calls. Which is **not** true?
+
+<div slot="answer">
+
+Few syscalls and little sharing: economy of mechanism and least common mechanism.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The first. It breaks two principles at once: many syscalls means a big attack surface, and maximum sharing is the opposite of least common mechanism. The other three are true. The crash rule is fail-safe, the simple design is economy of mechanism, and ptrace is how the first syscall monitors worked, which we'll see in the last lecture.
+
+</Notes>
+</Slide>
+
+<Slide title="A syscall, step by step">
+
+## The path of a syscall
+
+<Cols columns="1.2fr 1fr" gap={56} align="center">
+<div>
+
+<Diagram
+  fontSize={24}
+  alt="getpid sequence: the program calls libc, which runs the syscall instruction; the kernel looks up the handler, runs it and returns to user mode."
+  source={`sequenceDiagram
+  participant P as Program
+  participant L as libc
+  participant K as Kernel
+  P->>L: getpid()
+  L->>K: syscall
+  K->>K: sys_call_table
+  K->>K: sys_getpid()
+  K-->>P: sysretq`}
+/>
+
+</div>
+<div>
+
+<Reveal>
+
+1. Prepare arguments
+2. Pass control to the kernel
+3. Validate arguments
+4. Perform the operation
+5. Return to user mode
+
+</Reveal>
+
+</div>
+</Cols>
+
+<Notes>
+
+Syscalls cover process control like fork and exec, files, devices, system configuration, network and capabilities. Every one follows the same five steps.
+
+**[→]** The program prepares the arguments; for `getpid` the libc wrapper puts the syscall number in a register. **[→]** It runs the special `syscall` instruction, which switches to kernel mode. **[→]** The kernel looks the number up in the syscall table and validates the arguments. This is where mediation happens. **[→]** It runs the handler, here `sys_getpid`. **[→]** And `sysretq` drops back to user mode.
+
+Why does this matter? There is a limited number of entry points, so the attack surface is well defined. But the arguments are usually pointers into user memory, and handling them safely is entirely the kernel's job.
+
+</Notes>
+</Slide>
+
+<Slide title="Processes">
+
+## Processes
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+<Reveal>
+
+- A program **running**, with a **PID**. Root of the tree: `init`, PID&nbsp;1
+- Users have a **UID** and **GID**. Root: UID&nbsp;0
+- Children **inherit** privileges
+- **IPC** only through syscalls: files, shared memory, pipes, sockets, signals
+
+</Reveal>
+
+</div>
+<div>
+
+<Step at={5}>
+
+### Daemons
+
+Background services: indexing, remote login, printing, file sync.
+
+Start **before** the user, often with **more privilege**, and survive the session.
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+**[→]** A process is a program loaded into memory with a process ID. The border between processes is a trust boundary, and the kernel gives each one CPU time, memory, and resources through syscalls. `pstree` shows the tree.
+
+**[→]** Permissions depend on who created the process, through UIDs and GIDs. **[→]** Launching an app, the shell or GUI forks a new process, and descendants inherit their creator's privileges.
+
+**[→]** Processes talk only through syscalls: files, shared memory, pipes and sockets, which are synchronous, and signals, which are asynchronous.
+
+**[→]** Daemons are the processes you don't see. They start before you log in, often with more privilege than you, and outlive your session, so a bug in one is worth a lot.
+
+</Notes>
+</Slide>
+
+<Slide title="Same user, no isolation">
+
+## Same user, no isolation
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+### Windows evolution
+
+<Reveal>
+
+- **DOS:** no memory protection
+- **1.x to ME:** single-user, some user/kernel isolation
+- **NT, 2000, XP:** multi-user, isolation **between users**, like Unix
+
+</Reveal>
+
+</div>
+<div>
+
+<Step at={4}>
+
+### `/proc` on Unix
+
+Processes appear as **files**.
+
+`/proc/<pid>/mem` reads and writes another process's memory with plain `fopen`, `fread`, `fwrite`.
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+The fundamental rule is that a process can't touch the memory of a process of a **different user**. Read that carefully.
+
+**[→]** DOS had no memory protection at all; any program could write straight to screen memory. **[→]** Windows 1 to ME were single-user, with some separation between user space and kernel, and applications often ran as administrator. **[→]** From NT onward, Windows is multi-user and isolates users from each other, like Unix.
+
+**[→]** But inside one user, processes are not isolated. On Unix, `/proc` shows every process as files and folders, and `/proc/<pid>/mem` lets you read and write another process's memory with normal file calls, as long as it's yours. `/proc/<pid>/stat` gives its statistics. Containers, later on, are the answer to this.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: a non-root process">
+
+<Quiz
+  source="Resit, 2024/25"
+  options={[
+    "Can only communicate with other processes of different users via system calls.",
+    "Always has the permissions of the owner.",
+    "Cannot write to kernel memory, except for the first megabyte.",
+    "Cannot write to the memory of other processes of the same user.",
+  ]}
+  correct={0}
+>
+
+In a modern Unix OS, a process owned by a **non-root** user:
+
+<div slot="answer">
+
+All IPC goes through syscalls. Same-user memory is **not** protected.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The first one. The tempting wrong answer is the last: it sounds safe, but same-user processes are not isolated, that's the `/proc` slide. "Always the owner's permissions" is wrong because of setuid programs, coming up. And there's no "first megabyte" exception.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: the kernel">
+
+<Quiz
+  source="Resit, 2023/24"
+  options={[
+    "The kernel has its own memory space, protected at the hardware level.",
+    "All programs with root permissions run in kernel mode.",
+    "All of the other options.",
+    "A user-mode application can make some system calls without accessing the kernel.",
+  ]}
+  correct={0}
+>
+
+Consider the kernel of a Unix OS. Mark the only correct option, or that all are true.
+
+<div slot="answer">
+
+Root is a **user**. Root processes still run in user mode.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The first one. Don't mix up root and kernel mode: root is UID 0, a user with every permission, but its programs still run in ring 3 and still make syscalls. And a syscall by definition enters the kernel.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+{/* ------------------------------------------------------------ Systems Security 2: trust and boot */}
+
+<Chapter title="Trust and boot" label="Systems Security 2">
+
+<Slide title="Inductive trust">
+
+## Trust by induction
+
+<Reveal>
+
+- **Base:** after a fresh install, BIOS, bootloader and kernel are trusted
+- **Boot** loads the kernel and keeps that state
+- The kernel starts processes that **cannot change it**
+- **Hibernation** and admin **updates** must keep it too
+
+</Reveal>
+
+<Step at={5}>
+
+<p class="lede">Trusted: does exactly, and only, what it was specified to do.</p>
+
+</Step>
+
+<Notes>
+
+Trust in the OS works like a proof by induction. **[→]** The base case is a fresh install, which we trust by default. **[→]** Each boot step uses that trusted code to load the kernel and hand over control without breaking the trusted state. **[→]** The kernel launches processes with permissions that can't change it. **[→]** And anything that writes the state back, like hibernation, or an admin installing software, must preserve it.
+
+The lecture's example of an update gap is the Blaster worm, 2003, on Windows 2000 and XP without SP2. A buffer overflow crashed a core service and shut the OS down, and it infected almost any unpatched machine on the Internet. Allegedly it came from reverse engineering the patch.
+
+**[→]** "Trusted" means the system does exactly what it was specified to do: no data leaves without permission, it talks to the real Google, it encrypts the disk and clears memory at shutdown.
+
+</Notes>
+</Slide>
+
+<Slide title="Anchoring trust in hardware">
+
+## Anchoring the boot
+
+<p class="lede">Threats: BIOS, hibernation files, bootloader, **cold boot**.</p>
+
+<div class="cards" style="--n:3">
+<div class="card" data-color="blue">
+
+### TPM
+
+Crypto chip that **stores** keys and credentials.
+
+</div>
+<div class="card" data-color="green">
+
+### UEFI Secure Boot
+
+Boots only firmware and OS **signed** by the board maker.
+
+</div>
+<div class="card" data-color="purple">
+
+### OpenTitan
+
+Open-source **root-of-trust** chip. Audit for backdoors, stop supply-chain attacks.
+
+</div>
+</div>
+
+<Notes>
+
+The boot anchors the trust model, so a bug there bypasses everything above. Cold boot attacks read RAM right after power-off; the lecture calls them a side channel.
+
+The hardware answers. The TPM stores credentials and keys; it signs nothing for you. UEFI Secure Boot is a root of trust: it boots only components signed by the motherboard supplier. Google's OpenTitan, 2019, is open design for hardware: anyone can audit the chip for backdoors, and it proves cryptographically that nothing between BIOS and processor was modified.
+
+The OS adds event logs, for example to spot a process crashing again and again under an exploit attempt, process monitors, and signed code installs. Still, most real problems are admin mistakes.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: signed boot">
+
+<Quiz
+  source="Test 1, 2024/25"
+  options={[
+    "Disabling network access to prevent updates.",
+    "Exploring hardware-level side-channels.",
+    "All of the other options.",
+    "Changing the bootloader.",
+  ]}
+  correct={1}
+>
+
+How can an attacker compromise the OS boot even when every boot component is **digitally signed** and validated before load, forming a root of trust?
+
+<div slot="answer">
+
+Signatures stop modified code, not side channels like a cold boot attack.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** Hardware side channels. Changing the bootloader is exactly what the signature check catches. Blocking updates leaves old bugs in place, but doesn't break the boot. A cold boot attack never touches signed code, which is why the lecture lists it as a side channel.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: OS protections">
+
+<Quiz
+  source="Test 1, 2023/24"
+  options={[
+    "The OS hibernation files stored on disk shall always be encrypted.",
+    "A Trusted Platform Module ensures that the kernel is digitally signed by root.",
+    "OS virtual page tables stored in RAM memory shall be cleared when the OS shuts down.",
+    "UEFI Secure Boot ensures that the firmware is digitally signed by the manufacturer.",
+  ]}
+  correct={1}
+>
+
+Which is **not** an important protection to ensure that an OS is secure?
+
+<div slot="answer">
+
+A TPM **stores** keys. Nothing is "signed by root".
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The TPM one. It mixes up two things: the TPM stores keys and credentials, Secure Boot checks signatures, and the signer is the manufacturer, not the root user. Encrypting hibernation files and clearing memory at shutdown are both in the "trusted" definition we just saw.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+{/* ------------------------------------------------------------ Systems Security 2: virtual memory */}
+
+<Chapter title="Virtual memory" label="Systems Security 2">
+
+<Slide title="Address translation">
+
+## Virtual memory
+
+<Reveal>
+
+- Each process sees memory that **does not physically exist**: mediation
+- Split into **4 KB pages**. Page table: sparse tree. Missing page: **page fault**
+- The **TLB** caches translations and the **R/W/X** bits per page, like an ACL
+- Caching, speculation and paging are fast, and also **attack vectors**
+
+</Reveal>
+
+<Notes>
+
+The rule: no process reaches another user's memory, and the kernel is protected from user code. It's done by runtime mediation, hardware plus kernel.
+
+**[→]** Address translation gives each process a limited view: isolation by complete mediation. **[→]** The space is bigger than RAM, so some pages live on disk, open to offline attacks unless the disk is encrypted. **[→]** Page tables in RAM are slow, so the TLB, the Translation Lookaside Buffer, caches recent translations with read, write and execute bits per page. X is the NX bit from the software chapter.
+
+**[→]** The catch: these optimizations became attack vectors, Spectre and Meltdown, and the lecture links the cached pages to Dirty Pipe.
+
+</Notes>
+</Slide>
+
+<Slide title="Kernel mapping">
+
+## Kernel mapping
+
+<Cols columns="1fr 1fr" gap={72} align="center">
+<div>
+
+<div class="layers"><span class="hot">Kernel: PR PW PX</span><span>Stack</span><span>Heap</span><span>Code: UR UX</span></div>
+
+<p class="small muted">One process's address space.</p>
+
+</div>
+<div>
+
+<Reveal>
+
+- Kernel memory is **mapped into every process**, with **privileged** permissions
+- A syscall needs **no page-table switch**
+- Switching processes changes user tables, **never** the kernel's
+
+</Reveal>
+
+</div>
+</Cols>
+
+<Notes>
+
+If the kernel and user address spaces were fully separate, every syscall would be a costly switch.
+
+**[→]** So part of the kernel's virtual memory is mapped into each process, but with different permissions: privileged read, write and execute, not the user ones. The process can't touch it directly; it only reaches it through syscalls such as memory map. **[→]** On a syscall, the kernel memory is already there, and so is the part of the process that the syscall needs. **[→]** When the OS switches from one process to another, it swaps the user page tables but keeps the kernel's. So the kernel sits at the same place for everyone, and that's what Pegasus exploited, a few slides on.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: kernel mapping">
+
+<Quiz
+  source="Test 1, 2023/24"
+  options={[
+    "Part of the kernel memory space is mapped differently across different user processes.",
+    "Part of the kernel memory space is mapped into the memory space of each process, allowing it to write to mapped kernel memory.",
+    "Kernel Page-Table Isolation keeps a minimal kernel memory mapping for system calls into the memory space of each process.",
+    "Part of each user process's memory is mapped into the kernel memory space, to pass parameters to system calls.",
+  ]}
+  correct={2}
+>
+
+For efficiency, the Linux kernel's address space is not fully independent from user processes, due to **kernel mapping**. Which is correct?
+
+<div slot="answer">
+
+KPTI separates the tables **almost** entirely: a minimal mapping stays.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The KPTI one. KPTI, which we'll meet properly in a moment, splits user and kernel page tables almost entirely; the "almost" is the minimal mapping needed to enter a syscall. The first is wrong, the mapping is the same everywhere. The second is wrong, the permissions are privileged so the process can't write. The last reverses the direction.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: virtual memory">
+
+<Quiz
+  source="Test 1, 2024/25"
+  options={[
+    "Different user processes are mapped to the same kernel memory.",
+    "A non-root user process may have permissions to read memory of other processes.",
+    "Cache of page tables may be subject to side-channel attacks.",
+    "A non-root user may have permissions to read kernel memory.",
+  ]}
+  correct={3}
+>
+
+An OS virtual memory mechanism is susceptible to security concerns, **not** including:
+
+<div slot="answer">
+
+Kernel pages are privileged. Attacks leak them; no user is **allowed** to read them.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The last one. Each of the others is a real concern from this lecture: the shared kernel mapping, same-user processes reading each other through `/proc`, and the TLB as a side channel. Kernel pages carry privileged permissions, so a non-root user never has permission to read them. Meltdown reads them anyway, but by a side channel, not by permission.
+
+</Notes>
+</Slide>
+
+<Slide title="Meltdown vs Spectre">
+
+## Meltdown vs Spectre
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+### Meltdown
+
+<Step at={1}>
+
+A **race** between the privilege check and the memory access.
+
+</Step>
+
+<Step at={2}>
+
+Out-of-order execution reads and **caches** the data anyway. The access is rejected, but **timing** shows what's cached. Reads anything mapped in your process.
+
+</Step>
+
+</div>
+<div>
+
+### Spectre
+
+<Step at={3}>
+
+The attacker **trains** the CPU's branch prediction to guess wrong.
+
+</Step>
+
+<Step at={4}>
+
+Other processes reuse the bad guess and touch memory the attacker picked. **Timing** reveals it.
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+Both break process isolation and read data from running programs.
+
+**[→]** Meltdown: the CPU checks privileges and accesses memory in parallel. **[→]** With out-of-order execution, the load lands in the cache before the check fails. The access is rejected, but cache timing reveals what was loaded. So the attacker reads any address mapped in its own process, and kernel memory is mapped in every process. Hence KPTI.
+
+**[→]** Spectre: the attacker trains the speculative predictor to mispredict. **[→]** Another program reuses that wrong guess and speculatively touches locations the attacker chose, or runs injected speculative shellcode. Again, cache timing leaks it.
+
+For the test: Meltdown is the privilege race in your own address space; Spectre tricks other programs through the predictor.
+
+</Notes>
+</Slide>
+
+<Slide title="Dirty Pipe">
+
+## Dirty Pipe (CVE-2022-0847)
+
+<p class="lede">Overwrite **any file you can read**. A pipe-flag bug plus two optimizations: `splice()` and `PIPE_BUF_FLAG_CAN_MERGE`.</p>
+
+<Reveal>
+
+1. Open a file **read-only**
+2. Create a pipe with the `CAN_MERGE` flag
+3. Point the pipe at a section of the file
+4. Write to the pipe: it overwrites the **cached page**
+
+</Reveal>
+
+<Notes>
+
+Dirty Pipe, 2022, in the Linux kernel. Three ingredients: a bug that lets you create pipes with arbitrary flags; `splice()`, which quickly pushes a file's contents into a pipe without copying; and `CAN_MERGE`, which lets the kernel update a "dirty" page without rewriting the data.
+
+**[→]** You open, say, `/etc/passwd` read-only. **[→]** You make a pipe that carries the merge flag. **[→]** You splice the file into it, so the pipe now points at the file's page in the page cache. **[→]** Anything you write to the pipe lands in that cached page, so every reader sees your version. Read permission became write permission. We'll see the mitigation in the last lecture.
+
+</Notes>
+</Slide>
+
+<Slide title="Pegasus">
+
+## Pegasus: the iOS kernel (2016)
+
+<p class="lede">`OSUnserializeBinary` did not sanitize **syscall arguments**: elements with no closing tag, wrong sizes.</p>
+
+<Reveal>
+
+1. **CVE-2016-4655:** an overflow leaks the kernel's **location**
+2. **CVE-2016-4656:** casting bad objects gives a **use-after-free**
+3. Many threads, so no one else **reuses** the freed memory
+4. Shellcode through **ROP**: jailbreak
+
+</Reveal>
+
+<Notes>
+
+Pegasus, the NSO spyware, chained iOS kernel bugs in a function that unpacks serialized syscall data. Think of XML with missing closing tags and lying sizes.
+
+**[→]** Reading the malformed input overflows into sensitive kernel memory, so the attacker learns where the kernel lives. With kernel mapping, it's at the same place in every process, so one leak is enough. **[→]** Second, the kernel casts the malformed objects in a way that leaves a dangling pointer: a use-after-free. **[→]** The attacker spawns many threads so other processes are unlikely to grab that freed memory first. **[→]** And then injects shellcode with ROP, from the software chapter, which ends in a jailbreak. The lecture slide prints 4655 for both bugs; the corruption one is 4656.
+
+</Notes>
+</Slide>
+
+<Slide title="Protecting the kernel">
+
+## Defense in depth for the kernel
+
+<Reveal>
+
+- The kernel with **all** permissions on user memory? No
+- Not even the kernel may break **W^X**
+- The kernel should not **write** user memory: stops leaks and code injection
+- **KPTI:** page tables (almost) **fully separate**. Cost ~5%, up to 30%
+
+</Reveal>
+
+<Notes>
+
+The question is what permissions the kernel should have on user memory. **[→]** "All of them" is the wrong answer, because we want protection even against a corrupted kernel.
+
+**[→]** So W xor X applies to the kernel too: no page both writable and executable. **[→]** And the kernel is blocked from writing to user regions, which protects against information leaks and against the kernel running attacker code placed in user memory. The 2021/22 test asked for one such limit and the principle behind it: this is the answer, and the principle is defense in depth.
+
+**[→]** KPTI, Kernel Page-Table Isolation, removes almost all of the kernel from the user page tables, which kills Meltdown. The price is performance, about 5%, up to 30% for syscall-heavy loads.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+{/* ------------------------------------------------------------ Systems Security 3: Unix access control */}
+
+<Chapter title="Unix access control" label="Systems Security 3">
+
+<Slide title="Unix permissions">
+
+## Unix permissions
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+| | file | folder |
+| --- | --- | --- |
+| `r` | read | list contents |
+| `w` | write | create contents |
+| `x` | execute | enter |
+
+</div>
+<div>
+
+<p class="big"><code style="font-variant-ligatures: none">-rwxrw-r--</code></p>
+
+<Reveal>
+
+- First character: type (`-` file, `d` folder)
+- Then **owner**, **group**, **others**
+- Groups give a kind of **RBAC**
+
+</Reveal>
+
+</div>
+</Cols>
+
+<Notes>
+
+We use Unix as the example. Actors are users and processes, resources are files and folders.
+
+On files, r, w and x mean what you expect. On folders they change: r lists the contents, w creates new contents, and x lets you enter the folder. A test trap: x on a folder is not "execute".
+
+**[→]** The first character of `ls -l` is the type. **[→]** Then three triplets: owner, group, everyone else. Each resource has an owner and a group, and permissions are given to each independently. **[→]** Because users belong to groups and groups get permissions, the group column is role-based access control in miniature.
+
+</Notes>
+</Slide>
+
+<Slide title="Extended ACLs">
+
+## Extended ACLs and the mask
+
+```text {2,7}
+$ ls -l myfile
+-rw-r-----+ ... tux linux ... myfile
+$ getfacl myfile
+user::rw-
+group::r-x            # effective:r--
+group:penguins:r-x    # effective:r--
+mask::r--
+other::---
+```
+
+<Step at={1}>
+
+<p class="big">Effective = entry **and** mask.</p>
+
+<p class="big"><code>setfacl -m u:nobody:rw myfile</code></p>
+
+</Step>
+
+<Notes>
+
+Many Unix file systems also support extended ACLs, which add named users and named groups beyond owner, group and other. The `+` at the end of the permissions is how `ls` tells you one exists.
+
+Read the `getfacl` output. The owning group and the group "penguins" both have r-x, but the mask is r--, so their effective permission is only r--.
+
+**[→]** The mask is the maximum permission for every named user and group, and for the owning group. It exists for applications that don't understand ACLs. And `setfacl -m` modifies the ACL, here giving the user nobody read and write.
+
+</Notes>
+</Slide>
+
+<Slide title="Who can change what">
+
+## Who can change what
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+### Superuser
+
+UID 0. Once a user (**root**), now a role (**sudo**). Use it as little as possible.
+
+<Reveal>
+
+- `chown`: superuser only
+- `chgrp`: owner or superuser
+- `chmod`: owner or superuser
+
+</Reveal>
+
+</div>
+<div>
+
+<Step at={4}>
+
+### DAC vs MAC
+
+**Discretionary:** the owner sets permissions.
+
+**Mandatory:** only the superuser or a system policy, e.g. **SELinux**.
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+The superuser can do everything. It used to be a special user called root; today it's more of a role you take with sudo. Least privilege says use it as little as you can.
+
+**[→]** Changing the owner, chown, is for the superuser only. Otherwise you could give your files to someone else to dodge quotas or plant files on them. **[→]** Changing the group, chgrp, the owner or the superuser. **[→]** Changing the permissions, chmod, also the owner or the superuser.
+
+**[→]** That last fact is what makes the Unix file system discretionary access control, DAC: the owner decides at their discretion. In mandatory access control, MAC, users can't, only the superuser or a central policy, like SELinux. The 2021/22 test asked exactly this: why is Unix DAC, and what makes MAC different.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: file permissions">
+
+<Quiz
+  source="Resit, 2022/23"
+  options={[
+    "The group of a file can only be changed by the root user.",
+    "Only the owner of a file or the root user can change its permissions.",
+    "The owner of a file can only be changed by the owner itself.",
+    "Not even the root user can change the permissions of files he does not own.",
+  ]}
+  correct={1}
+>
+
+Unix file permissions protect critical administrative operations. Which is true?
+
+<div slot="answer">
+
+`chmod`: owner or root. `chgrp`: owner or root. `chown`: root.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The second one. The first is wrong because the owner can change the group too. The third has it backwards, only the superuser changes the owner. The fourth is wrong because the superuser can do everything.
+
+</Notes>
+</Slide>
+
+<Slide title="Login and the setuid bit">
+
+## Login and the setuid bit
+
+<Flow
+  items={[
+    "login|runs as root",
+    "authenticate|reads credentials",
+    "drop privileges|uid, gid := user",
+    "shell|as the user",
+  ]}
+  highlight={[2]}
+/>
+
+<Step at={1}>
+
+<p class="lede">**setuid bit:** the process runs as the file's **owner**, not as you. `passwd` is owned by root.</p>
+
+</Step>
+
+<Step at={2}>
+
+<p class="big">**CVEs:** `passwd` (2004-0360), `sudoedit` (2023-22809)</p>
+
+</Step>
+
+<Notes>
+
+Every process has an effective user ID that decides its permissions, usually the launcher's. Exceptions: sudo and passwd.
+
+Login runs as root so it can read the stored credentials, authenticates you, changes its UID and GID to yours, and launches your shell. The critical step is dropping privileges. Done wrong, the process keeps something it got as root, like an open file: capability leaking.
+
+**[→]** Escalating should be impossible, yet passwd must edit a root-owned file for you. The setuid bit makes the process run with the UID of the executable's owner; the superuser or the owner can set it. If the owner is root, any bug is a privilege escalation.
+
+**[→]** Two real ones: a buffer overflow in passwd on Solaris in 2004, and sudoedit in 2023, where extra arguments in an editor environment variable let a user edit arbitrary files as root.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: launch UID">
+
+<Quiz
+  source="Test 1, 2023/24"
+  options={[
+    "Of the user who launched it, unless the setuid bit is set to 1.",
+    "Of the owner, unless the setuid bit is set to 1.",
+    "Of the owner, unless that user is root.",
+    "Of the root user, if setuid bit is set to 1.",
+  ]}
+  correct={0}
+>
+
+An important detail of Unix file permissions is the UID of a process. A process is launched with the UID:
+
+<div slot="answer">
+
+Launcher by default. setuid bit set: the owner. Owner is not always root.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The first one. The second is the same sentence reversed, and that's the trap. The last is only true when root owns the file. The 2024 resit asked a variant: with the setuid bit, which ID becomes the owner's? The EUID. The RUID stays as you.
+
+</Notes>
+</Slide>
+
+<Slide title="Three UIDs">
+
+## Three UIDs per process
+
+<div class="cards" style="--n:3">
+<div class="card" data-color="blue">
+
+### EUID
+
+*effective*: **permissions**.
+
+</div>
+<div class="card" data-color="green">
+
+### RUID
+
+*real*: who **launched** it.
+
+</div>
+<div class="card" data-color="orange">
+
+### SUID
+
+*saved*: the **previous** user, for transitions.
+
+</div>
+</div>
+
+<Step at={1}>
+
+<p class="big"><code>setuid(x)</code> as root: all three := x. **Permanent.**</p>
+
+</Step>
+
+<Step at={2}>
+
+<p class="big"><code>seteuid(x)</code>: only the EUID. **Temporary.**</p>
+
+</Step>
+
+<Notes>
+
+Normal processes run with the launcher's UID, setuid ones with the owner's, kernel processes as UID 0, maximum privilege. The transitions are subtle, so each process has three UIDs.
+
+**[→]** Root can call `setuid(x)` and set all three to anything. A normal user can only set the EUID to the RUID, themselves, or the SUID, going back. That's how a process drops privileges for good: Apache runs as root to open port 80, then forks workers that drop to a normal user.
+
+**[→]** `seteuid(x)` changes only the EUID and keeps RUID and SUID. That's a temporary drop: lower, run some code, restore. The danger is using `seteuid` when you meant to drop for good: the saved root lets the process climb back. That mistake is CVE-2000-0525.
+
+</Notes>
+</Slide>
+
+<Slide title="Lab: UIDs">
+
+## RUID, EUID, SUID
+
+<UidLab
+  presets={[
+    { at: 0, ops: [] },
+    { at: 1, ops: ["seteuid(1000)"] },
+    { at: 2, ops: ["seteuid(1000)", "seteuid(0)"] },
+    { at: 3, ops: ["seteuid(1000)", "seteuid(0)", "setuid(1000)"] },
+    { at: 4, ops: ["seteuid(1000)", "seteuid(0)", "setuid(1000)", "seteuid(0)"] },
+  ]}
+/>
+
+<Notes>
+
+User 1000 runs a setuid-root program. At launch: EUID root, RUID 1000, SUID root.
+
+**[→]** `seteuid(1000)`. Only the EUID changes. The SUID still says root. This is the quiz from the lecture.
+
+**[→]** So `seteuid(0)` works and we're root again. That's what the saved UID is for.
+
+**[→]** Now, as root, `setuid(1000)`. Because the EUID was root, all three become 1000.
+
+**[→]** `seteuid(0)` fails with EPERM. A normal user may only pick the RUID or the SUID, and neither is root anymore. Root is gone for good, which is what you want once you no longer need it.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: setuid vs seteuid">
+
+<Quiz
+  source="Test 1, 2024/25"
+  options={[
+    "seteuid permanently changes privileges, by modifying EUID, RUID and SUID.",
+    "setuid temporarily changes privileges, by modifying EUID and SUID, but not RUID.",
+    "setuid permanently changes privileges, by modifying EUID and RUID but not SUID.",
+    "seteuid temporarily changes privileges, by modifying EUID but not RUID and SUID.",
+  ]}
+  correct={3}
+>
+
+Process privileges may be adjusted at runtime by syscalls that change the EUID, SUID and RUID. Which is true?
+
+<div slot="answer">
+
+`seteuid`: EUID only, temporary. `setuid` as root: all three, permanent.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The last one. Each wrong answer breaks one fact: the first makes seteuid permanent, the second makes setuid temporary, the third says setuid leaves the SUID alone. As root, setuid changes all three. The 2023 resit asked the same idea: setuid lets root become a normal user without the possibility to regain root.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: after setuid">
+
+<Quiz
+  source="Resit, 2024/25"
+  options={[
+    "No, it is not possible because user u cannot invoke seteuid(root).",
+    "Yes, it is possible because user u may invoke seteuid(root).",
+    "Yes, it is possible because previously root-acquired capabilities are not revoked.",
+    "No, it is not possible because all previously acquired capabilities are automatically revoked.",
+  ]}
+  correct={2}
+>
+
+Can a root-owned program **retain root privileges** after a `setuid(u)` call that drops privileges to another user u?
+
+<div slot="answer">
+
+Yes: **capability leaking**. What it opened as root stays open.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The third, and this one catches people who just learned the lab. It's true that u can't call `seteuid(root)` anymore, so the UIDs are safe. But anything the process got while it was root, like a file descriptor to `/etc/shadow`, is not taken away by `setuid`. That's capability leaking, the same warning as the login slide. The fix is to close those before dropping.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: least privilege">
+
+<Quiz source="Midterm, 2021/22" at={1}>
+
+Give a situation where a process changes its own **effective user ID** at runtime, following the principle of **least privilege**.
+
+<div slot="answer">
+
+Apache starts as root to open port 80, then its workers `setuid` to an unprivileged user. Or a setuid program calls `seteuid(user)` and returns to root only when it needs to.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** Either example from the lecture works. The point to write down is that the process holds root only for the moment it needs it, so a bug in the rest of the code runs without root. Say which call you use and whether the drop is permanent or temporary.
+
+</Notes>
+</Slide>
+
+<Slide title="setuid and the environment">
+
+## setuid programs and the environment
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+### `system(cmd)`
+
+Runs `/bin/sh -c cmd` with the **caller's environment**. The shell parses `;` and searches `PATH`.
+
+</div>
+<div>
+
+### `execve(path, argv, envp)`
+
+Runs the program **directly**. No shell. The environment is whatever you pass.
+
+</div>
+</Cols>
+
+<Reveal>
+
+- `PATH`: a relative `ls` may run **your** `ls`
+- `LD_PRELOAD`: replaces **shared library** functions only
+- Defenses: the loader ignores `LD_PRELOAD` in setuid processes; the shell may drop privileges
+
+</Reveal>
+
+<Notes>
+
+This is from the Environment Variable and Set-UID lab, and tests ask about it almost every year.
+
+`system` forks and runs `/bin/sh -c` with your command, and the shell inherits the program's environment, interprets characters like the semicolon, and finds bare names through `PATH`. `execve` runs exactly the binary you name with the arguments and environment you give. No shell.
+
+**[→]** In a setuid program, `system("ls")` trusts `PATH`, and you control `PATH`. Put your own `ls` first and it runs with the program's privileges. **[→]** `LD_PRELOAD` loads your library first, so you can replace dynamically linked functions like `printf` or `malloc`. Functions defined inside the program itself are not affected. **[→]** Both are so dangerous that the dynamic loader ignores `LD_PRELOAD` when EUID and RUID differ, and shells like dash drop privileges when they detect they run setuid. So a child may get the environment minus some critical variables.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: system vs execve">
+
+<Quiz
+  source="Test 1, 2024/25"
+  options={[
+    "`sprintf(command, \"%s %s\", \"/bin/cat\", arg); system(command);`",
+    "`execve(\"/bin/cat\", arg, environ);` with all current environment variables",
+    "`sprintf(command, \"%s \\\"%s\\\"\", \"/bin/cat\", arg); system(command);`",
+    "`execve(\"/bin/cat\", arg, NULL);`",
+  ]}
+  correct={0}
+>
+
+An attacker sets `char arg[20] = "file.txt ; rm file.txt\0"`. Which code **removes** `file.txt`?
+
+<div slot="answer">
+
+Only an **unquoted** string handed to the shell runs the second command.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The first. `system` hands `/bin/cat file.txt ; rm file.txt` to the shell, which sees two commands. The third quotes the argument, so the shell passes the whole string to cat as one file name. The two `execve` versions never start a shell, so the semicolon is just a character, whatever the environment.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: LD_PRELOAD">
+
+<Cols columns="1fr 1fr" gap={56} align="start">
+<div>
+
+```c
+char* test_heap() {
+  char* buf = malloc(10);
+  fgets(buf, 9, stdin);
+  return buf;
+}
+int test_sum() { return 2 * 2; }
+void my_puts(char* str) {
+  printf("%s\n", str);
+}
+int main() {
+  puts("Hello!");
+  printf("%d\n", test_sum());
+  my_puts(test_heap());
+}
+```
+
+</div>
+<div>
+
+<Quiz
+  source="Test 1, 2023/24"
+  options={[
+    "test_heap, test_sum, main",
+    "printf, fgets, malloc",
+    "puts, printf, my_puts",
+    "test_heap, test_sum, my_puts",
+  ]}
+  correct={1}
+>
+
+Which functions could be overridden with **`LD_PRELOAD`**?
+
+<div slot="answer">
+
+Only libc functions. `my_puts` is the program's own.
+
+</div>
+</Quiz>
+
+</div>
+</Cols>
+
+<Notes>
+
+**[→]** printf, fgets and malloc. `LD_PRELOAD` works at dynamic linking, so it can only replace functions that come from a shared library, here libc. Every `test_` function, `my_puts` and `main` live inside the binary. The third option is the trap: puts and printf are fine, but `my_puts` isn't.
+
+</Notes>
+</Slide>
+
+<Slide title="Everything is a file">
+
+## Everything is a file
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+Sockets, pipes, devices, kernel objects: **one interface**, one access control.
+
+Fewer syscalls, smaller attack surface: economy of mechanism.
+
+</div>
+<div>
+
+<Step at={1}>
+
+### Android
+
+Linux with **SELinux** (MAC). Each **app is a user**. Several people on a tablet? Names like `u1_a23`. Plus **manifest permissions**.
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+How do you keep the number of syscalls, and the attack surface, small? Use the same interface for files and everything else. On Unix, sockets, pipes, I/O devices and kernel objects all look like files, so the same access control checks them all.
+
+**[→]** Android reuses the user mechanism in a clever way: each app gets its own Linux user, so apps are isolated like different people. On top it runs SELinux, so it's mandatory access control. The problem is multiple real people on one tablet. The ad hoc fix is IDs like `u1_a23`: user 1, app 23. And each app declares permissions in its manifest.
+
+</Notes>
+</Slide>
+
+<Slide title="Linux Security Modules">
+
+## LSM: one more layer over DAC
+
+<Flow
+  items={[
+    "Syscall",
+    "Check errors",
+    "DAC",
+    "LSM hook",
+    "Resource",
+  ]}
+  highlight={[3]}
+/>
+
+<Reveal>
+
+- Since kernel 2.6, models load as **kernel modules**
+- Any step that fails **denies**: LSM can only **add** restrictions
+- A truly **generic reference monitor**
+
+</Reveal>
+
+<Notes>
+
+Linux Security Modules let you load access control models into the kernel, on top of normal DAC.
+
+The order of checks: the syscall arrives, the kernel checks the arguments, then the normal Unix permissions, then the LSM hook, where SELinux or AppArmor ask their policy, and only then the resource.
+
+**[→]** They are loadable kernel modules, since 2.6. **[→]** Because every step must pass, an LSM can only take permissions away, never grant more. **[→]** That's why the lecture calls it a truly generic reference monitor: one place where any policy can mediate.
+
+</Notes>
+</Slide>
+
+<Slide title="Unix: the verdict">
+
+## Unix access control: the verdict
+
+<p class="lede">ACLs with some batching (RBAC). **Simple**, and works in practice.</p>
+
+<Reveal>
+
+- A bug in `passwd` or `ssh` (EUID 0) is **catastrophic**
+- Root is used, often wrongly, for **too much**
+- Once an attacker has root, you **can't** downgrade them
+- Trust transitions are easy to get wrong: **log** them
+
+</Reveal>
+
+<Notes>
+
+The lecture's summary. Unix access control is basically access control lists with grouping, so RBAC. Without extended ACLs and LSM it's simple and it works.
+
+But it's not robust or flexible. **[→]** Programs that run as EUID 0 and parse user input are single points of failure. **[→]** Root does many unrelated jobs, which leads to admin mistakes. **[→]** There is nothing above root, so once an attacker has it, you can't take it back. **[→]** And even this simple system has transitions between trust states that are easy to get wrong, so compromise recording matters.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+{/* ------------------------------------------------------------ Systems Security 3: confinement */}
+
+<Chapter title="Confinement" label="Systems Security 3">
+
+<Slide title="Confinement levels">
+
+## Confining untrusted code
+
+<p class="lede">JavaScript, extensions, legacy code, honeypots, malware analysis. If it misbehaves, **kill it**.</p>
+
+<Reveal>
+
+- **Air gap:** separate hardware. Hard to manage
+- **Processes:** a virtual view per process. Weak against same user, admin, OS bugs
+- **VMs:** a hypervisor shares hardware between OSes
+- **Sandbox:** inside an app, e.g. JavaScript and WebAssembly
+- **Containers:** share the host **kernel**, isolate userland
+
+</Reveal>
+
+<Notes>
+
+We often run untrusted code on a trusted platform. If it misbehaves, nuke it.
+
+**[→]** The strongest level is physical, an air gap, and a pain to manage. **[→]** Next, the OS gives each process a virtual view, so P1 can't affect P2. Weak spots: same-user processes, admin processes, OS bugs. On Unix this rests on SFI and SCI, the next question. **[→]** VMs: the hypervisor gives each OS a virtual view of the hardware. **[→]** Sandboxing confines inside one app, like a browser's JavaScript and WebAssembly interpreters. **[→]** Containers: a VM runs a whole OS, more isolation; a container shares the host kernel, fewer resources.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: SCI and SFI">
+
+<Quiz source="Midterm, 2021/22" at={1}>
+
+Explain the two basic mechanisms that a Linux-like OS uses to isolate processes, which are forms of (1) **system call interposition** and (2) **software fault isolation**.
+
+<div slot="answer">
+
+<Step at={1}>
+
+**SCI:** kernel/user separation. Few syscalls, all checked by the same access control.
+
+</Step>
+
+<Step at={2}>
+
+**SFI:** memory isolation. Each process gets a virtual address space, and the kernel mediates translation.
+
+</Step>
+
+</div>
+</Quiz>
+
+<Notes>
+
+SFI is isolating processes that share userland address space; SCI is mediating every system call. Unix already does both, and this question wants you to name them.
+
+**[→]** System call interposition is the kernel versus userland split: a small set of syscalls, and each one goes through the same universal access control. **[→]** Software fault isolation is virtual memory: each process gets its own address space, and the kernel controls address translation, so one process can't reach another's memory.
+
+</Notes>
+</Slide>
+
+<Slide title="Hypervisors and containers">
+
+## Hypervisors and containers
+
+<Cols columns="1fr 1fr 1fr" gap={72}>
+<div>
+
+### Type 1 · bare metal
+
+<div class="layers"><span>App</span><span>Guest OS</span><span class="hot">Hypervisor</span><span>Hardware</span></div>
+
+</div>
+<div>
+
+### Type 2 · hosted
+
+<div class="layers"><span>App</span><span>Guest OS</span><span class="hot">Hypervisor</span><span>Host OS</span><span>Hardware</span></div>
+
+</div>
+<div>
+
+### Containers
+
+<div class="layers"><span>App</span><span>Files, runtime</span><span class="hot">Host OS</span><span>Hardware</span></div>
+
+</div>
+</Cols>
+
+<Step at={1}>
+
+<p class="big">Type 1: clouds. Type 2: PCs. Containers: **no guest OS**.</p>
+
+</Step>
+
+<Notes>
+
+A Type 1, or bare-metal, hypervisor is a thin layer straight on the hardware. A Type 2, or hosted, hypervisor is software running on a normal OS. Either way, each guest OS thinks it owns the machine.
+
+A container has no guest OS: just the app, its files and runtime, on the host's kernel.
+
+**[→]** Clouds use Type 1, PCs use Type 2. Containers share the host kernel, so they cost less and isolate less.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: confinement">
+
+<Quiz
+  source="Resit, 2022/23"
+  options={[
+    "A container allows a guest OS to run independently of a host OS.",
+    "A sandbox allows applications to run independently of an OS.",
+    "A container allows an OS to run independently from the underlying hardware through the use of virtual machines.",
+    "An hypervisor allows an OS to run independently from the underlying hardware through the use of virtual machines.",
+  ]}
+  correct={3}
+>
+
+There are several confinement approaches in operating systems. Which is true?
+
+<div slot="answer">
+
+Hypervisor: OS over virtual hardware. Container: no guest OS at all.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The last one, the hypervisor. The first and third describe containers as if they were VMs, but a container has no guest OS. The second is wrong because a sandbox lives inside an application that still runs on an OS.
+
+</Notes>
+</Slide>
+
+<Slide title="chroot">
+
+## chroot (1979)
+
+<Cols columns="1fr 1fr" gap={72} align="center">
+<div>
+
+```sh
+$ chroot /tmp/guest
+$ su guest
+```
+
+`fopen("/etc/passwd")` becomes `fopen("/tmp/guest/etc/passwd")`
+
+</div>
+<div>
+
+<Reveal>
+
+- **Root only.** A folder becomes `/`
+- Syscalls get the path **prefixed**
+- **jailkit** fills the jail with `ls`, `ps`, `vi`
+- Does **not** restrict the network
+
+</Reveal>
+
+</div>
+</Cols>
+
+<Notes>
+
+The oldest container is chroot. Here root makes `/tmp/guest` the root of the file system and switches to the user guest. Every path the process asks for is intercepted and prefixed, so it can't name a file outside the folder.
+
+**[→]** Only root can run it, for a reason we'll see on the next slide. **[→]** The interception is the whole mechanism. **[→]** An empty jail is useless, so jailkit sets up an environment from a configuration, with the tools you allow, and launches a shell inside. **[→]** The big drawback: a chroot jail does nothing about network communication.
+
+</Notes>
+</Slide>
+
+<Slide title="Escaping chroot">
+
+## Escaping a chroot jail
+
+<Reveal>
+
+- **Early versions:** `fopen("../../etc/passwd")` just walks out
+- **Ultrix 4.0:** a non-root user could run `chroot`
+- Root inside the jail: create a **raw disk device**, **signal** outside processes, **reboot**
+
+</Reveal>
+
+<Step at={2}>
+
+<Flow
+  items={[
+    "Create /aaa/etc/passwd",
+    "chroot /aaa",
+    "su root|your own password",
+  ]}
+/>
+
+</Step>
+
+<Notes>
+
+**[→]** At first, relative paths escaped: `/tmp/guest/../../etc/passwd` resolved outside the jail.
+
+**[→]** Ultrix 4.0 let a non-root user run chroot. So you write your own password file in `/aaa/etc/passwd`, with a root entry whose password you know, then chroot into `/aaa`. When you type `su root`, which password file does su read? Yours. You are root. That's why chroot is root-only.
+
+**[→]** And the general rule: the user inside a jail must never become root, because root has many ways out. It can create a device file for the raw disk and read anything, send signals to processes outside, or simply reboot the machine.
+
+</Notes>
+</Slide>
+
+<Slide title="Jails and LXC">
+
+## FreeBSD jails and Linux LXC
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+### FreeBSD jails (2000)
+
+Restrict **network** and **IPC**, and limit **root** inside. Became almost virtualization.
+
+<Step at={1}>
+
+Drawbacks: rigid policies. Apps still touch the network and kernel **directly**.
+
+</Step>
+
+</div>
+<div>
+
+<Step at={2}>
+
+### LXC (2008)
+
+Unprivileged containers: root inside is a **normal user** outside.
+
+**cgroups:** limit **how much** CPU, memory, network.
+
+**namespaces:** limit **what you can see** of the kernel.
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+FreeBSD jails, FreeBSD 4.0 in 2000, fix chroot's gaps: they restrict network and inter-process communication and limit root inside. They grew into near-virtualization.
+
+**[→]** Still, policies are rigid: a browser must read from disk to attach a file to an email. And apps still talk directly to the network and kernel.
+
+**[→]** LXC brings this to Linux in 2008. Unprivileged containers map root inside to a normal user outside. Don't mix up the two kernel features: control groups limit how much CPU, memory or network a group of processes uses, and set priority; namespaces partition kernel resources, so a process only sees its own processes, mounts or network.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: cgroups or namespaces">
+
+<Quiz
+  options={[
+    "cgroups, because they hide other containers' processes.",
+    "namespaces, because they partition what each process can see.",
+    "cgroups, because they cap the container's memory.",
+    "chroot, because it isolates the process table.",
+  ]}
+  correct={1}
+>
+
+`ps` inside a container shows only the container's own processes. Which kernel feature does that?
+
+<div slot="answer">
+
+Seeing: **namespaces**. Amount: **cgroups**.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** Namespaces. Hiding the other processes is about what you can see, which is a namespace, here the PID namespace. cgroups would be the answer if the question said "uses at most 512 MB". And chroot only changes the file system root; it doesn't touch the process table.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+{/* ------------------------------------------------------------ Systems Security 4: Docker and SCI */}
+
+<Chapter title="Docker and syscall interposition" label="Systems Security 4">
+
+<Slide title="Docker">
+
+## Docker
+
+<Reveal>
+
+- One app per **isolated, reproducible** environment. Engine and Hub
+- Built on LXC, then **libcontainer** (1.0). Layered images, compose, **OCI**
+- The **daemon runs as root**
+
+</Reveal>
+
+<Step at={4}>
+
+<p class="lede">**Shocker** (CVE-2014-3519): a container process kept `CAP_DAC_READ_SEARCH`, so `open_by_handle_at` read **host** files. Fixed in 1.0.</p>
+
+</Step>
+
+<Notes>
+
+Recap: the kernel now offers namespaces, cgroups and limits on root, all mediation.
+
+**[→]** Docker runs single apps in isolated, reproducible environments: the Engine runs containers, the Hub shares them. **[→]** It replaced LXC with its own libcontainer at 1.0, and added layered images like git history, docker-compose, and one open specification, OCI. **[→]** The security point: the daemon managing containers, disks and networks runs as root.
+
+**[→]** Shocker, 2014. A container process still held the kernel capability `CAP_DAC_READ_SEARCH`, which bypasses read permission checks and allows `open_by_handle_at`. With it, the container read host files. Docker has had many more CVEs, so keep it updated.
+
+</Notes>
+</Slide>
+
+<Slide title="System call interposition">
+
+## System call interposition
+
+<p class="lede">The attack surface is the **syscalls**. Watch them and block the unauthorized ones.</p>
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+<Reveal>
+
+- **In the kernel:** seccomp
+- **In user space:** program shepherding
+- **Hybrid:** Systrace
+
+</Reveal>
+
+</div>
+<div>
+
+<Step at={4}>
+
+### Chromium sandbox
+
+1. **SFI:** no files, network or other processes
+2. **SCI:** restrict the syscalls, the main attack surface
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+To change the real system, code must go through the file system or the network, and both are syscalls. So SCI monitors syscalls and blocks the ones that aren't allowed. That's complete mediation.
+
+**[→]** You can do it inside the kernel, like seccomp in Linux, **[→]** outside the kernel in user space, which is called program shepherding, **[→]** or a mix of both, like Systrace.
+
+**[→]** Chromium is the example of defense in depth: layer one, SFI, keeps the renderer away from files, network and other processes; layer two, SCI, restricts the syscall interface itself.
+
+</Notes>
+</Slide>
+
+<Slide title="ptrace and TOCTOU">
+
+## The first try: ptrace
+
+<Cols columns="1fr 1.3fr" gap={56} align="center">
+<div>
+
+A monitor attaches with `ptrace`, is **notified** on each syscall, and can **kill** the process.
+
+<Step at={1}>
+
+Slow, duplicated on forks, abort = kill. And **TOCTOU**: check and use are not atomic.
+
+</Step>
+
+</div>
+<div>
+
+<Step at={1}>
+
+<Diagram
+  fontSize={24}
+  alt="Process 1 calls open me, the monitor checks and approves, process 2 replaces me with a symlink to etc passwd, and the open reaches the wrong file."
+  source={`sequenceDiagram
+  participant P1 as Process 1
+  participant M as Monitor
+  participant P2 as Process 2
+  P1->>M: open("me")
+  M->>M: check: OK
+  P2->>P2: me → /etc/passwd
+  M->>P1: continue
+  P1->>P1: opens /etc/passwd`}
+/>
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+On Linux, `ptrace` lets a monitor attach to a child process and get notified whenever it makes a syscall. If the call isn't allowed, the monitor kills it. The Janus system used this for policies like "allow `/tmp/*`, deny `/etc/passwd`, deny all network".
+
+**[→]** The limits: it intercepts every call, so it's slow. The monitor has to be duplicated on every fork. Aborting one syscall means aborting the whole process. And the worst: TOCTOU, time of check to time of use. Process 1 asks to open "me". The monitor checks and says OK. Before the kernel runs it, process 2 replaces "me" with a symlink to `/etc/passwd`. The open runs and gets the wrong file. Checking and running are not one atomic step.
+
+</Notes>
+</Slide>
+
+<Slide title="seccomp">
+
+## seccomp
+
+<Cols columns="1fr 1.3fr" gap={64} align="start">
+<div>
+
+### Strict mode
+
+After `prctl()`: only exit, return and **already open** files. Violation: the kernel **kills** it.
+
+</div>
+<div>
+
+### seccomp-bpf
+
+<Reveal>
+
+- Fine-grained **BPF** rules: syscall, arguments, architecture
+- Returns `KILL`, `ERRNO` or `ALLOW`
+- Filters can't be **removed**, and pass to **all descendants**
+- **Immune to TOCTOU**
+- Used by Chromium and Docker
+
+</Reveal>
+
+</div>
+</Cols>
+
+<Notes>
+
+Secure Computing Mode puts SCI inside the kernel. In strict mode, the process calls `prctl()` and from then on can only terminate, return, or use files it already had open. No new files, no fork. Anything else and the kernel kills it.
+
+seccomp plus BPF makes it configurable with Berkeley Packet Filter rules. **[→]** A rule looks at the syscall number, its arguments and the architecture. **[→]** The kernel runs the filter on every syscall and returns kill the process, reject with an error, or allow. **[→]** A process can install several filters; once installed they can't be removed or turned off, and every descendant inherits them, even across `execve`. **[→]** It's in the kernel, so there's no gap between check and use. **[→]** Chrome forks its renderer and installs the policy with `prctl`. If an exploited renderer calls `fopen("/etc/passwd")`, seccomp-bpf kills it.
+
+</Notes>
+</Slide>
+
+<Slide title="Docker and seccomp">
+
+## Docker and kernel mitigations
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+### Docker
+
+Containers are **child processes** of the engine. The default seccomp profile **blocks many syscalls**, `ptrace` included.
+
+`--security-opt seccomp=profile.json`
+
+</div>
+<div>
+
+<Step at={1}>
+
+### Until you patch
+
+**Dirty COW:** block `ptrace()` and writes to `/proc/self/mem`.
+
+**Dirty Pipe:** block `splice()`.
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+Docker uses seccomp-bpf the same way. The containers are sub-processes of the Docker engine, so the engine filters their syscalls. The default policy blocks many calls, including ptrace, and you can change it with a JSON profile.
+
+**[→]** The same idea mitigates kernel bugs. Two famous CVEs let you overwrite read-only files. Dirty COW, 2016, is a race in copy-on-write, a feature there to support debuggers, attacked through `ptrace()` or `/proc/self/mem`. Dirty Pipe is the zero-copy optimization we saw, attacked through `splice()`. Until the kernel is updated, you block those syscalls and limit capabilities or access to certain files.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: Docker">
+
+<Quiz
+  source="Resit, 2023/24"
+  options={[
+    "A container may fork a sub-container with more relaxed seccomp-bpf filters.",
+    "With seccomp-bpf, root permissions are always removed from containers.",
+    "All choices are correct.",
+    "By default, Docker blocks some system calls inside containers.",
+  ]}
+  correct={3}
+>
+
+Under Linux, Docker relies on **seccomp-bpf** to confine containers. Select the only correct choice, or that all are correct.
+
+<div slot="answer">
+
+Filters are inherited and can't be relaxed. They filter syscalls, not root.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The default profile blocks some syscalls. The first is wrong because filters pass to every descendant and can't be removed. The second confuses seccomp with unprivileged containers: seccomp filters calls, it doesn't change who you are.
+
+</Notes>
+</Slide>
+
+<Slide title="eBPF">
+
+## eBPF (2014)
+
+<p class="lede">Safe user programs **inside the kernel**: **SCI** plus **SFI**.</p>
+
+<Reveal>
+
+- **Hooks** on syscalls and other events
+- Bytecode **formally verified**: memory safety, information flow, termination
+- **JIT** compiled to native code. Popular with Kubernetes
+
+</Reveal>
+
+<Notes>
+
+Kernels are usually rigid: changing behavior means a kernel module, which is risky. eBPF, from 2014 and now a hot topic, lets user space load small programs, for example monitoring, into the kernel.
+
+**[→]** They attach to hooks, syscalls or other events, which is the SCI half. **[→]** Before loading, the kernel verifies the bytecode: it only touches memory it should, doesn't leak information, and always terminates. That's the SFI half. **[→]** Then it's compiled just in time to native code, so it runs fast.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+{/* ------------------------------------------------------------ Systems Security 4: SFI */}
+
+<Chapter title="Software fault isolation" label="Systems Security 4">
+
+<Slide title="Software fault isolation">
+
+## Software fault isolation
+
+<p class="lede">Sandboxing with minimal overhead: each app gets a **memory segment** and may only access it.</p>
+
+<Reveal>
+
+- **Guards** before dangerous instructions, by binary instrumentation or at compile time
+- Dangerous: **loads and stores**, and **jumps**
+- Hard on **x86**. Alternative: separate address spaces, with **IPC** cost
+
+</Reveal>
+
+<Notes>
+
+SFI is least privilege for memory. Each application gets its own segment, and the code is controlled so every access stays inside.
+
+**[→]** Every dangerous operation gets a guard before it: check the segment, or force the address into it. You add guards by instrumenting the binary, or at compile time, as the CompCert work does. **[→]** Loads and stores are obvious. Why jumps? Because a jump could land past a guard, or in code that has none, and run unchecked instructions. So jump targets are validated too. **[→]** On x86 this is hard: many registers and many dangerous instructions. The other way to isolate is separate address spaces, but then every call between them costs inter-process communication.
+
+</Notes>
+</Slide>
+
+<Slide title="Google NaCl">
+
+## Google Native Client
+
+<Reveal>
+
+- Native C/C++ in Chrome, e.g. games. **POSIX**: files, sockets, threads
+- Compiled **ahead of time**: much faster than JIT JavaScript
+- **SFI + CFI**. Overhead 5% on ARM, 7% on x86-64
+- Dropped in 2016 for **WebAssembly**
+
+</Reveal>
+
+<Notes>
+
+NaCl is the SFI example. **[→]** It was a sandbox to run native code in the browser, a pioneer in moving C and C++ libraries to the web; they even ran Doom. **[→]** Code compiled ahead of time is much faster than JavaScript compiled just in time. **[→]** It combined software fault isolation for memory with control-flow integrity for jumps, which is exactly the jump problem from the last slide, and cost only 5 to 7%. **[→]** Google discontinued it in 2016; today C and C++ compile through LLVM to WebAssembly.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: SCI or not?">
+
+<Quiz
+  source="Resit, 2024/25"
+  options={[
+    "The `ptrace` system call.",
+    "seccomp (Secure Computing Mode).",
+    "LSM (Linux Security Modules).",
+    "Google NaCl sandboxes.",
+  ]}
+  correct={3}
+  columns={2}
+>
+
+Which is **not** a valid example of **system call interposition**?
+
+<div slot="answer">
+
+NaCl is **SFI** (plus CFI): it guards memory accesses and jumps.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** NaCl. ptrace and seccomp are the two SCI mechanisms we just saw. LSM hooks sit on the syscall path and can deny the call, so it also mediates syscalls. NaCl works on the code itself: memory segments and checked jumps.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: a form of SFI">
+
+<Quiz
+  source="Resit, 2024/25"
+  options={[
+    "Segmenting the memory region available to each web page in a browser.",
+    "Installing user-space hooks on system calls inside the kernel.",
+    "Monitoring the system calls performed by other processes.",
+    "Limiting root capabilities for docker containers.",
+  ]}
+  correct={0}
+>
+
+A form of **Software Fault Isolation** consists in:
+
+<div slot="answer">
+
+SFI = memory segments. Watching syscalls is SCI.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** Segmenting memory per web page. The second and third are SCI in disguise: hooks on syscalls, and watching syscalls like ptrace does. The last is about container privileges, neither of the two.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+{/* ------------------------------------------------------------ Systems Security 4: virtual machines */}
+
+<Chapter title="Virtual machines" label="Systems Security 4">
+
+<Slide title="Why VMs work">
+
+## Virtual machines
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+### Why they work
+
+<Reveal>
+
+- OS compromised: likely. Hypervisor: possible. **Both at once**: unlikely
+- A hypervisor is **simpler** than an OS
+- **Hardware support** lowers the risk
+
+</Reveal>
+
+</div>
+<div>
+
+### Uses
+
+<Reveal start={4}>
+
+- **NSA NetTop:** classified and not, on one machine. Type 2
+- **Cloud:** different clients on one machine. Type 1
+- **Qubes OS:** VMs for shady, work, personal. Type 1
+
+</Reveal>
+
+</div>
+</Cols>
+
+<Notes>
+
+VMs began in the 1960s, when many users shared few computers, vanished in the PC era, and came back after 2000 for isolation, in PCs and clouds.
+
+**[→]** An OS is likely compromised at some point, a hypervisor possibly, both at once improbably. **[→]** A hypervisor is simpler, so easier to validate, though some risk remains. **[→]** Hardware built for virtualization, like multi-level address translation and ARM's EL2, lowers it further.
+
+**[→]** NetTop keeps classified and unclassified data on one machine with a Type 2 hypervisor; to leak secrets, an attacker must corrupt several subsystems. **[→]** Clouds drop the host OS and run clients side by side on Type 1. In both, the risk is side channels. **[→]** Qubes OS splits shady, work and personal. Hypervisors have CVEs too: KVM, part of the Linux kernel, and Xen both rely on QEMU to emulate devices.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: hypervisor types">
+
+<Quiz
+  source="Resit, 2024/25"
+  options={[
+    "A Type-2 hypervisor cannot rely on a Type-1 hypervisor.",
+    "A Type-1 hypervisor is vulnerable to side-channels while a Type-2 hypervisor is not.",
+    "All the other options are false.",
+    "A Type-2 hypervisor makes it harder for a OS to detect that it is being virtualized than a Type-1 hypervisor.",
+  ]}
+  correct={2}
+>
+
+In system virtualization, which is true?
+
+<div slot="answer">
+
+You can stack them, both leak through side channels, and neither hides itself.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** All false. A Type 2 can run inside a VM on a Type 1. NetTop is Type 2 and the cloud is Type 1, and the lecture lists side channels as the risk for both. And no hypervisor is transparent, which is the next slide.
+
+</Notes>
+</Slide>
+
+<Slide title="Red Pill vs Blue Pill">
+
+## Breaking isolation
+
+<Cols columns="1fr 1fr" gap={72} align="start">
+<div>
+
+### Side channels
+
+Delays in memory access, cache effects. CPUs **can't** guarantee full isolation: Meltdown, Spectre.
+
+<Step at={1}>
+
+### Red Pill: am I in a VM?
+
+Instructions, hardware, memory latency, small resources. Hypervisors give compatibility and performance, **never transparency**.
+
+</Step>
+
+</div>
+<div>
+
+<Step at={2}>
+
+### Why care?
+
+Malware **hides** from analysis. Vendors **demand** real hardware. DRM.
+
+</Step>
+
+<Step at={3}>
+
+### Blue Pill
+
+A rootkit that moves your running OS **into the attacker's VM**.
+
+</Step>
+
+</div>
+</Cols>
+
+<Notes>
+
+Side channels observe side effects, like cache traces one process leaves for another to measure. Modern CPUs share too much hardware to promise full isolation.
+
+**[→]** Red Pill: can a program tell it's in a VM? Yes: available instructions, hardware features, memory latency, limited resources. Websites do it too: crawlers in VMs hunt for sites that inject malware, so those sites measure screen rendering latency and behave when watched. Hypervisors offer compatibility and performance, but not transparency. An "archaic" instruction set with 8 GB of RAM gives it away.
+
+**[→]** Why it matters: malware is analyzed in VMs, so it wants to detect them and play dead. Software makers may demand real hardware or a hardware key, and so may DRM.
+
+**[→]** Blue Pill, by Joanna Rutkowska, who founded Qubes, reverses the roles: a rootkit that slides a hypervisor under the running OS. The OS becomes the guest and can't see the attacker's layer.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: hypervisors">
+
+<Quiz
+  source="Test 1, 2024/25"
+  options={[
+    "It makes it difficult for an OS to know that it is running inside a VM.",
+    "It guarantees that a VM has the same behavior as the non-virtualized OS.",
+    "It ensures that an attacker can only break isolation between VMs via side-channels.",
+    "It may be vulnerable to attacks that are undetectable to VMs.",
+  ]}
+  correct={3}
+>
+
+A hypervisor runs virtual machines over a host OS or hardware. Which is true?
+
+<div slot="answer">
+
+A compromised hypervisor, like Blue Pill, is invisible from inside.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The last one. The first two claim transparency, which hypervisors don't give: VMs are easy to detect and don't behave identically. The third forgets that hypervisors have their own CVEs, KVM, Xen, QEMU, so side channels aren't the only way out.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: virtualization">
+
+<Quiz
+  source="Test 1, 2023/24"
+  options={[
+    "Hardware support improves performance of virtualised programs.",
+    "Malware can detect that it is running in a virtualised environment.",
+    "Malware may exploit the virtualisation layer to remain undetected.",
+    "Hardware support ensures indistinguishable behavior for virtualised programs.",
+  ]}
+  correct={3}
+  columns={2}
+>
+
+Virtualisation is a common security mechanism. Which sentence is **not** true?
+
+<div slot="answer">
+
+No transparency, with or without hardware support.
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** The last one. Hardware support gives speed and lowers risk, but not indistinguishable behavior. The second option is Red Pill and the third is Blue Pill, both true.
+
+</Notes>
+</Slide>
+
+<Slide title="Question: detecting VMs">
+
+<Quiz source="Midterm, 2021/22" at={1}>
+
+Can code in a VM detect that it is confined? Give a practical case where it is important that detection is (1) **made hard** or (2) **made easy** by the virtualization environment.
+
+<div slot="answer">
+
+<Step at={1}>
+
+**(1) Hard:** malware analysis. Malware that detects the VM hides its behavior.
+
+</Step>
+
+<Step at={2}>
+
+**(2) Easy:** a vendor or DRM wants proof it runs on real, licensed hardware.
+
+</Step>
+
+</div>
+</Quiz>
+
+<Notes>
+
+**[→]** Analysts run samples in VMs, so they want the VM hard to detect. The same goes for crawlers looking for malicious websites. The 2024 resit asked the multiple-choice version: why would a program want to detect a VM? Because malware wants to hide from security teams.
+
+**[→]** The other side: a software maker or a DRM system wants to refuse to run in a VM, so detection helps them. That closes the systems part.
+
+</Notes>
+</Slide>
+
+</Chapter>
+
+</Part>

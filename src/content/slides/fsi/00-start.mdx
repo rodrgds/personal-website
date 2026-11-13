@@ -1,0 +1,78 @@
+import { Chapter, Notes, Part, Slide, Step } from "../../../components/features/slides";
+
+<Part title="Start">
+<Chapter title="FSI · lectures 1 to 7" label="Start">
+
+<Slide layout="title" title="Cover">
+
+# Everything for Test 1:<br/>lectures 1 to 7
+
+<p class="lede">Concepts, memory, systems and the web, with every attack drawn step by step.</p>
+
+<p class="small muted">Interactive slides at <strong>rgo.pt/slides/fsi</strong></p>
+
+<Notes>
+
+Hi! This video covers everything for the first FSI test: lectures 1 to 7. Basic Concepts, the Security Model, the four Software Security lectures, the four Systems Security ones and the three on Web Security.
+
+The goal isn't to read the lecture slides to you. It's to understand why each attack works, why each defense stops it, and where the defense fails, because that's what the tests ask.
+
+The slides are at rgo.pt/slides/fsi, link in the description. You can zoom, draw on them, and the demos work there too.
+
+</Notes>
+</Slide>
+
+<Slide title="The map">
+
+## Four parts, from general to concrete
+
+<div class="cards" style="--n:4">
+<div class="card" data-color="blue">
+
+### 1 · Concepts
+
+CIA, risk, threat vs vulnerability, threat models
+
+</div>
+<div class="card" data-color="red">
+
+### 2 · Software
+
+Stack and heap bugs, shellcode, ROP, canaries, ASLR, CFI
+
+</div>
+<div class="card" data-color="green">
+
+### 3 · Systems
+
+Design principles, kernel, Unix permissions, setuid, isolation
+
+</div>
+<div class="card" data-color="purple">
+
+### 4 · Web
+
+SOP, cookies, SQL injection, XSS, CSRF, sessions
+
+</div>
+</div>
+
+<Step at={1}>
+
+<p class="big">Past test questions all along the way, and a <strong>last-minute checklist</strong> at the end.</p>
+
+</Step>
+
+<Notes>
+
+The video follows the order of the lectures, in four parts.
+
+First the concepts: the vocabulary that shows up in almost every question. Then software security, the most technical part: the stack, the heap and the defenses. Then systems: design principles, the kernel, Unix access control and isolation. And finally the web.
+
+**[→]** Along the way there are questions from past tests. Pause the video and answer before I click: that's the fastest way to find what you don't know yet. At the end there's a checklist of what comes up most. If you only have ten minutes, jump there.
+
+</Notes>
+</Slide>
+
+</Chapter>
+</Part>
