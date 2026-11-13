@@ -15,16 +15,35 @@ bullets:
 import CVImage from "../../components/features/cv/CVImage.astro";
 import CVImageGallery from "../../components/features/cv/CVImageGallery.astro";
 import Logo from "../../components/common/Logo.astro";
-import linkSearch from "../../assets/cv/montra/link-search.jpg";
-import textSearch from "../../assets/cv/montra/text-search.jpg";
+import approximateVisualSearch from "../../assets/cv/montra/approximate-visual-search.png";
+import floralSearch from "../../assets/cv/montra/floral-search.png";
+import home from "../../assets/cv/montra/home.png";
+import imageSelection from "../../assets/cv/montra/image-selection.png";
+import suitSearch from "../../assets/cv/montra/suit-search.png";
+import visualSearch from "../../assets/cv/montra/visual-search.png";
 
 **Montra** is fashion search across stores available in a shopper's region. It supports normal and AI-assisted queries, pasted product links, and image-based discovery, then returns filterable results with sizes, materials, colors, prices, availability, and retailer links.
 
 The web marketplace uses TanStack Start and <Logo fixed src="react" /> **React**, backed by a Hono API and <Logo fixed src="postgresql" /> **PostgreSQL** catalog. Meilisearch handles fast lexical retrieval, while pgvector and CLIP power visual similarity. The ingestion pipeline normalizes products and images from many retailers without making checkout or exact stock promises Montra cannot support.
 
-### Live natural-language and product-link search
+### Search across the live catalog
 
 <CVImageGallery columns={1} mobileColumns={1}>
-  <CVImage src={textSearch} alt="Montra search results for white linen trousers, with interpreted attributes, filters, and products from several retailers" />
-  <CVImage src={linkSearch} alt="Montra product-link search for Zara linen trousers, with extracted attributes and visually similar catalog results" />
+  <CVImage src={home} alt="Montra home page with search, image search, an outfit, category tabs, and a live catalog preview" />
+</CVImageGallery>
+
+<CVImageGallery columns={2} mobileColumns={1}>
+  <CVImage src={floralSearch} alt="Montra search results for floral dresses with active category and color filters" />
+  <CVImage src={suitSearch} alt="Montra search results for slim blue suits from several retailers" />
+</CVImageGallery>
+
+### Search from an image
+
+<CVImageGallery columns={1} mobileColumns={1}>
+  <CVImage src={imageSelection} alt="Montra image search selecting a coat, trousers, or bag from a photographed outfit" />
+</CVImageGallery>
+
+<CVImageGallery columns={2} mobileColumns={1}>
+  <CVImage src={visualSearch} alt="Montra visual search results for a beige belted trench coat selected from an image" />
+  <CVImage src={approximateVisualSearch} alt="Montra approximate visual search results for a striped shirt selected from an image" />
 </CVImageGallery>
