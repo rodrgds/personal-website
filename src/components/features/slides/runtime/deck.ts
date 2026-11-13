@@ -522,11 +522,18 @@ function initCanvas({ root, slug, slides, channel }: DeckContext): void {
     if (pointers.size > 0) return;
     const start = dragStart;
     dragStart = null;
-    if (moved || !start || ink.tool !== "interact" || event.button !== 0) {
+    // Left click selects a slide in interact mode; middle click does in any
+    // tool, so a slide can be picked without leaving the pen.
+    const select =
+      event.button === 1 || (event.button === 0 && ink.tool === "interact");
+    if (moved || !start || !select) {
       syncToolbar();
       return;
     }
-    const clicked = start.target?.closest<HTMLElement>("[data-slide]");
+    const clicked = document
+      .elementsFromPoint(start.x, start.y)
+      .map((element) => element.closest<HTMLElement>("[data-slide]"))
+      .find((element) => element !== null);
     const clickedIndex = clicked ? slides.indexOf(clicked) : -1;
     if (clickedIndex >= 0 && (clickedIndex !== index || place !== "slide")) {
       if (clickedIndex === index) void fitCurrent();
@@ -547,7 +554,7 @@ function initCanvas({ root, slug, slides, channel }: DeckContext): void {
         camera.zoomAt(
           event.clientX,
           event.clientY,
-          Math.exp(-event.deltaY * unit * 0.01),
+          Math.exp(-event.deltaY * unit * 0.005),
         );
       } else {
         camera.panBy(-event.deltaX * unit, -event.deltaY * unit);
