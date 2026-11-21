@@ -73,7 +73,7 @@
     margin: 1rem 0;
     overflow: hidden;
     border: 1px solid var(--border-color);
-    border-radius: 0.75rem;
+    border-radius: 0;
     background: color-mix(
       in srgb,
       var(--background-color) 92%,
@@ -111,7 +111,7 @@
     left: 1rem;
     bottom: 1rem;
     padding: 0.45rem 0.8rem;
-    border-radius: 999px;
+    border-radius: 0;
     background: rgba(0, 0, 0, 0.75);
     color: white;
     font-size: 0.85rem;

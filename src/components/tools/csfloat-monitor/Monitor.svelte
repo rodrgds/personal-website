@@ -1166,7 +1166,7 @@ onMount(() => {
   :global(.panel) {
     background-color: var(--surface-color);
     border: 1px solid var(--border-color);
-    border-radius: 0.35rem;
+    border-radius: 0;
     padding: 16px;
   }
 
@@ -1192,7 +1192,7 @@ onMount(() => {
     flex-direction: column;
     padding: 0.6rem 0.75rem;
     background: var(--bg-secondary);
-    border-radius: 0.28rem;
+    border-radius: 0;
     border: 1px solid var(--border-color);
   }
 
@@ -1236,7 +1236,7 @@ onMount(() => {
     font-size: 0.7rem;
     font-weight: bold;
     padding: 0.1rem 0.4rem;
-    border-radius: 0.25rem;
+    border-radius: 0;
     background-color: var(--link-color);
     color: var(--background-color);
     align-self: flex-start;
@@ -1383,7 +1383,7 @@ onMount(() => {
   .status-dot {
     width: 8px;
     height: 8px;
-    border-radius: 999px;
+    border-radius: 0;
     background: #9ca3af;
   }
   .status-dot.active {
@@ -1415,7 +1415,7 @@ onMount(() => {
     margin-bottom: 20px;
     padding: 12px;
     border: 1px solid color-mix(in srgb, var(--link-color) 24%, transparent);
-    border-radius: 0.35rem;
+    border-radius: 0;
     position: relative;
     background: color-mix(in srgb, var(--link-color) 8%, transparent);
   }
@@ -1505,7 +1505,7 @@ onMount(() => {
     padding: 0.75rem;
     background: color-mix(in srgb, var(--link-color) 6%, transparent);
     border: 1px solid color-mix(in srgb, var(--link-color) 14%, transparent);
-    border-radius: 0.28rem;
+    border-radius: 0;
     font-size: 0.8rem;
     color: var(--text-color);
   }
@@ -1533,7 +1533,7 @@ onMount(() => {
   .progress {
     width: 100%;
     height: 4px;
-    border-radius: 999px;
+    border-radius: 0;
     overflow: hidden;
     background: color-mix(in srgb, var(--link-color) 20%, transparent);
   }
@@ -1542,7 +1542,7 @@ onMount(() => {
   }
   .progress-fill {
     height: 100%;
-    border-radius: 999px;
+    border-radius: 0;
     background: var(--link-color);
     transition: width 100ms linear;
   }
@@ -1605,7 +1605,7 @@ onMount(() => {
     align-items: center;
     padding: 0.25rem 0.5rem;
     background: rgba(0, 0, 0, 0.03);
-    border-radius: 4px;
+    border-radius: 0;
     font-size: 0.8rem;
     font-family: var(--font-family-mono);
   }
@@ -1698,7 +1698,7 @@ onMount(() => {
     overflow-y: auto;
     padding: 0.5rem;
     background: rgba(0, 0, 0, 0.02);
-    border-radius: 0.5rem;
+    border-radius: 0;
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
@@ -1739,7 +1739,7 @@ onMount(() => {
   .log-entry {
     display: flex;
     gap: 12px;
-    border-radius: 8px;
+    border-radius: 0;
     border-width: 1px;
     border-left-width: 4px;
   }
@@ -1767,7 +1767,7 @@ onMount(() => {
   }
   .overlap-badge {
     padding: 2px 6px;
-    border-radius: 6px;
+    border-radius: 0;
     background: rgba(0, 0, 0, 0.1);
     color: #9ca3af;
     font-size: 9px;

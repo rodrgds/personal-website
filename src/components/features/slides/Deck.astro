@@ -97,7 +97,8 @@ const tools = [
       is:inline
       defer
       src="https://cool.rgo.pt/script.js"
-      data-website-id="f8aa3433-d34d-4b3a-9eaa-4b828d2a5338"></script>
+      data-website-id="f8aa3433-d34d-4b3a-9eaa-4b828d2a5338"
+    ></script>
     <script is:inline>
       (() => {
         let theme = "dark";
@@ -159,31 +160,27 @@ const tools = [
           </button>
         </div>
         <div class="tb-group tb-draw">
-          {
-            tools.map(([tool, label, key, Icon]) => (
-              <button
-                type="button"
-                data-tool={tool}
-                title={`${label} (${key})`}
-                aria-label={label}
-              >
-                <Icon size={18} />
-              </button>
-            ))
-          }
+          {tools.map(([tool, label, key, Icon]) => (
+            <button
+              type="button"
+              data-tool={tool}
+              title={`${label} (${key})`}
+              aria-label={label}
+            >
+              <Icon size={18} />
+            </button>
+          ))}
         </div>
         <div class="tb-group tb-colors">
-          {
-            colors.map(([color, label], index) => (
-              <button
-                type="button"
-                class="tb-swatch"
-                data-color={color}
-                title={`${label} (${index + 1})`}
-                aria-label={label}
-              />
-            ))
-          }
+          {colors.map(([color, label], index) => (
+            <button
+              type="button"
+              class="tb-swatch"
+              data-color={color}
+              title={`${label} (${index + 1})`}
+              aria-label={label}
+            />
+          ))}
         </div>
         <div class="tb-group">
           <button
@@ -223,35 +220,31 @@ const tools = [
         >
           <header>
             <h2 id="deck-help-title">Shortcuts</h2>
-            <button type="button" data-help-close aria-label="Close">×</button>
+            <button type="button" data-help-close aria-label="Close">
+              ×
+            </button>
           </header>
           <dl>
-            {
-              shortcuts.map(([keys, action]) => (
-                <>
-                  <dt>{keys}</dt>
-                  <dd>{action}</dd>
-                </>
-              ))
-            }
+            {shortcuts.map(([keys, action]) => (
+              <>
+                <dt>{keys}</dt>
+                <dd>{action}</dd>
+              </>
+            ))}
           </dl>
           <p>
             Drawings stay in this browser.
-            {
-              video && (
-                <>
-                  {" "}
-                  <a href={video} target="_blank" rel="noreferrer">
-                    Watch the video
-                  </a>
-                  .
-                </>
-              )
-            }
-            {" "}
-            <a href="?script">Full script</a> · <a href="/slides"
-              >Other presentations</a
-            >.
+            {video && (
+              <>
+                {" "}
+                <a href={video} target="_blank" rel="noreferrer">
+                  Watch the video
+                </a>
+                .
+              </>
+            )}{" "}
+            <a href="?script">Full script</a> ·{" "}
+            <a href="/slides">Other presentations</a>.
           </p>
         </div>
       </div>
@@ -268,8 +261,10 @@ const tools = [
             <button
               type="button"
               data-speaker-action="prev"
-              aria-label="Previous">←</button
+              aria-label="Previous"
             >
+              ←
+            </button>
             <button
               type="button"
               class="speaker-timer"
@@ -281,35 +276,45 @@ const tools = [
             <button
               type="button"
               data-speaker-action="reset"
-              title="Reset the timer">reset</button
+              title="Reset the timer"
             >
-            <button type="button" data-speaker-action="next" aria-label="Next"
-              >→</button
-            >
+              reset
+            </button>
+            <button type="button" data-speaker-action="next" aria-label="Next">
+              →
+            </button>
           </div>
         </section>
         <section class="speaker-side">
           <p class="speaker-label" data-speaker-next-label></p>
-          <div class="speaker-frame speaker-frame--next" data-speaker-next>
-          </div>
+          <div
+            class="speaker-frame speaker-frame--next"
+            data-speaker-next
+          ></div>
           <div class="speaker-notes-bar">
             <span class="speaker-label">Notes</span>
             <span>
               <button
                 type="button"
                 data-speaker-action="smaller"
-                aria-label="Smaller text">A−</button
+                aria-label="Smaller text"
               >
+                A−
+              </button>
               <button
                 type="button"
                 data-speaker-action="larger"
-                aria-label="Larger text">A+</button
+                aria-label="Larger text"
               >
+                A+
+              </button>
               <button
                 type="button"
                 data-speaker-action="theme"
-                aria-label="Change theme">theme</button
+                aria-label="Change theme"
               >
+                theme
+              </button>
             </span>
           </div>
           <div class="speaker-notes" data-speaker-notes data-scrollable></div>

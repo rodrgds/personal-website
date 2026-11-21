@@ -1,8 +1,4 @@
 <script lang="ts">
-  import {
-    ArrowTopRightOnSquareIcon,
-    XMarkIcon,
-  } from "heroicons-svelte/24/outline";
   import { onMount } from "svelte";
   import type { Snippet } from "svelte";
 
@@ -22,7 +18,7 @@
     title,
     size = "md",
     headerLink,
-    headerLinkText = "View profile",
+    headerLinkText = "profile",
     children,
   }: Props = $props();
 
@@ -69,40 +65,32 @@
   class="modal modal-{size}"
   onclick={handleBackdropClick}
   onkeydown={handleEscape}
+  data-no-vim
 >
   <div class="modal-content">
-    {#if title}
-      <div class="modal-header">
-        <h2>{title}</h2>
-        <div class="modal-header-actions">
-          {#if headerLink}
-            <a
-              href={headerLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              class="header-link"
-            >
-              {headerLinkText} <ArrowTopRightOnSquareIcon class="ui-icon" />
-            </a>
-          {/if}
-          <button
-            class="close-button"
-            onclick={handleClose}
-            aria-label="Close modal"
+    <div class="modal-header">
+      <h2>{title ?? ""}</h2>
+      <div class="modal-header-actions">
+        {#if headerLink}
+          <a
+            href={headerLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="header-link"
+            data-no-link-fx
           >
-            <XMarkIcon />
-          </button>
-        </div>
+            {headerLinkText} ↗
+          </a>
+        {/if}
+        <button
+          class="close-button"
+          type="button"
+          onclick={handleClose}
+          aria-label="Close"
+          title="Close (Esc)">x</button
+        >
       </div>
-    {:else}
-      <button
-        class="close-button-absolute"
-        onclick={handleClose}
-        aria-label="Close modal"
-      >
-        <XMarkIcon />
-      </button>
-    {/if}
+    </div>
     <div class="modal-body">
       {#if isOpen && children}
         {@render children()}
@@ -112,180 +100,182 @@
 </dialog>
 
 <style>
+  /* A terminal window over the page: a command in the title bar, [x] to quit. */
   .modal {
-    border: none;
-    border-radius: 0.45rem;
-    padding: 0;
-    max-width: 90vw;
+    max-width: calc(100vw - 2rem);
     max-height: 85vh;
-    background: var(--background-color);
-    color: var(--text-color);
+    padding: 0;
     border: 1px solid var(--border-color);
-    animation: modalFadeIn 0.2s ease-out;
+    border-radius: 0;
+    background: var(--term-panel);
+    color: var(--text-color);
+    box-shadow: 0.5rem 0.5rem 0 rgb(0 0 0 / 0.28);
+    font-family: var(--font-family);
+  }
+
+  .modal[open] {
+    animation: modal-on 0.32s steps(8, end);
   }
 
   .modal::backdrop {
-    background: color-mix(in srgb, var(--background-color) 74%, transparent);
-    animation: backdropFadeIn 0.2s ease-out;
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        rgb(0 0 0 / 0.12) 0 1px,
+        transparent 1px 3px
+      ),
+      color-mix(in srgb, var(--background-color) 78%, transparent);
   }
 
-  @keyframes modalFadeIn {
-    from {
-      opacity: 0;
-      transform: scale(0.95) translateY(-20px);
+  /* Power on like a CRT: a bright line that opens into the window. */
+  @keyframes modal-on {
+    0% {
+      clip-path: inset(49% 0 49% 0);
+      filter: brightness(2.2);
     }
-    to {
-      opacity: 1;
-      transform: scale(1) translateY(0);
-    }
-  }
 
-  @keyframes backdropFadeIn {
-    from {
-      opacity: 0;
+    40% {
+      clip-path: inset(30% 0 30% 0);
+      filter: brightness(1.5);
     }
-    to {
-      opacity: 1;
+
+    100% {
+      clip-path: inset(0);
+      filter: none;
     }
   }
 
   .modal-sm {
-    width: 400px;
+    width: 26rem;
   }
 
   .modal-md {
-    width: 600px;
+    width: 38rem;
   }
 
   .modal-lg {
-    width: 800px;
+    width: 52rem;
   }
 
   .modal-xl {
-    width: 1000px;
+    width: 64rem;
   }
 
   .modal-content {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    max-height: 85vh;
     overflow: hidden;
   }
 
   .modal-header {
     display: flex;
-    justify-content: space-between;
+    gap: 1rem;
     align-items: center;
-    padding: 1.5rem;
+    justify-content: space-between;
+    padding: 0.35rem 0.4rem 0.35rem 0.75rem;
     border-bottom: 1px solid var(--border-color);
   }
 
   .modal-header h2 {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    min-width: 0;
     margin: 0;
-    font-size: 1.5rem;
-    font-weight: 600;
+    overflow: hidden;
+    color: var(--gray-color);
+    font-family: inherit;
+    font-size: 0.76rem;
+    font-weight: 400;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .modal-header h2::before {
+    color: var(--tc-host);
+    content: "■";
+    font-size: 0.6rem;
   }
 
   .modal-header-actions {
     display: flex;
+    flex: none;
+    gap: 0.4rem;
     align-items: center;
-    gap: 1rem;
+  }
+
+  .header-link,
+  .close-button {
+    padding: 0 0.35rem;
+    border: 0;
+    background: none;
+    font: inherit;
+    font-size: 0.76rem;
+    line-height: 1.6;
+    text-decoration: none;
+    text-shadow: none;
+    white-space: nowrap;
+    cursor: pointer;
   }
 
   .header-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    font-size: 0.875rem;
     color: var(--link-color);
-    transition: opacity 0.2s;
-    white-space: nowrap;
   }
 
-  .header-link:hover {
-    opacity: 0.7;
-  }
-
-  .close-button,
-  .close-button-absolute {
-    background: none;
-    border: none;
-    line-height: 1;
-    cursor: pointer;
+  .close-button {
     color: var(--text-color);
-    padding: 0.25rem 0.5rem;
-    transition:
-      background-color 0.16s ease,
-      color 0.16s ease;
-    border-radius: 0.28rem;
   }
 
-  .close-button :global(svg),
-  .close-button-absolute :global(svg) {
-    width: 1.35rem;
-    height: 1.35rem;
+  .header-link::before,
+  .close-button::before {
+    content: "[";
+  }
+
+  .header-link::after,
+  .close-button::after {
+    content: "]";
+  }
+
+  .header-link:hover,
+  .header-link:focus-visible {
+    background: var(--link-color);
+    color: var(--background-color);
   }
 
   .close-button:hover,
-  .close-button-absolute:hover {
-    background: var(--bg-secondary);
-    color: var(--heading-color);
-  }
-
-  .close-button-absolute {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    z-index: 10;
+  .close-button:focus-visible {
+    background: var(--flexoki-red);
+    color: var(--background-color);
   }
 
   .modal-body {
-    padding: 1.5rem;
-    overflow-y: auto;
     flex: 1;
-  }
-
-  /* Scrollbar styling */
-  .modal-body::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .modal-body::-webkit-scrollbar-track {
-    background: var(--bg-secondary);
-    border-radius: 4px;
-  }
-
-  .modal-body::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 4px;
-  }
-
-  .modal-body::-webkit-scrollbar-thumb:hover {
-    background: var(--gray-color);
+    padding: 1rem 1.1rem;
+    overflow-y: auto;
+    font-size: 0.84rem;
+    scrollbar-color: var(--border-color) transparent;
+    scrollbar-width: thin;
   }
 
   @media (max-width: 768px) {
     .modal {
-      max-width: 95vw;
+      width: 100% !important;
       max-height: calc(
         90vh - env(safe-area-inset-top) - env(safe-area-inset-bottom)
       );
-      width: 100% !important;
       margin-top: max(1.5rem, env(safe-area-inset-top));
       margin-bottom: env(safe-area-inset-bottom);
     }
 
-    .modal-header {
-      padding: 1rem;
-    }
-
-    .modal-header h2 {
-      font-size: 1.25rem;
-    }
-
     .modal-body {
-      padding: 1rem;
+      padding: 0.8rem;
     }
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    .modal[open] {
+      animation: none;
+    }
+  }
 </style>

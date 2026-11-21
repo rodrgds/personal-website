@@ -1,0 +1,833 @@
+---
+// One CV entry per page, /cv/<slug>, written as a man page: NAME, SYNOPSIS
+// (the facts as flags), HIGHLIGHTS, the entry's own MDX as DESCRIPTION, and
+// SEE ALSO. A `less` prompt at the bottom tracks the line and takes q, n, p.
+import { getEntry, render } from "astro:content";
+import BaseHead from "../../components/common/BaseHead.astro";
+import Footer from "../../components/common/Footer.astro";
+import Header from "../../components/common/Header.astro";
+import CVEntryVisual from "../../components/features/cv/CVEntryVisual.astro";
+import CVYouTubeEmbed from "../../components/features/cv/CVYouTubeEmbed.svelte";
+import { getCVCovers, type CVCover } from "../../cv/covers";
+import {
+  formatCVDate,
+  getCVCollectionsData,
+  getCVRelatedItems,
+} from "../../cv/data";
+import {
+  formatTimelineDuration,
+  getTimelineEntries,
+  type TimelineCategory,
+  type TimelineEntry,
+} from "../../cv/timeline";
+
+export const prerender = true;
+
+type Collection =
+  "experience" | "projects" | "education" | "honors" | "certifications";
+
+const COLLECTION = {
+  experience: "experience",
+  "personal-projects": "projects",
+  "university-projects": "projects",
+  education: "education",
+  honors: "honors",
+  certifications: "certifications",
+} satisfies Record<TimelineCategory, Collection>;
+
+export async function getStaticPaths() {
+  const data = await getCVCollectionsData();
+  const covers = await getCVCovers(data);
+  // Newest first, the order the timeline lists them in.
+  const entries = getTimelineEntries(data).reverse();
+  return entries.map((entry, index) => ({
+    params: { slug: entry.slug },
+    props: {
+      entry,
+      newer: entries[index - 1],
+      older: entries[index + 1],
+      covers,
+    },
+  }));
+}
+
+interface Props {
+  entry: TimelineEntry;
+  newer?: TimelineEntry;
+  older?: TimelineEntry;
+  covers: Map<string, CVCover>;
+}
+
+const { entry, newer, older, covers } = Astro.props;
+const data = await getCVCollectionsData();
+const collection = COLLECTION[entry.category];
+const source = await getEntry(collection, entry.slug);
+if (!source) throw new Error(`Missing CV entry ${collection}/${entry.slug}`);
+const { Content } = await render(source);
+const item = source.data;
+
+/**
+ * man sections, loosely: things he built are commands (1), jobs run like
+ * daemons (8), awards are games (6), and school and courses are misc (7).
+ */
+const SECTION = {
+  build: 1,
+  uni: 1,
+  work: 8,
+  study: 7,
+  award: 6,
+  course: 7,
+} satisfies Record<TimelineEntry["type"]["key"], number>;
+const page = (other: TimelineEntry): string =>
+  `${other.slug}(${SECTION[other.type.key]})`;
+const title = `${entry.slug.toUpperCase()}(${SECTION[entry.type.key]})`;
+
+/** One flag in the SYNOPSIS: `--name value`, optionally linked. */
+interface Flag {
+  name: string;
+  value: string;
+  href?: string;
+  optional?: boolean;
+  tone?: "live" | "paused";
+}
+
+const month = (value: string): string => formatCVDate(value).toLowerCase();
+const host = (url: string): string => {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.host.replace(/^www\./, "")}${parsed.pathname.replace(/\/$/, "")}`;
+  } catch {
+    return url;
+  }
+};
+
+const flags: Flag[] = [];
+const bullets: string[] = item.bullets ?? [];
+let activities: string[] = [];
+let demoVideo: string | undefined;
+const tags: string[] = (item.tags ?? []).filter(Boolean);
+/** What the NAME line says after the dash. */
+let summary = entry.subtitle;
+
+if ("company" in item) {
+  summary = `${item.role} at ${item.company}`;
+  flags.push({ name: "at", value: item.company, href: item.url });
+  flags.push({ name: "as", value: item.role.toLowerCase() });
+  flags.push({ name: "type", value: item.type });
+  flags.push({ name: "where", value: item.location.toLowerCase() });
+} else if ("institution" in item) {
+  summary = `${item.degree} in ${item.area}, ${item.institution}`;
+  flags.push({
+    name: "degree",
+    value: `${item.degree} in ${item.area}`.toLowerCase(),
+  });
+  flags.push({
+    name: "at",
+    value: entry.name.toLowerCase(),
+    href: item.url,
+  });
+  flags.push({ name: "where", value: item.location.toLowerCase() });
+  if (item.grade) {
+    flags.push({
+      name: "grade",
+      value: item.gradeNote ? `${item.grade} (${item.gradeNote})` : item.grade,
+      optional: true,
+    });
+  }
+  activities = item.activities;
+} else if ("issueDate" in item) {
+  summary = `${item.name}, ${item.issuer}`;
+  flags.push({ name: "by", value: entry.context.toLowerCase() });
+  if (item.credentialUrl) {
+    flags.push({
+      name: "proof",
+      value: host(item.credentialUrl),
+      href: item.credentialUrl,
+      optional: true,
+    });
+  }
+  if (item.expiryDate) {
+    flags.push({ name: "expires", value: month(item.expiryDate) });
+  }
+} else if ("date" in item) {
+  summary = `${item.title}, ${item.issuer}`;
+  flags.push({
+    name: "by",
+    value: entry.context.toLowerCase(),
+    href: item.url,
+  });
+  if (item.association) {
+    flags.push({
+      name: "with",
+      value: item.association.toLowerCase(),
+      optional: true,
+    });
+  }
+} else {
+  summary = item.tagline ?? entry.subtitle;
+  if (item.cvRole) flags.push({ name: "as", value: item.cvRole.toLowerCase() });
+  if (item.url) {
+    flags.push({
+      name: "site",
+      value: host(item.url),
+      href: item.url,
+      optional: true,
+    });
+  }
+  if (item.repo) {
+    flags.push({
+      name: "code",
+      value: item.repo,
+      href: `https://github.com/${item.repo}`,
+      optional: true,
+    });
+  }
+  demoVideo = item.demoVideo;
+}
+
+if (entry.kind === "point") {
+  flags.push({ name: "on", value: month(entry.startDate) });
+} else {
+  flags.push({ name: "since", value: month(entry.startDate) });
+  if (entry.endDate) flags.push({ name: "until", value: month(entry.endDate) });
+  const state =
+    entry.status === "paused"
+      ? { value: "paused", tone: "paused" as const }
+      : entry.isCurrent
+        ? { value: "running", tone: "live" as const }
+        : { value: "done", tone: undefined };
+  flags.push({ name: "state", ...state });
+}
+
+const age =
+  entry.kind === "span"
+    ? formatTimelineDuration(entry.startDate, entry.endDate)
+    : undefined;
+
+// Related entries as man references, e.g. feup(7).
+const timeline = new Map(
+  getTimelineEntries(data).map((other) => [other.slug, other]),
+);
+const related = getCVRelatedItems(data, entry.slug, item.related).flatMap(
+  (other) => {
+    const row = timeline.get(other.slug);
+    return row ? [row] : [];
+  },
+);
+const peek = (other: TimelineEntry) => {
+  const cover = covers.get(other.slug);
+  return {
+    "data-peek-title": other.title,
+    "data-peek-meta": `${other.subtitle} · ${month(other.startDate)}`,
+    "data-peek-body": other.summary,
+    "data-peek-image": cover?.src,
+    "data-peek-label": cover?.label ?? page(other),
+  };
+};
+const description = entry.summary ?? summary;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <BaseHead
+      title={`${entry.title} | Rodrigo Dias`}
+      description={description}
+    />
+  </head>
+  <body>
+    <Header />
+    <main
+      class="man"
+      data-kind={entry.type.key}
+      data-man-newer={newer?.href}
+      data-man-older={older?.href}
+    >
+      <header class="man-line man-head" aria-label="Manual page header">
+        <span>{title}</span>
+        <a href="/cv" class="man-mid" data-no-link-fx>
+          rgo.pt cv manual
+        </a>
+        <span class="man-end">{title}</span>
+      </header>
+
+      <section class="man-section" aria-labelledby="man-name">
+        <h2 id="man-name">NAME</h2>
+        <div class="man-indent man-name">
+          {entry.visual && (
+            <span class="man-logo" aria-hidden="true">
+              <CVEntryVisual src={entry.visual} alt="" size={22} />
+            </span>
+          )}
+          <h1>
+            <b>{entry.slug}</b> - {summary}
+          </h1>
+        </div>
+      </section>
+
+      <section class="man-section" aria-labelledby="man-synopsis">
+        <h2 id="man-synopsis">SYNOPSIS</h2>
+        <p class="man-indent man-synopsis">
+          <b class="man-cmd">{entry.slug}</b>
+          {flags.map((flag) => (
+            <span
+              class="man-flag"
+              data-optional={flag.optional ? "" : undefined}
+            >
+              <b>--{flag.name}</b>{" "}
+              {flag.href ? (
+                <a href={flag.href} target="_blank" rel="noreferrer">
+                  {flag.value}
+                </a>
+              ) : (
+                <u data-tone={flag.tone}>{flag.value}</u>
+              )}
+            </span>
+          ))}
+        </p>
+        {age && (
+          <p class="man-indent man-note">
+            {entry.isCurrent ? "running for" : "ran for"} {age},{" "}
+            {entry.type.label}
+          </p>
+        )}
+      </section>
+
+      {bullets.length > 0 && (
+        <section class="man-section" aria-labelledby="man-highlights">
+          <h2 id="man-highlights">HIGHLIGHTS</h2>
+          <ul class="man-indent man-list">
+            {bullets.map((bullet) => (
+              <li>{bullet}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {activities.length > 0 && (
+        <section class="man-section" aria-labelledby="man-activities">
+          <h2 id="man-activities">ACTIVITIES</h2>
+          <ul class="man-indent man-list">
+            {activities.map((activity) => (
+              <li>{activity}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {demoVideo && (
+        <section class="man-section" aria-labelledby="man-video">
+          <h2 id="man-video">WALKTHROUGH</h2>
+          <div class="man-indent">
+            <CVYouTubeEmbed
+              url={demoVideo}
+              title={`${entry.title} walkthrough`}
+            />
+          </div>
+        </section>
+      )}
+
+      <section class="man-section" aria-labelledby="man-description">
+        <h2 id="man-description">DESCRIPTION</h2>
+        <article class="man-indent man-body">
+          <Content />
+        </article>
+      </section>
+
+      {tags.length > 0 && (
+        <section class="man-section" aria-labelledby="man-keywords">
+          <h2 id="man-keywords">KEYWORDS</h2>
+          <p class="man-indent man-tags">
+            {tags.map((tag) => (
+              <span>{tag.toLowerCase().replaceAll(" ", "-")}</span>
+            ))}
+          </p>
+        </section>
+      )}
+
+      {related.length > 0 && (
+        <section class="man-section" aria-labelledby="man-see-also">
+          <h2 id="man-see-also">SEE ALSO</h2>
+          <p class="man-indent man-refs">
+            {related.map((other) => (
+              <a href={other.href} data-no-link-fx {...peek(other)}>
+                <b>{other.slug}</b>({SECTION[other.type.key]})
+              </a>
+            ))}
+          </p>
+        </section>
+      )}
+
+      <footer class="man-line man-foot" aria-label="Manual page footer">
+        <span>rgo.pt</span>
+        <span class="man-mid">{month(entry.startDate)}</span>
+        <span class="man-end">{title}</span>
+      </footer>
+
+      <nav
+        class="man-less"
+        aria-label="Around this on the timeline"
+        data-no-vim
+      >
+        <span class="man-less-prompt">
+          Manual page {page(entry)} <span data-man-line>line 1</span>
+        </span>
+        <span class="man-less-keys">
+          {newer && (
+            <a href={newer.href} rel="prev" data-no-link-fx {...peek(newer)}>
+              <kbd>p</kbd> newer
+            </a>
+          )}
+          {older && (
+            <a href={older.href} rel="next" data-no-link-fx {...peek(older)}>
+              <kbd>n</kbd> older
+            </a>
+          )}
+          <a href="/cv" data-no-link-fx>
+            <kbd>q</kbd> cv
+          </a>
+        </span>
+      </nav>
+    </main>
+    <Footer />
+    <script>
+      // `less` keys: q back to the timeline, n older, p newer. g is the vim
+      // layer's "go to" prefix (g n is the now page), so n after g is not ours.
+      let last = "";
+      let lastAt = 0;
+
+      document.addEventListener("keydown", (event) => {
+        const main = document.querySelector<HTMLElement>("main.man");
+        const target = event.target;
+        if (!main || event.metaKey || event.ctrlKey || event.altKey) return;
+        if (
+          target instanceof HTMLInputElement ||
+          target instanceof HTMLTextAreaElement ||
+          (target instanceof HTMLElement && target.isContentEditable) ||
+          document.querySelector(".tty[open], dialog[open]")
+        ) {
+          return;
+        }
+        const afterG = last === "g" && event.timeStamp - lastAt < 1000;
+        last = event.key;
+        lastAt = event.timeStamp;
+        if (afterG) return;
+        const href =
+          event.key === "q"
+            ? "/cv"
+            : event.key === "n"
+              ? main.dataset.manOlder
+              : event.key === "p"
+                ? main.dataset.manNewer
+                : undefined;
+        if (!href) return;
+        event.preventDefault();
+        main.querySelector<HTMLAnchorElement>(`a[href="${href}"]`)?.click();
+      });
+
+      // The prompt counts lines like less does: the first line on screen.
+      function updateLine(): void {
+        const label = document.querySelector<HTMLElement>("[data-man-line]");
+        if (!label) return;
+        const lineHeight =
+          parseFloat(getComputedStyle(document.body).lineHeight) || 24;
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        const line = Math.floor(window.scrollY / lineHeight) + 1;
+        // A page that fits on screen is all read at once.
+        const percent =
+          max <= 0
+            ? 100
+            : Math.min(100, Math.round((window.scrollY / max) * 100));
+        label.textContent =
+          percent >= 100 ? `line ${line} (END)` : `line ${line} (${percent}%)`;
+      }
+
+      document.addEventListener("scroll", updateLine, { passive: true });
+      document.addEventListener("astro:page-load", updateLine);
+
+      // YouTube posters load the player only when clicked.
+      const ALLOW =
+        "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+
+      document.addEventListener("click", (event) => {
+        const poster =
+          event.target instanceof Element
+            ? event.target.closest<HTMLButtonElement>(".video-poster")
+            : null;
+        const shell = poster?.closest<HTMLElement>("[data-cv-youtube-embed]");
+        const embedUrl = poster?.dataset.embedUrl;
+        const title = poster?.dataset.videoTitle;
+        if (!poster || !shell || !embedUrl || !title) return;
+        event.preventDefault();
+        const iframe = document.createElement("iframe");
+        iframe.src = embedUrl;
+        iframe.title = title;
+        iframe.allow = ALLOW;
+        iframe.allowFullscreen = true;
+        iframe.referrerPolicy = "strict-origin-when-cross-origin";
+        shell.replaceChildren(iframe);
+      });
+
+      // A missing maxres thumbnail falls back to the next size.
+      document.addEventListener(
+        "error",
+        (event) => {
+          const image = event.target;
+          if (!(image instanceof HTMLImageElement)) return;
+          if (!image.matches(".video-poster img")) return;
+          let urls: unknown;
+          try {
+            urls = JSON.parse(image.dataset.thumbnailUrls ?? "[]");
+          } catch {
+            return;
+          }
+          if (!Array.isArray(urls)) return;
+          const index = Number(image.dataset.thumbnailIndex ?? "0") + 1;
+          // CVYouTubeEmbed writes the list as a JSON array of URL strings.
+          const next = urls.at(index);
+          if (next === undefined) return;
+          image.dataset.thumbnailIndex = String(index);
+          image.src = String(next);
+        },
+        true,
+      );
+    </script>
+  </body>
+</html>
+
+<style>
+  .man {
+    --indent: 7ch;
+    --kind: var(--accent);
+
+    font-size: 0.92rem;
+    line-height: 1.65;
+  }
+
+  .man[data-kind="work"] {
+    --kind: var(--tc-host);
+  }
+
+  .man[data-kind="build"] {
+    --kind: var(--tc-path);
+  }
+
+  .man[data-kind="uni"] {
+    --kind: var(--flexoki-cyan);
+  }
+
+  .man[data-kind="study"] {
+    --kind: var(--tc-tag);
+  }
+
+  .man[data-kind="award"] {
+    --kind: var(--tc-date);
+  }
+
+  .man[data-kind="course"] {
+    --kind: var(--flexoki-magenta);
+  }
+
+  /* The header and footer lines of man(1): name, middle, name. */
+  .man-line {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 1ch;
+    color: var(--heading-color);
+    font-weight: 700;
+  }
+
+  .man-head {
+    margin-bottom: 1.8rem;
+  }
+
+  .man-foot {
+    margin-top: 2.4rem;
+    color: var(--gray-color);
+    font-weight: 400;
+  }
+
+  .man-mid {
+    color: var(--gray-color);
+    font-weight: 400;
+    text-align: center;
+  }
+
+  a.man-mid {
+    text-decoration: none;
+    text-shadow: none;
+  }
+
+  a.man-mid:hover {
+    color: var(--link-color);
+  }
+
+  .man-end {
+    text-align: right;
+  }
+
+  .man-section {
+    margin-bottom: 1.5rem;
+  }
+
+  .man-section > h2,
+  .man-body :global(h2) {
+    margin: 0 0 0.2rem;
+    color: var(--heading-color);
+    font-family: var(--font-family);
+    font-size: inherit;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    line-height: inherit;
+    text-transform: uppercase;
+  }
+
+  /* Headings inside the MDX become their own sections at the margin. */
+  .man-body :global(h2) {
+    margin: 1.6rem 0 0.2rem calc(-1 * var(--indent));
+  }
+
+  .man-body :global(h3) {
+    margin: 1.2rem 0 0.2rem calc(-1 * var(--indent) / 2);
+    font-size: inherit;
+    font-weight: 700;
+  }
+
+  .man-indent {
+    margin: 0 0 0 var(--indent);
+  }
+
+  .man-name {
+    display: flex;
+    gap: 1ch;
+    align-items: flex-start;
+  }
+
+  .man-name h1 {
+    margin: 0;
+    color: var(--text-color);
+    font-size: inherit;
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: inherit;
+  }
+
+  .man-name h1 b {
+    color: var(--kind);
+  }
+
+  .man-logo {
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    width: 1.6rem;
+    height: 1.6rem;
+  }
+
+  .man-logo :global(img) {
+    max-width: 1.4rem !important;
+    max-height: 1.4rem !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0;
+    object-fit: contain;
+  }
+
+  /* man(1) style: literal flags in bold, values underlined. */
+  .man-synopsis {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.2ch;
+    padding-left: 2ch;
+    text-indent: -2ch;
+  }
+
+  .man-cmd {
+    color: var(--kind);
+  }
+
+  /* Flex drops the markup's whitespace, so brackets hug their flag. */
+  .man-flag {
+    display: inline-flex;
+    flex-wrap: wrap;
+    max-width: 100%;
+    text-indent: 0;
+  }
+
+  .man-flag b {
+    margin-right: 1ch;
+    color: var(--heading-color);
+    white-space: nowrap;
+  }
+
+  .man-flag u,
+  .man-flag a {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .man-flag[data-optional]::before {
+    color: var(--gray-color);
+    content: "[";
+  }
+
+  .man-flag[data-optional]::after {
+    color: var(--gray-color);
+    content: "]";
+  }
+
+  .man-flag u {
+    text-decoration-color: var(--gray-color);
+    text-underline-offset: 0.2em;
+  }
+
+  .man-flag u[data-tone="live"] {
+    color: var(--tc-live);
+  }
+
+  .man-flag u[data-tone="paused"] {
+    color: var(--tc-paused);
+  }
+
+  .man-note {
+    color: var(--gray-color);
+    font-size: 0.86rem;
+  }
+
+  .man-list,
+  .man-body :global(ul) {
+    padding: 0;
+    list-style: none;
+  }
+
+  .man-list li,
+  .man-body :global(ul > li) {
+    position: relative;
+    margin: 0 0 0.35rem;
+    padding-left: 2ch;
+  }
+
+  .man-list li::before,
+  .man-body :global(ul > li)::before {
+    position: absolute;
+    left: 0;
+    color: var(--kind);
+    content: "•";
+  }
+
+  .man-body :global(ol) {
+    margin: 0 0 1rem 2ch;
+    padding: 0;
+  }
+
+  .man-body :global(p) {
+    margin: 0 0 0.9rem;
+  }
+
+  .man-body :global(img) {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--border-color);
+  }
+
+  .man-body :global(figure) {
+    margin: 1rem 0;
+  }
+
+  .man-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.6ch;
+    color: var(--tc-tag);
+  }
+
+  .man-refs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 0.4ch;
+  }
+
+  .man-refs a {
+    color: var(--text-color);
+    text-decoration: none;
+    text-shadow: none;
+  }
+
+  .man-refs a:not(:last-child)::after {
+    color: var(--gray-color);
+    content: ",";
+  }
+
+  .man-refs a b {
+    color: var(--link-color);
+    font-weight: 700;
+  }
+
+  .man-refs a:hover b {
+    text-decoration: underline;
+  }
+
+  /* less(1)'s prompt, stuck to the bottom while the page scrolls. */
+  .man-less {
+    position: sticky;
+    bottom: 0.6rem;
+    z-index: 5;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 2ch;
+    justify-content: space-between;
+    margin-top: 1rem;
+    padding: 0.2rem 0.6rem;
+    background: var(--heading-color);
+    color: var(--background-color);
+    font-size: 0.82rem;
+  }
+
+  .man-less-keys {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 2ch;
+  }
+
+  .man-less a {
+    color: inherit;
+    text-decoration: none;
+    text-shadow: none;
+  }
+
+  .man-less a:hover {
+    text-decoration: underline;
+  }
+
+  .man-less kbd {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: 800;
+    box-shadow: none;
+  }
+
+  @media (max-width: 600px) {
+    .man {
+      --indent: 3ch;
+
+      font-size: 0.86rem;
+    }
+
+    .man-line {
+      grid-template-columns: 1fr auto;
+    }
+
+    .man-line .man-mid {
+      display: none;
+    }
+
+    .man-less-prompt {
+      display: none;
+    }
+  }
+</style>

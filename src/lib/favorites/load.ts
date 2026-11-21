@@ -1,3 +1,4 @@
+import { getImage } from "astro:assets";
 import { FAVORITES } from "../../data/favorites";
 import {
   getTmdbMediaDetails,
@@ -36,14 +37,39 @@ function slugify(value: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
-function mapStandardFavorite(
+/** Covers without a metadata provider, optimised by Astro. */
+const COVERS = import.meta.glob<ImageMetadata>(
+  "../../assets/favorites/*.{png,jpg,jpeg,webp,avif}",
+  { eager: true, import: "default" },
+);
+
+/** Cards and peeks show covers at most ~300px wide; 480 covers 1.5x. */
+const COVER_WIDTH = 480;
+
+/** `/images/favorites/<file>` in the data resolves to a resized WebP. */
+async function coverUrl(path: string): Promise<string> {
+  const name = path.split("/").pop() ?? "";
+  const key = Object.keys(COVERS).find((file) => file.endsWith(`/${name}`));
+  const cover = key ? COVERS[key] : undefined;
+  if (!cover) return path;
+  const result = await getImage({
+    src: cover,
+    width: Math.min(COVER_WIDTH, cover.width),
+    format: "webp",
+  });
+  return result.src;
+}
+
+async function mapStandardFavorite(
   sectionId: FavoriteSectionId,
   favorite: StandardFavoriteInput,
-): FavoriteItem {
-  return {
+): Promise<FavoriteItem> {
+  const item: FavoriteItem = {
     id: `${sectionId}:${slugify(favorite.title)}`,
     ...favorite,
   };
+  if (favorite.image) item.image = await coverUrl(favorite.image);
+  return item;
 }
 
 async function mapTmdbFavorite(
@@ -87,27 +113,23 @@ export async function loadFavorites(): Promise<FavoriteSection[]> {
     FAVORITES.shows.map((favorite) => mapTmdbFavorite("tv", favorite)),
   );
 
+  const standard = (
+    sectionId: FavoriteSectionId,
+    favorites: StandardFavoriteInput[],
+  ): Promise<FavoriteItem[]> =>
+    Promise.all(
+      favorites.map((favorite) => mapStandardFavorite(sectionId, favorite)),
+    );
+
   const itemsBySection = {
     movies,
     shows,
-    podcasts: FAVORITES.podcasts.map((favorite) =>
-      mapStandardFavorite("podcasts", favorite),
-    ),
-    books: FAVORITES.books.map((favorite) =>
-      mapStandardFavorite("books", favorite),
-    ),
-    blogs: FAVORITES.blogs.map((favorite) =>
-      mapStandardFavorite("blogs", favorite),
-    ),
-    articles: FAVORITES.articles.map((favorite) =>
-      mapStandardFavorite("articles", favorite),
-    ),
-    videos: FAVORITES.videos.map((favorite) =>
-      mapStandardFavorite("videos", favorite),
-    ),
-    cool: FAVORITES.cool.map((favorite) =>
-      mapStandardFavorite("cool", favorite),
-    ),
+    podcasts: await standard("podcasts", FAVORITES.podcasts),
+    books: await standard("books", FAVORITES.books),
+    blogs: await standard("blogs", FAVORITES.blogs),
+    articles: await standard("articles", FAVORITES.articles),
+    videos: await standard("videos", FAVORITES.videos),
+    cool: await standard("cool", FAVORITES.cool),
   } satisfies Record<FavoriteSectionId, FavoriteItem[]>;
 
   return SECTION_CONFIG.map((section) => ({

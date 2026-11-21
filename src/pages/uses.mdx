@@ -1,14 +1,16 @@
 ---
 layout: "../layouts/TwoCols.astro"
 title: Uses Page
-updatedDate: 2026-08-27
+updatedDate: 2026-11-20
 ---
 
 import Logo from "../components/common/Logo.astro";
 
-<details style="column-span: all; -webkit-column-span: all; margin-bottom: 1.5rem; padding: 0.4rem 1rem; background: color-mix(in srgb, var(--flexoki-yellow) 10%, transparent); border: 1px solid color-mix(in srgb, var(--flexoki-yellow) 38%, transparent); border-radius: 4px;">
-  <summary style="cursor: pointer; font-weight: bold; user-select: none;">Affiliate/referral disclaimer</summary>
-  <p style="margin-top: 0.5rem;">Some links on this page are affiliate/referral links (marked with <sup>ref</sup>). I may earn a commission if you sign up through these links, at no extra cost to you (and may even get you a discount). I only recommend services I personally use and trust. Feel free to search for these services directly if you prefer.</p>
+<h1 class="handwritten-heading handwritten-heading--page uses-title">uses</h1>
+
+<details class="uses-note">
+  <summary>some links are referral links, marked <sup>ref</sup></summary>
+  <p>I may earn a commission if you sign up through them, at no extra cost to you, and sometimes you get a discount. I only list services I use and trust. Search for them directly if you prefer.</p>
 </details>
 
 <h2 class="handwritten-heading handwritten-heading--section">Apps/Programs</h2>
@@ -20,18 +22,20 @@ import Logo from "../components/common/Logo.astro";
     - <Logo fixed src="hyprland" /> [Hyprland](https://hypr.land/) - Wayland compositor
     - <Logo fixed src="quickshell" /> [Quickshell](https://quickshell.org/) - Desktop bar
     - <Logo fixed src="homemanager" /> [Home Manager](https://github.com/nix-community/home-manager) - Dotfiles
-    - <Logo fixed src="vicinae" /> [Vicinae](https://www.vicinae.com/) - Application launcher
   - <Logo fixed src="macos" /> [macOS](https://www.apple.com/macos) - Laptop
     - <Logo fixed src="nixdarwin" /> [nix-darwin](https://github.com/nix-darwin/nix-darwin) - System config
     - <Logo fixed src="aerospace" /> [AeroSpace](https://github.com/nikitabobko/AeroSpace) - Window manager
     - <Logo fixed src="karabiner" /> [Karabiner-Elements](https://karabiner-elements.pqrs.org/) - Keyboard customization
+    - <Logo fixed src="macshot" /> [macshot](https://github.com/sw33tLie/macshot) - Screenshots & recording
+  - <Logo fixed src="vicinae" /> [Vicinae](https://www.vicinae.com/) - Application launcher, on both
 - <Logo fixed src="brave" /> [Brave](https://brave.com/download/) - Browser
   - <Logo fixed src="darkreader" /> [Dark Reader](https://chromewebstore.google.com/detail/dark-reader/eimadpbcbfnmbkopoojfekhnkhdbieeh) - Dark mode
   - <Logo fixed src="bitwarden" /> [Bitwarden](https://chromewebstore.google.com/detail/bitwarden-password-manage/nngceckbapebfimnlniiiahkandclblb) - Password manager
   {/* - <Logo fixed src="karakeep" /> [Karakeep](https://chromewebstore.google.com/detail/karakeep/kgcjekpmcjjogibpjebkhaanilehneje) - Bookmark manager */}
 - Dev
+  - <Logo fixed src="t3code" /> [T3 Code](https://t3.codes/) - Coding agents
   - <Logo fixed src="zed" /> [Zed](https://zed.dev/) - Code editor
-  - <Logo fixed src="pi" /> [Pi](https://pi.dev/) - AI coding agent
+  - <Logo fixed src="vscode" /> [VS Code](https://code.visualstudio.com/) - Code editor
   - <Logo fixed src="neovim" /> [Neovim](https://neovim.io/) - Config editor
   - <Logo fixed src="ghostty" /> [Ghostty](https://ghostty.org/) - Terminal emulator
   - <Logo fixed src="bash" /> [bash](https://www.gnu.org/software/bash/) - Shell
@@ -74,7 +78,6 @@ import Logo from "../components/common/Logo.astro";
 
 ### Selfhosted
 
-- <Logo fixed src="n8n" /> [n8n](https://n8n.io/) - Personal automations
 - <Logo fixed src="shlink" /> [Shlink](https://shlink.io/) - URL shortener
 - <Logo fixed src="umami" /> [Umami](https://umami.is) - Website analytics
 - <Logo fixed src="vaultwarden" /> [Vaultwarden](https://github.com/dani-garcia/vaultwarden) - Password manager

@@ -37,12 +37,15 @@ const {
 
 <style>
   .two-col :global(img[class*="logo"]) {
-    width: 24px !important;
-    max-width: 24px;
+    width: 18px !important;
+    max-width: 18px;
+    height: 18px !important;
+    vertical-align: -0.2em;
   }
 
   .two-col {
-    column-gap: 1.35rem;
+    column-gap: 2rem;
+    font-size: 0.86rem;
   }
 
   .two-col :global(details),
@@ -53,9 +56,95 @@ const {
     break-inside: avoid;
   }
 
+  .two-col :global(.uses-title),
+  .two-col :global(.uses-note) {
+    column-span: all;
+  }
+
+  .two-col :global(.uses-note) {
+    margin: -0.4rem 0 1.6rem;
+    color: var(--gray-color);
+    font-size: 0.8rem;
+  }
+
+  .two-col :global(.uses-note summary) {
+    width: fit-content;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .two-col :global(.uses-note summary::before) {
+    color: var(--gray-color);
+    content: "# ";
+  }
+
+  .two-col :global(.uses-note summary::-webkit-details-marker) {
+    display: none;
+  }
+
+  .two-col :global(.uses-note p) {
+    margin: 0.3rem 0 0 2ch;
+  }
+
+  /* Lists read like `tree`: ├── and └── with a line down to the next sibling. */
+  .two-col :global(ul) {
+    margin: 0 0 1rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .two-col :global(li) {
+    position: relative;
+    margin: 0;
+    padding-left: 4ch;
+    line-height: 1.75;
+  }
+
+  .two-col :global(li::before) {
+    position: absolute;
+    left: 0;
+    color: var(--border-color);
+    content: "├──";
+  }
+
+  .two-col :global(li:last-child::before) {
+    content: "└──";
+  }
+
+  .two-col :global(li:not(:last-child)::after) {
+    position: absolute;
+    top: 1.2em;
+    bottom: -0.4em;
+    left: 0.5ch;
+    border-left: 1px solid var(--border-color);
+    content: "";
+  }
+
+  .two-col :global(li > ul) {
+    margin: 0;
+  }
+
+  .two-col :global(li a) {
+    color: var(--tc-path);
+  }
+
+  .two-col :global(h3) {
+    margin: 1rem 0 0.3rem;
+  }
+
   @media (min-width: 768px) {
     .two-col {
       column-count: 2;
+    }
+
+    /* The first two sections start level, one at the top of each column. */
+    .two-col :global(h2:first-of-type) {
+      margin-top: 0;
+    }
+
+    .two-col :global(h2:nth-of-type(2)) {
+      margin-top: 0;
+      break-before: column;
     }
   }
 </style>

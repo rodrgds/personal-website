@@ -154,15 +154,15 @@
 <section class="muscle-heatmap" aria-labelledby="muscle-heatmap-title">
   <header class="heatmap-header">
     <div>
-      <h3 id="muscle-heatmap-title">Muscles trained</h3>
-      <p>Last {Math.round(periodDays / 7)} weeks</p>
+      <h3 id="muscle-heatmap-title">muscles trained</h3>
+      <p>last {Math.round(periodDays / 7)} weeks</p>
     </div>
     <div class="legend" aria-label="Training frequency, less to more">
-      <span>Less</span>
+      <span>less</span>
       {#each [0, 1, 2, 3, 4] as level}
         <span class="legend-cell" data-level={level}></span>
       {/each}
-      <span>More</span>
+      <span>more</span>
     </div>
   </header>
 

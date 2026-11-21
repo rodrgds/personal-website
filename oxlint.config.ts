@@ -12,9 +12,6 @@ export default {
     ".roo/**",
     ".windsurf/**",
     "tools/oxlint/anti-slop/**",
-    "public/encom-data.js",
-    "public/encom-grid.js",
-    "public/encom-globe.min.js",
   ],
   jsPlugins: [
     { name: "anti-slop", specifier: "./tools/oxlint/anti-slop/index.ts" },

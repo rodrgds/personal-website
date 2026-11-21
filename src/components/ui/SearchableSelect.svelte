@@ -110,7 +110,7 @@
   .trigger {
     width: 100%;
     padding: 0.5rem;
-    border-radius: 0.28rem;
+    border-radius: 0;
     border: 1px solid var(--border-color);
     background-color: var(--bg-secondary);
     color: var(--text-color);
@@ -142,7 +142,7 @@
     margin-top: 4px;
     background: var(--background-color);
     border: 1px solid var(--border-color);
-    border-radius: 0.28rem;
+    border-radius: 0;
     z-index: 50;
     overflow: hidden;
   }
@@ -156,7 +156,7 @@
     width: 100%;
     padding: 0.25rem 0.5rem;
     border: 1px solid var(--border-color);
-    border-radius: 0.22rem;
+    border-radius: 0;
     font-size: 0.875rem;
     background: transparent;
     color: var(--text-color);

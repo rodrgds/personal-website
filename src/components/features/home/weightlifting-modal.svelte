@@ -14,12 +14,12 @@
   }
 </script>
 
-<InteractiveLink text="Weightlifting" onclick={openModal} />
+<InteractiveLink text="weightlifting" onclick={openModal} />
 
 <Modal
   bind:isOpen={isModalOpen}
   onClose={closeModal}
-  title="My Workouts & Routines"
+  title="hevy --routines"
   size="lg"
 >
   <HevyRoutines />

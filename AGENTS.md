@@ -58,12 +58,27 @@ The production build prerenders CV PDFs and therefore genuinely requires Typst.
 
 ## UI direction and browser QA
 
-Flexoki is the established palette and the site should remain restrained,
-typography-led, and useful. Preserve existing content and functionality while
-reducing clutter. Prefer simple document flow over card/grid wrappers when the
-content does not need a grid; `/uses` intentionally uses plain responsive CSS
-columns. The normal reading width is `44rem`; widen only surfaces that genuinely
-need it. Header icon controls share a 28px hitbox and visual center.
+The whole site is a terminal (Nov 2026): JetBrains Mono everywhere, Flexoki
+base colours with ANSI-style accents, scanlines from `body::after`, a prompt
+bar header (`rgo.pt:~/page$`) and a status-line footer. Build new surfaces
+from `TermWindow.astro` (a title bar that reads like a command; `mark` sets
+its square's colour) instead of cards. Headings read like Markdown (`#`,
+`##`); the handwritten font is retired and its variables now resolve to
+mono. Keep it useful: real content, real photos, no decoration for its own
+sake. The reading width is `46rem`; header and footer span `--wide-width`.
+
+Say each thing once. A window's or modal's title bar is its command, so the
+body never repeats it as a `$ command` line; totals and sync notes go in a
+status line at the bottom, if anywhere. Choices are terminal buttons (like
+the CV filters), not native `<select>`s. Show only counts that are true: a
+partial feed is not a total.
+
+Orange (`--accent`) is the main colour: links, names, directories and the
+headings' `#`. Colour secondary roles with the `--tc-*` tokens at the top of
+`global.css`: running things and prompts green, dates yellow, tags purple,
+paused yellow. Flexoki blue, cyan and magenta mark categories and window
+squares, never the main text. Page changes use the view transition in `global.css` (old page
+drops out, new one prints top to bottom); the header keeps its own group.
 
 Start UI work with `dev-browser` and inspect the real rendered surface early.
 Before calling a UI change complete, cover the relevant subset of:
@@ -83,10 +98,10 @@ shared component. When publishing UI work, repeat the important smoke checks on
 
 ## CV and content workflow
 
-The collections in `src/content/` are canonical. The CV list and timeline,
-`/now`, and the generated CV files derive from those collections, so content
-changes must be checked across their consumers. `/cv` is the project portfolio;
-the former `/projects` page redirects there.
+The collections in `src/content/` are canonical. The CV timeline, the entry
+pages, the home's now.log and the generated CV files derive from those
+collections, so content changes must be checked across their consumers. `/cv`
+is the project portfolio; the former `/projects` page redirects there.
 
 - Verify dates, technology claims, links, and project status from the actual
   source repo, its history, and its docs; do not infer them from memory or a
@@ -96,12 +111,188 @@ the former `/projects` page redirects there.
   use the existing `CVImage`, `CVImageGallery`, and entry visual components.
 - Match the established project-entry structure. Do not publish a repository
   link for a private project.
-- After CV/content edits, check `/cv` Timeline and List, direct hash opening,
-  `/now` current-item derivation and affected PDF endpoints. Keep
-  mobile timeline overflow inside `[data-timeline-scroller]`, never on the
-  document.
-- Preserve old shared URLs. In particular, legacy `?view=icons` resolves to the
-  current Timeline view.
+- `/cv` is one view: `CVProcessTable.astro`, an `htop`-style process list
+  with lifetime bars on one year axis (R running, S paused). Type filters
+  live in the hash (`/cv#projects`). Hovering a row peeks its cover image.
+- Every entry has its own prerendered page, `src/pages/cv/[slug].astro`
+  (`/cv/<entry id>`, so ids must be unique across the CV collections), laid
+  out as a man page: `OPENPOST(1)` header and footer lines, NAME, SYNOPSIS
+  (the facts as `--flags`, optional ones in brackets), HIGHLIGHTS, the MDX as
+  DESCRIPTION (its `##` headings become sections), KEYWORDS and SEE ALSO as
+  `name(section)` references with peeks. Sections: projects 1, work 8,
+  awards 6, study and courses 7. A sticky `less` prompt counts lines and
+  takes `q` (back to /cv), `n` (older) and `p` (newer); `n` right after `g`
+  stays the vim layer's.
+- Rows and lists show compact names: `short` (role, institution, title or
+  name) and `orgShort` (company or issuer) in frontmatter, and a one-line
+  `tagline` for projects. Full names stay on entry pages and in peeks. Add
+  them whenever a name would crowd a row.
+- A peek's cover is the first image the entry's MDX renders
+  (`src/cv/covers.ts`); a project's `cover` field overrides it.
+- After CV/content edits, check `/cv`, the affected entry pages, the home's
+  now.log and affected PDF endpoints. The timeline must not overflow the
+  document on phones; rows stack name over bar.
+- Preserve old shared URLs: `?view=icons` and `?view=list` show the timeline,
+  old list hashes (`#project-openpost`) redirect to the entry page, and old
+  section hashes (`#projects`) filter the timeline.
+
+## Home page and the terminal layer
+
+`/` is `src/components/features/home/TerminalHome.astro`: a short boot (once
+per session: systemd-style life log, live uptime, an ASCII portrait drawn from
+`src/assets/home/portrait.webp`, a typed login), then windows for whoami (with
+the interests and their modals), `life.exe`, now.log, writing, thoughts,
+whereami, uses, favorites and activity. Data comes from `getHomeData()` in
+`src/lib/home/data.ts`, so it stays in sync with `/cv`, `/uses` and `/faves`.
+The home is also the now page: `/now` redirects to `/#now`.
+
+- The boot plays in a 3D scene (three.js, loaded with a dynamic import only
+  when the boot runs). `src/lib/home/boot-room.ts` builds the scene: the PC is
+  `src/assets/models/pc.glb` ("Personal Computer" by Juan Foo, CC-BY-4.0, see
+  `CREDITS.md`; the attribution lives in the tty's `credits` command, kept out
+  of the page so it does not crowd the UI),
+  meshopt-compressed and placed so its screen lands at `SCREEN_*`. Its own
+  keyboard and glass are hidden; the scene adds a keyboard with moving keys,
+  mouse, a desk lamp and desk props, from primitives and canvas textures (the
+  lint bans `THREE.Shape` by name). There is no room: walls, a window and
+  shelves never looked detailed enough. A real wooden desk (`buildDesk()`,
+  top, apron, four legs) stands on an endless plank floor (`buildFloor()`,
+  at `FLOOR_Y` from `boot-person.ts`, where his shoes and the chair base
+  rest) that runs off into fog of the `VOID` colour, with a dark dome behind
+  it fogged the same way, so nothing ends in a horizon. Inception's laptop
+  level uses the same desk and floor at its own scale. `src/lib/home/boot-stage.ts` runs the
+  camera: walk up, power on, the real boot DOM on the monitor through
+  CSS3DRenderer, keys pressing as the login is typed, then the monitor shows
+  the real page (a same-origin iframe of the current URL at window size) and
+  the camera flies in until it is exactly 1:1 while the room fades; the real
+  page underneath then takes over without a seam. That iframe is why
+  `X-Frame-Options` is `SAMEORIGIN`, not `DENY`. Without WebGL it falls back
+  to the flat boot. Stage styles must be `:global(.boot-stage)` because JS
+  builds it outside the component.
+- The boot scene follows the compact 80s all-in-ones (rounded case, black
+  tube surround, a wedge keyboard sloping up to the back, a one-button mouse)
+  and is shot like a print: grain, a warm vignette and a polaroid border with
+  a caption and an orange film date stamp (`.boot-film`, `.boot-polaroid` in
+  `global.css`). The border opens out during the fly-in so the hand-off stays
+  1:1.
+- The boot and inception share Rodrigo’s seated model in
+  `src/lib/home/boot-person.ts`. Keep body-reference photos private.
+  Arms use two-bone IK; the nearer hand reaches for the power
+  button and the hands tap the keys as the login is typed. Motion is
+  time-based (`ease(rate, dt)`), not per-frame, so slow GPUs look the same.
+  His materials are transparent from the start: switching `transparent`
+  mid-flight rebuilds shaders and stalls the fly-in. No camera move onto the
+  keyboard.
+- `life.exe` rotates the curated `LIFE` photos in `data.ts`. Use travel and
+  public events. The Porto drawing belongs in the location peek. Frames change
+  with `pixelSlide()`.
+- Personal photos live in `src/assets/home/` (reel photos in `life/`). Use
+  metadata-free renditions. Keep private gatherings, family photos and body
+  references out of the reel.
+- `src/lib/terminal/` runs on every page from `BaseHead`: vim keys (`j k d u
+  gg G H L`, `g` + `h c n u f e s`, `f`/`F` link hints), the tty (`:` or `` ` ``,
+  data from the prerendered `/api/tty.json`), and peek cards. Mark anything
+  with its own keyboard handling `data-no-vim`.
+- Peek: `data-peek-image`, `data-peek-scene="porto"` or `data-peek-title` (with
+  `-meta`, `-body`, `-rating`) show a hover window. Use it for screenshots and
+  favourites instead of inline galleries. Abbreviations (`fde`, `eng.`) use
+  `data-peek-tip="what it stands for"` on an `<abbr>`: a one-line tooltip,
+  nothing more. External links in text preview through the same window
+  (`link-peek.ts` fetches `/api/link-preview` and calls `peekAt()`); there is
+  no separate preview card.
+- Links in text hover like a terminal selection: the link colour becomes the
+  background (`global.css`). No animated underlines or blur fades. Rows,
+  cards and controls opt out with `data-no-link-fx` and style their own.
+- The `new` badge is automatic: `<NewBadge date={...} />` or `isRecent()` from
+  `src/lib/recent.ts`. Never hand-write "new".
+- Project `status: "paused"` keeps a project on the CV but out of "now".
+- `src/data/socials.ts` is the one list of accounts (label, handle,
+  `primary`). Primary accounts show in the header and whoami; the rest are
+  only in the tty (`socials`). There is no "+N more" menu.
+- The home's `whereami` window (`src/components/features/now/NowWhere.astro`)
+  is an ASCII globe drawn on a canvas (`src/lib/now/ascii-globe.ts`, ideas
+  after asciicn's ascii-globe, our own code): real land from a 1-degree mask
+  (`src/lib/now/land.ts`, generated by `tools/world-land.py` from Natural
+  Earth), drawn like asciicn's: one ink, the ` .:-=+*#%@` ramp, a faint
+  stippled sea and the graticule as tone, so the characters carry the
+  shading. Pins for Porto and the visitor (one lookup in
+  `src/lib/now/where.ts`) are the only labels; no caption under it. Drag to
+  turn. It only animates while on screen,
+  holds still under reduced motion and stops on unmount; keep any canvas or
+  WebGL loop that way.
+- WebGL teardown (boot, inception): dispose geometries, materials, textures
+  (`disposeScene()` in `boot-room.ts`) and render targets, call
+  `renderer.dispose()` then `forceContextLoss()`, remove every DOM listener
+  that closes over the scene, and detach the canvas. three.js shares some
+  textures across renderers, and their GPU copies keep the old canvas and its
+  DOM alive; a listener left in that DOM kept a whole scene per `inception`
+  run in memory.
+- Activity metrics come from Directus (`activity_days`), filled by
+  `bun run personal-data sync --source <name>` on the VPS (systemd timers in
+  `~/.config/home/modules/hosting/sites/personal.nix`; Directus only answers
+  the API from the VPS). `tv` is WeTrakr: every film and episode on the
+  public profile by its latest play date, needing only the app key
+  `WETRAKR_CLIENT_ID` (days with more than 24 plays are backfills and are
+  dropped; the total is the profile's own count). `posts` is OpenPost: one
+  per published publication by `actual_run_at`, read with
+  `OPENPOST_API_TOKEN` (a never-expiring CLI token). The movies modal reads
+  recent films and episodes live through the `getWatchHistory` action.
+- now.log lists everything running (current work, study and active projects,
+  newest first) with its type, short name, context and age; projects peek
+  their cover. It is not a list of every project: that is `/cv`. `/edu` is
+  not a CV entry and joins now.log through `EXTRA_NOW` in `data.ts`.
+- The tty's `ask` command posts to `/api/ask`, which answers about Rodrigo from
+  `src/lib/ask/context.ts` (built from the collections) via OpenRouter
+  `openrouter/free`. The key is `OPENROUTER_API_KEY`, read at runtime through
+  `astro:env/server` so it is never inlined into a build; production gets it
+  from the sops secret `website_openrouter_api_key` in
+  `~/.config/home/modules/hosting/sites/personal.nix`. Keep the per-IP limits.
+  Answers stream in as light Markdown (bold, inline code, lists, fenced code)
+  and render through `src/lib/terminal/markdown.ts`, which builds DOM nodes
+  (never HTML strings) and colours code with a small regex highlighter; piped
+  answers stay plain text.
+- The tty is a small bash. `src/lib/terminal/tty.ts` is only the view; the
+  shell lives in `src/lib/terminal/shell/` (lexer with quotes and `|`, `;`,
+  `&&`, `||`; a read-only virtual filesystem built from `/api/tty.json` with
+  `~/writing/*.md`, `~/projects`, `~/socials`, `~/faves` and `/usr/bin`; the
+  interpreter; the programs). Any line whose first word is not a program goes
+  to `ask` as a question (a lone near-miss like `lss` gets "did you mean");
+  `ask` also takes piped input. Register new programs in `shell/registry.ts`.
+- `inception` in the tty (`src/lib/home/inception.ts`) pulls this page back
+  onto the desk's monitor, then zooms out forever with the page staying at
+  the centre. Levels alternate desk and laptop (`inception-laptop.ts`, a
+  16:10 display filling its lid); level 1 is the desk whose monitor shows the
+  page, live in the iframe during the pull-back, then a snapshot of the page
+  (`modern-screenshot`, taken as inception starts). Each frame renders the
+  three levels under the one on screen into textures, deepest first, each
+  from its own shot (desk shots at 16:10, whose centre 4:3 crop is the
+  photo). The camera loops from "picture fills the photo" to the shot, one
+  level out per loop at one zoom speed. Never swap what a screen shows while
+  it is visible: that read as the site vanishing. Keep `NoToneMapping` there:
+  three.js tone-maps and fogs differently for the window and for textures,
+  which showed as a darker seam every loop.
+  The photo is held at 4:3 (the glass's shape) with `camera.setViewOffset`
+  inside the polaroid border, which is what makes the loop seamless. Esc or
+  the top-left `kick` button ends it; it refuses under reduced motion.
+- Tty completion lives in `src/lib/terminal/complete.ts`; add argument options
+  there when you add a command.
+- ASCII effects (ideas after asciicn.sumak.dev, our own code) live in
+  `src/lib/terminal/ascii.ts` and are opt-in by attribute through
+  `effects.ts`: `.ascii-spinner` for loading states, `data-scramble` (decode on
+  view) or `data-scramble-hover`, and `img[data-ascii-reveal]` (photo resolves
+  out of glyphs). Use `blockBar()` for progress and shade glyphs (`░▒▓█`) for
+  heatmaps. Every effect must settle instantly under reduced motion.
+- thoughts.log shows the latest five Bluesky posts. Rodrigo writes once and
+  OpenPost crossposts everywhere; Bluesky is just the easiest feed to read,
+  so the window links out to X, LinkedIn and Bluesky instead of shuffling or
+  counting. Pictures show as a tiny thumbnail (and `×N`) and peek on hover
+  with `data-peek-images`.
+- `/edu` is a standalone app (`public/edu/`) restyled with the same mono face
+  and CRT palette; keep its variables in step with `global.css`.
+- Structured links (rows, cards) carry `data-no-link-fx` so the global link
+  hover and link previews leave them alone.
+- Check the boot, `life.exe`, peeks, `f` hints and the tty in both themes, at
+  390px, with reduced motion and after SPA navigation.
 
 ## Slide decks (`/slides`)
 
@@ -129,6 +320,24 @@ part from `src/content/slides/<slug>/`. Author with the components exported by
 Pushes to `main` are deployed by `.github/workflows/ci.yml`. The workflow path-filters application and CI changes, warms/restores the Nix/Devenv environment, caches Bun dependencies, runs the portable formatting/typecheck gate, and then signs a request to `https://webhooks.rgo.pt/hooks/deploy-personal-website`. Production is a VPS source build rather than a Docker image: the NixOS deploy service fetches the verified revision, runs the secret-dependent Astro build with declarative Typst, atomically updates the served site, and verifies the public URL. The server-side source of truth is `~/.config/home/modules/hosting/sites/personal.nix` and `~/.config/home/modules/hosting/deployments/default.nix`.
 
 When adding build inputs, update the workflow `app` path filter and cache keys so changes cannot skip verification or reuse stale dependencies. Preserve the shared Nix-store, Devenv/Cachix, `.devenv` evaluation, Bun download/`node_modules`, and Typst package caches; never put production secrets in GitHub caches or the Nix store. Validate workflow edits with `actionlint`, and treat the deploy as complete only after the workflow hook succeeds and `https://rgo.pt/` serves the new revision.
+
+Dependency notes: TypeScript stays on 6.x until `@astrojs/check` supports 7.
+Markdown plugins go through `processor: unified({...})` from
+`@astrojs/markdown-remark` (a direct dependency; MDX 8 needs it at ^7.3),
+not the deprecated `markdown.rehypePlugins`. Read new server secrets at
+runtime through `astro:env/server` (declared in `astro.config.mjs`), not
+`import.meta.env`, which inlines them into the build.
+
+If islands stop reacting in dev (state changes but the UI does not), Vite
+probably re-optimised deps mid-session and loaded two Svelte copies: stop the
+dev server, delete `node_modules/.vite` and restart. Add client deps reached
+only through dynamic imports to `vite.optimizeDeps.include` in
+`astro.config.mjs`.
+
+The dev watcher must not follow `.devenv/`: it links into the Nix store
+(170k+ files) and crawling it ran the dev server out of heap within minutes.
+`vite.server.watch.ignored` in `astro.config.mjs` excludes it with build
+output and tool caches; keep new symlinked tool folders out the same way.
 
 The image-optimization tail of local and VPS builds can be quiet for several
 minutes. If the process is alive and has no error, keep it attached rather than
@@ -173,18 +382,21 @@ verify                # oxlint + format-check + astro check
 src/
   actions/                  # Service-specific Astro actions and shared cache
   assets/cv/                # Canonical CV/project screenshots and media
+  assets/home/              # Personal photos for the home (from Immich)
   components/
     common/                 # Global head, header, footer, and shared primitives
     features/cv/            # CV timeline, list cards, navigation, and galleries
     features/favorites/     # Favorites page and interactions
-    features/home/          # Homepage feature components
-    features/now/           # Current timeline and Now-page interactions
+    features/home/          # Terminal home and its widgets
+    features/now/           # the whereami globe window used on the home
     tools/csfloat-monitor/  # CSFloat tool (has its own sub-structure)
     ui/                     # Reusable form and control elements
   content/                  # Astro content collections
   cv/                       # Normalization, timeline layout, Typst/PDF generation
   layouts/                  # Shared document layouts
   lib/directus.ts           # Directus SDK client
+  lib/home/                 # Home data loader, life.exe, Porto map renderer
+  lib/terminal/             # Vim keys, link hints, tty and peek (every page)
   pages/                    # Astro pages (.astro, .mdx) + API routes
   config.ts                 # Site-level constants (SITE_TITLE, SITE_DESCRIPTION)
   env.d.ts                  # TypeScript env declarations
@@ -279,7 +491,7 @@ The site uses Astro's `<ClientRouter />` for View Transitions (SPA-like navigati
 
 ### Global scripts and production hydration
 
-`src/components/common/BaseHead.astro` owns global theme, sound, animated-link,
+`src/components/common/BaseHead.astro` owns global theme, sound
 and navigation lifecycle behavior. Keep global DOM transforms narrow: exclude
 structured widgets instead of replacing their contents, and test them after
 both initial load and `astro:after-swap`.

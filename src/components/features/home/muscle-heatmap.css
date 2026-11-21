@@ -1,17 +1,29 @@
 .muscle-heatmap {
   --heat-0: color-mix(in srgb, var(--text-muted) 14%, var(--background-color));
-  --heat-1: color-mix(in srgb, var(--link-color) 28%, var(--background-color));
-  --heat-2: color-mix(in srgb, var(--link-color) 50%, var(--background-color));
-  --heat-3: color-mix(in srgb, var(--link-color) 74%, var(--background-color));
-  --heat-4: var(--link-color);
+  --heat-1: color-mix(
+    in srgb,
+    var(--flexoki-green) 28%,
+    var(--background-color)
+  );
+  --heat-2: color-mix(
+    in srgb,
+    var(--flexoki-green) 50%,
+    var(--background-color)
+  );
+  --heat-3: color-mix(
+    in srgb,
+    var(--flexoki-green) 74%,
+    var(--background-color)
+  );
+  --heat-4: var(--flexoki-green);
 
   display: flex;
   flex-direction: column;
   min-height: 22rem;
-  padding: 1rem 1.25rem;
-  background: var(--bg-secondary);
+  padding: 0.7rem 0.8rem;
+  background: var(--background-color);
   border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
+  border-radius: 0;
 }
 
 .muscle-heatmap .heatmap-header {
@@ -24,7 +36,13 @@
 .muscle-heatmap .heatmap-header h3 {
   margin: 0;
   color: var(--heading-color);
-  font-size: 1rem;
+  font-family: inherit;
+  font-size: 0.8rem;
+}
+
+.muscle-heatmap .heatmap-header h3::before {
+  color: var(--tc-heading);
+  content: "## ";
 }
 
 .muscle-heatmap .heatmap-header p {
@@ -45,7 +63,7 @@
   width: 0.65rem;
   height: 0.65rem;
   border: 1px solid color-mix(in srgb, var(--border-color) 80%, transparent);
-  border-radius: 0.12rem;
+  border-radius: 0;
 }
 
 .muscle-heatmap .legend-cell[data-level="0"],

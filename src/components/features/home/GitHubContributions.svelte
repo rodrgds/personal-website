@@ -1,6 +1,5 @@
 <script lang="ts">
   import { actions } from "astro:actions";
-  import { ArrowTopRightOnSquareIcon } from "heroicons-svelte/24/outline";
   import { onMount } from "svelte";
 
   type ActivitySource =
@@ -9,7 +8,9 @@
     | "leetcode"
     | "steps"
     | "sleep"
-    | "music";
+    | "music"
+    | "tv"
+    | "posts";
   type ActivityLevel = 0 | 1 | 2 | 3 | 4;
 
   interface ActivityDay {
@@ -36,14 +37,13 @@
     "steps",
     "sleep",
     "music",
+    "tv",
+    "posts",
   ];
-  const colorScale = [
-    "var(--contrib-level-0)",
-    "var(--contrib-level-1)",
-    "var(--contrib-level-2)",
-    "var(--contrib-level-3)",
-    "var(--contrib-level-4)",
-  ];
+  const levels: ActivityLevel[] = [0, 1, 2, 3, 4];
+  const levelGlyphs = ["·", "░", "▒", "▓", "█"];
+  const levelAlpha = [0.6, 0.45, 0.65, 0.85, 1];
+  const ROWS = 7;
   const monthNames = [
     "Jan",
     "Feb",
@@ -65,6 +65,8 @@
     steps: "Phone",
     sleep: "Health Connect",
     music: "Last.fm",
+    tv: "WeTrakr",
+    posts: "OpenPost",
   } satisfies Record<ActivitySource, string>;
   const selectLabels = {
     github: "Code",
@@ -73,8 +75,9 @@
     steps: "Steps",
     sleep: "Sleep",
     music: "Music",
+    tv: "TV",
+    posts: "Posts",
   } satisfies Record<ActivitySource, string>;
-  const comingSoonSources = ["Posts", "TV"];
   const sourceUnits = {
     github: "contributions",
     hevy: "minutes",
@@ -82,6 +85,8 @@
     steps: "steps",
     sleep: "minutes",
     music: "scrobbles",
+    tv: "films and episodes",
+    posts: "posts",
   } satisfies Record<ActivitySource, string>;
   const sourceLinks = {
     github: `https://github.com/${username}`,
@@ -90,20 +95,37 @@
     steps: null,
     sleep: null,
     music: "https://url.rgo.pt/music",
+    tv: "https://url.rgo.pt/movies",
+    posts: null,
   } as const satisfies Record<ActivitySource, string | null>;
 
   let activeSource = $state<ActivitySource>("github");
-  let activity = $state<Record<ActivitySource, ActivityData | null>>({
+  // Raw: the payload holds ~2000 days that are only ever read, never mutated.
+  let activity = $state.raw<Record<ActivitySource, ActivityData | null>>({
     github: null,
     hevy: null,
     leetcode: null,
     steps: null,
     sleep: null,
     music: null,
+    tv: null,
+    posts: null,
   });
   let loading = $state(true);
   let loadingSource = $state<ActivitySource | null>(null);
   let error = $state<string | null>(null);
+  let scrollEl = $state<HTMLDivElement>();
+  let canvasEl = $state<HTMLCanvasElement>();
+  let graphEl = $state<HTMLDivElement>();
+  let pitch = $state(13);
+  let themeTick = $state(0);
+  let hover = $state<{
+    col: number;
+    row: number;
+    text: string;
+    x: number;
+    y: number;
+  } | null>(null);
 
   function getMonthLabels(
     weeks: ActivityWeek[],
@@ -196,7 +218,7 @@
         );
       }
 
-      activity[source] = result.data;
+      activity = { ...activity, [source]: result.data };
     } catch (caught) {
       console.error(`Error fetching ${sourceLabels[source]} activity:`, caught);
       if (activeSource === source) {
@@ -220,6 +242,9 @@
     if (source === "steps") return `${total.toLocaleString()} steps`;
     if (source === "sleep") return `${formatDuration(total)} slept`;
     if (source === "music") return `${total.toLocaleString()} scrobbles`;
+    if (source === "tv")
+      return `${total.toLocaleString()} films and episodes`;
+    if (source === "posts") return `${total.toLocaleString()} posts`;
     return `${total.toLocaleString()} contributions`;
   }
 
@@ -238,12 +263,131 @@
     return `${day.count.toLocaleString()} ${sourceUnits[source]} on ${day.date}`;
   }
 
+  function readColor(name: string, fallback: string): string {
+    const value = getComputedStyle(document.documentElement)
+      .getPropertyValue(name)
+      .trim();
+    return value || fallback;
+  }
+
+  function drawHeatmap(
+    canvas: HTMLCanvasElement,
+    weeks: ActivityWeek[],
+    step: number,
+  ): void {
+    const gap = step >= 13 ? 3 : 2;
+    const size = step - gap;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const cssWidth = Math.max(1, weeks.length * step - gap);
+    const cssHeight = ROWS * step - gap;
+    canvas.width = Math.round(cssWidth * dpr);
+    canvas.height = Math.round(cssHeight * dpr);
+    canvas.style.width = `${cssWidth}px`;
+    canvas.style.height = `${cssHeight}px`;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cssWidth, cssHeight);
+
+    const green = readColor("--flexoki-green", "#66800b");
+    const gray = readColor("--gray-color", "#878580");
+    const family = readColor("--font-family", "monospace");
+    const fontSize = size + 1;
+    ctx.font = `${fontSize}px ${family}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    // Shade glyphs are taller than wide; squash them into square cells.
+    const glyphWidth = ctx.measureText("█").width || fontSize * 0.6;
+    const scaleX = size / glyphWidth;
+    const scaleY = 0.85;
+
+    weeks.forEach((week, col) => {
+      week.days.forEach((day, row) => {
+        ctx.save();
+        ctx.translate(col * step + size / 2, row * step + size / 2);
+        ctx.scale(scaleX, scaleY);
+        ctx.globalAlpha = levelAlpha[day.level];
+        ctx.fillStyle = day.level === 0 ? gray : green;
+        ctx.fillText(levelGlyphs[day.level], 0, 0);
+        ctx.restore();
+      });
+    });
+  }
+
+  function onPointer(event: PointerEvent): void {
+    const canvas = canvasEl;
+    const graph = graphEl;
+    if (!canvas || !graph) return;
+    const rect = canvas.getBoundingClientRect();
+    const col = Math.floor((event.clientX - rect.left) / pitch);
+    const row = Math.floor((event.clientY - rect.top) / pitch);
+    const day = visibleWeeks[col]?.days[row];
+    if (!day || row < 0 || col < 0) {
+      hover = null;
+      return;
+    }
+    if (hover && hover.col === col && hover.row === row) return;
+    const graphRect = graph.getBoundingClientRect();
+    hover = {
+      col,
+      row,
+      text: formatDay(day, activeSource),
+      x: rect.left - graphRect.left + col * pitch + (pitch - 3) / 2,
+      y: rect.top - graphRect.top + row * pitch,
+    };
+  }
+
   onMount(() => {
     const interval = window.setInterval(
       () => void loadSource(activeSource, true),
       1000 * 60 * 60,
     );
-    return () => window.clearInterval(interval);
+
+    const bumpTheme = () => {
+      themeTick += 1;
+    };
+    const observer = new MutationObserver(bumpTheme);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    media.addEventListener("change", bumpTheme);
+    // The mono face may finish loading after the first draw.
+    void document.fonts?.ready.then(bumpTheme);
+
+    return () => {
+      window.clearInterval(interval);
+      observer.disconnect();
+      media.removeEventListener("change", bumpTheme);
+    };
+  });
+
+  // Cell pitch follows the scroller width: tighter cells on narrow screens.
+  $effect(() => {
+    const scroller = scrollEl;
+    if (!scroller) return;
+    const measure = () => {
+      pitch = scroller.clientWidth < 600 ? 11 : 13;
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(scroller);
+    return () => observer.disconnect();
+  });
+
+  $effect(() => {
+    void themeTick;
+    if (canvasEl) drawHeatmap(canvasEl, visibleWeeks, pitch);
+  });
+
+  // New data or source: show the most recent week (the first column).
+  $effect(() => {
+    void visibleWeeks;
+    if (scrollEl) scrollEl.scrollLeft = 0;
+    hover = null;
   });
 
   $effect(() => {
@@ -258,20 +402,19 @@
   let yearLabels = $derived(getYearLabels(visibleWeeks));
 </script>
 
-<div class="activity-graph">
+<div class="activity-graph" bind:this={graphEl}>
   <div class="activity-header">
     <div class="activity-summary">
-      <label for="activity-source">Activity</label>
-      <select id="activity-source" bind:value={activeSource}>
+      <div class="sources" role="group" aria-label="Activity">
         {#each activitySources as source (source)}
-          <option value={source}>{selectLabels[source]}</option>
+          <button
+            type="button"
+            aria-pressed={activeSource === source}
+            onclick={() => (activeSource = source)}
+            >{selectLabels[source].toLowerCase()}</button
+          >
         {/each}
-        <optgroup label="Coming soon">
-          {#each comingSoonSources as label (label)}
-            <option disabled>{label}</option>
-          {/each}
-        </optgroup>
-      </select>
+      </div>
       {#if visibleActivity}
         <span class="activity-count"
           >{formatTotal(activeSource, visibleActivity.total)} since {visibleActivity.startYear}</span
@@ -280,85 +423,74 @@
     </div>
     <div class="header-right">
       <div class="legend" aria-label="Activity intensity: less to more">
-        <span class="legend-label">Less</span>
-        {#each colorScale as color, index (index)}
-          <span
-            class="legend-day"
-            style="background-color: {color}"
-            aria-hidden="true"
+        <span class="legend-label">less</span>
+        {#each levels as level (level)}
+          <span class="legend-day" data-level={level} aria-hidden="true"
           ></span>
         {/each}
-        <span class="legend-label">More</span>
+        <span class="legend-label">more</span>
       </div>
       <a
         href={`/activity?activity=${activeSource}`}
         class="explorer-link"
-        aria-label="Explore activity history"
-        title="Explore activity history"
+        title="Explore the whole history">[explore]</a
       >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm7.4-2.1 1.2 1-.1 1.1-1.5 2.6-1 .5-1.5-.6c-.5.4-1 .7-1.6.9l-.3 1.6-.9.6h-3l-.9-.6-.3-1.6c-.6-.2-1.1-.5-1.6-.9l-1.5.6-1-.5-1.5-2.6-.1-1.1 1.2-1a8 8 0 0 1 0-1.8l-1.2-1 .1-1.1L5.4 6l1-.5 1.5.6c.5-.4 1-.7 1.6-.9l.3-1.6.9-.6h3l.9.6.3 1.6c.6.2 1.1.5 1.6.9l1.5-.6 1 .5 1.5 2.6.1 1.1-1.2 1a8 8 0 0 1 0 1.8Z"
-          ></path>
-        </svg>
-      </a>
       {#if sourceLinks[activeSource]}
         <a
           href={sourceLinks[activeSource]}
           target="_blank"
           rel="noopener noreferrer"
-          class="source-link"
+          class="source-link">[{sourceLabels[activeSource].toLowerCase()}]</a
         >
-          View on {sourceLabels[activeSource]}
-          <ArrowTopRightOnSquareIcon class="ui-icon" />
-        </a>
       {/if}
     </div>
   </div>
 
   {#if loading}
     <div class="loading" aria-live="polite">
-      <div class="spinner"></div>
+      <span class="ascii-spinner" aria-hidden="true">⠋</span>
       Loading {sourceLabels[activeSource]} activity...
     </div>
   {:else if error}
     <div class="error" role="alert">
-      <p>{error}</p>
-      <button onclick={() => loadSource(activeSource, true)} class="retry-btn"
-        >Retry</button
-      >
+      <p>
+        <span class="error-mark">error:</span>
+        {sourceLabels[activeSource].toLowerCase()} activity did not load.
+        <button onclick={() => loadSource(activeSource, true)} class="retry-btn"
+          >[retry]</button
+        >
+      </p>
     </div>
   {:else}
-    <div class="activity-scroll-container">
-      <div class="activity-wrapper">
+    <div class="activity-scroll-container" bind:this={scrollEl}>
+      <div class="activity-wrapper" style="--pitch: {pitch}px">
         <div class="day-labels" aria-hidden="true">
           <span></span><span>Mon</span><span></span><span>Wed</span><span
           ></span><span>Fri</span><span></span>
         </div>
-        <div
-          class="activity-grid"
-          aria-label={`${sourceLabels[activeSource]} activity calendar`}
-        >
-          {#each visibleWeeks as week, index (week.days[0]?.date ?? index)}
-            <div class="week">
-              {#each week.days as day (day.date)}
-                <div
-                  class="day"
-                  class:day-empty={day.level === 0}
-                  style="background-color: {colorScale[day.level]}"
-                  title={formatDay(day, activeSource)}
-                  role="img"
-                  aria-label={formatDay(day, activeSource)}
-                ></div>
-              {/each}
-            </div>
-          {/each}
-        </div>
+        <canvas
+          bind:this={canvasEl}
+          class="activity-canvas"
+          role="img"
+          aria-label={`${sourceLabels[activeSource]} activity calendar: ${visibleActivity ? formatTotal(activeSource, visibleActivity.total) : "no data"}`}
+          onpointermove={onPointer}
+          onpointerdown={onPointer}
+          onpointerleave={() => (hover = null)}
+        ></canvas>
+        {#if hover}
+          <div
+            class="cell-outline"
+            style="left: {hover.col * pitch}px; top: {hover.row *
+              pitch}px; width: {pitch - (pitch >= 13 ? 3 : 2)}px; height: {pitch -
+              (pitch >= 13 ? 3 : 2)}px"
+            aria-hidden="true"
+          ></div>
+        {/if}
         <div class="month-labels">
           {#each monthLabels as label (`${label.month}-${label.index}`)}
             <span
               class="month-label"
-              style="left: calc(var(--contrib-cell-size) * {label.index})"
+              style="left: calc(var(--pitch) * {label.index})"
               >{label.month}</span
             >
           {/each}
@@ -367,7 +499,7 @@
           {#each yearLabels as label (label.year)}
             <span
               class="year-label"
-              style="left: calc(var(--contrib-cell-size) * {label.startWeek})"
+              style="left: calc(var(--pitch) * {label.startWeek})"
               >{label.year}</span
             >
           {/each}
@@ -375,37 +507,23 @@
       </div>
     </div>
   {/if}
+  {#if hover}
+    <div
+      class="tip"
+      style="left: {Math.min(
+        Math.max(hover.x, 110),
+        Math.max(110, (graphEl?.clientWidth ?? 0) - 110),
+      )}px; top: {hover.y}px"
+      role="status"
+    >
+      {hover.text}
+    </div>
+  {/if}
 </div>
 
 <style>
-  :global(:root) {
-    --contrib-level-0: #f2f0e5;
-    --contrib-level-1: #92bfdb;
-    --contrib-level-2: #4385be;
-    --contrib-level-3: #3171b2;
-    --contrib-level-4: #205ea6;
-    --contrib-cell-size: 13px;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :global(:root:not([data-theme="light"])) {
-      --contrib-level-0: #1c1b1a;
-      --contrib-level-1: #71320d;
-      --contrib-level-2: #9d4310;
-      --contrib-level-3: #cb6120;
-      --contrib-level-4: #da702c;
-    }
-  }
-
-  :global(:root[data-theme="dark"]) {
-    --contrib-level-0: #1c1b1a;
-    --contrib-level-1: #71320d;
-    --contrib-level-2: #9d4310;
-    --contrib-level-3: #cb6120;
-    --contrib-level-4: #da702c;
-  }
-
   .activity-graph {
+    position: relative;
     margin: 1.5rem 0;
   }
 
@@ -427,32 +545,37 @@
     gap: 0.65rem;
   }
 
-  .activity-summary label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
+  /* Sources as terminal buttons, like the CV filters; the one shown is filled. */
+  .sources {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    align-items: center;
   }
 
-  select {
-    min-height: 2.25rem;
-    padding: 0.2rem 1.4rem 0.2rem 0.4rem;
+  .sources button {
+    padding: 0.05rem 0.45rem;
     border: 1px solid var(--border-color);
-    border-radius: 0.28rem;
-    background: var(--background-color);
+    border-radius: 0;
+    background: transparent;
     color: var(--text-color);
     font: inherit;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     cursor: pointer;
   }
 
-  select:hover {
-    border-color: var(--link-color);
+  .sources button:hover {
+    border-color: var(--tc-live);
+    color: var(--tc-live);
   }
 
-  select:focus-visible,
+  .sources button[aria-pressed="true"] {
+    border-color: var(--tc-live);
+    background: var(--tc-live);
+    color: var(--background-color);
+  }
+
+  .sources button:focus-visible,
   .source-link:focus-visible,
   .explorer-link:focus-visible,
   .retry-btn:focus-visible {
@@ -476,63 +599,19 @@
   .legend-day {
     width: 10px;
     height: 10px;
-    border-radius: 2px;
+    border-radius: 0;
   }
 
   .legend-label {
     margin: 0 0.25rem;
   }
 
-  .source-link {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
+  /* Plain terminal links; the global hover inverts them. */
+  .source-link,
+  .explorer-link {
     color: var(--link-color);
     font-size: 0.75rem;
     text-decoration: none;
-  }
-
-  .source-link::before {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    width: 0;
-    height: 1px;
-    background: currentColor;
-    content: "";
-    transition: width 0.25s ease;
-  }
-
-  .source-link:hover::before,
-  .source-link:focus-visible::before {
-    width: 100%;
-  }
-
-  .explorer-link {
-    display: grid;
-    width: 2.25rem;
-    height: 2.25rem;
-    place-items: center;
-    border: 1px solid transparent;
-    border-radius: 0.28rem;
-    color: var(--gray-color);
-  }
-
-  .explorer-link:hover {
-    border-color: var(--border-color);
-    color: var(--link-color);
-  }
-
-  .explorer-link svg {
-    width: 1rem;
-    height: 1rem;
-    fill: none;
-    stroke: currentColor;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    stroke-width: 1.5;
   }
 
   .activity-scroll-container {
@@ -567,36 +646,73 @@
     line-height: 10px;
   }
 
-  .activity-grid {
-    display: flex;
-    width: fit-content;
-    flex-direction: row;
-    gap: 3px;
+  /* Legend glyphs mirror the canvas: shade glyphs squashed into square cells. */
+  .legend-day {
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    font-family: var(--font-family);
+    font-size: 11px;
+    line-height: 1;
   }
 
-  .week {
-    display: flex;
-    flex-shrink: 0;
-    flex-direction: column;
-    gap: 3px;
+  .legend-day::before {
+    display: block;
+    content: "·";
+    color: var(--gray-color);
+    opacity: 0.6;
+    transform: scale(1.7, 0.85);
   }
 
-  .day {
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
-    cursor: pointer;
-    transition:
-      transform 0.1s,
-      outline 0.1s;
+  .legend-day[data-level="1"]::before {
+    content: "░";
+    color: var(--flexoki-green);
+    opacity: 0.45;
   }
 
-  .day:hover {
-    position: relative;
+  .legend-day[data-level="2"]::before {
+    content: "▒";
+    color: var(--flexoki-green);
+    opacity: 0.65;
+  }
+
+  .legend-day[data-level="3"]::before {
+    content: "▓";
+    color: var(--flexoki-green);
+    opacity: 0.85;
+  }
+
+  .legend-day[data-level="4"]::before {
+    content: "█";
+    color: var(--flexoki-green);
+    opacity: 1;
+  }
+
+  .activity-canvas {
+    display: block;
+    cursor: crosshair;
+    touch-action: pan-x pan-y;
+  }
+
+  .cell-outline {
+    position: absolute;
     z-index: 1;
     outline: 2px solid var(--link-color);
     outline-offset: 1px;
-    transform: scale(1.2);
+    pointer-events: none;
+  }
+
+  .tip {
+    position: absolute;
+    z-index: 5;
+    padding: 0.2rem 0.45rem;
+    border: 1px solid var(--border-color);
+    background: var(--background-color);
+    color: var(--text-color);
+    font-size: 0.7rem;
+    white-space: nowrap;
+    pointer-events: none;
+    transform: translate(-50%, calc(-100% - 6px));
   }
 
   .month-labels,
@@ -637,42 +753,29 @@
     gap: 0.75rem;
     padding: 1rem;
     color: var(--gray-color);
-    font-size: 0.875rem;
-  }
-
-  .error {
-    flex-direction: column;
-    gap: 0.5rem;
+    font-size: 0.8rem;
   }
 
   .error p {
     margin: 0;
   }
 
-  .spinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid var(--border-color);
-    border-top-color: var(--link-color);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+  .error-mark {
+    color: var(--error);
   }
 
   .retry-btn {
-    padding: 0.4rem 0.8rem;
-    border: none;
-    border-radius: 0.25rem;
-    background: var(--link-color);
-    color: var(--background-color);
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--link-color);
     font: inherit;
-    font-size: 0.75rem;
     cursor: pointer;
   }
 
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
+  .retry-btn:hover {
+    background: var(--link-color);
+    color: var(--background-color);
   }
 
   @media (max-width: 768px) {
@@ -684,10 +787,6 @@
 
     .activity-summary {
       min-width: 0;
-    }
-
-    .activity-summary select {
-      max-width: 100%;
     }
 
     .header-right {
@@ -708,30 +807,6 @@
       margin-left: -1rem;
       padding-right: 1rem;
       padding-left: 1rem;
-    }
-
-    .activity-grid {
-      gap: 2px;
-    }
-
-    .week {
-      gap: 2px;
-    }
-
-    .day {
-      width: 9px;
-      height: 9px;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .day,
-    .source-link::before {
-      transition: none;
-    }
-
-    .spinner {
-      animation: none;
     }
   }
 </style>

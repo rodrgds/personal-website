@@ -2,29 +2,35 @@
 import BaseHead from "../components/common/BaseHead.astro";
 import Footer from "../components/common/Footer.astro";
 import Header from "../components/common/Header.astro";
-import ActivityExplorer from "../components/features/home/ActivityExplorer.svelte";
+import ActivityExplorer from "../components/features/activity/ActivityExplorer.svelte";
 import { SITE_TITLE } from "../config";
 
-const title = "Activity";
 const description =
-  "My coding, workouts, problems, movement, and listening history.";
+  "My coding, workouts, problems, steps, sleep and listening history.";
 ---
 
 <!doctype html>
 <html lang="en">
   <head>
-    <BaseHead title={`${title} | ${SITE_TITLE}`} {description} />
+    <BaseHead title={`Activity | ${SITE_TITLE}`} {description} />
   </head>
   <body>
     <Header title={SITE_TITLE} />
     <main>
-      <h1 class="handwritten-heading handwritten-heading--page">{title}</h1>
-      <p>
-        Choose a metric, period, and grouping to inspect the history I keep for
-        this site.
+      <h1 class="handwritten-heading handwritten-heading--page">activity</h1>
+      <p class="activity-lead">
+        Daily logs from the apps I use. Select a row to open that period.
       </p>
       <ActivityExplorer client:load />
     </main>
     <Footer />
   </body>
 </html>
+
+<style>
+  .activity-lead {
+    margin: 0 0 1.2rem;
+    color: var(--gray-color);
+    font-size: 0.86rem;
+  }
+</style>

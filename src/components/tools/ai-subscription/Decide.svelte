@@ -123,7 +123,7 @@
   .answers button {
     padding: 1rem;
     border: 1px solid var(--border-color);
-    border-radius: 4px;
+    border-radius: 0;
     background: transparent;
     color: var(--text-color);
     font-family: inherit;

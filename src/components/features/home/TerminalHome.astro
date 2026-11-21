@@ -1,0 +1,1516 @@
+---
+import type { HomeData } from "../../../lib/home/data";
+import HomeLogo from "./shared/HomeLogo.astro";
+import NewBadge from "../../common/NewBadge.astro";
+import BlueskyThoughts from "./bluesky-thoughts.astro";
+import DateOfBirth from "./date-of-birth.svelte";
+import GitHubContributions from "./GitHubContributions.svelte";
+import MoviesModal from "./movies-modal.svelte";
+import MusicModal from "./music-modal.svelte";
+import WeightliftingModal from "./weightlifting-modal.svelte";
+import NowWhere from "../now/NowWhere.astro";
+
+interface Props {
+  data: HomeData;
+}
+
+const { data } = Astro.props;
+
+/** The boot log reads like systemd starting a life, one service per chapter. */
+interface BootLine {
+  status: "OK" | "NEW";
+  unit: string;
+  detail: string;
+}
+
+const BOOT_UNITS: BootLine[] = [
+  {
+    status: "OK",
+    unit: "porto.target",
+    detail: "born 2006-12-02, porto, portugal",
+  },
+  { status: "OK", unit: "self-taught.service", detail: "hello, world at 14" },
+  {
+    status: "OK",
+    unit: "colegio-de-gaia.service",
+    detail: "it + multimedia, 2021",
+  },
+  {
+    status: "OK",
+    unit: "cs-lan.service",
+    detail: "organised a counter-strike lan",
+  },
+  { status: "OK", unit: "tecla.service", detail: "2nd in 2023, 1st in 2024" },
+  {
+    status: "OK",
+    unit: "feup.service",
+    detail: "informatics engineering, 2024",
+  },
+  { status: "OK", unit: "enf.service", detail: "100+ downloads from nurses" },
+  { status: "OK", unit: "openpost.service montra.service", detail: "shipping" },
+  {
+    status: "OK",
+    unit: "codespring.service",
+    detail: "3rd place with ark, 2026",
+  },
+  {
+    status: "NEW",
+    unit: "augusta-labs.service",
+    detail: "forward deployed engineer",
+  },
+];
+
+/** systemd-style status, padded with no-break spaces so it never wraps. */
+const statusLabel = (status: BootLine["status"]): string =>
+  status === "OK" ? "[\u00a0\u00a0OK\u00a0\u00a0]" : "[\u00a0NEW\u00a0]";
+
+// "rgo.pt" in figlet's slant font.
+const BANNER = [
+  "                             __ ",
+  "   _________ _____    ____  / /_",
+  "  / ___/ __ `/ __ \\  / __ \\/ __/",
+  " / /  / /_/ / /_/ / / /_/ / /_  ",
+  "/_/   \\__, /\\____(_) .___/\\__/  ",
+  "     /____/       /_/           ",
+].join("\n");
+const formatDay = (date: Date): string => date.toISOString().slice(0, 10);
+const usesTree = data.uses.flatMap((group, groupIndex) => {
+  const lastGroup = groupIndex === data.uses.length - 1;
+  return [
+    {
+      prefix: lastGroup ? "└── " : "├── ",
+      label: `${group.title.toLowerCase()}/`,
+      tool: undefined,
+    },
+    ...group.items.map((tool, index) => ({
+      prefix: `${lastGroup ? "    " : "│   "}${index === group.items.length - 1 ? "└── " : "├── "}`,
+      label: "",
+      tool,
+    })),
+  ];
+});
+const primarySocials = data.socials.filter((item) => item.primary);
+const augusta = data.now.find((item) => item.context.includes("Augusta"));
+const firstFrame = data.life[0];
+const pad2 = (value: number): string => String(value).padStart(2, "0");
+---
+
+<div class="term" data-terminal>
+  <script is:inline data-astro-rerun>
+    (function () {
+      var root = document.currentScript && document.currentScript.parentElement;
+      if (!root) return;
+      var seen = false;
+      try {
+        seen = sessionStorage.getItem("rgo:terminal-booted") === "1";
+      } catch (error) {
+        seen = false;
+      }
+      var still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      root.dataset.boot = seen || still ? "done" : "staging";
+    })();
+  </script>
+
+  <div class="term-boot" data-term-boot aria-hidden="true">
+    <div class="boot-grid">
+      <div class="boot-log">
+        <div class="boot-banner" data-boot-line>
+          {BANNER}
+        </div>
+        <div class="boot-line boot-dim" data-boot-line>
+          RGO-BIOS v20.06 · build 2006-12-02 · porto, pt 41.15°N 8.61°W
+        </div>
+        <div class="boot-line" data-boot-line>
+          <span class="boot-key">cpu</span> rodrigo dias, 1 core, very curious
+        </div>
+        <div class="boot-line" data-boot-line>
+          <span class="boot-key">uptime</span>
+          <span data-boot-uptime>19.96 years</span>
+        </div>
+        <div class="boot-line" data-boot-line>
+          <span class="boot-key">langs</span> pt, en · ts, go, rust, php
+        </div>
+        <div class="boot-gap" data-boot-line></div>
+        {BOOT_UNITS.map((line) => (
+          <div class="boot-line" data-boot-line>
+            <b class="boot-status" data-status={line.status}>
+              {statusLabel(line.status)}
+            </b>
+            Started <span class="boot-unit">{line.unit}</span>
+            <span class="boot-dim">: {line.detail}</span>
+          </div>
+        ))}
+        <div class="boot-line" data-boot-line>
+          <b class="boot-status" data-status="OK">
+            {statusLabel("OK")}
+          </b>
+          Mounted{" "}
+          <span class="boot-unit">
+            /home/rodrigo/{"{"}lifting,biking,table-tennis,photos{"}"}
+          </span>
+        </div>
+        <div class="boot-gap" data-boot-line></div>
+        <div
+          class="boot-line"
+          data-boot-line
+          data-prompt="rgo.pt login: "
+          data-type="rodrigo"
+        ></div>
+        <div class="boot-line boot-dim" data-boot-line data-boot-lastlogin>
+          last login: today on tty1 from porto
+        </div>
+        <div
+          class="boot-line"
+          data-boot-line
+          data-prompt="rodrigo@rgo.pt:~$ "
+          data-type="startx"
+        ></div>
+      </div>
+      {data.portrait && (
+        <figure class="boot-portrait">
+          <pre data-boot-ascii data-src={data.portrait} />
+          <figcaption class="boot-dim">
+            ~/portrait.webp <span data-boot-scan>scanning</span>
+          </figcaption>
+        </figure>
+      )}
+    </div>
+    <div class="term-boot-bar" data-boot-bar aria-hidden="true">
+      <span data-boot-bar-text>[ ]</span>
+      <span data-boot-bar-value> 0%</span>
+    </div>
+    <p class="term-boot-skip">press any key to skip</p>
+  </div>
+
+  <div class="term-screen">
+    <main class="term-desk">
+      <section class="term-win term-whoami" aria-labelledby="t-whoami">
+        <h2 id="t-whoami" class="term-title">
+          <span class="term-title-text" data-scramble>
+            whoami
+          </span>
+          <span class="term-title-actions">
+            <button type="button" data-boot-replay>
+              reboot
+            </button>
+            <span>
+              porto <span data-term-clock>--:--:--</span>
+            </span>
+          </span>
+        </h2>
+        <div class="term-body term-whoami-body">
+          {data.portrait && (
+            <div class="term-portrait">
+              <img src={data.portrait} alt="Rodrigo Dias" />
+            </div>
+          )}
+          <h1 class="term-big">
+            <span data-scramble>Rodrigo Dias</span>
+            <span class="term-cursor" aria-hidden="true"></span>
+          </h1>
+          <dl class="term-kv">
+            <div>
+              <dt>born</dt>
+              <dd>
+                <span
+                  class="term-peek"
+                  data-peek-scene="porto"
+                  data-peek-label="porto.map"
+                >
+                  porto, portugal
+                </span>
+                , 2006
+              </dd>
+            </div>
+            <div>
+              <dt>age</dt>
+              <dd>
+                <DateOfBirth client:load />
+              </dd>
+            </div>
+            <div>
+              <dt>work</dt>
+              <dd>
+                <abbr
+                  class="term-abbr"
+                  data-peek-tip="forward deployed engineer"
+                >
+                  <span aria-hidden="true">fde</span>
+                  <span class="sr-only">forward deployed engineer</span>
+                </abbr>{" "}
+                @ <a href="https://augustalabs.ai">augusta labs</a>
+                <NewBadge date={augusta?.startDate} />
+              </dd>
+            </div>
+            <div>
+              <dt>study</dt>
+              <dd>
+                informatics and computing{" "}
+                <abbr class="term-abbr" data-peek-tip="engineering">
+                  <span aria-hidden="true">eng.</span>
+                  <span class="sr-only">engineering</span>
+                </abbr>{" "}
+                @ <a href="https://fe.up.pt">feup</a>
+              </dd>
+            </div>
+            <div>
+              <dt>into</dt>
+              <dd>
+                linux, nixos, foss, self-hosting, automation, teaching, space
+              </dd>
+            </div>
+            <div>
+              <dt>offline</dt>
+              <dd>
+                <ul class="term-inline">
+                  <li>
+                    <WeightliftingModal client:visible />
+                  </li>
+                  <li>biking</li>
+                  <li>table tennis</li>
+                  <li>badminton</li>
+                  <li>calisthenics</li>
+                  <li>photography</li>
+                </ul>
+              </dd>
+            </div>
+            <div>
+              <dt>on</dt>
+              <dd>
+                <ul class="term-inline">
+                  <li>
+                    <MoviesModal client:visible />
+                  </li>
+                  <li>
+                    <MusicModal client:visible />
+                  </li>
+                  <li>counter-strike</li>
+                </ul>
+              </dd>
+            </div>
+          </dl>
+          <p class="term-links">
+            <a href="mailto:hey@rgo.pt">[mail]</a>
+            {primarySocials.map((item) => (
+              <a href={item.href} rel="me" title={item.handle}>
+                [{item.name}]
+              </a>
+            ))}
+          </p>
+          <p class="term-hint">
+            try <kbd>:</kbd> for a shell, <kbd>f</kbd> for link hints,
+            <kbd>?</kbd> for every key
+          </p>
+        </div>
+      </section>
+
+      <section
+        class="term-win term-life"
+        aria-labelledby="t-life"
+        data-life-player
+      >
+        <h2 id="t-life" class="term-title">
+          <span class="term-title-text" data-scramble>
+            life.exe
+          </span>
+          <span data-life-counter>01/{pad2(data.life.length)}</span>
+        </h2>
+        <div class="term-body">
+          <div class="term-reel">
+            {data.life.map((frame, index) => (
+              <figure
+                class="term-frame"
+                data-life-frame={index}
+                data-label={frame.label}
+                data-caption={frame.caption}
+                data-active={index === 0 ? "" : undefined}
+              >
+                <img
+                  src={index < 2 ? frame.image.src : undefined}
+                  data-src={index < 2 ? undefined : frame.image.src}
+                  alt={frame.image.alt}
+                  decoding="async"
+                  style={`object-position:${frame.image.position}`}
+                />
+              </figure>
+            ))}
+          </div>
+          <p class="term-caption" data-life-caption aria-live="polite">
+            {firstFrame && `[${firstFrame.label}] ${firstFrame.caption}`}
+          </p>
+          <p class="term-controls">
+            <button type="button" data-life-step="-1">
+              prev
+            </button>
+            <button type="button" data-life-toggle>
+              pause
+            </button>
+            <button type="button" data-life-step="1">
+              next
+            </button>
+          </p>
+        </div>
+      </section>
+
+      <section class="term-win term-now" id="now" aria-labelledby="t-now">
+        <h2 id="t-now" class="term-title">
+          <span class="term-title-text" data-scramble>
+            tail -f now.log
+          </span>
+          <a href="/cv">all of it</a>
+        </h2>
+        <ul class="term-body term-list term-log">
+          {data.now.map((item) => (
+            <li data-kind={item.type.key}>
+              <a
+                href={item.href}
+                data-no-link-fx
+                data-peek-title={item.peek.title}
+                data-peek-meta={item.peek.meta}
+                data-peek-body={item.peek.body}
+                data-peek-image={item.peek.image}
+                data-peek-label={item.peek.label}
+              >
+                <time datetime={item.startDate}>{item.startDate}</time>
+                <span class="term-kind">{item.type.label}</span>
+                <span class="term-logo">
+                  <HomeLogo logo={item.logo} size={14} />
+                </span>
+                <span class="term-grow">
+                  <span class="term-name">{item.name.toLowerCase()}</span>
+                  <span class="term-dim term-context">
+                    {" "}
+                    · {item.context.toLowerCase()}
+                  </span>
+                </span>
+                <NewBadge date={item.startDate} />
+                <span class="term-age" title="running for">
+                  {item.age}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section class="term-win term-writing" aria-labelledby="t-writing">
+        <h2 id="t-writing" class="term-title">
+          <span class="term-title-text" data-scramble>
+            ls ~/writing
+          </span>
+          <a href="/rss.xml">rss</a>
+        </h2>
+        <ul class="term-body term-list">
+          {data.posts.map((post) => (
+            <li>
+              <a
+                href={post.href}
+                data-no-link-fx
+                data-peek-title={post.title}
+                data-peek-meta={post.meta}
+                data-peek-body={post.description}
+                data-peek-label={`~/writing/${post.id}.md`}
+              >
+                <time datetime={post.date.toISOString()}>
+                  {formatDay(post.date)}
+                </time>
+                <span class="term-grow">{post.title}</span>
+                <NewBadge date={post.date} />
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section class="term-win term-thoughts" aria-labelledby="t-thoughts">
+        <h2 id="t-thoughts" class="term-title">
+          <span class="term-title-text" data-scramble>
+            tail -n 5 thoughts.log
+          </span>
+        </h2>
+        <div class="term-body">
+          <BlueskyThoughts />
+        </div>
+      </section>
+
+      <section class="term-win term-where" aria-labelledby="t-where">
+        <h2 id="t-where" class="term-title">
+          <span class="term-title-text" data-scramble>
+            whereami --and-you
+          </span>
+        </h2>
+        <div class="term-body">
+          <NowWhere />
+        </div>
+      </section>
+
+      <section class="term-win term-uses" aria-labelledby="t-uses">
+        <h2 id="t-uses" class="term-title">
+          <span class="term-title-text" data-scramble>
+            tree ~/uses
+          </span>
+          <a href="/uses">all</a>
+        </h2>
+        <ul class="term-body term-tree">
+          {usesTree.map((line) => (
+            <li>
+              <span class="term-dim">{line.prefix}</span>
+              {line.tool ? (
+                <>
+                  <a href={line.tool.href} data-no-link-fx>
+                    <HomeLogo logo={line.tool.logo} size={13} />
+                    {line.tool.name.toLowerCase()}
+                  </a>
+                  <span class="term-dim"> # {line.tool.role}</span>
+                </>
+              ) : (
+                <span>{line.label}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section class="term-win term-faves" aria-labelledby="t-faves">
+        <h2 id="t-faves" class="term-title">
+          <span class="term-title-text" data-scramble>
+            favorites.txt
+          </span>
+          <a href="/faves">all</a>
+        </h2>
+        <div class="term-body term-faves-body">
+          {data.faves.map((group) => (
+            <div class="term-fave-group">
+              <span class="term-h">{group.title.toLowerCase()}/</span>
+              <ul class="term-fave-list">
+                {group.items.map((item) => (
+                  <li>
+                    <a
+                      class="term-fave-item"
+                      href={item.href ?? `/faves#${group.id}`}
+                      data-no-link-fx
+                      data-peek-title={item.title}
+                      data-peek-meta={item.meta}
+                      data-peek-body={item.comment}
+                      data-peek-episodes={item.episodes}
+                      data-peek-rating={item.rating}
+                      data-peek-image={item.image}
+                      data-peek-label={`${group.id}/`}
+                    >
+                      {item.icon ? (
+                        <img
+                          class="term-fave-icon"
+                          src={item.icon}
+                          alt=""
+                          width="16"
+                          height="16"
+                          loading="lazy"
+                          decoding="async"
+                          referrerpolicy="no-referrer"
+                          onerror="this.style.visibility='hidden'"
+                        />
+                      ) : (
+                        <span
+                          class="term-fave-icon term-fave-blank"
+                          aria-hidden="true"
+                        />
+                      )}
+                      <span>{item.title}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section class="term-win term-activity" aria-labelledby="t-activity">
+        <h2 id="t-activity" class="term-title">
+          <span class="term-title-text" data-scramble>
+            git log --graph
+          </span>
+        </h2>
+        <div class="term-body">
+          <GitHubContributions client:visible />
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+  import { mountTerminal } from "../../../lib/home/terminal-client";
+
+  let cleanup: (() => void) | null = null;
+
+  function init(): void {
+    cleanup?.();
+    cleanup = null;
+    const root = document.querySelector<HTMLElement>("[data-terminal]");
+    if (root) cleanup = mountTerminal(root);
+  }
+
+  document.addEventListener("astro:page-load", init);
+  document.addEventListener("astro:before-swap", () => {
+    cleanup?.();
+    cleanup = null;
+  });
+</script>
+
+<style>
+  /* The home uses the site-wide terminal palette from global.css. */
+  .term {
+    --term-bg: var(--background-color);
+    --term-panel: var(--surface-color);
+    --term-line: var(--border-color);
+    --term-text: var(--text-color);
+    --term-dim: var(--gray-color);
+    /* Links are cyan; orange is kept for the cursor and live state. */
+    --term-glow: var(--link-color);
+    --term-hot: var(--accent);
+
+    position: relative;
+    color: var(--term-text);
+    font-size: 0.82rem;
+    line-height: 1.55;
+  }
+
+  .term a {
+    color: var(--term-glow);
+    text-decoration: none;
+    text-shadow: 0 0 8px var(--term-glow-soft);
+  }
+
+  .term a:hover {
+    background: var(--term-glow);
+    color: var(--term-bg);
+    text-shadow: none;
+  }
+
+  @keyframes term-blink {
+    50% {
+      opacity: 0.35;
+    }
+  }
+
+  /* Boot overlay. */
+  .term-boot {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(1rem, 5vw, 4.5rem);
+    background: var(--term-bg);
+    color: var(--term-text);
+    cursor: pointer;
+    font-size: clamp(0.6rem, 0.45rem + 0.55vw, 0.86rem);
+    line-height: 1.6;
+  }
+
+  [data-boot="running"] .term-boot,
+  [data-boot="power"] .term-boot {
+    display: flex;
+  }
+
+  [data-boot="running"] .term-boot {
+    animation: term-power-on 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  @keyframes term-power-on {
+    0% {
+      clip-path: inset(50% 0 50% 0);
+      filter: brightness(4);
+    }
+    40% {
+      clip-path: inset(49.6% 0 49.6% 0);
+      filter: brightness(3);
+    }
+    100% {
+      clip-path: inset(0 0 0 0);
+      filter: none;
+    }
+  }
+
+  [data-boot="power"] .term-boot {
+    animation: term-power 0.55s cubic-bezier(0.7, 0, 0.3, 1) forwards;
+  }
+
+  @keyframes term-power {
+    0% {
+      clip-path: inset(0 0 0 0);
+      filter: brightness(1);
+    }
+    55% {
+      clip-path: inset(49.5% 0 49.5% 0);
+      filter: brightness(3);
+    }
+    100% {
+      clip-path: inset(50% 50% 50% 50%);
+      filter: brightness(4);
+    }
+  }
+
+  .boot-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: clamp(1rem, 4vw, 4rem);
+    align-items: center;
+    width: min(100%, 78rem);
+    margin: 0 auto;
+  }
+
+  .boot-log {
+    min-width: 0;
+  }
+
+  [data-boot-line] {
+    visibility: hidden;
+  }
+
+  [data-boot-line][data-shown] {
+    visibility: visible;
+  }
+
+  .boot-banner {
+    margin-bottom: 0.6rem;
+    color: var(--term-hot);
+    font-size: 1.05em;
+    line-height: 1.15;
+    text-shadow: 0 0 12px var(--term-glow-soft);
+    white-space: pre;
+  }
+
+  .boot-line {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .boot-gap {
+    height: 0.7em;
+  }
+
+  .boot-dim {
+    color: var(--term-dim);
+  }
+
+  .boot-key {
+    display: inline-block;
+    width: 7ch;
+    color: var(--term-dim);
+  }
+
+  .boot-status {
+    margin-right: 0.5ch;
+    font-weight: 400;
+    white-space: nowrap;
+  }
+
+  .boot-status[data-status="OK"] {
+    color: #879a39;
+  }
+
+  :global(:root[data-theme="light"]) .boot-status[data-status="OK"] {
+    color: #66800b;
+  }
+
+  .boot-status[data-status="NEW"] {
+    background: var(--tc-date);
+    color: var(--term-bg);
+  }
+
+  .boot-unit {
+    color: var(--heading-color);
+  }
+
+  .boot-line[data-type]::after {
+    display: inline-block;
+    width: 0.6em;
+    height: 1em;
+    margin-left: 0.1em;
+    background: var(--term-hot);
+    content: "";
+    vertical-align: -0.15em;
+    animation: term-blink 0.8s steps(1) infinite;
+  }
+
+  .boot-line[data-type][data-typed]::after {
+    display: none;
+  }
+
+  .boot-portrait {
+    margin: 0;
+    text-align: center;
+  }
+
+  .boot-portrait pre {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: none;
+    color: var(--term-hot);
+    font-family: inherit;
+    font-size: clamp(4px, 0.62vw, 9px);
+    letter-spacing: 0;
+    line-height: 1;
+    text-shadow: 0 0 6px var(--term-glow-soft);
+    white-space: pre;
+  }
+
+  .boot-portrait figcaption {
+    margin-top: 0.6rem;
+    font-size: 0.85em;
+  }
+
+  .term-boot-bar {
+    display: flex;
+    gap: 1ch;
+    width: min(100%, 78rem);
+    margin: 1.4rem auto 0;
+    color: var(--tc-live);
+    text-shadow: 0 0 10px var(--term-glow-soft);
+    white-space: pre;
+  }
+
+  .term-abbr {
+    text-decoration: underline dotted var(--term-dim);
+    text-underline-offset: 0.2em;
+    cursor: help;
+  }
+
+  .term-boot-skip {
+    width: min(100%, 78rem);
+    margin: 0.8rem auto 0;
+    color: var(--term-dim);
+    animation: term-blink 1s steps(1) infinite;
+  }
+
+  @media (max-width: 760px) {
+    .boot-grid {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.8rem;
+    }
+
+    .boot-portrait {
+      order: -1;
+    }
+
+    .boot-portrait pre {
+      font-size: 3.2px;
+    }
+
+    .boot-banner {
+      font-size: 0.9em;
+    }
+  }
+
+  [data-boot="running"] .term-screen,
+  [data-boot="staging"] .term-screen {
+    visibility: hidden;
+  }
+
+  /* While three.js loads, keep the room dark instead of flashing the page. */
+  .term[data-boot="staging"]::before {
+    position: fixed;
+    inset: 0;
+    z-index: 65;
+    background:
+      radial-gradient(
+        ellipse 45% 55% at 64% 46%,
+        rgb(150 90 40 / 0.32),
+        transparent 70%
+      ),
+      radial-gradient(
+        ellipse 70% 40% at 50% 92%,
+        rgb(90 55 25 / 0.45),
+        transparent 75%
+      ),
+      #0e0c0a;
+    content: "";
+  }
+
+  /* After the 3D boot the page was already on the monitor: no second
+     entrance animation. */
+  [data-boot="done"][data-boot-seamless] .term-screen {
+    animation: none;
+  }
+
+  /* The stage is built by JS outside this component, so match it globally,
+     and give it the same palette the home uses. */
+  :global(.boot-stage) {
+    --term-bg: var(--background-color);
+    --term-panel: var(--surface-color);
+    --term-line: var(--border-color);
+    --term-text: var(--text-color);
+    --term-dim: var(--gray-color);
+    --term-glow: var(--link-color);
+    --term-hot: var(--accent);
+
+    color: var(--term-text);
+    font-family: var(--font-family);
+    line-height: 1.6;
+  }
+
+  :global(.boot-stage[data-boot="running"]) .term-boot {
+    display: flex;
+    animation: term-power-on 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  /* On the monitor: a fixed 4:3 screen with type sized for it. */
+  :global(.boot-stage) .term-boot {
+    inset: auto;
+    z-index: auto;
+    width: 1024px;
+    padding: 48px 56px;
+    font-size: 14px;
+  }
+
+  /* The monitor is 1024px wide on any device, so undo the phone layout. */
+  :global(.boot-stage) .boot-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) !important;
+    gap: 32px !important;
+  }
+
+  :global(.boot-stage) .boot-portrait {
+    order: 0 !important;
+  }
+
+  :global(.boot-stage) .boot-portrait pre {
+    font-size: 4.6px !important;
+  }
+
+  :global(.boot-stage) .boot-banner {
+    font-size: 1.05em !important;
+  }
+
+  :global(.boot-stage) .term-boot-skip {
+    display: none;
+  }
+
+  [data-boot="done"] .term-screen {
+    animation: term-on 0.5s ease-out;
+  }
+
+  @keyframes term-on {
+    from {
+      filter: brightness(2.2) blur(1px);
+      opacity: 0.4;
+    }
+  }
+
+  .term button {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--term-glow);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .term button::before,
+  .term button::after {
+    display: inline-block;
+    transition: transform 0.16s steps(2, end);
+  }
+
+  .term button::before {
+    content: "[";
+  }
+
+  .term button::after {
+    content: "]";
+  }
+
+  /* Brackets step out a character on hover, after asciicn's buttons. */
+  .term button:hover::before,
+  .term button:focus-visible::before {
+    transform: translateX(-0.6ch);
+  }
+
+  .term button:hover::after,
+  .term button:focus-visible::after {
+    transform: translateX(0.6ch);
+  }
+
+  .term button:hover {
+    background: var(--term-glow);
+    color: var(--term-bg);
+  }
+
+  /* Desk of windows. */
+  .term-desk {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 1rem;
+    width: min(100%, 78rem);
+    margin: 0 auto;
+  }
+
+  .term-win {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border: 1px solid var(--term-line);
+    background: var(--term-panel);
+  }
+
+  .term-title {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    margin: 0;
+    padding: 0.35rem 0.7rem;
+    border-bottom: 1px solid var(--term-line);
+    color: var(--term-dim);
+    font-family: inherit;
+    font-size: 0.74rem;
+    font-weight: 400;
+  }
+
+  .term-title::before {
+    color: var(--win-mark, var(--term-dim));
+    content: "■";
+    font-size: 0.6rem;
+  }
+
+  .term-title a,
+  .term-title > span:not(.term-title-text) {
+    margin-left: auto;
+  }
+
+  .term-body {
+    margin: 0;
+    padding: 0.8rem 0.9rem;
+  }
+
+  .term-whoami {
+    --win-mark: var(--tc-host);
+
+    grid-column: span 7;
+  }
+
+  .term-life {
+    --win-mark: var(--flexoki-magenta);
+
+    grid-column: span 5;
+  }
+
+  /* Top of the desk: whoami over now.log on the left, the photos over
+     writing on the right. Placed by hand so the columns fill on their own. */
+  @media (min-width: 981px) {
+    .term-whoami {
+      grid-row: 1;
+      grid-column: 1 / span 7;
+    }
+
+    .term-now {
+      grid-row: 2 / span 2;
+      grid-column: 1 / span 7;
+    }
+
+    .term-life {
+      grid-row: 1 / span 2;
+      grid-column: 8 / span 5;
+    }
+
+    .term-writing {
+      grid-row: 3;
+      grid-column: 8 / span 5;
+    }
+  }
+
+  .term-now {
+    --win-mark: var(--tc-date);
+
+    grid-column: span 7;
+  }
+
+  .term-thoughts {
+    --win-mark: var(--accent);
+
+    grid-column: span 7;
+  }
+
+  .term-where {
+    --win-mark: var(--flexoki-cyan);
+
+    grid-column: span 5;
+  }
+
+  .term-writing {
+    --win-mark: var(--flexoki-blue);
+
+    grid-column: span 5;
+  }
+
+  .term-uses {
+    --win-mark: var(--tc-tag);
+
+    grid-column: span 5;
+  }
+
+  .term-faves {
+    --win-mark: var(--flexoki-red);
+
+    grid-column: span 7;
+  }
+
+  .term-activity {
+    --win-mark: var(--tc-live);
+
+    grid-column: span 12;
+  }
+
+  /* The Porto map draws its land with --heading-color and Porto in --accent. */
+  .term-life {
+    --heading-color: var(--gray-color);
+  }
+
+  .term-whoami-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 1rem;
+  }
+
+  .term-whoami-body > :not(.term-portrait) {
+    grid-column: 1;
+  }
+
+  .term-portrait {
+    position: relative;
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    width: clamp(6rem, 12vw, 9.5rem);
+    overflow: hidden;
+    border: 1px solid var(--term-line);
+    aspect-ratio: 1;
+  }
+
+  .term-portrait img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    object-fit: cover;
+    object-position: 50% 35%;
+  }
+
+  .term-title-actions {
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+    margin-left: auto;
+  }
+
+  .term-peek {
+    border-bottom: 1px dashed var(--term-glow);
+    color: var(--term-glow);
+    cursor: crosshair;
+  }
+
+  .term-hint {
+    margin: 0.7rem 0 0;
+    color: var(--term-dim);
+    font-size: 0.74rem;
+  }
+
+  .term-hint kbd {
+    padding: 0 0.3rem;
+    border: 1px solid var(--term-line);
+    border-radius: 0;
+    background: var(--term-bg);
+    color: var(--tc-host);
+  }
+
+  .term-big {
+    margin: 0 0 0.8rem;
+    font-family: inherit;
+    color: var(--term-hot);
+    font-size: clamp(1.6rem, 1rem + 2.4vw, 2.8rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    text-shadow: 0 0 14px var(--term-glow-soft);
+  }
+
+  .term-cursor {
+    display: inline-block;
+    width: 0.5em;
+    height: 0.85em;
+    margin-left: 0.15em;
+    background: var(--term-hot);
+    vertical-align: -0.05em;
+    animation: term-blink 1s steps(1) infinite;
+  }
+
+  .term-kv {
+    display: grid;
+    gap: 0.1rem;
+    margin: 0;
+  }
+
+  .term-kv div {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+  }
+
+  .term-kv dt {
+    color: var(--term-dim);
+  }
+
+  .term-kv dt::after {
+    content: ":";
+  }
+
+  .term-kv dd {
+    margin: 0;
+  }
+
+  .term-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 0.8rem;
+    margin: 0.9rem 0 0;
+  }
+
+  /* life.exe: a reel of personal photos. */
+  .term-reel {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--term-line);
+    background: var(--term-bg);
+    aspect-ratio: 4 / 3.4;
+  }
+
+  /* Beside whoami and now.log, the reel grows to their height. */
+  @media (min-width: 981px) {
+    .term-life > .term-body {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+    }
+
+    .term-life .term-reel {
+      flex: 1;
+      min-height: 18rem;
+      aspect-ratio: auto;
+    }
+  }
+
+  .term-frame {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 0.5s ease,
+      visibility 0s linear 0.5s;
+  }
+
+  .term-frame[data-active] {
+    opacity: 1;
+    visibility: visible;
+    transition:
+      opacity 0.5s ease,
+      visibility 0s;
+  }
+
+  .term-frame img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    object-fit: cover;
+  }
+
+  /* Scanlines over the reel keep photos in the terminal. */
+  .term-reel::after {
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgb(0 0 0 / 0.12) 0,
+      rgb(0 0 0 / 0.12) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    content: "";
+    pointer-events: none;
+  }
+
+  .term-caption {
+    min-height: 2.6em;
+    margin: 0.7rem 0 0.3rem;
+  }
+
+  .term-controls {
+    display: flex;
+    gap: 0.8rem;
+    margin: 0;
+  }
+
+  .term-list {
+    list-style: none;
+  }
+
+  .term-list li {
+    margin: 0;
+  }
+
+  .term .term-list a {
+    display: flex;
+    gap: 0.7rem;
+    align-items: center;
+    padding: 0.15rem 0.2rem;
+    color: var(--term-text);
+    text-shadow: none;
+  }
+
+  .term .term-list a:hover {
+    background: var(--term-glow);
+    color: var(--term-bg);
+  }
+
+  .term-list a:hover .term-dim,
+  .term-list a:hover time {
+    color: var(--term-bg);
+  }
+
+  .term-list time,
+  .term-dim {
+    color: var(--term-dim);
+    white-space: nowrap;
+  }
+
+  .term-logo {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 14px;
+  }
+
+  .term-grow {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .term-list time {
+    color: var(--tc-date);
+  }
+
+  /* now.log: date, type, logo, name and what it is, then how long. */
+  .term-log [data-kind="work"] {
+    --kind: var(--tc-host);
+  }
+
+  .term-log [data-kind="build"] {
+    --kind: var(--tc-path);
+  }
+
+  .term-log [data-kind="uni"] {
+    --kind: var(--flexoki-cyan);
+  }
+
+  .term-log [data-kind="study"] {
+    --kind: var(--tc-tag);
+  }
+
+  .term-kind {
+    flex: none;
+    width: 7ch;
+    color: var(--kind);
+  }
+
+  .term-name {
+    color: var(--term-text);
+  }
+
+  .term-age {
+    flex: none;
+    min-width: 6ch;
+    color: var(--term-dim);
+    text-align: right;
+  }
+
+  .term-list a:hover .term-kind,
+  .term-list a:hover .term-name,
+  .term-list a:hover .term-age {
+    color: var(--term-bg);
+  }
+
+  /* Comma lists whose items can be islands: flex drops the whitespace
+     around them, so the comma sits right after each label. */
+  .term-inline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1ch;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .term-inline li {
+    display: inline-flex;
+    align-items: baseline;
+    margin: 0;
+  }
+
+  .term-inline li:not(:last-child)::after {
+    content: ",";
+  }
+
+  .term-h {
+    color: var(--tc-path);
+  }
+
+  .term-tree {
+    list-style: none;
+  }
+
+  .term-tree li {
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .term-tree li > .term-dim:first-child {
+    white-space: pre;
+  }
+
+  .term-tree a {
+    display: inline-flex;
+    gap: 0.4rem;
+    align-items: center;
+    vertical-align: middle;
+  }
+
+  .term-faves-body {
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  .term-fave-group {
+    display: grid;
+    grid-template-columns: 6.2rem minmax(0, 1fr);
+    gap: 0.6rem;
+    align-items: baseline;
+  }
+
+  .term-fave-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .term-fave-list li {
+    margin: 0;
+  }
+
+  .term .term-fave-item {
+    display: inline-flex;
+    gap: 0.4rem;
+    align-items: center;
+    padding: 0.1rem 0.4rem 0.1rem 0.15rem;
+    border: 1px solid var(--term-line);
+    color: var(--term-text);
+    text-shadow: none;
+  }
+
+  .term .term-fave-item:hover {
+    border-color: var(--term-glow);
+  }
+
+  .term-fave-icon {
+    display: block;
+    flex: none;
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    object-fit: cover;
+  }
+
+  .term-fave-blank {
+    background: var(--term-line);
+  }
+
+  .term-activity :global(*) {
+    font-family: inherit;
+  }
+
+  /* The graph brings its own page margins; the window already pads it. */
+  .term-activity :global(.activity-graph) {
+    margin: 0;
+  }
+
+  @media (max-width: 980px) {
+    .term-whoami,
+    .term-now,
+    .term-thoughts,
+    .term-writing,
+    .term-uses,
+    .term-faves {
+      grid-column: span 12;
+      grid-row: auto;
+    }
+
+    .term-life,
+    .term-where {
+      grid-column: span 12;
+      grid-row: auto;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .term {
+      font-size: 0.76rem;
+    }
+
+    .term-title-actions > span {
+      display: none;
+    }
+
+    .term-kv div {
+      grid-template-columns: 4.2rem minmax(0, 1fr);
+    }
+
+    /* On a phone the portrait sits beside the name only, so the facts get
+       the whole width. */
+    .term-portrait {
+      grid-row: 1;
+      width: 3.4rem;
+      align-self: center;
+    }
+
+    .term-whoami-body > :not(.term-portrait, .term-big) {
+      grid-column: 1 / -1;
+    }
+
+    /* The age column already says how long; names need the room. */
+    .term-log time {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .term-cursor,
+    .term-boot-skip {
+      animation: none;
+    }
+
+    [data-boot="done"] .term-screen {
+      animation: none;
+    }
+  }
+</style>

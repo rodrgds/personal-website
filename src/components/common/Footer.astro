@@ -1,12 +1,22 @@
 ---
-import { Moon, Sun, Volume2, VolumeX } from "lucide-astro";
 import ToastHost from "./ToastHost.astro";
 
 const today = new Date();
 ---
 
-<footer transition:name="footer">
-  <div class="footer-controls" role="group" aria-label="Site preferences">
+<footer transition:name="footer" class="status-line">
+  <p class="status-left">
+    <span class="status-mode">NORMAL</span>
+    <span>&copy; {today.getFullYear()}</span>
+    <a href="/">rodrigo dias</a>
+    <a href="/ssh.pub" class="pubkey">
+      me.pub
+    </a>
+    <span>
+      all <s>rights</s> <i>lefts</i> reserved
+    </span>
+  </p>
+  <div class="status-right" role="group" aria-label="Site preferences">
     <button
       class="footer-toggle theme-toggle"
       type="button"
@@ -15,12 +25,8 @@ const today = new Date();
       aria-label="Switch color theme"
       title="Switch color theme"
     >
-      <span class="theme-icon theme-icon-light" aria-hidden="true">
-        <Sun size={18} strokeWidth={1.8} />
-      </span>
-      <span class="theme-icon theme-icon-dark" aria-hidden="true">
-        <Moon size={18} strokeWidth={1.8} />
-      </span>
+      <span class="theme-icon theme-icon-light">light</span>
+      <span class="theme-icon theme-icon-dark">dark</span>
     </button>
     <button
       class="footer-toggle sound-toggle"
@@ -30,72 +36,92 @@ const today = new Date();
       aria-pressed="true"
       title="Mute interface sounds"
     >
-      <span class="sound-icon sound-icon-on" aria-hidden="true">
-        <Volume2 size={18} strokeWidth={1.8} />
-      </span>
-      <span class="sound-icon sound-icon-off" aria-hidden="true">
-        <VolumeX size={18} strokeWidth={1.8} />
-      </span>
+      <span class="sound-icon sound-icon-on">sound on</span>
+      <span class="sound-icon sound-icon-off">muted</span>
     </button>
+    <span class="status-utf">utf-8</span>
   </div>
-  <p>
-    &copy; {today.getFullYear()}
-    <img src="/favicon.webp" alt="" aria-hidden="true" />
-    <a href="/">Rodrigo Dias</a>
-    <a href="/ssh.pub" class="pubkey">me.pub</a>. All <s>rights</s>
-    <i>lefts</i> reserved.
-  </p>
 </footer>
 <ToastHost />
 <style>
-  footer {
-    padding: 3.5rem 0 2rem;
+  .status-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 4rem;
+    margin-bottom: 1.5rem;
+    padding: 0.35rem 0;
+    border-top: 1px solid var(--border-color);
     color: var(--gray-color);
-    font-size: 0.88rem;
+    font-size: 0.74rem;
   }
 
-  .footer-controls {
+  .status-left {
     display: flex;
-    justify-content: center;
-    gap: 0.2rem;
-    margin-bottom: 0.65rem;
-    color: var(--link-color);
+    flex-wrap: wrap;
+    gap: 0.2rem 0.8rem;
+    align-items: center;
+    margin: 0;
+  }
+
+  .status-mode {
+    padding: 0 0.4rem;
+    background: var(--accent);
+    color: var(--background-color);
+    font-weight: 700;
+  }
+
+  .status-right {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
   }
 
   .footer-toggle {
-    display: inline-grid;
-    place-items: center;
-    width: 1.75rem;
-    height: 1.75rem;
-    padding: 0;
+    padding: 0 0.2rem;
     border: 0;
     background: transparent;
-    color: inherit;
-    line-height: 1;
-    transition:
-      opacity 0.2s ease-out,
-      transform 0.2s ease-out;
+    color: var(--link-color);
+    font: inherit;
+    line-height: 1.4;
+  }
+
+  .footer-toggle::before,
+  .footer-toggle::after {
+    display: inline-block;
+    transition: transform 0.16s steps(2, end);
+  }
+
+  .footer-toggle::before {
+    content: "[";
+  }
+
+  .footer-toggle::after {
+    content: "]";
+  }
+
+  /* Brackets step out a character on hover. */
+  .footer-toggle:hover::before,
+  .footer-toggle:focus-visible::before {
+    transform: translateX(-0.6ch);
+  }
+
+  .footer-toggle:hover::after,
+  .footer-toggle:focus-visible::after {
+    transform: translateX(0.6ch);
   }
 
   .footer-toggle:hover,
   .footer-toggle:focus-visible {
-    opacity: 0.8;
-    transform: scale(1.1);
+    background: var(--accent);
+    color: var(--background-color);
   }
 
   .theme-icon,
   .sound-icon {
     display: none;
-    width: 1.18rem;
-    height: 1.18rem;
-  }
-
-  .theme-icon :global(svg),
-  .sound-icon :global(svg) {
-    width: 100%;
-    height: 100%;
-    stroke: currentColor;
-    fill: none;
   }
 
   .theme-toggle[data-theme-state="light"] .theme-icon-dark,
@@ -104,27 +130,21 @@ const today = new Date();
   .sound-toggle[data-sound-state="on"] .sound-icon-on,
   .sound-toggle:not([data-sound-state]) .sound-icon-on,
   .sound-toggle[data-sound-state="off"] .sound-icon-off {
-    display: inline-grid;
-    place-items: center;
-  }
-
-  p {
-    margin: 0;
-    text-align: center;
-  }
-
-  img {
-    width: 1.35rem;
-    height: 1.35rem;
-    margin: 0 0.15rem -0.28rem;
+    display: inline;
   }
 
   a {
     color: inherit;
+    text-shadow: none;
   }
 
-  .pubkey {
-    font-family: var(--font-family-mono);
-    font-size: 0.82em;
+  a:hover {
+    color: var(--link-color);
+  }
+
+  @media (max-width: 520px) {
+    .status-utf {
+      display: none;
+    }
   }
 </style>

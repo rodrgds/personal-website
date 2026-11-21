@@ -19,7 +19,10 @@ const { title, id, layout = "default", class: className } = Astro.props;
   <svg
     class="slide-marks slide-marks--under"
     data-marks-under
-    aria-hidden="true"></svg>
-  <div class="slide-body"><slot /></div>
+    aria-hidden="true"
+  ></svg>
+  <div class="slide-body">
+    <slot />
+  </div>
   <svg class="slide-marks" data-marks aria-hidden="true"></svg>
 </section>

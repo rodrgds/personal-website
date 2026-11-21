@@ -8,9 +8,60 @@ export type TimelineCategory =
   | "honors"
   | "certifications";
 
+/** What an entry is, as shown in TYPE columns and filters. */
+export interface TimelineType {
+  key: "work" | "build" | "uni" | "study" | "award" | "course";
+  /** One entry, e.g. "project". */
+  label: string;
+  /** A filter button, e.g. "projects". */
+  plural: string;
+  categories: TimelineCategory[];
+}
+
+/** Display groups; the order is the filter order. */
+export const TIMELINE_TYPES: TimelineType[] = [
+  { key: "work", label: "work", plural: "work", categories: ["experience"] },
+  {
+    key: "build",
+    label: "project",
+    plural: "projects",
+    categories: ["personal-projects"],
+  },
+  {
+    key: "uni",
+    label: "uni",
+    plural: "uni",
+    categories: ["university-projects"],
+  },
+  { key: "study", label: "study", plural: "study", categories: ["education"] },
+  { key: "award", label: "award", plural: "awards", categories: ["honors"] },
+  {
+    key: "course",
+    label: "course",
+    plural: "courses",
+    categories: ["certifications"],
+  },
+];
+
+export function timelineType(category: TimelineCategory): TimelineType {
+  return (
+    TIMELINE_TYPES.find((type) => type.categories.includes(category)) ??
+    TIMELINE_TYPES[0]
+  );
+}
+
 export interface TimelineEntry {
+  /** Unique across collections, e.g. "project-openpost". */
   id: string;
+  /** The collection entry id; its page is /cv/<slug>. */
+  slug: string;
   category: TimelineCategory;
+  type: TimelineType;
+  /** Short name for rows, e.g. "FEUP". */
+  name: string;
+  /** Short second part of a row: the place, or what a project is. */
+  context: string;
+  /** Full title and subtitle, for pages and hover cards. */
   title: string;
   subtitle: string;
   startDate: string;
@@ -19,45 +70,11 @@ export interface TimelineEntry {
   visual?: string;
   href: string;
   isCurrent: boolean;
+  /** One line for hover cards: a tagline or the first CV bullet. */
+  summary?: string;
+  /** Project status, when the entry is a project. */
+  status?: string;
 }
-
-export interface TimelinePositionedEntry extends TimelineEntry {
-  row: number;
-  labelRow: number;
-  startMonth: number;
-  endMonth: number;
-  lanePoints: Array<{ month: number; row: number }>;
-}
-
-export interface TimelineLayout {
-  startMonth: number;
-  endMonth: number;
-  monthCount: number;
-  entries: TimelinePositionedEntry[];
-  rowCount: number;
-  labelRowCount: number;
-  density: number[];
-  maxDensity: number;
-  ticks: Array<{ month: number; label?: string }>;
-}
-
-export const TIMELINE_CATEGORIES: TimelineCategory[] = [
-  "experience",
-  "personal-projects",
-  "university-projects",
-  "education",
-  "honors",
-  "certifications",
-];
-
-export const TIMELINE_CATEGORY_LABELS = {
-  experience: "Experience",
-  "personal-projects": "Personal projects",
-  "university-projects": "University projects",
-  education: "Education",
-  honors: "Honors",
-  certifications: "Certifications",
-} satisfies Record<TimelineCategory, string>;
 
 function parseMonth(value: string): number {
   const match = /^(\d{4})-(\d{2})$/.exec(value);
@@ -74,12 +91,6 @@ function parseMonth(value: string): number {
   return year * 12 + month - 1;
 }
 
-function formatMonth(monthIndex: number): string {
-  const year = Math.floor(monthIndex / 12);
-  const month = (monthIndex % 12) + 1;
-  return `${year}-${String(month).padStart(2, "0")}`;
-}
-
 function getCurrentMonth(now: Date): number {
   return now.getFullYear() * 12 + now.getMonth();
 }
@@ -88,83 +99,121 @@ function getVisual(logo?: string, image?: string): string | undefined {
   return logo ?? image;
 }
 
+export function getCVEntryPath(slug: string): string {
+  return `/cv/${slug}`;
+}
+
 export function getTimelineEntries(
   data: CVCollectionsData,
   now = new Date(),
 ): TimelineEntry[] {
   const currentMonth = getCurrentMonth(now);
 
-  const entries: TimelineEntry[] = [
+  const entries: Omit<TimelineEntry, "type">[] = [
     ...data.experience.map(({ id, data: item }) => ({
       id: `experience-${id}`,
+      slug: id,
       category: "experience" as const,
+      name: item.short ?? item.role,
+      context: item.orgShort ?? item.company,
       title: item.role,
       subtitle: item.company,
       startDate: item.startDate,
       endDate: item.endDate,
       kind: "span" as const,
       visual: getVisual(item.logo, item.image),
-      href: `/cv?view=list#experience-${id}`,
+      href: getCVEntryPath(id),
       isCurrent: !item.endDate,
+      summary: item.bullets?.[0],
     })),
     ...data.projects.map(({ id, data: item }) => ({
       id: `project-${id}`,
+      slug: id,
       category:
         item.category === "university"
           ? ("university-projects" as const)
           : ("personal-projects" as const),
+      name: item.short ?? item.name,
+      context:
+        item.tagline ??
+        (item.category === "university"
+          ? "University project"
+          : "Personal project"),
       title: item.name,
       subtitle:
-        item.category === "university"
+        item.cvRole ??
+        (item.category === "university"
           ? "University project"
-          : "Personal project",
+          : "Personal project"),
       startDate: item.startDate,
       endDate: item.endDate,
       kind: "span" as const,
       visual: getVisual(item.logo, item.image),
-      href: `/cv?view=list#project-${id}`,
+      href: getCVEntryPath(id),
       isCurrent:
         !item.endDate && (item.status === "active" || item.status === "wip"),
+      summary: item.tagline ?? item.bullets?.[0],
+      status: item.status,
     })),
     ...data.education.map(({ id, data: item }) => ({
       id: `education-${id}`,
+      slug: id,
       category: "education" as const,
+      name: item.short ?? item.institution,
+      context: `${item.degree}, ${item.area}`,
       title: item.institution,
       subtitle: `${item.degree} in ${item.area}`,
       startDate: item.startDate,
       endDate: item.endDate,
       kind: "span" as const,
       visual: getVisual(item.logo, item.image),
-      href: `/cv?view=list#education-${id}`,
+      href: getCVEntryPath(id),
       isCurrent: !item.endDate,
+      summary: item.bullets?.[0],
     })),
     ...data.honors.map(({ id, data: item }) => ({
       id: `honor-${id}`,
+      slug: id,
       category: "honors" as const,
+      name: item.short ?? item.title,
+      context: item.orgShort ?? item.issuer,
       title: item.title,
       subtitle: item.issuer,
       startDate: item.date,
       endDate: item.date,
       kind: "point" as const,
       visual: getVisual(item.logo, item.image),
-      href: `/cv?view=list#honor-${id}`,
+      href: getCVEntryPath(id),
       isCurrent: false,
+      summary: item.bullets?.[0],
     })),
     ...data.certifications.map(({ id, data: item }) => ({
       id: `certification-${id}`,
+      slug: id,
       category: "certifications" as const,
+      name: item.short ?? item.name,
+      context: item.orgShort ?? item.issuer,
       title: item.name,
       subtitle: item.issuer,
       startDate: item.issueDate,
       endDate: item.issueDate,
       kind: "point" as const,
       visual: getVisual(item.logo, item.image),
-      href: `/cv?view=list#certification-${id}`,
+      href: getCVEntryPath(id),
       isCurrent: false,
+      summary: item.bullets?.[0],
     })),
   ];
 
+  const slugs = new Set<string>();
   for (const entry of entries) {
+    // Every entry gets its own /cv/<slug> page, so ids must be unique
+    // across collections.
+    if (slugs.has(entry.slug)) {
+      throw new Error(`Two CV entries share the id "${entry.slug}"`);
+    }
+    slugs.add(entry.slug);
+
     const start = parseMonth(entry.startDate);
     const end = entry.endDate ? parseMonth(entry.endDate) : currentMonth;
     if (end < start) {
@@ -174,11 +223,13 @@ export function getTimelineEntries(
     }
   }
 
-  return entries.sort(
-    (a, b) =>
-      parseMonth(a.startDate) - parseMonth(b.startDate) ||
-      a.title.localeCompare(b.title),
-  );
+  return entries
+    .map((entry) => ({ ...entry, type: timelineType(entry.category) }))
+    .sort(
+      (a, b) =>
+        parseMonth(a.startDate) - parseMonth(b.startDate) ||
+        a.title.localeCompare(b.title),
+    );
 }
 
 export function getCurrentTimelineEntries(
@@ -194,147 +245,16 @@ export function getCurrentTimelineEntries(
     );
 }
 
-export function buildTimelineLayout(
-  entries: TimelineEntry[],
+/** "1y 3m" from a start month to an end month (or now), inclusive. */
+export function formatTimelineDuration(
+  startDate: string,
+  endDate: string | undefined,
   now = new Date(),
-): TimelineLayout {
-  if (entries.length === 0) {
-    throw new Error("Cannot build an empty timeline");
-  }
-
-  const currentMonth = getCurrentMonth(now);
-  const earliestMonth = Math.min(
-    ...entries.map((entry) => parseMonth(entry.startDate)),
-  );
-  const latestMonth = Math.max(
-    currentMonth,
-    ...entries.map((entry) =>
-      entry.endDate ? parseMonth(entry.endDate) : currentMonth,
-    ),
-  );
-  const startMonth = earliestMonth - 2;
-  const endMonth = latestMonth + 1;
-  const monthCount = endMonth - startMonth + 1;
-
-  const sortedEntries = [...entries].sort(
-    (a, b) =>
-      parseMonth(a.startDate) - parseMonth(b.startDate) ||
-      a.title.localeCompare(b.title),
-  );
-  const positionedEntries: TimelinePositionedEntry[] = sortedEntries.map(
-    (entry) => ({
-      ...entry,
-      row: 0,
-      labelRow: 0,
-      startMonth: parseMonth(entry.startDate),
-      endMonth: entry.endDate ? parseMonth(entry.endDate) : currentMonth,
-      lanePoints: [],
-    }),
-  );
-  const startsByMonth = new Map<number, TimelinePositionedEntry[]>();
-  const eventMonths = new Set<number>();
-
-  for (const entry of positionedEntries) {
-    const startingEntries = startsByMonth.get(entry.startMonth) ?? [];
-    startingEntries.push(entry);
-    startsByMonth.set(entry.startMonth, startingEntries);
-    eventMonths.add(entry.startMonth);
-    eventMonths.add(entry.endMonth + 1);
-  }
-
-  let activeEntries: TimelinePositionedEntry[] = [];
-  let rowCount = 0;
-
-  for (const month of [...eventMonths].sort((a, b) => a - b)) {
-    activeEntries = activeEntries.filter((entry) => entry.endMonth >= month);
-
-    activeEntries.forEach((entry, row) => {
-      const previousPoint = entry.lanePoints.at(-1);
-      if (previousPoint?.row !== row) {
-        entry.lanePoints.push({ month, row });
-      }
-    });
-
-    for (const entry of startsByMonth.get(month) ?? []) {
-      entry.row = activeEntries.length;
-      entry.lanePoints.push({ month, row: entry.row });
-      activeEntries.push(entry);
-    }
-
-    rowCount = Math.max(rowCount, activeEntries.length);
-  }
-
-  const labelRows: Array<Array<{ start: number; end: number }>> = [];
-  const minimumLabelSpanMonths = 10;
-
-  for (const entry of positionedEntries) {
-    const occupiedUntil = entry.startMonth + minimumLabelSpanMonths;
-    let labelRow = labelRows.findIndex((intervals) =>
-      intervals.every(
-        (interval) =>
-          occupiedUntil < interval.start || entry.startMonth > interval.end,
-      ),
-    );
-
-    if (labelRow === -1) {
-      labelRow = labelRows.length;
-      labelRows.push([]);
-    }
-
-    entry.labelRow = labelRow;
-    labelRows[labelRow].push({
-      start: entry.startMonth,
-      end: occupiedUntil,
-    });
-  }
-
-  const densityDelta = new Int32Array(monthCount + 1);
-  for (const entry of entries) {
-    const entryStart = Math.max(0, parseMonth(entry.startDate) - startMonth);
-    const entryEnd = Math.min(
-      monthCount - 1,
-      (entry.endDate ? parseMonth(entry.endDate) : currentMonth) - startMonth,
-    );
-
-    if (entryStart <= entryEnd) {
-      densityDelta[entryStart] += 1;
-      densityDelta[entryEnd + 1] -= 1;
-    }
-  }
-
-  let activeEntryCount = 0;
-  const density = Array.from({ length: monthCount }, (_, offset) => {
-    activeEntryCount += densityDelta[offset];
-    return activeEntryCount;
-  });
-
-  const ticks = Array.from({ length: monthCount }, (_, offset) => {
-    const month = startMonth + offset;
-    const monthOfYear = month % 12;
-    return {
-      month,
-      label: monthOfYear === 0 ? String(Math.floor(month / 12)) : undefined,
-    };
-  }).filter(({ month, label }) => label || month % 3 === 0);
-
-  return {
-    startMonth,
-    endMonth,
-    monthCount,
-    entries: positionedEntries,
-    rowCount: Math.max(1, rowCount),
-    labelRowCount: Math.max(1, labelRows.length),
-    density,
-    maxDensity: Math.max(...density, 1),
-    ticks,
-  };
-}
-
-export function getTimelineDateLabel(entry: TimelineEntry): string {
-  if (entry.kind === "point") return entry.startDate;
-  return `${entry.startDate}–${entry.endDate ?? "Now"}`;
-}
-
-export function getTimelineMonthKey(month: number): string {
-  return formatMonth(month);
+): string {
+  const end = endDate ? parseMonth(endDate) : getCurrentMonth(now);
+  const months = end - parseMonth(startDate) + 1;
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  if (years === 0) return `${Math.max(1, rest)}m`;
+  return rest ? `${years}y ${rest}m` : `${years}y`;
 }

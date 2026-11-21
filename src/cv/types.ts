@@ -1,6 +1,8 @@
 export interface ExperienceData {
   company: string;
   role: string;
+  short?: string;
+  orgShort?: string;
   type:
     | "full-time"
     | "part-time"
@@ -22,6 +24,9 @@ export interface ExperienceData {
 
 export interface ProjectData {
   name: string;
+  short?: string;
+  tagline?: string;
+  cover?: string;
   startDate: string;
   endDate?: string;
   url?: string;
@@ -33,7 +38,7 @@ export interface ProjectData {
   tags: string[];
   category: "personal" | "university";
   featured: boolean;
-  status: "active" | "archived" | "wip";
+  status: "active" | "archived" | "wip" | "paused";
   cvRole?: string;
   bullets?: string[];
   related?: string[];
@@ -41,6 +46,7 @@ export interface ProjectData {
 
 export interface EducationData {
   institution: string;
+  short?: string;
   degree: string;
   area: string;
   location: string;
@@ -59,7 +65,9 @@ export interface EducationData {
 
 export interface CertificationData {
   name: string;
+  short?: string;
   issuer: string;
+  orgShort?: string;
   issueDate: string;
   expiryDate?: string;
   credentialUrl?: string;
@@ -72,7 +80,9 @@ export interface CertificationData {
 
 export interface HonorData {
   title: string;
+  short?: string;
   issuer: string;
+  orgShort?: string;
   date: string;
   association?: string;
   url?: string;
@@ -86,7 +96,8 @@ export interface HonorData {
 export interface CVCollectionEntry<T> {
   id: string;
   data: T;
-  body: string;
+  // Astro leaves it out for entries without a body.
+  body?: string;
 }
 
 export interface CVCollectionsData {
@@ -133,7 +144,7 @@ export interface CVProject {
   url?: string;
   repo?: string;
   role?: string;
-  status: "active" | "archived" | "wip";
+  status: "active" | "archived" | "wip" | "paused";
   tags: string[];
   bullets: string[];
   related?: RelatedItem[];

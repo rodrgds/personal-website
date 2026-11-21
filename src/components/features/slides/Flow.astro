@@ -13,22 +13,20 @@ const { items, direction = "row", at, highlight = [] } = Astro.props;
 ---
 
 <ol class:list={["flow", `flow--${direction}`]}>
-  {
-    items.map((item, index) => {
-      const [title, detail] = item.split("|");
-      return (
-        <li
-          class:list={[
-            "flow-item",
-            highlight.includes(index) && "flow-item--hot",
-          ]}
-          data-show={at === undefined ? undefined : String(at + index)}
-          data-fx="up"
-        >
-          <strong>{title}</strong>
-          {detail && <span>{detail}</span>}
-        </li>
-      );
-    })
-  }
+  {items.map((item, index) => {
+    const [title, detail] = item.split("|");
+    return (
+      <li
+        class:list={[
+          "flow-item",
+          highlight.includes(index) && "flow-item--hot",
+        ]}
+        data-show={at === undefined ? undefined : String(at + index)}
+        data-fx="up"
+      >
+        <strong>{title}</strong>
+        {detail && <span>{detail}</span>}
+      </li>
+    );
+  })}
 </ol>

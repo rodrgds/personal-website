@@ -50,7 +50,7 @@
 </script>
 
 {#if loading}
-  <p class="loading">Loading scrobbles...</p>
+  <p class="loading"><span class="ascii-spinner" aria-hidden="true">⠋</span> loading scrobbles...</p>
 {:else if error}
   <p class="error">Failed to load scrobbles: {error}</p>
 {:else if data}
@@ -114,7 +114,7 @@
   .track-item {
     padding: 0.75rem;
     background: var(--bg-secondary);
-    border-radius: 8px;
+    border-radius: 0;
     border: 1px solid var(--border-color);
   }
 

@@ -1,6 +1,69 @@
 import type { Loader } from "astro/loaders";
 import { z } from "astro/zod";
 
+/** One picture as the Bluesky app view sends it. */
+const imageView = z.object({
+  thumb: z.string(),
+  fullsize: z.string(),
+  alt: z.string().optional(),
+});
+
+/** Media on a post: images, a video, or either inside a quote post. */
+const mediaView = z.object({
+  $type: z.string(),
+  images: z.array(imageView).optional(),
+  thumbnail: z.string().optional(),
+  alt: z.string().optional(),
+});
+
+const embedView = mediaView.extend({
+  external: z
+    .object({
+      uri: z.string(),
+      title: z.string().optional(),
+      description: z.string().optional(),
+      thumb: z.string().optional(),
+    })
+    .optional(),
+  media: mediaView.optional(),
+});
+
+const picture = z.object({
+  thumb: z.string(),
+  fullsize: z.string(),
+  alt: z.string().optional(),
+  video: z.boolean().optional(),
+});
+
+/** A stored post's pictures; collection data arrives untyped. */
+export const blueskyPictures = z.array(picture);
+
+type Picture = z.infer<typeof picture>;
+
+function picturesOf(media: z.infer<typeof mediaView>): Picture[] | undefined {
+  if (media.images?.length) return media.images;
+  if (media.thumbnail) {
+    return [
+      {
+        thumb: media.thumbnail,
+        fullsize: media.thumbnail,
+        alt: media.alt,
+        video: true,
+      },
+    ];
+  }
+  return undefined;
+}
+
+/** The post's embed, already parsed with `embedView`. */
+function embedOf(view: z.infer<typeof embedView>) {
+  return {
+    type: view.$type,
+    images: picturesOf(view.media ?? view),
+    external: view.external,
+  };
+}
+
 export function blueskyLoader(options: {
   repo: string;
   limit?: number;
@@ -46,6 +109,8 @@ export function blueskyLoader(options: {
               continue;
             }
 
+            // Parse the embed at the API boundary; unknown kinds drop out.
+            const embed = embedView.safeParse(post.embed);
             const entry = {
               id: post.cid,
               data: {
@@ -59,13 +124,7 @@ export function blueskyLoader(options: {
                   displayName: post.author?.displayName,
                   avatar: post.author?.avatar,
                 },
-                embed: post.embed
-                  ? {
-                      type: post.embed.$type,
-                      images: post.embed.images,
-                      external: post.embed.external,
-                    }
-                  : undefined,
+                embed: embed.success ? embedOf(embed.data) : undefined,
                 likeCount: post.likeCount,
                 replyCount: post.replyCount,
                 repostCount: post.repostCount,
@@ -101,14 +160,7 @@ export function blueskyLoader(options: {
       embed: z
         .object({
           type: z.string(),
-          images: z
-            .array(
-              z.object({
-                image: z.string(),
-                alt: z.string().optional(),
-              }),
-            )
-            .optional(),
+          images: z.array(picture).optional(),
           external: z
             .object({
               uri: z.string(),

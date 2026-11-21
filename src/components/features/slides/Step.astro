@@ -13,14 +13,12 @@ const Tag = inline ? "span" : "div";
 const range = String(at);
 ---
 
-{
-  fx === "focus" ? (
-    <Tag class:list={["step-focus", className]} data-focus={range}>
-      <slot />
-    </Tag>
-  ) : (
-    <Tag class:list={["step", className]} data-show={range} data-fx={fx}>
-      <slot />
-    </Tag>
-  )
-}
+{fx === "focus" ? (
+  <Tag class:list={["step-focus", className]} data-focus={range}>
+    <slot />
+  </Tag>
+) : (
+  <Tag class:list={["step", className]} data-show={range} data-fx={fx}>
+    <slot />
+  </Tag>
+)}

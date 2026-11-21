@@ -1,30 +1,31 @@
+/* rgo.pt is a terminal: the map uses the same mono face and CRT palette. */
 @font-face {
-  font-family: "Bricolage Grotesque";
+  font-family: "JetBrains Mono";
   font-style: normal;
-  font-weight: 200 800;
+  font-weight: 100 800;
   font-display: swap;
-  src: url("https://fonts.gstatic.com/s/bricolagegrotesque/v9/3y9H6as8bTXq_nANBjzKo3IeZx8z6up5BeSl5jBNz_19PpbpMXuECpwUxJBOm_OJWiawA1XphjhQYg.woff2")
+  src: url("/fonts/jetbrains-mono-latin-variable-wghtOnly-normal.woff2")
     format("woff2");
 }
 
 :root {
   color-scheme: light;
-  --bg: #fffcf0;
-  --surface: #fffcf0;
-  --surface-strong: #f2f0e5;
-  --surface-active: rgb(16 15 15 / 0.05);
-  --ink: #100f0f;
+  --bg: #f4f0e2;
+  --surface: #faf7ec;
+  --surface-strong: #ebe6d4;
+  --surface-active: rgb(180 80 15 / 0.07);
+  --ink: #1c1b1a;
   --ink-soft: #6f6e69;
   --ink-faint: #b7b5ac;
-  --line: #e6e4d9;
-  --line-hover: #dad8ce;
-  --line-strong: #cecdc3;
-  --primary: hsl(175 57% 39%);
-  --primary-strong: #24837b;
-  --accent: #ad8301;
-  --focus: hsl(175 57% 39%);
+  --line: #dcd6c3;
+  --line-hover: #cfc9b6;
+  --line-strong: #b9b29c;
+  --primary: #b4500f;
+  --primary-strong: #9c4410;
+  --accent: #b4500f;
+  --focus: #b4500f;
   --scrim: rgb(16 15 15 / 0.42);
-  --canvas-dot: #dad8ce;
+  --canvas-dot: #d5cfbc;
   --canvas-red: #af3029;
   --canvas-orange: #bc5215;
   --canvas-yellow: #ad8301;
@@ -34,42 +35,36 @@
   --callout-default: 32 94 166;
   --callout-warning: 188 82 21;
   --callout-quote: 158 158 158;
-  --highlight: rgb(247 209 61 / 0.3);
+  --highlight: rgb(180 80 15 / 0.18);
   --topbar-height: 64px;
-  --radius-s: 4px;
-  --radius-m: 8px;
+  --radius-s: 0;
+  --radius-m: 0;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  font-family:
-    "Bricolage Grotesque",
-    Inter,
-    ui-sans-serif,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
-  font-size: 15px;
+  font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 13.5px;
+  font-variant-ligatures: none;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #100f0f;
-  --surface: #100f0f;
-  --surface-strong: #1c1b1a;
-  --surface-active: rgb(254 252 240 / 0.05);
-  --ink: #cecdc3;
-  --ink-soft: #878580;
-  --ink-faint: #575653;
-  --line: #282726;
-  --line-hover: #343331;
-  --line-strong: #403e3c;
-  --primary: hsl(175 49% 51%);
-  --primary-strong: #3aa99f;
-  --accent: #d0a215;
-  --focus: hsl(175 49% 51%);
+  --bg: #0d0c0b;
+  --surface: #131210;
+  --surface-strong: #1b1a17;
+  --surface-active: rgb(232 137 63 / 0.08);
+  --ink: #d3cfc3;
+  --ink-soft: #8a857c;
+  --ink-faint: #57534c;
+  --line: #2a2724;
+  --line-hover: #38342f;
+  --line-strong: #4a4540;
+  --primary: #e8893f;
+  --primary-strong: #f09a55;
+  --accent: #e8893f;
+  --focus: #e8893f;
   --scrim: rgb(16 15 15 / 0.72);
-  --canvas-dot: #343331;
+  --canvas-dot: #2a2724;
   --canvas-red: #d14d41;
   --canvas-orange: #da702c;
   --canvas-yellow: #d0a215;
@@ -79,7 +74,7 @@
   --callout-default: 67 133 190;
   --callout-warning: 218 112 44;
   --callout-quote: 158 158 158;
-  --highlight: rgb(213 159 17 / 0.3);
+  --highlight: rgb(232 137 63 / 0.22);
 }
 
 * {
@@ -537,7 +532,7 @@ svg {
 
 .markdown code {
   padding: 0.1em 0.28em;
-  border-radius: 4px;
+  border-radius: 0;
   background: var(--surface-strong);
   font-family:
     "JetBrainsMono Nerd Font", ui-monospace, "SFMono-Regular", Consolas,
@@ -765,7 +760,7 @@ kbd {
   min-width: 1.5em;
   padding: 0.08em 0.35em;
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: 0;
   background: var(--surface);
   color: var(--ink-soft);
   font-family: inherit;
@@ -1236,5 +1231,56 @@ dialog::backdrop {
 
   .reader-list {
     overflow: visible;
+  }
+}
+
+/* CRT scanlines over the whole map, matching the rest of rgo.pt. */
+body::after {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgb(60 50 30 / 0.035) 0,
+    rgb(60 50 30 / 0.035) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  content: "";
+  pointer-events: none;
+}
+
+:root[data-theme="dark"] body::after {
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgb(0 0 0 / 0.18) 0,
+      rgb(0 0 0 / 0.18) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    radial-gradient(ellipse at center, transparent 60%, rgb(0 0 0 / 0.35));
+}
+
+.brand::after {
+  display: inline-block;
+  width: 0.55em;
+  height: 1em;
+  margin-left: 0.3em;
+  background: var(--primary);
+  content: "";
+  vertical-align: -0.15em;
+  animation: edu-cursor 1s steps(1) infinite;
+}
+
+@keyframes edu-cursor {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brand::after {
+    animation: none;
   }
 }

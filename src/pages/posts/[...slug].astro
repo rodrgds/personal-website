@@ -21,39 +21,48 @@ const { Content } = await render(entry);
 
     <style>
       .title {
-        font-size: 2em;
         margin: 0.25em 0 0;
+        font-size: 1.6rem;
+      }
+
+      .title::before {
+        color: var(--tc-heading);
+        content: "# ";
+        font-weight: 400;
+      }
+
+      time {
+        color: var(--tc-date);
+        font-size: 0.82rem;
       }
       hr {
         border-top: 1px solid var(--border-color);
         margin: 1rem 0;
       }
     </style>
-    {
-      entry.data.katex === true && (
-        <>
-          <script
-            defer
-            src="https://cdn.jsdelivr.net/npm/katex@0.16.3/dist/katex.min.js"
-            integrity="sha384-97gW6UIJxnlKemYavrqDHSX3SiygeOwIZhwyOKRfSaf0JWKRVj9hLASHgFTzT+0O"
-            crossorigin="anonymous"
-          />
-          <link
-            rel="stylesheet"
-            href="https://cdn.jsdelivr.net/npm/katex@0.16.3/dist/katex.min.css"
-            integrity="sha384-Juol1FqnotbkyZUT5Z7gUPjQ9gzlwCENvUZTpQBAPxtusdwFLRy382PSDx5UUJ4/"
-            crossorigin="anonymous"
-          />
-          <script
-            defer
-            src="https://cdn.jsdelivr.net/npm/katex@0.16.3/dist/contrib/auto-render.min.js"
-            integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05"
-            crossorigin="anonymous"
-            onload='renderMathInElement(document.body,{delimiters: [{left: "$$", right: "$$", display: true},{left: "$", right: "$", display: false}]});'
-          />
-        </>
-      )
-    }
+    {entry.data.katex === true && (
+      <>
+        <script
+          defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.16.3/dist/katex.min.js"
+          integrity="sha384-97gW6UIJxnlKemYavrqDHSX3SiygeOwIZhwyOKRfSaf0JWKRVj9hLASHgFTzT+0O"
+          crossorigin="anonymous"
+        />
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/katex@0.16.3/dist/katex.min.css"
+          integrity="sha384-Juol1FqnotbkyZUT5Z7gUPjQ9gzlwCENvUZTpQBAPxtusdwFLRy382PSDx5UUJ4/"
+          crossorigin="anonymous"
+        />
+        <script
+          defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.16.3/dist/contrib/auto-render.min.js"
+          integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05"
+          crossorigin="anonymous"
+          onload='renderMathInElement(document.body,{delimiters: [{left: "$$", right: "$$", display: true},{left: "$", right: "$", display: false}]});'
+        />
+      </>
+    )}
     <script is:inline>
       document.addEventListener("astro:after-swap", () => {
         if (window.renderMathInElement) {
@@ -75,13 +84,11 @@ const { Content } = await render(entry);
         <h1 class="title" transition:name={`blogpost-name-${entry.id}`}>
           {entry.data.title}
         </h1>
-        {
-          entry.data.pubDate && (
-            <time transition:name={`blogpost-pubdate-${entry.id}`}>
-              {entry.data.pubDate}
-            </time>
-          )
-        }
+        {entry.data.pubDate && (
+          <time transition:name={`blogpost-pubdate-${entry.id}`}>
+            {entry.data.pubDate}
+          </time>
+        )}
         <hr />
         <Content />
       </article>

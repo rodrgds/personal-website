@@ -25,24 +25,30 @@ const buttons = ["seteuid(1000)", "seteuid(0)", "setuid(1000)", "setuid(0)"];
   </p>
   <div class="uid-cards">
     <div class="uid-card" data-uid="ruid">
-      <span>RUID</span><strong></strong><small>who launched it</small>
+      <span>RUID</span>
+      <strong></strong>
+      <small>who launched it</small>
     </div>
     <div class="uid-card" data-uid="euid">
-      <span>EUID</span><strong></strong><small>decides permissions</small>
+      <span>EUID</span>
+      <strong></strong>
+      <small>decides permissions</small>
     </div>
     <div class="uid-card" data-uid="suid">
-      <span>SUID</span><strong></strong><small>kept to go back</small>
+      <span>SUID</span>
+      <strong></strong>
+      <small>kept to go back</small>
     </div>
   </div>
   <div class="uid-actions">
-    {
-      buttons.map((call) => (
-        <button type="button" data-uid-call={call}>
-          {call}
-        </button>
-      ))
-    }
-    <button type="button" class="uid-reset" data-uid-reset>reset</button>
+    {buttons.map((call) => (
+      <button type="button" data-uid-call={call}>
+        {call}
+      </button>
+    ))}
+    <button type="button" class="uid-reset" data-uid-reset>
+      reset
+    </button>
   </div>
   <p class="lab-status" data-uid-status aria-live="polite"></p>
   <ol class="uid-log" data-uid-log></ol>

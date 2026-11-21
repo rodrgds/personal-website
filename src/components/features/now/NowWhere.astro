@@ -1,0 +1,59 @@
+---
+// Where I am and where you are, as two pins on an ASCII globe
+// (src/lib/now/ascii-globe.ts). Drag it to turn it. The visitor's place
+// comes from one IP lookup.
+---
+
+<div class="where" data-where>
+  <canvas
+    class="globe"
+    data-where-globe
+    role="img"
+    aria-label="A globe with a pin on Porto, where I live, and one where you are"
+  ></canvas>
+</div>
+
+<script>
+  import {
+    mountAsciiGlobe,
+    type AsciiGlobe,
+  } from "../../../lib/now/ascii-globe";
+  import { HOME, locateVisitor } from "../../../lib/now/where";
+
+  let globe: AsciiGlobe | null = null;
+
+  async function mount(): Promise<void> {
+    globe?.destroy();
+    globe = null;
+    const root = document.querySelector<HTMLElement>("[data-where]");
+    const canvas = root?.querySelector<HTMLCanvasElement>("[data-where-globe]");
+    if (!root || !canvas) return;
+    const mine = mountAsciiGlobe(canvas, HOME);
+    globe = mine;
+    const visitor = await locateVisitor();
+    // The page may have changed while the lookup ran.
+    if (visitor && globe === mine) mine.setVisitor(visitor);
+  }
+
+  document.addEventListener("astro:page-load", () => void mount());
+  document.addEventListener("astro:before-swap", () => {
+    globe?.destroy();
+    globe = null;
+  });
+</script>
+
+<style>
+  .globe {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    max-height: 26rem;
+    margin: 0 auto;
+    cursor: grab;
+    touch-action: pan-y;
+  }
+
+  .globe:active {
+    cursor: grabbing;
+  }
+</style>

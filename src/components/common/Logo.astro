@@ -31,38 +31,36 @@ const isBlackLogo = (blackLogos as readonly string[]).includes(normalizedSrc);
 const isExactMonochrome = normalizedSrc === "diassolutions";
 ---
 
-{
-  isEmoji(src) ? (
-    <span
-      style={{
-        fontSize: size + "px",
-        margin: "0",
-        verticalAlign: "middle",
-        display: "inline-block",
-        lineHeight: "1",
-      }}
-    >
-      {src}
-    </span>
-  ) : (
-    <Image
-      src={import(`../../logos/${normalizedSrc}.png`)}
-      alt={alt || normalizedSrc + " logo"}
-      format="webp"
-      height={doubleSize}
-      class:list={[
-        isWhiteLogo && "logo-needs-invert",
-        isBlackLogo && "logo-needs-dark-invert",
-        isExactMonochrome && "logo-exact-monochrome",
-      ]}
-      style={{
-        height: size + "px",
-        width: fixed ? size + "px" : "auto",
-        margin: "0",
-        verticalAlign: "middle",
-        display: "inline-block",
-        objectFit: "contain",
-      }}
-    />
-  )
-}
+{isEmoji(src) ? (
+  <span
+    style={{
+      fontSize: size + "px",
+      margin: "0",
+      verticalAlign: "middle",
+      display: "inline-block",
+      lineHeight: "1",
+    }}
+  >
+    {src}
+  </span>
+) : (
+  <Image
+    src={import(`../../logos/${normalizedSrc}.png`)}
+    alt={alt || normalizedSrc + " logo"}
+    format="webp"
+    height={doubleSize}
+    class:list={[
+      isWhiteLogo && "logo-needs-invert",
+      isBlackLogo && "logo-needs-dark-invert",
+      isExactMonochrome && "logo-exact-monochrome",
+    ]}
+    style={{
+      height: size + "px",
+      width: fixed ? size + "px" : "auto",
+      margin: "0",
+      verticalAlign: "middle",
+      display: "inline-block",
+      objectFit: "contain",
+    }}
+  />
+)}

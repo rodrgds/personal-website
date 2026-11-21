@@ -30,7 +30,7 @@
   .select-input {
     width: 100%;
     padding: 0.5rem;
-    border-radius: 0.28rem;
+    border-radius: 0;
     border: 1px solid var(--border-color);
     background-color: var(--bg-secondary);
     color: var(--text-color);

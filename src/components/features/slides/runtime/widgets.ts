@@ -4,7 +4,7 @@ import type { StepDetail } from "./steps";
 // Interactive labs. Each lab can be driven by deck steps through presets, and
 // stays editable so the presenter can try inputs live.
 
-function presetsOf<T extends z.ZodTypeAny>(
+function presetsOf<T extends z.ZodType>(
   element: HTMLElement,
   schema: T,
 ): z.infer<T>[] {

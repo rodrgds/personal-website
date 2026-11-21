@@ -1,0 +1,41 @@
+---
+import type { HomeLogo as HomeLogoData } from "../../../../lib/home/data";
+
+interface Props {
+  logo?: HomeLogoData;
+  size?: number;
+  alt?: string;
+  class?: string;
+}
+
+const { logo, size = 20, alt = "", class: className } = Astro.props;
+---
+
+{logo && (
+  <img
+    class:list={[
+      "home-logo",
+      className,
+      logo.invertLight && "logo-needs-invert",
+      logo.invertDark && "logo-needs-dark-invert",
+    ]}
+    src={logo.src}
+    alt={alt}
+    width={size}
+    height={size}
+    loading="lazy"
+    decoding="async"
+    style={`--logo-size:${size}px`}
+  />
+)}
+
+<style>
+  .home-logo {
+    display: block;
+    flex: none;
+    width: var(--logo-size);
+    height: var(--logo-size);
+    margin: 0;
+    object-fit: contain;
+  }
+</style>

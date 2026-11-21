@@ -21,6 +21,9 @@ const experienceCollection = defineCollection({
   schema: z.object({
     company: z.string(),
     role: z.string(),
+    // Compact names for timelines and lists; the full ones stay for pages.
+    short: z.string().optional(),
+    orgShort: z.string().optional(),
     type: z.enum([
       "full-time",
       "part-time",
@@ -46,6 +49,12 @@ const projectsCollection = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/projects" }),
   schema: z.object({
     name: z.string(),
+    short: z.string().optional(),
+    // One line on what it is, for timelines, peeks and the home.
+    tagline: z.string().optional(),
+    // Hover image, a path under src/assets/cv. Defaults to the first image
+    // the entry shows.
+    cover: z.string().optional(),
     startDate: z.string(),
     endDate: z.string().optional(),
     url: z.string().optional(),
@@ -57,7 +66,7 @@ const projectsCollection = defineCollection({
     tags: z.array(z.string()).default([]),
     category: z.enum(["personal", "university"]).default("personal"),
     featured: z.boolean().default(false),
-    status: z.enum(["active", "archived", "wip"]).default("active"),
+    status: z.enum(["active", "archived", "wip", "paused"]).default("active"),
     bullets: z.array(z.string()).optional(),
     cvRole: z.string().optional(),
     related: z.array(z.string()).optional(),
@@ -68,6 +77,7 @@ const educationCollection = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/education" }),
   schema: z.object({
     institution: z.string(),
+    short: z.string().optional(),
     degree: z.string(),
     area: z.string(),
     location: z.string(),
@@ -92,7 +102,9 @@ const certificationsCollection = defineCollection({
   }),
   schema: z.object({
     name: z.string(),
+    short: z.string().optional(),
     issuer: z.string(),
+    orgShort: z.string().optional(),
     issueDate: z.string(),
     expiryDate: z.string().optional(),
     credentialUrl: z.url().optional(),
@@ -108,7 +120,9 @@ const honorsCollection = defineCollection({
   loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/honors" }),
   schema: z.object({
     title: z.string(),
+    short: z.string().optional(),
     issuer: z.string(),
+    orgShort: z.string().optional(),
     date: z.string(),
     association: z.string().optional(),
     url: z.url().optional(),

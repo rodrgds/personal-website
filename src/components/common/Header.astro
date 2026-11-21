@@ -1,139 +1,213 @@
 ---
+import { SOCIALS } from "../../data/socials";
 import HeaderLink from "./HeaderLink.astro";
+import SocialIcon from "./SocialIcon.astro";
+
+const segment = Astro.url.pathname.replace(/\/$/, "").split("/")[1] ?? "";
+const path = segment ? `~/${segment}` : "~";
+const primary = SOCIALS.filter((social) => social.primary);
 ---
 
-<header>
-  <nav>
+<header class="site-bar" transition:name="site-bar" transition:animate="none">
+  <nav aria-label="Main">
+    <a class="prompt" href="/" aria-label="rgo.pt home" data-no-link-fx>
+      <span class="prompt-host">rgo.pt</span>
+      <span class="prompt-path" data-prompt-path>
+        :{path}
+      </span>
+      <span class="prompt-sign">$</span>
+      <span class="prompt-cursor" aria-hidden="true"></span>
+    </a>
     <div class="primary-links">
-      <HeaderLink href="/">Me</HeaderLink>
-      <HeaderLink href="/cv">CV</HeaderLink>
-      <HeaderLink href="/now">Now</HeaderLink>
-      <HeaderLink href="/uses">Uses</HeaderLink>
-      <HeaderLink href="/faves">Faves</HeaderLink>
+      <HeaderLink href="/">me</HeaderLink>
+      <HeaderLink href="/cv">cv</HeaderLink>
+      <HeaderLink href="/uses">uses</HeaderLink>
+      <HeaderLink href="/faves">faves</HeaderLink>
     </div>
-    <div class="flex">
-      <HeaderLink
-        class="hide-sometimes"
-        href="https://url.rgo.pt/mastodon"
-        target="_blank"
-        title="My Mastodon account"
+    <div class="bar-tools">
+      <button
+        type="button"
+        class="tty-button"
+        data-tty-open
+        title="Open the terminal (: or `)"
+        aria-label="Open the terminal"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 512 512"
-          ><path
-            d="M480,173.59c0-104.13-68.26-134.65-68.26-134.65C377.3,23.15,318.2,16.5,256.8,16h-1.51c-61.4.5-120.46,7.15-154.88,22.94,0,0-68.27,30.52-68.27,134.65,0,23.85-.46,52.35.29,82.59C34.91,358,51.11,458.37,145.32,483.29c43.43,11.49,80.73,13.89,110.76,12.24,54.47-3,85-19.42,85-19.42l-1.79-39.5s-38.93,12.27-82.64,10.77c-43.31-1.48-89-4.67-96-57.81a108.44,108.44,0,0,1-1-14.9,558.91,558.91,0,0,0,96.39,12.85c32.95,1.51,63.84-1.93,95.22-5.67,60.18-7.18,112.58-44.24,119.16-78.09C480.84,250.42,480,173.59,480,173.59ZM399.46,307.75h-50V185.38c0-25.8-10.86-38.89-32.58-38.89-24,0-36.06,15.53-36.06,46.24v67H231.16v-67c0-30.71-12-46.24-36.06-46.24-21.72,0-32.58,13.09-32.58,38.89V307.75h-50V181.67q0-38.65,19.75-61.39c13.6-15.15,31.4-22.92,53.51-22.92,25.58,0,44.95,9.82,57.75,29.48L256,147.69l12.45-20.85c12.81-19.66,32.17-29.48,57.75-29.48,22.11,0,39.91,7.77,53.51,22.92Q399.5,143,399.46,181.67Z"
-          ></path>
-        </svg>
-      </HeaderLink>
-      <HeaderLink
-        class="hide-sometimes"
-        href="https://url.rgo.pt/x"
+        :tty
+      </button>
+      {primary.map((social) => (
+        <a
+          class="icon-link"
+          href={social.url}
+          target="_blank"
+          rel="me noopener noreferrer"
+          title={`${social.label} ${social.handle}`}
+          aria-label={social.label}
+          data-no-link-fx
+        >
+          <SocialIcon name={social.icon_name} />
+        </a>
+      ))}
+      <a
+        class="icon-link"
+        href="/rss.xml"
         target="_blank"
-        title="My X account"
+        title="RSS feed for the blog"
+        aria-label="RSS feed"
+        data-no-link-fx
       >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
-          ></path>
-        </svg>
-      </HeaderLink>
-      <HeaderLink
-        class="hide-sometimes"
-        href="https://url.rgo.pt/github"
-        target="_blank"
-        title="My GitHub account"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          ><path
-            d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
-          ></path>
-        </svg>
-      </HeaderLink>
-      <HeaderLink href="/rss.xml" target="_blank" title="My Blog's RSS Feed">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          ><path
-            d="M6.503 20.752c0 1.794-1.456 3.248-3.251 3.248-1.796 0-3.252-1.454-3.252-3.248 0-1.794 1.456-3.248 3.252-3.248 1.795.001 3.251 1.454 3.251 3.248zm-6.503-12.572v4.811c6.05.062 10.96 4.966 11.022 11.009h4.817c-.062-8.71-7.118-15.758-15.839-15.82zm0-3.368c10.58.046 19.152 8.594 19.183 19.188h4.817c-.03-13.231-10.755-23.954-24-24v4.812z"
-          ></path>
-        </svg>
-      </HeaderLink>
+        <SocialIcon name="rss" />
+      </a>
     </div>
   </nav>
 </header>
 <style>
-  header {
-    padding: 2rem 0 3.5rem;
+  .site-bar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    margin-bottom: 2.4rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--background-color);
   }
 
   nav {
     display: flex;
-    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.2rem;
     align-items: center;
-    gap: 1rem;
+  }
+
+  .prompt {
+    display: inline-flex;
+    align-items: center;
+    color: var(--tc-host);
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-decoration: none;
+    text-shadow: none;
+    white-space: nowrap;
+  }
+
+  .prompt:hover {
+    text-decoration: none;
+  }
+
+  .prompt-path {
+    color: var(--flexoki-blue);
+    font-weight: 500;
+  }
+
+  .prompt-sign {
+    margin-left: 0.15rem;
+    color: var(--gray-color);
+    font-weight: 400;
+  }
+
+  .prompt-cursor {
+    display: inline-block;
+    width: 0.55em;
+    height: 1em;
+    margin-left: 0.35rem;
+    background: var(--accent);
+    animation: prompt-blink 1s steps(1) infinite;
+  }
+
+  @keyframes prompt-blink {
+    50% {
+      opacity: 0;
+    }
   }
 
   .primary-links {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.95rem;
+    gap: 0.2rem;
   }
 
-  .flex {
+  .bar-tools {
     display: flex;
     align-items: center;
-    gap: 0.2rem;
-    color: var(--link-color);
+    gap: 0.15rem;
+    margin-left: auto;
+    color: var(--gray-color);
   }
 
-  svg {
-    width: 1.18rem;
-    height: 1.18rem;
-    fill: currentColor;
-  }
-
-  .flex :global(a) {
+  .icon-link {
     display: inline-grid;
     place-items: center;
     width: 1.75rem;
     height: 1.75rem;
-    color: var(--link-color);
+    color: var(--gray-color);
+    text-decoration: none;
+    text-shadow: none;
+  }
+
+  .icon-link :global(.social-icon) {
+    width: 0.95rem;
+    height: 0.95rem;
+    fill: currentColor;
+  }
+
+  .icon-link:hover,
+  .icon-link:focus-visible {
+    background: var(--surface-hover);
+    color: var(--heading-color);
+  }
+
+  .tty-button {
+    padding: 0 0.35rem;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--text-color);
     font-family: var(--font-family);
-    font-size: 1rem;
-    line-height: 1;
+    font-size: 0.74rem;
+    line-height: 1.6;
+    cursor: pointer;
   }
 
-  .flex :global(a:hover),
-  .flex :global(a:focus-visible) {
-    color: var(--link-color);
+  .tty-button {
+    margin-right: 0.35rem;
+    border-color: var(--tc-host);
+    color: var(--tc-host);
   }
 
-  .hide-sometimes {
-    display: none;
+  .tty-button:hover,
+  .tty-button:focus-visible {
+    background: var(--tc-host);
+    color: var(--background-color);
   }
 
-  @media (min-width: 400px) {
-    .hide-sometimes {
-      display: inline;
+  /* Fixed prompt width so the nav never shifts when the path changes. */
+  @media (min-width: 521px) {
+    .prompt {
+      min-width: 17ch;
     }
   }
 
   @media (max-width: 520px) {
-    header {
-      padding: 1.4rem 0 2.5rem;
+    .site-bar {
+      margin-bottom: 1.6rem;
     }
 
-    nav {
-      align-items: flex-start;
+    .prompt-path {
+      display: none;
+    }
+
+    .bar-tools {
+      margin-left: 0;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .bar-tools .icon-link:last-child {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .prompt-cursor {
+      animation: none;
     }
   }
 </style>

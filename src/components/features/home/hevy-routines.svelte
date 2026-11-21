@@ -231,20 +231,19 @@
       workout.endTime,
     )}
     <li class="workout-item">
-      <div class="workout-title">{workout.title}</div>
-      <div class="workout-date">
-        {formatDate(workout.startTime)} • {getRelativeTime(workout.startTime)}
-        {#if duration}
-          • {duration}
-        {/if}
-      </div>
+      <span class="workout-date">{formatDate(workout.startTime).toLowerCase()}</span>
+      <span class="workout-title">{workout.title.toLowerCase()}</span>
+      <span class="workout-meta"
+        >{getRelativeTime(workout.startTime).toLowerCase()}{duration
+          ? ` · ${duration}`
+          : ""}</span
+      >
     </li>
   {/snippet}
 
   {#if loading}
     <div class="loading">
-      <div class="spinner"></div>
-      <p>Loading routines...</p>
+      <p><span class="ascii-spinner" aria-hidden="true">⠋</span> loading routines...</p>
     </div>
   {:else if error}
     <div class="error">
@@ -252,13 +251,6 @@
       <button onclick={loadRoutines} class="retry-button">Retry</button>
     </div>
   {:else}
-    <div class="data-source">
-      <img src="/logos/hevy.png" alt="Hevy" class="source-logo" />
-      <span class="source-text"
-        >Data automatically tracked from my Hevy account</span
-      >
-    </div>
-
     {#if stats}
       <div class="workout-overview">
         <MuscleHeatmap
@@ -268,9 +260,9 @@
         />
         {#if stats.recentWorkouts && stats.recentWorkouts.length > 0}
           <section class="recent-workouts-panel" aria-labelledby="recent-workouts-title">
-            <h3 id="recent-workouts-title">Recent workouts</h3>
+            <h3 id="recent-workouts-title">tail -n 5 workouts.log</h3>
             <ul class="recent-workouts">
-              {#each stats.recentWorkouts.slice(0, 3) as workout (workout.startTime)}
+              {#each stats.recentWorkouts.slice(0, 5) as workout (workout.startTime)}
                 {@render WorkoutRow(workout)}
               {/each}
             </ul>
@@ -281,7 +273,7 @@
 
     {#if routines.length === 0}
       <div class="empty">
-        <p>No routines in the "Current" folder right now.</p>
+        <p>ls: ~/routines/current: empty right now</p>
       </div>
     {:else}
       <div class="routines-masonry">
@@ -289,7 +281,7 @@
           <div class="masonry-column">
             {#each column as routine (routine.id)}
               <div class="routine-card">
-                <h3>{routine.title}</h3>
+                <h3>{routine.title.toLowerCase()}</h3>
                 {#if routine.exercises && routine.exercises.length > 0}
                   <div class="exercises">
                     {#each routine.exercises as exercise, exIdx (
@@ -350,214 +342,131 @@
 
 <style>
   .hevy-routines {
-    width: 100%;
+    font-size: 0.8rem;
   }
 
-  .data-source {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
-    background: rgba(0, 0, 0, 0.02);
-    border-radius: 0.5rem;
-    border: 1px solid var(--border-color, #e5e5e5);
-    font-size: 0.875rem;
-    color: var(--text-muted);
-    margin-bottom: 1rem;
+  .loading p,
+  .empty p {
+    margin: 0;
+    color: var(--gray-color);
   }
 
-  .source-logo {
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
-  }
-
-  .source-text {
-    flex: 1;
-  }
-
-  .loading,
-  .error,
-  .empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 3rem 1rem;
-    text-align: center;
-  }
-
-  .spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid rgba(0, 0, 0, 0.1);
-    border-left-color: var(--link-color);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    margin-bottom: 1rem;
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-
-  .error {
-    color: var(--error);
+  .error p {
+    margin: 0 0 0.5rem;
+    color: var(--flexoki-red);
   }
 
   .retry-button {
-    margin-top: 1rem;
-    padding: 0.5rem 1rem;
-    background: var(--link-color);
-    color: white;
-    border: none;
-    border-radius: 0.5rem;
+    padding: 0 0.3rem;
+    border: 0;
+    background: none;
+    color: var(--link-color);
+    font: inherit;
     cursor: pointer;
-    font-size: 1rem;
-    transition: opacity 0.2s;
   }
 
-  .retry-button:hover {
-    opacity: 0.9;
+  .retry-button::before {
+    content: "[";
   }
 
-  .empty {
-    gap: 0.5rem;
+  .retry-button::after {
+    content: "]";
   }
 
   .workout-overview {
     display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(15rem, 0.65fr);
-    align-items: center;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 1rem;
+    align-items: start;
+    margin-bottom: 1rem;
   }
 
-  .recent-workouts-panel {
-    display: flex;
-    flex-direction: column;
+  .workout-overview > :global(*) {
     min-width: 0;
   }
 
-  .recent-workouts-panel h3 {
-    margin: 0 0 0.35rem;
+  .recent-workouts-panel h3,
+  .routine-card h3 {
+    margin: 0 0 0.4rem;
+    color: var(--gray-color);
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 400;
+  }
+
+  .routine-card h3 {
     color: var(--heading-color);
-    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  .routine-card h3::before {
+    color: var(--tc-heading);
+    content: "## ";
   }
 
   .recent-workouts {
     margin: 0;
     padding: 0;
-    border-top: 1px solid var(--border-color);
     list-style: none;
   }
 
   .workout-item {
-    padding: 0.85rem 0;
-    border-bottom: 1px solid var(--border-color);
-  }
-
-  .workout-title {
-    font-weight: 600;
-    font-size: 0.875rem;
-    margin-bottom: 0.25rem;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0 1ch;
+    margin: 0;
+    padding: 0.25rem 0;
+    border-bottom: 1px dashed var(--border-color);
   }
 
   .workout-date {
-    font-size: 0.75rem;
-    opacity: 0.7;
+    color: var(--tc-date);
   }
 
-  .dropdown-content {
-    position: absolute;
-    right: 0;
-    top: calc(100% + 0.5rem);
-    background: var(--background-color, #ffffff);
-    border: 1px solid var(--border-color, #e5e5e5);
-    border-radius: 0.375rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    padding: 0.5rem;
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+  .workout-title {
+    color: var(--heading-color);
   }
 
-  /* Masonry layout (CSS columns).
-     Real masonry stacking, no overlaps, minimal JS. */
+  .workout-meta {
+    grid-column: 2;
+    color: var(--gray-color);
+  }
+
   .routines-masonry {
     display: flex;
-    gap: 1.5rem;
+    gap: 1rem;
     align-items: flex-start;
-    width: 100%;
   }
 
   .masonry-column {
     display: flex;
-    flex-direction: column;
     flex: 1;
-    min-width: 0;
+    flex-direction: column;
     gap: 1rem;
+    min-width: 0;
   }
 
   .routine-card {
-    display: block;
-    width: 100%;
-    position: relative;
-    z-index: 0;
-    overflow: visible;
-    background: rgba(0, 0, 0, 0.02);
-    border: 1px solid var(--border-color, #e5e5e5);
-    border-radius: 0.5rem;
-    padding: 0.75rem;
-    transition: all 0.2s;
-  }
-
-  .routine-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-
-  /* Ensure overlays in a card can render above neighboring cards/columns.
-     This prevents hover/focus flicker when a dropdown overlaps another card. */
-  .routine-card:hover,
-  .routine-card:focus-within {
-    z-index: 50;
-  }
-
-  .exercise-item[open] {
-    position: relative;
-    z-index: 60;
-  }
-
-  .routine-card h3 {
-    margin: 0 0 0.5rem 0;
-    font-size: 1.125rem;
-    color: var(--heading-color);
+    padding: 0.6rem 0.7rem;
+    border: 1px solid var(--border-color);
+    background: var(--background-color);
   }
 
   .exercises {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
   }
 
   .exercise-item {
     position: relative;
-    padding: 0.5rem;
-    background: rgba(0, 0, 0, 0.02);
-    border-radius: 0.375rem;
-    border: 1px solid rgba(0, 0, 0, 0.05);
   }
 
   .exercise-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    gap: 1ch;
+    align-items: baseline;
+    padding: 0.15rem 0.2rem;
     cursor: pointer;
-    user-select: none;
     list-style: none;
   }
 
@@ -565,147 +474,82 @@
     display: none;
   }
 
+  .exercise-header:hover,
+  .exercise-item[open] > .exercise-header {
+    background: var(--surface-hover);
+  }
+
   .exercise-title {
-    font-weight: 600;
-    font-size: 0.9375rem;
-    color: var(--heading-color);
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text-color);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* A dotted leader runs from the name to the set count. */
+  .exercise-header::after {
+    flex: 1;
+    order: 1;
+    border-bottom: 1px dotted var(--border-color);
+    content: "";
   }
 
   .set-count {
-    font-size: 0.8125rem;
-    color: var(--link-color);
-    font-weight: 600;
-    opacity: 0.85;
+    flex: none;
+    order: 2;
+    color: var(--tc-date);
+  }
+
+  .dropdown-content {
+    margin: 0.2rem 0 0.4rem 2ch;
+    padding-left: 1ch;
+    border-left: 1px solid var(--tc-path);
   }
 
   .exercise-notes {
-    font-size: 0.8125rem;
-    font-style: italic;
-    opacity: 0.75;
-    padding: 0.25rem 0.375rem;
-    background: rgba(0, 0, 0, 0.02);
-    border-radius: 0.25rem;
+    margin-bottom: 0.3rem;
+    color: var(--gray-color);
+    white-space: pre-wrap;
   }
 
-  .exercise-dropdown {
-    min-width: 220px;
-    max-width: 280px;
+  .exercise-notes::before {
+    content: "# ";
   }
 
   .sets-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 0.375rem;
-  }
-
-  @media (max-width: 768px) {
-    /* Render exercise details inline on mobile to keep them inside the modal. */
-    .exercise-item > .exercise-dropdown.dropdown-content {
-      position: static;
-      top: auto;
-      right: auto;
-      box-shadow: none;
-      margin-top: 0.5rem;
-    }
-
-    .exercise-dropdown {
-      min-width: 0;
-      max-width: none;
-    }
-
+    display: grid;
+    gap: 0.05rem;
   }
 
   .set-item {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.375rem 0.5rem;
-    background: rgba(255, 255, 255, 0.5);
-    border-radius: 0.25rem;
-    font-size: 0.8125rem;
+    gap: 1ch;
   }
 
   .set-number {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    background: var(--link-color);
-    color: white;
-    border-radius: 50%;
-    font-weight: 600;
-    font-size: 0.6875rem;
-    flex-shrink: 0;
+    width: 2ch;
+    color: var(--gray-color);
   }
 
   .set-details {
-    flex: 1;
-    font-weight: 500;
+    color: var(--text-color);
   }
 
   .set-rpe {
-    font-size: 0.6875rem;
-    padding: 0.125rem 0.375rem;
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 0.25rem;
-    font-weight: 600;
+    margin-left: auto;
+    color: var(--tc-tag);
   }
 
   .no-exercises {
-    font-size: 0.875rem;
-    color: #9ca3af;
-    font-style: italic;
-    text-align: center;
-    padding: 2rem;
+    margin: 0;
+    color: var(--gray-color);
   }
 
   @media (max-width: 768px) {
     .workout-overview {
-      grid-template-columns: 1fr;
-    }
-
-    .recent-workouts-panel {
-      order: -1;
-    }
-  }
-
-  @media (prefers-color-scheme: dark) {
-    .data-source {
-      background: rgba(255, 255, 255, 0.03);
-      border-color: rgba(255, 255, 255, 0.1);
-    }
-
-
-    .routine-card {
-      background: rgba(255, 255, 255, 0.03);
-      border-color: rgba(255, 255, 255, 0.1);
-    }
-
-    .routine-card:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    }
-
-    .spinner {
-      border-color: rgba(255, 255, 255, 0.1);
-      border-left-color: var(--link-color);
-    }
-
-    .exercise-item {
-      background: rgba(255, 255, 255, 0.02);
-      border-color: rgba(255, 255, 255, 0.05);
-    }
-
-    .exercise-notes {
-      background: rgba(255, 255, 255, 0.02);
-    }
-
-    .set-item {
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    .set-rpe {
-      background: rgba(255, 255, 255, 0.1);
+      grid-template-columns: minmax(0, 1fr);
     }
   }
 </style>

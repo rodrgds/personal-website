@@ -17,21 +17,6 @@ import type {
 } from "./types";
 import type { CVProfile } from "./profiles";
 
-type CVCollectionKind =
-  | "experience"
-  | "projects"
-  | "education"
-  | "honors"
-  | "certifications";
-
-const CV_ENTRY_PREFIXES = {
-  experience: "experience",
-  projects: "project",
-  education: "education",
-  honors: "honor",
-  certifications: "certification",
-} as const satisfies Record<CVCollectionKind, string>;
-
 function normalizeBullets(value: string[] | undefined): string[] {
   if (!value || value.length === 0) return [];
   return value.filter((item) => item.trim().length > 0);
@@ -72,27 +57,6 @@ function sortByDateDesc<T extends { date: string }>(
 }
 
 type EntryWithRelated = { slug: string; title: string; related?: string[] };
-
-export function getCVEntryHref(data: CVCollectionsData, slug: string): string {
-  const collectionsByKind = {
-    experience: data.experience,
-    projects: data.projects,
-    education: data.education,
-    honors: data.honors,
-    certifications: data.certifications,
-  } satisfies Record<CVCollectionKind, { id: string }[]>;
-  // SAFETY: the object above lists every CV collection kind exactly once, so
-  // its entries keep that order and pairing when Object.entries flattens it.
-  const collectionKey = (
-    Object.entries(collectionsByKind) as [CVCollectionKind, { id: string }[]][]
-  ).find(([, entries]) => entries.some((entry) => entry.id === slug))?.[0];
-
-  if (!collectionKey) {
-    return `#${slug}`;
-  }
-
-  return `#${CV_ENTRY_PREFIXES[collectionKey]}-${slug}`;
-}
 
 export function getCVRelatedItems(
   data: CVCollectionsData,

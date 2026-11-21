@@ -5,7 +5,9 @@ const SECURITY_HEADERS = {
   "Permissions-Policy": "camera=(), geolocation=(), microphone=()",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "X-Content-Type-Options": "nosniff",
-  "X-Frame-Options": "DENY",
+  // Other sites may not frame these pages; the home's 3D boot frames the
+  // page itself on the monitor before handing over to it.
+  "X-Frame-Options": "SAMEORIGIN",
 } as const;
 
 const EDU_CONTENT_SECURITY_POLICY = [

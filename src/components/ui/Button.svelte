@@ -29,7 +29,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 0.28rem;
+    border-radius: 0;
     font-weight: 500;
     transition:
       background-color 0.16s ease,

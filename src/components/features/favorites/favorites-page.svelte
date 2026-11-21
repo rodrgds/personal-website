@@ -1,1261 +1,1150 @@
-<script>
-  import {
-    ArrowsRightLeftIcon,
-    BookOpenIcon,
-    ChatBubbleLeftIcon,
-    ChevronDownIcon,
-    ChevronRightIcon,
-    DocumentTextIcon,
-    FilmIcon,
-    MicrophoneIcon,
-    PlayIcon,
-    RssIcon,
-    SparklesIcon,
-    StarIcon as StarOutlineIcon,
-    TvIcon,
-  } from "heroicons-svelte/24/outline";
-  import { StarIcon as StarSolidIcon } from "heroicons-svelte/24/solid";
-  import { afterUpdate, onMount } from "svelte";
-  import { SvelteSet } from "svelte/reactivity";
+<script lang="ts">
+  import { onMount } from "svelte";
+  import { episodeLines } from "../../../lib/favorites/episodes";
 
-  export let sections;
+  import type {
+    FavoriteItem,
+    FavoriteSection,
+  } from "../../../lib/favorites/types";
 
-  // Reactive state
-  let activeFilters = new SvelteSet();
-  let expandedItems = new SvelteSet();
-  let filterLogic = "AND";
-  let isMobile = false;
-  let sortBy = "alpha";
-  let mounted = false;
-  let collapsedSections = new SvelteSet();
-  let slotMeasureFrame;
-
-  const sectionIcons = {
-    movies: FilmIcon,
-    shows: TvIcon,
-    podcasts: MicrophoneIcon,
-    books: BookOpenIcon,
-    blogs: RssIcon,
-    articles: DocumentTextIcon,
-    videos: PlayIcon,
-    cool: SparklesIcon,
-  };
-
-  $: showClearButton = activeFilters.size > 0;
-
-  // Get all available categories
-  $: allCategories = (() => {
-    const categories = new SvelteSet();
-    sections.forEach((section) => {
-      section.items.forEach((item) => {
-        if (item.categories) {
-          item.categories.forEach((cat) => categories.add(cat));
-        }
-      });
-    });
-    return Array.from(categories).sort();
-  })();
-
-  function toggleSection(section) {
-    const newCollapsed = new SvelteSet(collapsedSections);
-    if (newCollapsed.has(section)) newCollapsed.delete(section);
-    else newCollapsed.add(section);
-    collapsedSections = newCollapsed;
+  interface Props {
+    sections: FavoriteSection[];
   }
 
-  $: visibleSections = (() => {
-    const visible = [];
+  type MatchMode = "all" | "any";
+  type SortKey = "rating" | "title" | "year";
 
-    for (const section of sections) {
-      const visibleItems = section.items.filter((item) => {
-        if (activeFilters.size === 0) return true;
-        if (filterLogic === "AND") {
-          return Array.from(activeFilters).every((filter) =>
-            (item.categories || []).includes(filter),
-          );
-        } else {
-          return Array.from(activeFilters).some((filter) =>
-            (item.categories || []).includes(filter),
-          );
-        }
-      });
+  interface Segment {
+    text: string;
+    kind: "cmd" | "flag" | "string" | "pipe";
+  }
 
-      const sortedItems = [...visibleItems].sort((a, b) => {
-        switch (sortBy) {
-          case "alpha":
-            return a.title.localeCompare(b.title);
-          case "alpha-desc":
-            return b.title.localeCompare(a.title);
-          case "rating":
-            return (a.rating || 0) - (b.rating || 0);
-          case "rating-desc":
-            return (b.rating || 0) - (a.rating || 0);
-          default:
-            return 0;
-        }
-      });
+  interface SortOption {
+    key: SortKey;
+    label: string;
+  }
 
-      if (sortedItems.length > 0) {
-        visible.push({ ...section, items: sortedItems });
+  const SORTS: SortOption[] = [
+    { key: "rating", label: "rating" },
+    { key: "title", label: "a-z" },
+    { key: "year", label: "year" },
+  ];
+
+  let { sections }: Props = $props();
+
+  // Plain Sets swapped for new ones on every change: reliable reactivity in
+  // dev and production alike (SvelteSet stopped updating in Vite dev).
+  let activeTags = $state.raw(new Set<string>());
+  let collapsed = $state.raw(new Set<string>());
+
+  function toggled(set: Set<string>, value: string): Set<string> {
+    const next = new Set(set);
+    if (next.has(value)) next.delete(value);
+    else next.add(value);
+    return next;
+  }
+  let openItem = $state<string | null>(null);
+  let match = $state<MatchMode>("all");
+  let sortKey = $state<SortKey>("rating");
+  let query = $state("");
+  let touch = $state(false);
+  let tagsOpen = $state(false);
+
+  const allTags = $derived(
+    [
+      ...new Set(
+        sections.flatMap((section) =>
+          section.items.flatMap((item) => item.categories),
+        ),
+      ),
+    ].sort((a, b) => a.localeCompare(b)),
+  );
+
+  const totalCount = $derived(
+    sections.reduce((sum, section) => sum + section.items.length, 0),
+  );
+
+  const visible = $derived(
+    sections
+      .map((section) => ({
+        ...section,
+        total: section.items.length,
+        items: section.items.filter(matches).sort(compare),
+      }))
+      .filter((section) => section.items.length > 0),
+  );
+
+  const shownCount = $derived(
+    visible.reduce((sum, section) => sum + section.items.length, 0),
+  );
+
+  const filtered = $derived(activeTags.size > 0 || query.trim() !== "");
+
+  const command = $derived.by((): Segment[] => {
+    const segments: Segment[] = [];
+    const tags = [...activeTags];
+    const needle = query.trim();
+    const stages: Segment[][] = [];
+    if (tags.length > 0 && match === "any") {
+      stages.push([
+        { text: "grep", kind: "cmd" },
+        { text: "-E", kind: "flag" },
+        { text: `"${tags.join("|")}"`, kind: "string" },
+      ]);
+    } else {
+      for (const tag of tags) {
+        stages.push([
+          { text: "grep", kind: "cmd" },
+          { text: "-w", kind: "flag" },
+          { text: `"${tag}"`, kind: "string" },
+        ]);
       }
     }
-
-    return visible;
-  })();
-
-  // Functions
-  function initFromURL() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const tagsParam = urlParams.get("tags");
-    if (tagsParam) {
-      activeFilters = new SvelteSet(tagsParam.split(",").filter(Boolean));
+    if (needle) {
+      stages.push([
+        { text: "grep", kind: "cmd" },
+        { text: "-i", kind: "flag" },
+        { text: `"${needle}"`, kind: "string" },
+      ]);
     }
+    const first = stages[0];
+    if (first) first.push({ text: "faves", kind: "string" });
+    else stages.unshift([{ text: "cat", kind: "cmd" }, { text: "faves", kind: "string" }]);
+    stages.push([
+      { text: "sort", kind: "cmd" },
+      { text: "-k", kind: "flag" },
+      { text: sortKey === "title" ? "title" : sortKey, kind: "string" },
+    ]);
+    stages.forEach((stage, index) => {
+      if (index > 0) segments.push({ text: "|", kind: "pipe" });
+      segments.push(...stage);
+    });
+    return segments;
+  });
+
+  function matches(item: FavoriteItem): boolean {
+    const tags = [...activeTags];
+    if (tags.length > 0) {
+      const ok =
+        match === "all"
+          ? tags.every((tag) => item.categories.includes(tag))
+          : tags.some((tag) => item.categories.includes(tag));
+      if (!ok) return false;
+    }
+    const needle = query.trim().toLowerCase();
+    if (!needle) return true;
+    return [item.title, item.author, item.year, item.comment, ...item.categories]
+      .filter((part): part is string => Boolean(part))
+      .some((part) => part.toLowerCase().includes(needle));
   }
 
-  function updateURL() {
+  function compare(a: FavoriteItem, b: FavoriteItem): number {
+    if (sortKey === "title") return a.title.localeCompare(b.title);
+    if (sortKey === "year") {
+      const diff = Number(b.year ?? 0) - Number(a.year ?? 0);
+      if (diff !== 0) return diff;
+    } else {
+      const diff = b.rating - a.rating;
+      if (diff !== 0) return diff;
+    }
+    return a.title.localeCompare(b.title);
+  }
+
+  function syncUrl(): void {
     const url = new URL(window.location.href);
-    if (activeFilters.size > 0) {
-      url.searchParams.set("tags", Array.from(activeFilters).join(","));
+    if (activeTags.size > 0) {
+      url.searchParams.set("tags", [...activeTags].join(","));
     } else {
       url.searchParams.delete("tags");
     }
-    window.history.replaceState({}, "", url.toString());
+    window.history.replaceState(window.history.state, "", url);
   }
 
-  function toggleFilter(category) {
-    if (!category) return;
-
-    const newFilters = new SvelteSet(activeFilters);
-    if (newFilters.has(category)) {
-      newFilters.delete(category);
-    } else {
-      newFilters.add(category);
-    }
-    activeFilters = newFilters;
-    updateURL();
+  function toggleTag(tag: string): void {
+    activeTags = toggled(activeTags, tag);
+    openItem = null;
+    syncUrl();
   }
 
-  function clearFilters() {
-    activeFilters = new SvelteSet();
-    expandedItems = new SvelteSet();
-    updateURL();
+  function clearAll(): void {
+    activeTags = new Set();
+    query = "";
+    openItem = null;
+    syncUrl();
   }
 
-  function toggleItemExpanded(itemId) {
-    // Only allow expanding on mobile
-    if (!isMobile) return;
-
-    const newExpanded = new SvelteSet(expandedItems);
-    if (newExpanded.has(itemId)) {
-      newExpanded.delete(itemId);
-    } else {
-      newExpanded.clear(); // Only one item expanded at a time
-      newExpanded.add(itemId);
-    }
-    expandedItems = newExpanded;
+  function toggleSection(id: string): void {
+    collapsed = toggled(collapsed, id);
   }
 
-  function handleItemClick(event, itemId) {
-    // Don't expand if clicking on a link or tag
-    if (event.target.closest("a") || event.target.closest(".tag-pill")) {
-      return;
-    }
-    // Only handle clicks on mobile
-    if (isMobile) {
-      toggleItemExpanded(itemId);
-    }
+  function toggleOpen(id: string): void {
+    openItem = openItem === id ? null : id;
   }
 
-  function handleTagClick(event, category) {
-    event.preventDefault();
-    event.stopPropagation();
-    toggleFilter(category);
-  }
-
-  function handleOutsideClick(event) {
-    if (
-      !event.target.closest(".favorite-item") &&
-      !event.target.closest(".filter-controls")
-    ) {
-      expandedItems = new SvelteSet();
-    }
-  }
-
-  function detectMobile() {
-    isMobile = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
-  }
-
-  function syncFavoriteSlotHeights() {
-    if (isMobile) return;
-
-    const slots = document.querySelectorAll(".favorite-item-slot");
-    slots.forEach((slot) => slot.classList.add("measuring"));
-
-    slots.forEach((slot) => {
-      const card = slot.querySelector(".favorite-item");
-      if (!(card instanceof HTMLElement) || !(slot instanceof HTMLElement)) {
-        return;
-      }
-
-      slot.style.setProperty(
-        "--favorite-slot-height",
-        `${card.getBoundingClientRect().height}px`,
-      );
-    });
-
-    slots.forEach((slot) => slot.classList.remove("measuring"));
-  }
-
-  function scheduleFavoriteSlotSync() {
-    cancelAnimationFrame(slotMeasureFrame);
-    slotMeasureFrame = requestAnimationFrame(syncFavoriteSlotHeights);
-  }
-
-  function formatCategoryName(category) {
-    return category
-      .split("-")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
-  }
-
-  function isTagHighlighted(category, itemId) {
-    return (
-      activeFilters.has(category) &&
-      (expandedItems.has(itemId) || activeFilters.size > 0)
-    );
-  }
-
-  function goToRandomFavorite() {
-    const itemsWithUrl = sections
+  function openRandom(): void {
+    const linked = sections
       .flatMap((section) => section.items)
-      .filter((item) => !!item.url);
-
-    if (itemsWithUrl.length === 0) return;
-
-    const randomItem =
-      itemsWithUrl[Math.floor(Math.random() * itemsWithUrl.length)];
-
-    window.open(randomItem.url, "_blank", "noopener,noreferrer");
+      .filter((item) => item.url);
+    const pick = linked[Math.floor(Math.random() * linked.length)];
+    if (pick?.url) window.open(pick.url, "_blank", "noopener,noreferrer");
   }
 
-  // Lifecycle
-  afterUpdate(scheduleFavoriteSlotSync);
+  function hasDetail(item: FavoriteItem): boolean {
+    return Boolean(item.comment) || (item.favoriteEpisodes?.length ?? 0) > 0;
+  }
+
+  function meta(item: FavoriteItem): string {
+    return [item.author, item.year].filter(Boolean).join(", ");
+  }
+
+  function host(url: string): string {
+    try {
+      return new URL(url).hostname.replace(/^www\./, "");
+    } catch {
+      return url;
+    }
+  }
+
+  /** A site's favicon through DuckDuckGo's icon service (no tracking cookies). */
+  function siteIcon(url: string | undefined): string | undefined {
+    if (!url) return undefined;
+    try {
+      return `https://icons.duckduckgo.com/ip3/${new URL(url).hostname}.ico`;
+    } catch {
+      return undefined;
+    }
+  }
+
+  function thumb(item: FavoriteItem): string | undefined {
+    return item.image ?? siteIcon(item.url);
+  }
+
+  function hideBroken(event: Event): void {
+    if (event.currentTarget instanceof HTMLElement) {
+      event.currentTarget.style.visibility = "hidden";
+    }
+  }
 
   onMount(() => {
-    mounted = true;
-    initFromURL();
-    detectMobile();
-    syncFavoriteSlotHeights();
-    document.addEventListener("click", handleOutsideClick);
-    const handleResize = () => {
-      detectMobile();
-      scheduleFavoriteSlotSync();
+    const tags = new URLSearchParams(window.location.search).get("tags");
+    if (tags) {
+      activeTags = new Set(tags.split(",").filter(Boolean));
+    }
+    const hover = window.matchMedia("(hover: none)");
+    const sync = (): void => {
+      touch = hover.matches;
     };
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      cancelAnimationFrame(slotMeasureFrame);
-      document.removeEventListener("click", handleOutsideClick);
-      window.removeEventListener("resize", handleResize);
-    };
+    sync();
+    hover.addEventListener("change", sync);
+    return () => hover.removeEventListener("change", sync);
   });
-
-  // Watch for changes to update URL
-  $: if (mounted && "window" in globalThis) {
-    updateURL();
-  }
 </script>
 
-<div class="favorites-container">
-  <div class="header-section compact">
-    <h1 class="handwritten-heading handwritten-heading--page">My Favorites</h1>
-    <p>
-      A curated collection of my favorite movies, shows, podcasts, books, blogs,
-      articles, videos, and cool stuff that have shaped my thinking. Saved here
-      to revisit as I get older.
-    </p>
-  </div>
-
-  <div class="filter-controls">
-    <div class="filter-header">
-      <div class="filter-title-row">
-        <h3>Filters & Sort</h3>
-        <button
-          class="surprise-btn"
-          on:click={goToRandomFavorite}
-          title="Visit a random favorite"
-        >
-          <ArrowsRightLeftIcon class="ui-icon" /> Surprise me
-        </button>
-      </div>
-      <div class="filter-options">
-        <div class="filter-logic">
-          <button
-            class="logic-btn"
-            class:active={filterLogic === "AND"}
-            on:click={() => (filterLogic = "AND")}
-            title="Show items that have ALL selected tags"
-          >
-            Match all
-          </button>
-          <button
-            class="logic-btn"
-            class:active={filterLogic === "OR"}
-            on:click={() => (filterLogic = "OR")}
-            title="Show items that have ANY of the selected tags"
-          >
-            Match any
-          </button>
-        </div>
-        <div class="sort-options">
-          <select bind:value={sortBy}>
-            <option value="alpha">A-Z</option>
-            <option value="alpha-desc">Z-A</option>
-            <option value="rating-desc">Rating: high to low</option>
-            <option value="rating">Rating: low to high</option>
-          </select>
-        </div>
-      </div>
-    </div>
-
-    <div class="filter-tags-container">
-      <div class="filter-tags">
-        {#each allCategories as category (category)}
-          <button
-            class="filter-chip"
-            class:active={activeFilters.has(category)}
-            on:click={() => toggleFilter(category)}
-          >
-            {formatCategoryName(category)}
-          </button>
-        {/each}
-      </div>
-    </div>
-
-    {#if showClearButton}
-      <button class="clear-btn" on:click={clearFilters}>Clear All</button>
+{#snippet label(item: FavoriteItem)}
+  <span class="rating" role="img" aria-label={`${item.rating} out of 5`}>
+    <span class="rating-on">{"★".repeat(item.rating)}</span><span
+      class="rating-off">{"☆".repeat(5 - item.rating)}</span
+    >
+  </span>
+  <span class="thumb">
+    {#if thumb(item)}
+      <img
+        src={thumb(item)}
+        alt=""
+        width="16"
+        height="16"
+        loading="lazy"
+        decoding="async"
+        referrerpolicy="no-referrer"
+        onerror={hideBroken}
+      />
     {/if}
-  </div>
+  </span>
+  <span class="name">
+    <span class="title">{item.title}</span>
+    {#if meta(item)}<span class="meta">{meta(item)}</span>{/if}
+  </span>
+{/snippet}
 
-  {#each visibleSections as { id: section, title: sectionTitle, items } (section)}
-    <section class="content-section">
-      <h2 class="section-title">
+<div class="favorites-container">
+  <header class="intro">
+    <h1 class="handwritten-heading handwritten-heading--page">faves</h1>
+    <p>
+      Movies, shows, podcasts, books, blogs and videos I come back to. Hover a
+      row to read why, or tap it on a phone.
+    </p>
+  </header>
+
+  <section class="win bar" data-no-vim aria-label="Filters">
+    <h2 class="win-title">
+      <span class="win-cmd">grep faves</span>
+      <span class="win-count" aria-live="polite">
+        {shownCount}{filtered ? ` of ${totalCount}` : ""} items
+      </span>
+    </h2>
+    <div class="win-body">
+      <p class="prompt">
+        <span class="ps">$</span>
+        {#each command as segment, index (index)}
+          <span class={segment.kind}>{segment.text}</span>{" "}
+        {/each}<span class="cursor" aria-hidden="true"></span>
+      </p>
+
+      <div class="field">
+        <span class="key">tags</span>
         <button
-          class:collapsed={collapsedSections.has(section)}
-          class="section-toggle"
-          on:click={() => toggleSection(section)}
-          aria-expanded={!collapsedSections.has(section)}
+          type="button"
+          class="chip chip-act tags-more"
+          aria-expanded={tagsOpen}
+          onclick={() => (tagsOpen = !tagsOpen)}
+          >{tagsOpen ? "less" : `all ${allTags.length}`}</button
         >
-          {#if collapsedSections.has(section)}
-            <ChevronRightIcon class="collapse-icon" />
-          {:else}
-            <ChevronDownIcon class="collapse-icon" />
-          {/if}
-          <span class="section-label">{sectionTitle}</span>
-          <span class="item-count">({items.length})</span>
-        </button>
-      </h2>
-      {#if !collapsedSections.has(section)}
-        <div class="items-list">
-          {#each items as item (item.id)}
-            {@const itemId = item.id}
-            {@const isExpanded = expandedItems.has(itemId)}
-            <div class="favorite-item-slot">
-              <div
-                class="favorite-item"
-                class:expanded={isExpanded}
-                on:click={(e) => handleItemClick(e, itemId)}
-                role="button"
-                tabindex="0"
-                on:keydown={(e) =>
-                  e.key === "Enter" && handleItemClick(e, itemId)}
-              >
-                <div class="item-image">
-                  {#if item.image}
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      class="item-img {section === 'books'
-                        ? 'aspect-book'
-                        : section === 'movies' || section === 'shows'
-                          ? 'aspect-poster'
-                          : 'aspect-square'}"
-                      loading="lazy"
-                    />
-                  {:else}
-                    <div class="item-icon">
-                      {#if item.icon}
-                        {item.icon}
-                      {:else}
-                        <svelte:component this={sectionIcons[section]} />
-                      {/if}
-                    </div>
-                  {/if}
-                </div>
-
-                <div class="item-content">
-                  <div class="item-header">
-                    <div class="title-with-indicators">
-                      <div class="title-and-meta">
-                        <h3 class="item-title">
-                          {#if item.url}
-                            <a
-                              href={item.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {item.title}
-                            </a>
-                          {:else}
-                            {item.title}
-                          {/if}
-                        </h3>
-                        <div class="item-meta">
-                          {#if item.author}<span class="author"
-                              >by {item.author}</span
-                            >{/if}
-                          {#if item.year}<span class="year">({item.year})</span
-                            >{/if}
-                        </div>
-                      </div>
-                      <div class="rating-container">
-                        {#if item.rating}
-                          <div class="rating-top" aria-label={`${item.rating} out of 5 stars`}>
-                            {#each Array(5) as _, index (index)}
-                              {#if index < item.rating}
-                                <StarSolidIcon />
-                              {:else}
-                                <StarOutlineIcon />
-                              {/if}
-                            {/each}
-                          </div>
-                        {/if}
-                        <div class="indicators">
-                          {#if item.comment}
-                            <span class="indicator" title="Has comment"
-                              ><ChatBubbleLeftIcon /></span
-                            >
-                          {/if}
-                          {#if section === "podcasts" && item.favoriteEpisodes}
-                            <span
-                              class="indicator"
-                              title="Has favorite episodes"
-                              ><StarSolidIcon /></span
-                            >
-                          {/if}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <p class="item-comment">
-                    {#if item.comment}
-                      {item.comment}
-                    {:else}
-                      <em>No comment</em>
-                    {/if}
-                  </p>
-
-                  {#if section === "podcasts" && item.favoriteEpisodes}
-                    <div class="favorite-episodes">
-                      <h4>Favorite Episodes:</h4>
-                      <ul>
-                        {#each item.favoriteEpisodes as episode (episode.number ?? episode.title)}
-                          <li>
-                            {#if episode.number}
-                              <strong
-                                >{episode.number}{episode.guest
-                                  ? ` - ${episode.guest}:`
-                                  : ":"}</strong
-                              >
-                              {episode.title}
-                            {:else}
-                              <strong>{episode.title}</strong>
-                            {/if}
-                          </li>
-                        {/each}
-                      </ul>
-                    </div>
-                  {/if}
-
-                  <div class="item-tags">
-                    <div class="tags-list">
-                      {#each item.categories || [] as category (category)}
-                        <button
-                          class="tag-pill"
-                          class:highlighted={isTagHighlighted(category, itemId)}
-                          data-tag={category}
-                          on:click={(e) => handleTagClick(e, category)}
-                        >
-                          {formatCategoryName(category)}
-                        </button>
-                      {/each}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+        <div class="chips chips-tags" class:chips-open={tagsOpen}>
+          {#each allTags as tag (tag)}
+            <button
+              type="button"
+              class="chip chip-tag"
+              class:on={activeTags.has(tag)}
+              aria-pressed={activeTags.has(tag)}
+              onclick={() => toggleTag(tag)}>{tag}</button
+            >
           {/each}
         </div>
+      </div>
+
+      <div class="field">
+        <span class="key">match</span>
+        <div class="chips chips-fit">
+          {#each ["all", "any"] as const as mode (mode)}
+            <button
+              type="button"
+              class="chip"
+              class:on={match === mode}
+              aria-pressed={match === mode}
+              onclick={() => (match = mode)}>{mode}</button
+            >
+          {/each}
+        </div>
+        <span class="key key-gap">sort</span>
+        <div class="chips chips-fit">
+          {#each SORTS as option (option.key)}
+            <button
+              type="button"
+              class="chip"
+              class:on={sortKey === option.key}
+              aria-pressed={sortKey === option.key}
+              onclick={() => (sortKey = option.key)}>{option.label}</button
+            >
+          {/each}
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="key" for="faves-query">grep -i</label>
+        <input
+          id="faves-query"
+          class="query"
+          type="text"
+          bind:value={query}
+          placeholder="title, author, note"
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+          enterkeyhint="search"
+        />
+        <div class="chips chips-end">
+          <button type="button" class="chip chip-act" onclick={openRandom}
+            >random</button
+          >
+          <button
+            type="button"
+            class="chip chip-act"
+            disabled={!filtered}
+            onclick={clearAll}>clear</button
+          >
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="shelves">
+  {#each visible as section (section.id)}
+    {@const folded = collapsed.has(section.id)}
+    <section class="win" id={section.id} aria-labelledby={`t-${section.id}`}>
+      <h2 class="win-title" id={`t-${section.id}`}>
+        <button
+          type="button"
+          class="win-toggle"
+          aria-expanded={!folded}
+          aria-controls={`rows-${section.id}`}
+          onclick={() => toggleSection(section.id)}
+        >
+          <span class="win-cmd"
+            >ls -l ~/faves/<span class="path">{section.id}</span></span
+          >
+          <span class="win-count"
+            >{section.items.length}{section.items.length !== section.total
+              ? ` of ${section.total}`
+              : ""}</span
+          >
+          <span class="win-fold" aria-hidden="true">{folded ? "[+]" : "[-]"}</span>
+        </button>
+      </h2>
+      {#if !folded}
+        <ul class="rows" id={`rows-${section.id}`}>
+          {#each section.items as item (item.id)}
+            {@const detail = hasDetail(item)}
+            {@const isOpen = openItem === item.id}
+            <li class:is-open={isOpen}>
+              <div
+                class="row"
+                data-peek-title={item.title}
+                data-peek-meta={meta(item) || undefined}
+                data-peek-body={item.comment}
+                data-peek-episodes={episodeLines(item.favoriteEpisodes)}
+                data-peek-rating={item.rating}
+                data-peek-image={item.image}
+                data-peek-label={`${section.id}/`}
+              >
+                {#if touch && detail}
+                  <button
+                    type="button"
+                    class="row-main"
+                    aria-expanded={isOpen}
+                    aria-controls={`d-${item.id}`}
+                    onclick={() => toggleOpen(item.id)}
+                  >
+                    {@render label(item)}
+                  </button>
+                {:else if item.url}
+                  <a
+                    class="row-main"
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-no-link-fx
+                  >
+                    {@render label(item)}
+                  </a>
+                {:else}
+                  <div class="row-main">{@render label(item)}</div>
+                {/if}
+
+                {#if detail}
+                  <button
+                    type="button"
+                    class="row-mark"
+                    aria-expanded={isOpen}
+                    aria-controls={`d-${item.id}`}
+                    aria-label={`Note on ${item.title}`}
+                    onclick={() => toggleOpen(item.id)}>#</button
+                  >
+                {:else}
+                  <span class="row-mark" aria-hidden="true"></span>
+                {/if}
+
+                <span class="row-tags">
+                  {#each item.categories.slice(0, 3) as tag (tag)}
+                    <button
+                      type="button"
+                      class="row-tag"
+                      class:on={activeTags.has(tag)}
+                      onclick={() => toggleTag(tag)}>{tag}</button
+                    >
+                  {/each}
+                </span>
+              </div>
+
+              {#if isOpen && detail}
+                <div class="detail" id={`d-${item.id}`}>
+                  {#if item.comment}
+                    <p class="note"># {item.comment}</p>
+                  {/if}
+                  {#if item.favoriteEpisodes?.length}
+                    <p class="note"># favorite episodes</p>
+                    <ul class="eps">
+                      {#each item.favoriteEpisodes as episode (episode.number ?? episode.title)}
+                        <li>
+                          {#if episode.number}<span class="ep-no"
+                              >{episode.number}</span
+                            >{/if}
+                          {#if episode.guest}<span class="meta"
+                              >{episode.guest}</span
+                            >{/if}
+                          {episode.title}
+                        </li>
+                      {/each}
+                    </ul>
+                  {/if}
+                  <p class="detail-tags">
+                    {#each item.categories as tag (tag)}
+                      <button
+                        type="button"
+                        class="row-tag"
+                        class:on={activeTags.has(tag)}
+                        onclick={() => toggleTag(tag)}>{tag}</button
+                      >
+                    {/each}
+                  </p>
+                  {#if item.url}
+                    <a
+                      class="visit"
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      data-no-link-fx>open {host(item.url)} ↗</a
+                    >
+                  {/if}
+                </div>
+              {/if}
+            </li>
+          {/each}
+        </ul>
       {/if}
     </section>
   {/each}
+  </div>
 
-  <div class="tmdb-credit">
-    <img src="/logos/tmdb.svg" alt="TMDB" />
+  {#if visible.length === 0}
+    <section class="win">
+      <h2 class="win-title"><span class="win-cmd">grep faves</span></h2>
+      <div class="win-body empty">
+        <p>no matches.</p>
+        <button type="button" class="chip chip-act" onclick={clearAll}
+          >clear</button
+        >
+      </div>
+    </section>
+  {/if}
+
+  <p class="footnote">
+    <img src="/logos/tmdb.svg" alt="TMDB" width="40" height="16" />
     <span
       >This product uses the TMDB API but is not endorsed or certified by TMDB.</span
     >
-  </div>
+  </p>
 </div>
 
 <style>
   .favorites-container {
-    max-width: 1200px;
-    margin-left: 0;
-    margin-right: auto;
-    padding: 0;
+    --rate-col: 5.4ch;
+    --pad: 0.9rem;
+
+    min-width: 0;
+    font-size: 0.84rem;
   }
 
-  .tmdb-credit {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 2rem;
-    color: var(--gray-color);
-    font-size: 0.75rem;
+  .intro {
+    margin: 0 0 1.2rem;
   }
 
-  .tmdb-credit img {
-    width: 4rem;
-    height: auto;
+  .intro h1 {
+    margin: 0 0 0.4rem;
   }
 
-  .header-section {
-    margin-bottom: 2rem;
-    text-align: left;
-    max-width: 1200px;
-    margin-left: 0;
-    margin-right: auto;
-    padding: 0;
-  }
-
-  .header-section.compact h1 {
-    font-size: var(--font-size-handwritten-page);
-    font-weight: 400;
-    line-height: 0.95;
-    font-family: var(--font-family-handwritten);
-    margin-bottom: 0.5rem;
-    color: var(--heading-color);
-  }
-
-  .header-section.compact p {
-    font-size: 1rem;
-    color: var(--text-muted);
+  .intro p {
     margin: 0;
-    font-weight: 400;
-    line-height: 1.5;
+    color: var(--gray-color);
   }
 
-  .filter-title-row {
+  /* Terminal windows */
+  /* Sections flow into two or three columns, each kept whole. */
+  .shelves {
+    column-gap: 1.2rem;
+    columns: 3 22rem;
+  }
+
+  .shelves > .win {
+    break-inside: avoid;
+  }
+
+  /* Columns are narrow: tags move into the opened detail. */
+  .shelves .row {
+    grid-template-columns: minmax(0, max-content) 2.4ch;
+  }
+
+  .shelves .row-tags {
+    display: none;
+  }
+
+  .shelves .detail-tags {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
   }
 
-  .surprise-btn {
-    font-family: var(--font-family);
-    font-size: 0.875rem;
-    padding: 0.375rem 0.75rem;
-    border-radius: 0.28rem;
+  .win {
+    min-width: 0;
+    margin: 0 0 1.2rem;
     border: 1px solid var(--border-color);
-    background: var(--bg-secondary);
-    color: var(--link-color);
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    transition:
-      background-color 0.2s ease,
-      color 0.2s ease;
-    font-weight: 500;
+    background: var(--term-panel);
+    scroll-margin-top: 1rem;
   }
 
-  .surprise-btn:hover {
-    background: var(--surface-hover);
-    border-color: var(--link-color);
+  .win-title {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    margin: 0;
+    padding: 0.35rem var(--pad);
+    border-bottom: 1px solid var(--border-color);
+    color: var(--gray-color);
+    font-size: 0.76rem;
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+
+  .win-title::before {
     color: var(--accent);
+    content: "■";
+    font-size: 0.6rem;
   }
 
-  .clear-btn {
-    font-size: 0.875rem;
-    padding: 0.5rem 1rem;
-    background: transparent;
-    color: var(--error);
-    border: 1px solid var(--border-color);
-    border-radius: 0.28rem;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-
-  .clear-btn:hover {
-    background: color-mix(in srgb, var(--error) 10%, transparent);
-  }
-
-  .filter-controls {
-    margin-bottom: 2rem;
-  }
-
-  .filter-header {
+  .win-toggle {
     display: flex;
-    justify-content: space-between;
+    flex: 1;
+    gap: 0.6rem;
     align-items: center;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-    gap: 1rem;
-  }
-
-  .filter-header h3 {
+    min-width: 0;
     margin: 0;
-    font-size: 1.125rem;
-    font-weight: 600;
+    padding: 0.35rem var(--pad) 0.35rem 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+  }
+
+  .win-title:has(.win-toggle) {
+    padding: 0 0 0 var(--pad);
+  }
+
+  .win-toggle:hover .win-fold,
+  .win-toggle:focus-visible .win-fold {
     color: var(--heading-color);
   }
 
-  .filter-options {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-    flex-wrap: wrap;
+  .win-cmd {
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
-  .filter-logic {
-    display: flex;
-    gap: 0.25rem;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: 0.35rem;
-    padding: 0.25rem;
+  .win-cmd .path {
+    color: var(--tc-path);
   }
 
-  .logic-btn {
-    font-family: var(--font-family);
-    font-size: 0.875rem;
-    color: var(--text-color);
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    padding: 0.375rem 0.75rem;
-    border-radius: 0.25rem;
-    transition: all 0.2s;
-    font-weight: 500;
+  .win-count {
+    margin-left: auto;
+    white-space: nowrap;
   }
 
-  .logic-btn:hover {
-    background: var(--surface-hover);
-  }
-
-  .logic-btn.active {
-    background: var(--link-color);
-    color: var(--background-color);
-  }
-
-  .sort-options select {
-    font-family: var(--font-family);
-    font-size: 0.875rem;
-    padding: 0.5rem 0.75rem;
-    border: 1px solid var(--border-color);
-    border-radius: 0.28rem;
-    background: var(--bg-secondary);
-    color: var(--text-color);
-    cursor: pointer;
-  }
-
-  .filter-tags-container {
-    position: relative;
-  }
-
-  .filter-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    max-height: 7.5rem;
-    overflow-y: auto;
-    padding: 0.5rem 0;
-    margin-bottom: 0.5rem;
-  }
-
-  .filter-tags::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  .filter-tags::-webkit-scrollbar-track {
-    background: var(--bg-secondary);
-    border-radius: 2px;
-  }
-
-  .filter-tags::-webkit-scrollbar-thumb {
-    background: var(--border-color);
-    border-radius: 2px;
-  }
-
-  .filter-chip {
-    padding: 0.375rem 0.75rem;
-    background: transparent;
-    color: var(--text-muted);
-    border: 1px solid var(--border-color);
-    border-radius: 0.28rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-size: 0.875rem;
-    font-family: var(--font-family);
-    font-weight: 500;
-  }
-
-  .filter-chip:hover {
-    background: var(--bg-secondary);
-    color: var(--heading-color);
-    border-color: var(--link-color);
-  }
-
-  .filter-chip.active {
-    background: var(--link-color);
-    color: var(--background-color);
-    border-color: var(--link-color);
-  }
-
-  .content-section {
-    margin-bottom: 3rem;
-  }
-
-  .section-title {
-    font-size: 1.5rem;
-    margin-bottom: 1.5rem;
-    color: var(--heading-color);
-    text-transform: capitalize;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    user-select: none;
-    transition: opacity 0.2s;
-  }
-
-  .section-title:hover {
-    opacity: 0.8;
-  }
-
-  .items-list {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 0.75rem;
-    align-items: start;
-  }
-
-  .section-toggle {
-    all: unset;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    cursor: pointer;
-    font-size: 1.125rem;
-    color: var(--heading-color);
-  }
-
-  .section-label {
-    font-family: var(--font-family-handwritten);
-    font-size: var(--font-size-handwritten-section);
-    font-weight: 400;
-    line-height: 0.95;
-  }
-
-  :global(.collapse-icon) {
-    width: 0.9rem;
-    height: 0.9rem;
+  .win-fold {
     color: var(--gray-color);
   }
 
-  .item-count {
-    font-size: 0.9rem;
-    opacity: 0.7;
-    margin-left: 0.5rem;
+  .win-body {
+    padding: 0.8rem var(--pad);
   }
 
-  @media (min-width: 768px) {
-    .items-list {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 1rem;
-      align-items: start;
-    }
+  /* Filter bar */
+  .prompt {
+    margin: 0 0 0.7rem;
+    color: var(--heading-color);
+    line-height: 1.6;
+    overflow-wrap: anywhere;
   }
 
-  @media (min-width: 900px) {
-    .items-list {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
+  .prompt .ps {
+    margin-right: 0.5ch;
+    color: var(--tc-host);
   }
 
-  .favorite-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-    padding: 0.75rem;
-    background: var(--surface-color);
-    border: 1px solid var(--border-color);
-    border-radius: 0.35rem;
-    transition:
-      background-color 0.16s ease,
-      border-color 0.16s ease,
-      box-shadow 0.2s ease,
-      transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
-      width 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
-    cursor: pointer;
+  .prompt .cmd {
+    color: var(--tc-path);
   }
 
-  .favorite-item-slot {
-    position: relative;
-    min-width: 0;
-  }
-
-  .favorite-item:hover,
-  .favorite-item.expanded {
-    background: var(--bg-secondary);
-    border-color: var(--link-color);
-  }
-
-  .item-image {
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .item-img {
-    width: 3rem;
-    object-fit: cover;
-    border-radius: 0.25rem;
-  }
-
-  .aspect-square {
-    height: 3rem;
-  }
-  .aspect-book {
-    height: 4rem;
-  }
-  .aspect-poster {
-    height: 4rem;
-  }
-
-  .item-icon {
-    width: 3rem;
-    height: 3rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    background: transparent;
-    border: 1px solid var(--border-color);
-    border-radius: 0.25rem;
+  .prompt .flag {
     color: var(--gray-color);
   }
 
-  .item-icon :global(svg) {
-    width: 1.5rem;
-    height: 1.5rem;
+  .prompt .string {
+    color: var(--tc-string);
   }
 
-  .item-content {
-    flex: 1;
+  .prompt .pipe {
+    color: var(--gray-color);
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 0.6em;
+    height: 1em;
+    margin-left: 0.1ch;
+    background: var(--accent);
+    vertical-align: text-bottom;
+  }
+
+  .field {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.6rem;
+    align-items: baseline;
+    margin: 0 0 0.45rem;
+  }
+
+  .field:last-child {
+    margin-bottom: 0;
+  }
+
+  .key {
+    flex: none;
+    width: 7ch;
+    color: var(--gray-color);
+  }
+
+  .key-gap {
+    width: auto;
+    margin-left: 0.8rem;
+  }
+
+  .chips {
+    display: flex;
+    flex: 1 1 0;
+    flex-wrap: wrap;
+    gap: 0.15rem 0.5rem;
     min-width: 0;
-    margin: 0;
-    padding: 0;
   }
 
-  .item-header {
-    margin-bottom: 0.25rem;
+  .field > .chips:not(:last-child) {
+    flex: 0 1 auto;
   }
 
-  .title-with-indicators {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.5rem;
-    margin-bottom: 0.25rem;
+  .chips-fit {
+    flex: 0 1 auto;
   }
 
-  .title-and-meta {
-    flex: 1;
-    min-width: 0;
+  /* Two lines of tags until you ask for all of them. */
+  .tags-more {
+    display: inline-block;
   }
 
-  .indicators {
-    display: flex;
-    gap: 0.25rem;
-    flex-shrink: 0;
-    justify-content: flex-end;
-  }
-
-  .rating-container {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.25rem;
-    flex-shrink: 0;
-  }
-
-  .indicator {
-    display: inline-flex;
-    opacity: 0.7;
-  }
-
-  .indicator :global(svg) {
-    width: 0.9rem;
-    height: 0.9rem;
-  }
-
-  .item-title {
-    font-size: 1rem;
-    font-weight: 600;
-    margin: 0 0 0.25rem 0;
-    color: var(--text-color);
-  }
-
-  .item-title a {
-    color: var(--text-color);
-    text-decoration: none;
-    transition: color 0.2s;
-  }
-
-  .item-title a:hover {
-    color: var(--link-color);
-  }
-
-  .item-meta {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    color: var(--text-color);
-    opacity: 0.7;
-    margin: 0;
-  }
-
-  .rating-top {
-    color: var(--flexoki-yellow);
-    font-size: 0.75rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.08rem;
-  }
-
-  .rating-top :global(svg) {
-    width: 0.75rem;
-    height: 0.75rem;
-  }
-
-  .item-comment {
-    font-size: 0.875rem;
-    line-height: 1.4;
-    color: var(--text-color);
-    margin: 0;
-    opacity: 0;
-    visibility: hidden;
-    max-height: 0;
+  .chips-tags {
+    max-height: 3rem;
     overflow: hidden;
-    transition: all 0.2s ease;
   }
 
-  @media (hover: hover) and (pointer: fine) {
-    .favorite-item-slot {
-      height: var(--favorite-slot-height, 5.75rem);
-    }
-
-    .favorite-item {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      z-index: 1;
-      box-sizing: border-box;
-      width: 100%;
-      max-height: min(34rem, calc(100vh - 3rem));
-      transform: translate(-50%, -50%);
-    }
-
-    .favorite-item-slot:hover,
-    .favorite-item-slot:focus-within {
-      z-index: 20;
-    }
-
-    .favorite-item:hover,
-    .favorite-item:focus-visible,
-    .favorite-item:focus-within {
-      width: calc(100% + 1.25rem);
-      overflow-y: auto;
-      border-color: var(--link-color);
-      box-shadow:
-        0 1rem 2.5rem rgb(0 0 0 / 0.28),
-        0 0 0 1px color-mix(in srgb, var(--link-color) 24%, transparent);
-      transform: translate(-50%, -50%) scale(1.015);
-    }
-
-    .favorite-item:hover .item-comment,
-    .favorite-item:focus-visible .item-comment,
-    .favorite-item:focus-within .item-comment {
-      opacity: 1;
-      visibility: visible;
-      max-height: 10rem;
-      margin: 0.5rem 0;
-    }
+  .chips-tags.chips-open {
+    max-height: none;
   }
 
-  @media (hover: none) and (pointer: coarse) {
-    .favorite-item.expanded .item-comment {
-      opacity: 1;
-      visibility: visible;
-      max-height: 10rem;
-      margin: 0.5rem 0;
-    }
+  .chips-end {
+    flex: 0 0 auto;
+    margin-left: auto;
   }
 
-  .item-comment em {
-    opacity: 0.7;
-  }
-
-  .favorite-episodes {
-    opacity: 0;
-    visibility: hidden;
-    max-height: 0;
-    overflow: hidden;
-    transition: all 0.2s ease;
-    margin: 0;
-    padding: 0;
-    border-top: none;
-  }
-
-  @media (hover: hover) and (pointer: fine) {
-    .favorite-item:hover .favorite-episodes,
-    .favorite-item:focus-visible .favorite-episodes,
-    .favorite-item:focus-within .favorite-episodes {
-      opacity: 1;
-      visibility: visible;
-      max-height: 20rem;
-      margin: 0.75rem 0;
-      padding-top: 0.75rem;
-      border-top: 1px solid rgba(0, 0, 0, 0.1);
-    }
-  }
-
-  @media (hover: none) and (pointer: coarse) {
-    .favorite-item.expanded .favorite-episodes {
-      opacity: 1;
-      visibility: visible;
-      max-height: 20rem;
-      margin: 0.75rem 0;
-      padding-top: 0.75rem;
-      border-top: 1px solid rgba(0, 0, 0, 0.1);
-    }
-  }
-
-  .favorite-episodes h4 {
-    margin: 0 0 0.5rem 0;
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: var(--text-color);
-  }
-
-  .favorite-episodes ul {
-    margin: 0;
-    padding-left: 1.2rem;
-    list-style-type: disc;
-  }
-
-  .favorite-episodes li {
-    margin-bottom: 0.25rem;
-    color: var(--text-color);
-    font-size: 0.8rem;
+  .chip {
+    padding: 0.15rem 0.2rem;
+    border: 0;
+    background: none;
+    color: var(--heading-color);
+    font: inherit;
     line-height: 1.3;
   }
 
-  .favorite-episodes strong {
-    color: var(--accent);
-    font-weight: 600;
+  .chip::before {
+    content: "[";
+    color: var(--gray-color);
   }
 
-  .item-tags {
-    opacity: 0;
-    visibility: hidden;
-    height: 0;
-    overflow: hidden;
-    transition:
-      opacity 0.2s ease,
-      visibility 0.2s ease,
-      height 0.2s ease;
+  .chip::after {
+    content: "]";
+    color: var(--gray-color);
   }
 
-  @media (hover: hover) and (pointer: fine) {
-    .favorite-item:hover .item-tags,
-    .favorite-item:focus-visible .item-tags,
-    .favorite-item:focus-within .item-tags {
-      opacity: 1;
-      visibility: visible;
-      height: auto;
-    }
+  .chip-tag {
+    color: var(--tc-tag);
   }
 
-  @media (hover: none) and (pointer: coarse) {
-    .favorite-item.expanded .item-tags {
-      opacity: 1;
-      visibility: visible;
-      height: auto;
-    }
-  }
-
-  .tags-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-  }
-
-  .tag-pill {
-    font-size: 0.75rem;
-    padding: 0.125rem 0.5rem;
-    background: transparent;
-    color: var(--text-muted);
-    border: 1px solid var(--border-color);
-    border-radius: 0.25rem;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .tag-pill:hover {
-    background: var(--bg-secondary);
-    color: var(--heading-color);
-    border-color: var(--link-color);
-  }
-
-  .tag-pill.highlighted {
-    background: var(--link-color);
+  .chip.on {
+    background: var(--heading-color);
     color: var(--background-color);
-    font-weight: 600;
-    border-color: var(--link-color);
   }
 
-  .favorite-item-slot:global(.measuring) .favorite-item {
-    width: 100% !important;
-    overflow: visible !important;
-    transform: translate(-50%, -50%) !important;
+  .chip.on::before,
+  .chip.on::after {
+    color: inherit;
   }
 
-  .favorite-item-slot:global(.measuring) .item-comment,
-  .favorite-item-slot:global(.measuring) .favorite-episodes {
-    max-height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
+  .chip:hover:not(.on):not(:disabled) {
+    background: var(--tc-selection);
   }
 
-  .favorite-item-slot:global(.measuring) .item-tags {
-    height: 0 !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
+  .chip:disabled {
+    color: var(--gray-color);
+    cursor: default;
+    opacity: 0.5;
   }
 
-  @media (prefers-color-scheme: dark) {
-    .favorite-item:hover .favorite-episodes,
-    .favorite-item.expanded .favorite-episodes {
-      border-top-color: var(--border-color);
+  .chip-act {
+    color: var(--link-color);
+  }
+
+  .query {
+    flex: 1 1 12rem;
+    min-width: 0;
+    padding: 0.15rem 0;
+    border: 0;
+    border-bottom: 1px dashed var(--border-color);
+    border-radius: 0;
+    background: transparent;
+    color: var(--heading-color);
+    font: inherit;
+    outline: none;
+  }
+
+  .query::placeholder {
+    color: var(--gray-color);
+    opacity: 0.7;
+  }
+
+  .query:focus {
+    border-bottom-color: var(--accent);
+  }
+
+  .empty {
+    display: flex;
+    gap: 1rem;
+    align-items: baseline;
+    color: var(--gray-color);
+  }
+
+  .empty p {
+    margin: 0;
+  }
+
+  /* Rows */
+  .rows {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .rows > li {
+    margin: 0;
+    padding: 0;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: minmax(0, max-content) 2.4ch minmax(0, 1fr);
+    gap: 0 0.6rem;
+    align-items: start;
+    padding: 0 var(--pad);
+  }
+
+  .row:hover,
+  li.is-open > .row {
+    background: var(--tc-selection);
+  }
+
+  .row-main {
+    display: grid;
+    grid-template-columns: var(--rate-col) 16px minmax(0, 1fr);
+    gap: 0 0.75rem;
+    align-items: start;
+    min-width: 0;
+    margin: 0;
+    padding: 0.28rem 0;
+    border: 0;
+    background: none;
+    color: var(--tc-path);
+    font: inherit;
+    line-height: 1.45;
+    text-align: left;
+    text-decoration: none;
+  }
+
+  @media (hover: hover) {
+    .row-main:hover .title {
+      text-decoration: underline;
+      text-underline-offset: 0.18em;
     }
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .favorite-item,
-    .item-comment,
-    .favorite-episodes,
-    .item-tags {
-      transition: none;
+  .row-main:focus-visible,
+  .row-mark:focus-visible,
+  .row-tag:focus-visible,
+  .chip:focus-visible,
+  .win-toggle:focus-visible,
+  .visit:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .rating {
+    color: var(--gray-color);
+    letter-spacing: 0;
+    white-space: nowrap;
+  }
+
+  .rating-on {
+    color: var(--tc-date);
+  }
+
+  .rating-off {
+    opacity: 0.55;
+  }
+
+  .thumb {
+    display: block;
+    width: 16px;
+    height: 16px;
+    margin-top: 0.14rem;
+    box-shadow: inset 0 0 0 1px var(--border-color);
+  }
+
+  .thumb img {
+    display: block;
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    object-fit: cover;
+  }
+
+  .name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .title {
+    color: var(--tc-path);
+  }
+
+  .meta {
+    margin-left: 0.5ch;
+    color: var(--gray-color);
+  }
+
+  .row-mark {
+    align-self: start;
+    padding: 0.28rem 0 0;
+    border: 0;
+    background: none;
+    color: var(--gray-color);
+    font: inherit;
+    line-height: 1.45;
+    text-align: center;
+  }
+
+  button.row-mark {
+    color: var(--heading-color);
+  }
+
+  button.row-mark:hover,
+  li.is-open button.row-mark {
+    color: var(--accent);
+  }
+
+  .row-tags {
+    display: flex;
+    gap: 0 1ch;
+    justify-content: flex-end;
+    min-width: 0;
+    padding: 0.28rem 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .row-tag {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--gray-color);
+    font: inherit;
+    line-height: 1.45;
+  }
+
+  .row-tag:hover {
+    color: var(--tc-tag);
+  }
+
+  .row-tag.on {
+    color: var(--tc-tag);
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+  }
+
+  /* Opened note, aligned under the title column */
+  .detail {
+    padding: 0.1rem var(--pad) 0.7rem
+      calc(var(--pad) + var(--rate-col) + 16px + 1.5rem);
+    background: var(--tc-selection);
+  }
+
+  .detail p {
+    margin: 0 0 0.35rem;
+  }
+
+  .note {
+    color: var(--gray-color);
+    overflow-wrap: anywhere;
+  }
+
+  .eps {
+    margin: 0 0 0.35rem;
+    padding: 0;
+    color: var(--heading-color);
+    list-style: none;
+  }
+
+  .eps li {
+    margin: 0;
+    padding-left: 2ch;
+    text-indent: -2ch;
+  }
+
+  .eps li::before {
+    content: "- ";
+    color: var(--gray-color);
+  }
+
+  .ep-no {
+    margin-right: 1ch;
+    color: var(--tc-date);
+  }
+
+  .detail-tags {
+    display: none;
+    flex-wrap: wrap;
+    gap: 0 1ch;
+  }
+
+  .visit {
+    display: inline-block;
+    padding: 0.2rem 0;
+    color: var(--link-color);
+    text-decoration: none;
+  }
+
+  .visit:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+  }
+
+  .footnote {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    margin: 0 0 1rem;
+    color: var(--gray-color);
+    font-size: 0.72rem;
+    line-height: 1.5;
+  }
+
+  .footnote img {
+    flex: none;
+    width: 40px;
+    height: auto;
+    margin: 0;
+    opacity: 0.7;
+  }
+
+  .footnote span::before {
+    content: "# ";
+  }
+
+  @media (max-width: 860px) {
+    .row {
+      grid-template-columns: minmax(0, max-content) 2.4ch;
+    }
+
+    .row-tags {
+      display: none;
+    }
+
+    .detail-tags {
+      display: flex;
     }
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 640px) {
     .favorites-container {
-      padding: 0 1rem;
+      --pad: 0.7rem;
+      --rate-col: 5.4ch;
+
+      font-size: 0.8rem;
     }
-    .favorite-item {
-      position: relative;
-      top: auto;
-      left: auto;
+
+    .row-main {
+      gap: 0 0.55rem;
+      padding: 0.45rem 0;
+      min-height: 2.2rem;
+    }
+
+    .thumb {
+      margin-top: 0.2rem;
+    }
+
+    .row-mark {
+      min-height: 2.2rem;
+    }
+
+    .detail {
+      padding-left: var(--pad);
+    }
+
+    .win-toggle {
+      min-height: 2.2rem;
+    }
+
+    .chip {
+      padding: 0.35rem 0.25rem;
+    }
+
+    .row-tag {
+      padding: 0.3rem 0;
+    }
+
+    .visit {
+      padding: 0.45rem 0;
+    }
+
+    .field {
+      row-gap: 0;
+    }
+
+    .key {
       width: auto;
+      min-width: 7ch;
+    }
+
+    .key-gap {
+      min-width: 0;
+      margin-left: 0.6rem;
+    }
+
+    .chips-tags {
+      flex-basis: 100%;
+      max-height: 5.6rem;
+      overflow: hidden;
+    }
+
+    .chips-tags.chips-open {
       max-height: none;
-      overflow: visible;
-      transform: none;
-      gap: 0.75rem;
     }
-    .favorite-item:hover,
-    .favorite-item:focus-visible,
-    .favorite-item:focus-within {
-      width: auto;
-      max-height: none;
-      overflow: visible;
-      box-shadow: none;
-      transform: none;
+
+    .tags-more {
+      display: inline-block;
     }
-    .favorite-item-slot {
-      height: auto;
+
+    .chips-end {
+      margin-left: 0;
     }
-    .item-img,
-    .item-icon {
-      width: 2.5rem;
-      height: 2.5rem;
+
+    .query {
+      flex-basis: 100%;
+      padding: 0.45rem 0;
+      font-size: 1rem;
     }
-    .aspect-book,
-    .aspect-poster {
-      height: 3.5rem;
-    }
-    .item-icon {
-      font-size: 1.25rem;
-    }
-    .filter-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.75rem;
-    }
-    .filter-title-row {
-      width: 100%;
-      justify-content: space-between;
-    }
-    .surprise-btn {
-      font-size: 0.8rem;
-      padding: 0.3rem 0.6rem;
-    }
-    .filter-options {
-      width: 100%;
-      justify-content: space-between;
-      gap: 0.75rem;
-    }
-    .filter-logic {
-      flex: 1;
-    }
-    .logic-btn {
-      flex: 1;
-      font-size: 0.8rem;
-      padding: 0.35rem 0.5rem;
-      text-align: center;
-    }
-    .sort-options {
-      flex-shrink: 0;
-    }
-    .sort-options select {
-      font-size: 0.8rem;
-      padding: 0.4rem 0.5rem;
-    }
-    .filter-tags {
-      max-height: 6rem;
-    }
-    .filter-chip {
-      font-size: 0.8rem;
-      padding: 0.3rem 0.6rem;
-    }
+
   }
 </style>

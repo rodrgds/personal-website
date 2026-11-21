@@ -18,6 +18,9 @@
   font-family: "JetBrains Mono";
   src: url("/fonts/jetbrains-mono-latin-variable-wghtOnly-normal.woff2")
     format("woff2");
+  font-style: normal;
+  font-weight: 100 800;
+  font-display: swap;
 }
 
 @font-face {
@@ -34,17 +37,19 @@
 :root {
   color-scheme: light;
 
-  --width: 44rem;
-  --wide-width: 72rem;
+  --width: 46rem;
+  --wide-width: 78rem;
   --page-padding: 1.5rem;
-  --font-family: "Geist", sans-serif;
-  --font-family-serif: "Source Serif 4", serif;
-  --font-family-handwritten: "Reenie Beanie", cursive;
+  /* The whole site is a terminal: one monospace face everywhere. */
+  --font-family: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-family-serif: var(--font-family);
+  /* Handwriting is retired; anything still asking for it gets the terminal. */
+  --font-family-handwritten: var(--font-family);
   --font-family-mono: "JetBrains Mono", monospace;
-  --font-scale: 1.1em;
-  --font-size-handwritten-page: clamp(2.55rem, 2.3rem + 1vw, 2.95rem);
-  --font-size-handwritten-section: clamp(2.15rem, 2rem + 0.6vw, 2.4rem);
-  --font-size-handwritten-subsection: clamp(1.9rem, 1.8rem + 0.4vw, 2.1rem);
+  --font-scale: 0.96em;
+  --font-size-handwritten-page: 1.6rem;
+  --font-size-handwritten-section: 1.25rem;
+  --font-size-handwritten-subsection: 1.05rem;
 
   --flexoki-black: #100f0f;
   --flexoki-paper: #fffcf0;
@@ -69,23 +74,41 @@
   --flexoki-purple: #5e409d;
   --flexoki-magenta: #a02f6f;
 
-  --background-color: #fffcf0; /* flexoki paper */
-  --bg-secondary: #f2f0e5; /* flexoki base-50 */
-  --surface-color: #fffcf0; /* flexoki paper */
-  --surface-hover: #e6e4d9; /* flexoki base-100 */
-  --heading-color: #100f0f; /* flexoki black */
-  --text-color: #403e3c; /* flexoki base-800 */
-  --text-muted: #6f6e69; /* flexoki base-600 */
-  --link-color: #205ea6; /* flexoki blue-600 */
-  --accent: #205ea6; /* flexoki blue-600 */
+  /* Light theme: a paper terminal. Flexoki base, ANSI-style accents. */
+  --background-color: #fffcf0;
+  --bg-secondary: #f2f0e5;
+  --surface-color: #f7f5ea;
+  --surface-hover: #e6e4d9;
+  --heading-color: #100f0f;
+  --text-color: #282726;
+  --text-muted: #6f6e69;
+  --link-color: var(--accent);
+  --accent: var(--flexoki-orange);
   --link-underline-color: var(--link-color);
-  --visited-color: #5e409d; /* flexoki purple-600 */
-  --error: #af3029; /* flexoki red-600 */
-  --code-color: #282726; /* flexoki base-900 */
-  --blockquote-color: #403e3c; /* flexoki base-800 */
-  --border-color: #dad8ce; /* flexoki base-150 */
-  --gray-color: #6f6e69; /* flexoki base-600 */
-  --code-background-color: #1a1a1a;
+  --visited-color: var(--accent);
+  --error: var(--flexoki-red);
+  --code-color: #282726;
+  --blockquote-color: #403e3c;
+  --border-color: #dad8ce;
+  --gray-color: #6f6e69;
+  --code-background-color: #1c1b1a;
+  --term-panel: #f7f5ea;
+  --term-glow-soft: transparent;
+  --term-scan: rgb(16 15 15 / 0.03);
+  --term-vignette: transparent;
+  /* Terminal roles. Orange is the main colour (links, names, headings);
+     the other Flexoki hues mark dates, state and tags. */
+  --tc-host: var(--flexoki-green);
+  --tc-path: var(--accent);
+  --tc-date: var(--flexoki-yellow);
+  --tc-tag: var(--flexoki-purple);
+  --tc-new: var(--flexoki-green);
+  --tc-live: var(--flexoki-green);
+  --tc-paused: var(--flexoki-yellow);
+  --tc-string: var(--flexoki-cyan);
+  --tc-key: var(--flexoki-blue);
+  --tc-heading: var(--accent);
+  --tc-selection: rgb(188 82 21 / 0.16);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -101,23 +124,28 @@
     --flexoki-purple: #8b7ec8;
     --flexoki-magenta: #ce5d97;
 
-    --background-color: #100f0f; /* flexoki black */
-    --bg-secondary: #1c1b1a; /* flexoki base-950 */
-    --surface-color: #1c1b1a; /* flexoki base-950 */
-    --surface-hover: #282726; /* flexoki base-900 */
-    --heading-color: #e6e4d9; /* flexoki base-100 */
-    --text-color: #cecdc3; /* flexoki base-200 */
-    --text-muted: #878580; /* flexoki base-500 */
-    --link-color: #da702c; /* flexoki orange-400 */
-    --accent: #da702c; /* flexoki orange-400 */
+    --background-color: #100f0f;
+    --bg-secondary: #1c1b1a;
+    --surface-color: #171615;
+    --surface-hover: #282726;
+    --heading-color: #e6e4d9;
+    --text-color: #cecdc3;
+    --text-muted: #878580;
+    --link-color: var(--accent);
+    --accent: var(--flexoki-orange);
     --link-underline-color: var(--link-color);
-    --visited-color: #8b7ec8; /* flexoki purple-400 */
-    --error: #d14d41; /* flexoki red-400 */
-    --code-color: #e6e4d9; /* flexoki base-100 */
-    --blockquote-color: #cecdc3; /* flexoki base-200 */
-    --border-color: #403e3c; /* flexoki base-800 */
-    --gray-color: #878580; /* flexoki base-500 */
-    --code-background-color: #0d0d0d;
+    --visited-color: var(--accent);
+    --error: var(--flexoki-red);
+    --code-color: #e6e4d9;
+    --blockquote-color: #b7b5ac;
+    --border-color: #343331;
+    --gray-color: #878580;
+    --code-background-color: #0a0909;
+    --term-panel: #161514;
+    --term-glow-soft: rgb(218 112 44 / 0.3);
+    --term-scan: rgb(0 0 0 / 0.16);
+    --term-vignette: rgb(0 0 0 / 0.34);
+    --tc-selection: rgb(218 112 44 / 0.22);
   }
 }
 
@@ -133,23 +161,28 @@
   --flexoki-purple: #8b7ec8;
   --flexoki-magenta: #ce5d97;
 
-  --background-color: #100f0f; /* flexoki black */
-  --bg-secondary: #1c1b1a; /* flexoki base-950 */
-  --surface-color: #1c1b1a; /* flexoki base-950 */
-  --surface-hover: #282726; /* flexoki base-900 */
-  --heading-color: #e6e4d9; /* flexoki base-100 */
-  --text-color: #cecdc3; /* flexoki base-200 */
-  --text-muted: #878580; /* flexoki base-500 */
-  --link-color: #da702c; /* flexoki orange-400 */
-  --accent: #da702c; /* flexoki orange-400 */
+  --background-color: #100f0f;
+  --bg-secondary: #1c1b1a;
+  --surface-color: #171615;
+  --surface-hover: #282726;
+  --heading-color: #e6e4d9;
+  --text-color: #cecdc3;
+  --text-muted: #878580;
+  --link-color: var(--accent);
+  --accent: var(--flexoki-orange);
   --link-underline-color: var(--link-color);
-  --visited-color: #8b7ec8; /* flexoki purple-400 */
-  --error: #d14d41; /* flexoki red-400 */
-  --code-color: #e6e4d9; /* flexoki base-100 */
-  --blockquote-color: #cecdc3; /* flexoki base-200 */
-  --border-color: #403e3c; /* flexoki base-800 */
-  --gray-color: #878580; /* flexoki base-500 */
-  --code-background-color: #0d0d0d;
+  --visited-color: var(--accent);
+  --error: var(--flexoki-red);
+  --code-color: #e6e4d9;
+  --blockquote-color: #b7b5ac;
+  --border-color: #343331;
+  --gray-color: #878580;
+  --code-background-color: #0a0909;
+  --term-panel: #161514;
+  --term-glow-soft: rgb(218 112 44 / 0.3);
+  --term-scan: rgb(0 0 0 / 0.16);
+  --term-vignette: rgb(0 0 0 / 0.34);
+  --tc-selection: rgb(218 112 44 / 0.22);
 }
 
 :root[data-theme="light"] {
@@ -196,6 +229,18 @@
   box-sizing: border-box;
 }
 
+/* Hash links and scrollIntoView stop below the sticky prompt bar. Nothing
+   may scroll the page sideways; `clip` (unlike `hidden`) keeps the sticky
+   header working, and inner scrollers keep their own overflow. */
+html {
+  overflow-x: clip;
+  scroll-padding-top: 4.5rem;
+}
+
+body {
+  overflow-x: clip;
+}
+
 body {
   font-family: var(--font-family);
   font-size: var(--font-scale);
@@ -206,15 +251,39 @@ body {
   background-color: var(--background-color);
   word-wrap: break-word;
   overflow-wrap: break-word;
-  line-height: 1.68;
+  line-height: 1.7;
   color: var(--text-color);
   text-rendering: optimizeLegibility;
+  font-variant-ligatures: none;
 }
 
-body > header,
-body > main,
-body > footer {
+/* CRT scanlines and a soft vignette over every page. */
+body::after {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      var(--term-scan) 0,
+      var(--term-scan) 1px,
+      transparent 1px,
+      transparent 3px
+    ),
+    radial-gradient(ellipse at center, transparent 58%, var(--term-vignette));
+  content: "";
+  pointer-events: none;
+}
+
+body > main {
   width: min(100%, var(--width));
+  margin-inline: auto;
+}
+
+/* The prompt bar and status line span the wide column on every page. */
+body > header,
+body > footer {
+  width: min(100%, var(--wide-width));
   margin-inline: auto;
 }
 
@@ -265,69 +334,46 @@ h6 {
 }
 
 h1 {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 1.6rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
 }
 h2 {
-  font-size: 1.6rem;
-  font-weight: 600;
+  font-size: 1.25rem;
+  font-weight: 700;
 }
 h3 {
-  font-size: 1.4rem;
-  font-weight: 550;
+  font-size: 1.1rem;
+  font-weight: 650;
 }
 h4 {
-  font-size: 1.3rem;
-  font-weight: 500;
+  font-size: 1rem;
+  font-weight: 600;
 }
 h5 {
-  font-size: 1.2rem;
-  font-weight: 400;
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 h6 {
-  font-size: 1rem;
-  font-weight: 400;
+  font-size: 0.9rem;
+  font-weight: 600;
 }
 
 a {
   color: var(--link-color);
   cursor: pointer;
   text-decoration: none;
+  text-shadow: 0 0 10px var(--term-glow-soft);
 }
 
-a[data-animated-link="true"] {
-  position: relative;
-}
-
-a[data-animated-link="true"] .animated-link-line {
-  position: relative;
-  display: inline-block;
-}
-
-a[data-animated-link="true"] .animated-link-line::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 0;
-  height: 1px;
-  background-color: var(--link-color);
-  transition: width 0.25s ease;
-}
-
-a[data-animated-link="true"]:hover .animated-link-line::before,
-a[data-animated-link="true"]:focus-visible .animated-link-line::before {
-  width: 100%;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  a[data-animated-link="true"] .animated-link-line::before {
-    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-}
-
-a .animated-link-token {
-  display: inline;
+/* Links in text light up like a terminal selection: the link's colour
+   becomes the background. Rows, cards and controls (data-no-link-fx, or any
+   link around a picture) style their own hover. Component rules win ties. */
+a:where(:not([data-no-link-fx], :has(img, svg, picture, video))):hover,
+a:where(:not([data-no-link-fx], :has(img, svg, picture, video))):focus-visible {
+  background: var(--link-color);
+  color: var(--background-color);
+  text-shadow: none;
 }
 
 nav a {
@@ -353,22 +399,42 @@ button {
   font-family: var(--font-family-handwritten);
 }
 
+/* Former handwritten headings now read like Markdown in a terminal. */
 .handwritten-heading {
-  font-family: var(--font-family-handwritten);
+  font-family: var(--font-family);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.handwritten-heading::before {
+  color: var(--tc-heading);
   font-weight: 400;
-  line-height: 0.95;
+  text-shadow: 0 0 10px var(--term-glow-soft);
 }
 
 .handwritten-heading--page {
-  font-size: var(--font-size-handwritten-page);
+  font-size: 1.6rem;
+}
+
+.handwritten-heading--page::before {
+  content: "# ";
 }
 
 .handwritten-heading--section {
-  font-size: var(--font-size-handwritten-section);
+  font-size: 1.25rem;
+}
+
+.handwritten-heading--section::before {
+  content: "## ";
 }
 
 .handwritten-heading--subsection {
-  font-size: var(--font-size-handwritten-subsection);
+  font-size: 1.05rem;
+}
+
+.handwritten-heading--subsection::before {
+  content: "### ";
 }
 
 .ui-icon {
@@ -380,11 +446,12 @@ button {
 }
 
 ::selection {
-  background-color: color-mix(in srgb, var(--flexoki-blue) 22%, transparent);
+  background-color: var(--tc-selection);
+  color: var(--heading-color);
 }
 
 :focus-visible {
-  outline: 2px solid var(--flexoki-blue);
+  outline: 2px solid var(--accent);
   outline-offset: 0.18rem;
 }
 
@@ -405,7 +472,7 @@ img {
 kbd {
   font-family: var(--font-family-mono);
   padding: 2px 5px;
-  border-radius: 0.2rem;
+  border-radius: 0;
   background-color: var(--bg-secondary);
   color: var(--text-color);
   border: 1px solid var(--border-color);
@@ -417,16 +484,14 @@ code {
     monospace;
   padding: 2px;
   color: var(--code-color);
-  border-radius: 0.2rem;
+  border-radius: 0;
 }
 
 blockquote {
-  border-left: 1px solid
-    color-mix(in srgb, var(--flexoki-blue) 60%, transparent);
+  border-left: 2px solid var(--tc-tag);
   color: var(--blockquote-color);
   padding-left: 16px;
   margin: 0;
-  font-style: italic;
 }
 
 .title:hover {
@@ -446,7 +511,7 @@ blockquote {
   padding: 1px 15px;
   background-color: var(--code-background-color);
   color: var(--code-color);
-  border-radius: 3px;
+  border-radius: 0;
   margin-block-start: 1em;
   margin-block-end: 1em;
   overflow-x: scroll;
@@ -488,7 +553,7 @@ table code {
 
 ::-webkit-scrollbar-thumb {
   background-color: var(--border-color);
-  border-radius: 4px;
+  border-radius: 0;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -505,7 +570,7 @@ figure[data-rehype-pretty-code-figure] > pre {
   padding: 0.75rem 1rem !important;
   margin: 0 !important;
   border: 1px solid var(--border-color) !important;
-  border-radius: 0.35rem !important;
+  border-radius: 0 !important;
   font-size: 0.85rem !important;
   line-height: 1.5 !important;
   overflow-x: auto !important;
@@ -523,14 +588,14 @@ figure[data-rehype-pretty-code-figure] > pre > code {
   padding: 0.4rem 1rem !important;
   border: 1px solid var(--border-color) !important;
   border-bottom: 0 !important;
-  border-radius: 0.35rem 0.35rem 0 0 !important;
+  border-radius: 0 !important;
   font-family: var(--font-family-mono) !important;
   font-size: 0.8rem !important;
   margin-bottom: 0 !important;
 }
 
 [data-rehype-pretty-code-title] + pre {
-  border-radius: 0 0 0.35rem 0.35rem !important;
+  border-radius: 0 !important;
 }
 
 figure[data-rehype-pretty-code-figure] button.rehype-pretty-copy {
@@ -559,234 +624,861 @@ figure[data-rehype-pretty-code-figure] button.rehype-pretty-copy .success {
 }
 
 /* ---------------------------------------------------------------------------
- * External link hover preview card
- * A cmrg.me-style card shown beside external prose links on hover-capable
- * devices. The card is a fixed, non-interactive overlay; placement and
- * content are driven by the script in BaseHead.astro.
+ * "new" badge, shown automatically next to anything recent
  * ------------------------------------------------------------------------- */
 
-.link-preview-card {
-  --link-preview-width: 18rem;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 2000;
-  pointer-events: none;
-  width: var(--link-preview-width);
-  max-width: calc(100vw - 1.25rem);
-  visibility: hidden;
-  opacity: 0;
-  filter: blur(16px);
-  transform: scale(0.94);
-  transition:
-    opacity 0.28s ease-out,
-    filter 0.3s ease-out,
-    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-    visibility 0s linear 0.45s;
-  will-change: transform, opacity, filter;
+.new-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0 0.35rem;
+  background: var(--tc-new);
+  color: var(--background-color);
+  font-family: var(--font-family);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  text-shadow: none;
+  vertical-align: 0.12em;
+  animation: new-badge-blink 1.2s steps(1) infinite;
 }
 
-.link-preview-card[data-shown="true"] {
-  visibility: visible;
-  opacity: 1;
-  filter: blur(0);
-  transform: scale(1);
-  transition:
-    opacity 0.28s ease-out,
-    filter 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-    visibility 0s linear 0s;
-}
-
-.link-preview-card-inner {
-  overflow: hidden;
-  border-radius: 0.75rem;
-  border: 1px solid color-mix(in srgb, var(--flexoki-base-700) 55%, transparent);
-  background-color: color-mix(
-    in srgb,
-    var(--flexoki-base-950) 97%,
-    transparent
-  );
-  box-shadow:
-    0 20px 64px -36px rgba(0, 0, 0, 0.95),
-    0 8px 24px -12px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-}
-
-.link-preview-text {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  padding: 0.875rem;
-}
-
-.link-preview-image {
-  display: none;
-  position: relative;
-  aspect-ratio: 1200 / 630;
-  margin-bottom: -1.5rem;
-  overflow: hidden;
-}
-
-.link-preview-image.has-image {
-  display: block;
-}
-
-.link-preview-image img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  opacity: 0;
-  filter: saturate(1.25) blur(4px);
-  transition:
-    opacity 0.3s ease-out,
-    filter 0.3s ease-out;
-  mask-image: linear-gradient(to bottom, black, transparent);
-  -webkit-mask-image: linear-gradient(to bottom, black, transparent);
-}
-
-.link-preview-image.is-loaded img {
-  opacity: 1;
-  filter: saturate(1.25) blur(0);
-}
-
-/* A failed image keeps its slot so the card never repositions; it just
-   fades into a quiet gradient. */
-.link-preview-image.is-broken {
-  background: linear-gradient(
-    to bottom,
-    color-mix(in srgb, var(--flexoki-base-800) 45%, transparent),
-    color-mix(in srgb, var(--flexoki-base-900) 25%, transparent)
-  );
-}
-
-.link-preview-image.is-broken .link-preview-loading {
-  opacity: 0;
-}
-
-.link-preview-loading {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.3rem;
-  opacity: 1;
-  transition: opacity 0.2s ease-out;
-}
-
-.link-preview-loading i {
-  width: 0.25rem;
-  height: 0.25rem;
-  border-radius: 50%;
-  background-color: var(--flexoki-base-500);
-  animation: link-preview-pulse 1.2s ease-in-out infinite;
-}
-
-.link-preview-loading i:nth-child(2) {
-  animation-delay: 0.15s;
-}
-
-.link-preview-loading i:nth-child(3) {
-  animation-delay: 0.3s;
-}
-
-.link-preview-image.is-loaded .link-preview-loading {
-  opacity: 0;
-}
-
-@keyframes link-preview-pulse {
-  0%,
-  100% {
-    opacity: 0.25;
-    transform: scale(0.85);
-  }
+@keyframes new-badge-blink {
   50% {
-    opacity: 1;
-    transform: scale(1);
+    opacity: 0.4;
   }
-}
-
-.link-preview-domain {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-family: var(--font-family-mono);
-  font-size: 0.75rem;
-  line-height: 1;
-  color: var(--flexoki-base-200);
-}
-
-.link-preview-domain .link-preview-sep {
-  color: var(--flexoki-base-600);
-}
-
-.link-preview-title {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  line-height: 1.35;
-  color: var(--flexoki-base-50);
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.link-preview-desc {
-  margin: 0;
-  font-size: 0.75rem;
-  line-height: 1.45;
-  color: var(--flexoki-base-200);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.link-preview-desc[hidden] {
-  display: none;
-}
-
-/* Loading cursor while the preview metadata is being fetched. */
-a[data-external-preview="true"].is-preview-loading {
-  cursor: progress;
 }
 
 /* ---------------------------------------------------------------------------
- * Hand-drawn underline annotations (rough-notation)
+ * Peek: the terminal window that follows the pointer over [data-peek-*]
  * ------------------------------------------------------------------------- */
 
-[data-annotate] .rough-annotation path,
-.rough-annotation path {
-  stroke: color-mix(in srgb, var(--flexoki-orange) 88%, transparent 12%);
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.peek {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1900;
+  width: min(19rem, calc(100vw - 1.5rem));
+  border: 1px solid var(--border-color);
+  background: var(--term-panel);
+  box-shadow: 0 16px 48px rgb(0 0 0 / 0.35);
+  color: var(--text-color);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.14s ease;
 }
 
-.rough-annotation.is-retracting path {
-  animation: rough-notation-undraw 0.28s ease-in forwards !important;
+.peek[data-visible="true"] {
+  opacity: 1;
 }
 
-@keyframes rough-notation-undraw {
-  from {
-    stroke-dashoffset: 0;
+/* A tooltip: just what an abbreviation stands for, on one line. */
+.peek[data-kind="tip"] {
+  width: max-content;
+  max-width: min(22rem, calc(100vw - 1.5rem));
+}
+
+.peek[data-kind="tip"] .peek-bar {
+  display: none;
+}
+
+.peek[data-kind="tip"] .peek-text {
+  padding: 0.2rem 0.55rem;
+}
+
+.peek[data-kind="tip"] .peek-title {
+  color: var(--heading-color);
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+
+.peek-bar {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.25rem 0.6rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--gray-color);
+  font-size: 0.7rem;
+}
+
+.peek-bar::before {
+  color: var(--flexoki-magenta);
+  content: "■";
+  font-size: 0.55rem;
+}
+
+.peek-media {
+  display: none;
+  position: relative;
+  background: var(--bg-secondary);
+}
+
+.peek[data-has-media="true"] .peek-media {
+  display: block;
+}
+
+.peek-media img,
+.peek-media canvas {
+  display: none;
+  width: 100%;
+  max-height: 13rem;
+  margin: 0;
+  object-fit: cover;
+  object-position: top;
+}
+
+.peek[data-kind="image"] .peek-media img {
+  display: block;
+}
+
+.peek[data-kind="card"] .peek-media img {
+  display: block;
+  max-height: 15rem;
+  object-fit: contain;
+}
+
+.peek-grid {
+  display: none;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+
+.peek[data-kind="gallery"] .peek-grid {
+  display: grid;
+}
+
+.peek[data-kind="gallery"] .peek-grid img {
+  display: block;
+  aspect-ratio: 1;
+  max-height: none;
+}
+
+/* Three pictures: the first one runs across the top. */
+.peek-grid[data-count="3"] img:first-child {
+  grid-column: 1 / -1;
+  aspect-ratio: 2;
+}
+
+.peek[data-kind="scene"] .peek-media canvas {
+  display: block;
+  height: 11rem;
+  image-rendering: pixelated;
+}
+
+.peek-text {
+  display: none;
+  padding: 0.6rem 0.75rem 0.7rem;
+}
+
+.peek[data-has-text="true"] .peek-text {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.peek-title {
+  margin: 0;
+  color: var(--heading-color);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.peek-meta,
+.peek-rating {
+  margin: 0;
+  color: var(--gray-color);
+}
+
+.peek-rating {
+  color: var(--tc-date);
+  letter-spacing: 0.1em;
+}
+
+.peek-body {
+  margin: 0;
+  color: var(--text-color);
+}
+
+.peek:has(.peek-episodes li) {
+  width: min(27rem, calc(100vw - 1.5rem));
+}
+
+.peek:has(.peek-episodes li) .peek-media {
+  float: right;
+  width: 3.5rem;
+  margin: 0.6rem 0.75rem 0 0;
+}
+
+.peek:has(.peek-episodes li) .peek-text {
+  display: block;
+}
+
+.peek-episodes {
+  clear: both;
+  display: grid;
+  gap: 0.2rem;
+  margin: 0;
+  padding: 0.5rem 0 0;
+  list-style: none;
+}
+
+.peek-episodes::before {
+  content: "favorite episodes";
+  color: var(--tc-date);
+}
+
+.peek-episodes:empty,
+.peek-body:empty,
+.peek-meta:empty,
+.peek-rating:empty {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .new-badge {
+    animation: none;
   }
+}
+
+/* ---------------------------------------------------------------------------
+ * Vim link hints (press f)
+ * ------------------------------------------------------------------------- */
+
+.vim-hints {
+  position: fixed;
+  inset: 0;
+  z-index: 1950;
+  pointer-events: none;
+}
+
+.vim-hint {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 0 0.25rem;
+  background: var(--accent);
+  color: var(--background-color);
+  font-family: var(--font-family);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.35;
+  text-transform: lowercase;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
+}
+
+.vim-hint[data-typed="1"] {
+  background: var(--heading-color);
+}
+
+/* ---------------------------------------------------------------------------
+ * The tty (press : or `)
+ * ------------------------------------------------------------------------- */
+
+.tty {
+  position: fixed;
+  inset: 0;
+  z-index: 1980;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  padding: clamp(0.5rem, 4vw, 3rem);
+  background: color-mix(in srgb, var(--background-color) 55%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.tty[data-open="true"] {
+  display: flex;
+}
+
+.tty-window {
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 52rem);
+  height: min(32rem, 78svh);
+  border: 1px solid var(--accent);
+  background: var(--term-panel);
+  box-shadow:
+    0 0 0 1px var(--background-color),
+    0 24px 80px rgb(0 0 0 / 0.5),
+    0 0 40px var(--term-glow-soft);
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.tty-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.3rem 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--gray-color);
+  font-size: 0.72rem;
+}
+
+.tty-close {
+  padding: 0 0.3rem;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+}
+
+.tty-close:hover {
+  background: var(--accent);
+  color: var(--background-color);
+}
+
+.tty-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.7rem 0.9rem 0.3rem;
+  overscroll-behavior: contain;
+}
+
+.tty-out {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.tty-row a {
+  text-decoration: none;
+}
+
+.tty-row a:hover {
+  background: var(--accent);
+  color: var(--background-color);
+  text-shadow: none;
+}
+
+.tty-echo {
+  margin-top: 0.45rem;
+  color: var(--heading-color);
+}
+
+.tty-dim {
+  color: var(--gray-color);
+}
+
+.tty-accent {
+  color: var(--accent);
+  text-shadow: 0 0 10px var(--term-glow-soft);
+}
+
+.tty-err {
+  color: var(--error);
+}
+
+/* ls colours: directories blue, programs green, like a real terminal. */
+.tty-dir {
+  color: var(--tc-path);
+  font-weight: 650;
+}
+
+.tty-exec {
+  color: var(--tc-host);
+  font-weight: 650;
+}
+
+.tty-date {
+  color: var(--tc-date);
+}
+
+.tty-tag {
+  color: var(--tc-tag);
+}
+
+.tty-str {
+  color: var(--tc-string);
+}
+
+.tty-out a {
+  color: var(--tc-path);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.tty-big {
+  color: var(--accent);
+  font-size: 1.4rem;
+  font-weight: 750;
+  text-shadow: 0 0 14px var(--term-glow-soft);
+}
+
+.tty-line {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.45rem 0.9rem 0.6rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.tty-line label {
+  flex: none;
+  color: var(--gray-color);
+}
+
+.tty-host {
+  color: var(--heading-color);
+  font-weight: 700;
+}
+
+.tty-path {
+  color: var(--accent);
+}
+
+.tty-field {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Fish-style suggestion: the typed text is invisible, the rest is dimmed. */
+.tty-ghost {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  padding: 0.1rem 0;
+  font: inherit;
+  white-space: pre;
+  pointer-events: none;
+}
+
+.tty-ghost-typed {
+  visibility: hidden;
+}
+
+.tty-ghost-rest {
+  color: var(--gray-color);
+  opacity: 0.7;
+}
+
+.tty-suggest {
+  display: grid;
+  gap: 0.05rem;
+  max-height: 13rem;
+  overflow-y: auto;
+  padding: 0.35rem 0.5rem;
+  border-top: 1px dashed var(--border-color);
+  font-size: 0.78rem;
+}
+
+.tty-suggest[hidden] {
+  display: none;
+}
+
+.tty-suggest-row {
+  display: flex;
+  gap: 1.2rem;
+  justify-content: space-between;
+  padding: 0.05rem 0.4rem;
+  color: var(--heading-color);
+  cursor: pointer;
+}
+
+.tty-suggest-row span:last-child:not(:first-child) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tty-suggest-row:hover,
+.tty-suggest-row[data-active] {
+  background: var(--accent);
+  color: var(--background-color);
+}
+
+.tty-suggest-row:hover .tty-dim,
+.tty-suggest-row[data-active] .tty-dim {
+  color: var(--background-color);
+}
+
+.tty-donut {
+  color: var(--accent);
+  font-size: 0.72rem;
+  line-height: 1.05;
+  text-shadow: 0 0 8px var(--term-glow-soft);
+  white-space: pre;
+}
+
+.tty-ai {
+  margin: 0.2rem 0 0.4rem;
+  padding-left: 0.8rem;
+  border-left: 2px solid var(--accent);
+  color: var(--heading-color);
+}
+
+/* Markdown in ask answers (markdown.ts). */
+.tty-ai b {
+  font-weight: 700;
+}
+
+.tty-md-heading {
+  color: var(--heading-color);
+}
+
+.tty-code-inline {
+  padding: 0 0.3em;
+  background: var(--surface-hover);
+  color: var(--tc-string);
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.tty-code {
+  position: relative;
+  margin: 0.35rem 0;
+  padding: 0.5rem 0.75rem;
+  overflow-x: auto;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-color);
+  white-space: pre;
+}
+
+.tty-code code {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.tty-code-lang {
+  float: right;
+  margin-left: 1rem;
+  color: var(--gray-color);
+  font-size: 0.72em;
+}
+
+.tty-line input {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  padding: 0.1rem 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--heading-color);
+  caret-color: var(--accent);
+  font: inherit;
+}
+
+@media (max-width: 560px) {
+  .tty {
+    align-items: stretch;
+    padding: 0.4rem;
+  }
+
+  .tty-window {
+    height: auto;
+  }
+
+  .tty-line label .tty-host {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * ASCII effects (src/lib/terminal/ascii.ts)
+ * ------------------------------------------------------------------------- */
+
+canvas.ascii-resolve {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+}
+
+canvas.pixel-slide {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.ascii-spinner {
+  display: inline-block;
+  width: 2ch;
+  color: var(--accent);
+  text-align: center;
+}
+
+canvas.matrix-rain {
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  background: #000;
+  pointer-events: none;
+}
+
+/* Page changes: the old screen drops out, the new one prints top to bottom.
+   The header keeps its own group, so the prompt stays put. */
+::view-transition-old(root) {
+  animation: page-out 0.14s steps(3, end) both;
+}
+
+::view-transition-new(root) {
+  animation: page-in 0.36s steps(9, end) both;
+}
+
+@keyframes page-out {
   to {
-    stroke-dashoffset: var(--rno-len, 200px);
+    opacity: 0;
+    filter: brightness(1.4) blur(1px);
+    transform: translateY(-0.4rem);
+  }
+}
+
+@keyframes page-in {
+  from {
+    clip-path: inset(0 0 100% 0);
+    filter: brightness(1.5);
+  }
+
+  60% {
+    filter: brightness(1.1);
+  }
+
+  to {
+    clip-path: inset(0);
+    filter: none;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .link-preview-card,
-  .link-preview-image img {
-    transition: none;
-  }
-
-  .link-preview-loading i {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
     animation: none;
   }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The 3D boot on the home page (src/lib/home/boot-stage.ts). The DOM screen
+   sits under the WebGL canvas, which leaves a hole where the glass is. */
+/* While three.js loads, the room's lamp light, not a black screen. */
+.boot-stage {
+  background:
+    radial-gradient(
+      ellipse 45% 55% at 64% 46%,
+      rgb(150 90 40 / 0.32),
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 70% 40% at 50% 92%,
+      rgb(90 55 25 / 0.45),
+      transparent 75%
+    ),
+    #0e0c0a;
+}
+
+.boot-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  overflow: hidden;
+  cursor: pointer;
+  transition: background-color 0.4s ease;
+}
+
+.boot-stage-css,
+.boot-stage-gl {
+  position: absolute;
+  inset: 0;
+}
+
+.boot-stage-gl {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+
+.boot-stage.is-in .boot-stage-gl {
+  opacity: 1;
+}
+
+/* The flight in fades the room out frame by frame, so no transition. */
+.boot-stage.is-flying .boot-stage-gl {
+  transition: none;
+}
+
+/* The real page on the monitor; it prints in like any page change. */
+.boot-page {
+  border: 0;
+  background: var(--background-color);
+  pointer-events: none;
+}
+
+.boot-page.is-on {
+  animation: page-in 0.5s steps(9, end) both;
+}
+
+/* The boot scene as a photo: grain, a warm vignette and a polaroid border. */
+.boot-film,
+.boot-polaroid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.boot-film {
+  background:
+    radial-gradient(ellipse at 50% 45%, transparent 55%, rgb(20 10 0 / 0.45)),
+    linear-gradient(rgb(255 196 140 / 0.05), rgb(255 196 140 / 0.05));
+}
+
+.boot-film::after {
+  position: absolute;
+  inset: -50%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  content: "";
+  mix-blend-mode: overlay;
+  opacity: 0.22;
+  animation: boot-grain 0.9s steps(6) infinite;
+}
+
+@keyframes boot-grain {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  20% {
+    transform: translate(-3%, 2%);
+  }
+
+  40% {
+    transform: translate(2%, -4%);
+  }
+
+  60% {
+    transform: translate(-4%, -1%);
+  }
+
+  80% {
+    transform: translate(3%, 3%);
+  }
+
+  100% {
+    transform: translate(-1%, -3%);
+  }
+}
+
+.boot-polaroid {
+  --side: clamp(10px, 3.2vmin, 32px);
+  --chin: clamp(48px, 12vmin, 120px);
+
+  border: solid #efe8d8;
+  border-width: var(--side) var(--side) var(--chin);
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 0.35),
+    inset 0 0 2.5vmin rgb(0 0 0 / 0.35);
+  transition: border-width 1.2s cubic-bezier(0.7, 0, 0.3, 1);
+}
+
+.boot-caption {
+  position: absolute;
+  bottom: calc(-1 * var(--chin));
+  left: 0;
+  display: flex;
+  align-items: center;
+  height: var(--chin);
+  color: #3a352c;
+  font-family: var(--font-family);
+  font-size: clamp(0.75rem, 1.9vmin, 1.1rem);
+  transform: rotate(-0.6deg);
+}
+
+/* The orange date a film camera burns into the corner of the picture. */
+.boot-stamp {
+  position: absolute;
+  right: clamp(8px, 2.4vmin, 24px);
+  bottom: clamp(6px, 1.8vmin, 18px);
+  color: #ff8a2a;
+  font-family: var(--font-family);
+  font-size: clamp(0.8rem, 2.2vmin, 1.3rem);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+  text-shadow: 0 0 6px rgb(255 120 30 / 0.7);
+}
+
+.boot-stage.is-flying .boot-polaroid {
+  --side: 0px;
+  --chin: 0px;
+
+  border-width: 0;
+  box-shadow: none;
+}
+
+.boot-stage.is-flying .boot-caption,
+.boot-stage.is-flying .boot-stamp,
+.boot-stage.is-flying .boot-film {
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+/* `inception` in the tty (src/lib/home/inception.ts): the boot stage, run
+   backwards and forever. The room's opacity is driven per frame. */
+.inception-stage .boot-stage-gl {
+  transition: none;
+}
+
+.inception-stage .boot-polaroid {
+  transition: border-width 1.4s cubic-bezier(0.7, 0, 0.3, 1);
+}
+
+.inception-stage .boot-caption,
+.inception-stage .boot-stamp,
+.inception-stage .boot-film {
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+.inception-stage.is-dreaming .boot-caption,
+.inception-stage.is-dreaming .boot-stamp,
+.inception-stage.is-dreaming .boot-film {
+  opacity: 1;
+}
+
+.inception-kick {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 3;
+  padding: 0.15rem 0.55rem;
+  border: 1px solid #3a352c;
+  background: #efe8d8;
+  color: #3a352c;
+  font-family: var(--font-family);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.inception-kick::before {
+  content: "[esc] ";
+  opacity: 0.6;
+}
+
+.inception-kick:hover,
+.inception-kick:focus-visible {
+  background: #bc5215;
+  color: #fffcf0;
+  outline: none;
+}
+
+/* The print appears with the first frame of the scene, not while it loads. */
+.boot-stage:not(.is-in):not(.inception-stage) .boot-polaroid,
+.boot-stage:not(.is-in):not(.inception-stage) .boot-film {
+  opacity: 0;
 }

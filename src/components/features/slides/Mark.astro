@@ -1,12 +1,6 @@
 ---
 export type MarkType =
-  | "underline"
-  | "box"
-  | "circle"
-  | "highlight"
-  | "strike"
-  | "cross"
-  | "bracket";
+  "underline" | "box" | "circle" | "highlight" | "strike" | "cross" | "bracket";
 
 export type MarkColor =
   | "red"
@@ -36,6 +30,6 @@ const {
 const Tag = block ? "div" : "span";
 ---
 
-<Tag class="mark" data-mark={type} data-mark-at={at} data-mark-color={color}
-  ><slot /></Tag
->
+<Tag class="mark" data-mark={type} data-mark-at={at} data-mark-color={color}>
+  <slot />
+</Tag>

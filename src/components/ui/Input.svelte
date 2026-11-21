@@ -33,7 +33,7 @@
     color: var(--text-color);
     background-color: var(--bg-secondary);
     border: 1px solid var(--border-color);
-    border-radius: 0.28rem;
+    border-radius: 0;
     transition:
       border-color 0.16s ease,
       background-color 0.16s ease;

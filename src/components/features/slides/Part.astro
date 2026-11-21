@@ -8,5 +8,7 @@ const { title } = Astro.props;
 
 <section class="deck-part" data-part data-title={title}>
   <h2 class="deck-part-title">{title}</h2>
-  <div class="deck-part-row"><slot /></div>
+  <div class="deck-part-row">
+    <slot />
+  </div>
 </section>

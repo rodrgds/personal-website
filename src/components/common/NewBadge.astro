@@ -1,0 +1,12 @@
+---
+// Renders a small "new" badge when `date` is recent. Styles live in global.css.
+import { isRecent } from "../../lib/recent";
+
+interface Props {
+  date?: Date | string;
+}
+
+const { date } = Astro.props;
+---
+
+{isRecent(date) && <span class="new-badge">new</span>}

@@ -6,38 +6,73 @@ export const CONSTANTS = {
   LOCATION: { lat: 41.1579, lng: -8.6291 }, // Porto, Portugal
 };
 
-export const SOCIALS = [
+export interface Social {
+  icon_name: string;
+  /** Display name, e.g. "LinkedIn". */
+  label: string;
+  /** The account as it reads on the service. */
+  handle: string;
+  url: string;
+  /** Primary accounts show in the header and on the home page. */
+  primary: boolean;
+}
+
+export const SOCIALS: Social[] = [
   {
-    icon_name: "youtube",
-    url: "https://url.rgo.pt/youtube",
-  },
-  {
-    icon_name: "x",
-    url: "https://url.rgo.pt/x",
-  },
-  {
-    icon_name: "mastodon",
-    url: "https://url.rgo.pt/mastodon",
-  },
-  {
-    icon_name: "bluesky",
-    url: "https://url.rgo.pt/bluesky",
-  },
-  {
-    icon_name: "instagram",
-    url: "https://url.rgo.pt/instagram",
-  },
-  {
-    icon_name: "threads",
-    url: "https://url.rgo.pt/threads",
+    icon_name: "github",
+    label: "GitHub",
+    handle: "rodrgds",
+    url: "https://url.rgo.pt/github",
+    primary: true,
   },
   {
     icon_name: "linkedin",
+    label: "LinkedIn",
+    handle: "in/rodrgds",
     url: "https://url.rgo.pt/linkedin",
+    primary: true,
   },
   {
-    icon_name: "github",
-    url: "https://url.rgo.pt/github",
+    icon_name: "x",
+    label: "X",
+    handle: "@rodrgds",
+    url: "https://url.rgo.pt/x",
+    primary: true,
+  },
+  {
+    icon_name: "youtube",
+    label: "YouTube",
+    handle: "@rodrgds",
+    url: "https://url.rgo.pt/youtube",
+    primary: false,
+  },
+  {
+    icon_name: "mastodon",
+    label: "Mastodon",
+    handle: "@rgo@masto.pt",
+    url: "https://url.rgo.pt/mastodon",
+    primary: false,
+  },
+  {
+    icon_name: "bluesky",
+    label: "Bluesky",
+    handle: "@rgo.pt",
+    url: "https://url.rgo.pt/bluesky",
+    primary: false,
+  },
+  {
+    icon_name: "instagram",
+    label: "Instagram",
+    handle: "@rodrgds",
+    url: "https://url.rgo.pt/instagram",
+    primary: false,
+  },
+  {
+    icon_name: "threads",
+    label: "Threads",
+    handle: "@rodrgds",
+    url: "https://url.rgo.pt/threads",
+    primary: false,
   },
 ];
 

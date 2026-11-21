@@ -18,24 +18,26 @@ const label = source ? `Past test · ${source}` : "Practice question";
 
 <div class="quiz">
   <p class="quiz-source">{label}</p>
-  <div class="quiz-prompt"><slot /></div>
-  {
-    options.length > 0 && (
-      <ol class:list={["quiz-options", columns === 2 && "quiz-options--2"]}>
-        {options.map((option, index) => (
-          <li data-correct={index === correct ? "" : undefined}>
-            <span>
-              {option
-                .split("`")
-                .map((part, part_index) =>
-                  part_index % 2 === 1 ? <code>{part}</code> : part,
-                )}
-            </span>
-          </li>
-        ))}
-      </ol>
-    )
-  }
+  <div class="quiz-prompt">
+    <slot />
+  </div>
+  {options.length > 0 && (
+    <ol class:list={["quiz-options", columns === 2 && "quiz-options--2"]}>
+      {options.map((option, index) => (
+        <li data-correct={index === correct ? "" : undefined}>
+          <span>
+            {option
+              .split("`")
+              .map((part, part_index) =>
+                part_index % 2 === 1 ? <code>{part}</code> : part,
+              )}
+          </span>
+        </li>
+      ))}
+    </ol>
+  )}
   <span class="quiz-flag" data-show={at}></span>
-  <div class="quiz-answer" data-show={at}><slot name="answer" /></div>
+  <div class="quiz-answer" data-show={at}>
+    <slot name="answer" />
+  </div>
 </div>

@@ -1,0 +1,705 @@
+---
+// The CV as `htop`: a few meters on top, then one process per CV entry with
+// its lifetime drawn as a bar on a shared year axis. Rows open /cv/<slug>;
+// hovering one shows its first screenshot and a summary.
+import { blockBar } from "../../../lib/terminal/ascii";
+import {
+  TIMELINE_TYPES,
+  formatTimelineDuration,
+  type TimelineEntry,
+} from "../../../cv/timeline";
+import type { CVCover } from "../../../cv/covers";
+import CVEntryVisual from "./CVEntryVisual.astro";
+
+interface Props {
+  entries: TimelineEntry[];
+  covers?: Map<string, CVCover>;
+  now?: Date;
+}
+
+const { entries, covers = new Map(), now = new Date() } = Astro.props;
+
+const toMonth = (value: string): number => {
+  const [year, month] = value.split("-").map(Number);
+  return year * 12 + month - 1;
+};
+
+const nowMonth = now.getFullYear() * 12 + now.getMonth();
+const firstYear = Math.floor(
+  Math.min(...entries.map((entry) => toMonth(entry.startDate))) / 12,
+);
+const startMonth = firstYear * 12;
+// One spare month so a bar that runs to today still has room for its cap.
+const endMonth = nowMonth + 1;
+const span = endMonth - startMonth;
+const percent = (month: number): number =>
+  Math.round(((month - startMonth) / span) * 10_000) / 100;
+
+const years = Array.from(
+  { length: Math.floor(nowMonth / 12) - firstYear + 1 },
+  (_, index) => firstYear + index,
+);
+
+const duration = (months: number): string => {
+  const years = Math.floor(months / 12);
+  const rest = months % 12;
+  if (years === 0) return `${Math.max(1, rest)}m`;
+  return rest ? `${years}y ${rest}m` : `${years}y`;
+};
+
+const MONTHS = [
+  "jan",
+  "feb",
+  "mar",
+  "apr",
+  "may",
+  "jun",
+  "jul",
+  "aug",
+  "sep",
+  "oct",
+  "nov",
+  "dec",
+];
+const monthLabel = (value: string): string => {
+  const month = toMonth(value);
+  return `${MONTHS[month % 12]} ${Math.floor(month / 12)}`;
+};
+
+/** ps-style state: R running, S sleeping (paused), and a blank for exited. */
+const stateOf = (entry: TimelineEntry): "R" | "S" | "-" => {
+  if (entry.status === "paused") return "S";
+  if (entry.kind === "span" && !entry.endDate && entry.isCurrent) return "R";
+  if (entry.kind === "span" && !entry.endDate) return "S";
+  return "-";
+};
+
+const rows = [...entries]
+  .sort(
+    (a, b) =>
+      toMonth(b.startDate) - toMonth(a.startDate) ||
+      a.title.localeCompare(b.title),
+  )
+  .map((entry, index) => {
+    const start = toMonth(entry.startDate);
+    const end = entry.endDate ? toMonth(entry.endDate) : nowMonth;
+    const state = stateOf(entry);
+    const kind = entry.type;
+    const range =
+      entry.kind === "point"
+        ? monthLabel(entry.startDate)
+        : `${monthLabel(entry.startDate)} → ${entry.endDate ? monthLabel(entry.endDate) : "now"}`;
+    return {
+      entry,
+      pid: String(index + 1).padStart(2, "0"),
+      kind,
+      state,
+      left: percent(start),
+      // Bars cover whole months, so a one-month job is still visible.
+      width: Math.max(0.6, percent(end + 1) - percent(start)),
+      time:
+        entry.kind === "point"
+          ? ""
+          : formatTimelineDuration(entry.startDate, entry.endDate, now),
+      cover: covers.get(entry.slug),
+      range,
+    };
+  });
+
+const running = rows.filter((row) => row.state === "R");
+const meters = TIMELINE_TYPES.slice(0, 4).map((kind) => {
+  const all = rows.filter((row) => row.kind.key === kind.key);
+  const live = all.filter((row) => row.state === "R").length;
+  return {
+    label: kind.plural,
+    key: kind.key,
+    live,
+    total: all.length,
+    bar: blockBar(all.length ? live / all.length : 0, 10),
+  };
+});
+const BIRTH = new Date("2006-12-02T00:00:00Z");
+const ageMonths =
+  (now.getFullYear() - BIRTH.getFullYear()) * 12 +
+  now.getMonth() -
+  BIRTH.getMonth();
+const counts = new Map(
+  TIMELINE_TYPES.map((kind) => [
+    kind.key,
+    rows.filter((row) => row.kind.key === kind.key).length,
+  ]),
+);
+---
+
+<section class="ps" data-cv-ps aria-label="CV timeline">
+  <div class="ps-meters">
+    {meters.map((meter) => (
+      <p class="ps-meter" data-kind={meter.key}>
+        <span class="ps-meter-label">{meter.label}</span>
+        <span class="ps-meter-bar" aria-hidden="true" set:text={meter.bar} />
+        <span class="ps-meter-value">
+          {meter.live}/{meter.total}
+        </span>
+      </p>
+    ))}
+    <p class="ps-stats">
+      <span>
+        <b>tasks:</b>
+        {rows.length} total,
+        <em>{running.length} running</em>
+      </span>
+      <span>
+        <b>uptime:</b> {duration(ageMonths)}, since dec 2006
+      </span>
+    </p>
+  </div>
+
+  <div class="ps-filters" role="group" aria-label="Show" data-no-vim>
+    <button
+      type="button"
+      data-cv-filter="all"
+      data-cv-hash=""
+      aria-pressed="true"
+    >
+      all <span>{rows.length}</span>
+    </button>
+    {TIMELINE_TYPES.map((kind) => (
+      <button
+        type="button"
+        data-cv-filter={kind.key}
+        data-cv-hash={kind.plural}
+        data-kind={kind.key}
+        aria-pressed="false"
+      >
+        {kind.plural} <span>{counts.get(kind.key)}</span>
+      </button>
+    ))}
+  </div>
+
+  <div class="ps-table" data-timeline-scroller>
+    <div class="ps-head" aria-hidden="true">
+      <span>S</span>
+      <span class="ps-col-kind">TYPE</span>
+      <span>NAME</span>
+      <span class="ps-axis">
+        {years.map((year) => (
+          <span style={`left:${percent(year * 12)}%`}>{year}</span>
+        ))}
+      </span>
+      <span class="ps-col-time">TIME</span>
+    </div>
+    <ol
+      class="ps-rows"
+      style={`--now:${percent(nowMonth + 1)}%;--year:${(12 / span) * 100}%`}
+    >
+      {rows.map((row) => (
+        <li
+          class="ps-row"
+          data-kind={row.kind.key}
+          data-state={row.state}
+          data-point={row.entry.kind === "point" ? "" : undefined}
+        >
+          <a
+            href={row.entry.href}
+            data-no-link-fx
+            data-peek-title={row.entry.title}
+            data-peek-meta={`${row.entry.subtitle} · ${row.range}`}
+            data-peek-body={row.entry.summary}
+            data-peek-image={row.cover?.src}
+            data-peek-label={row.cover?.label ?? `${row.kind.label}/${row.pid}`}
+          >
+            <span
+              class="ps-state"
+              title={
+                row.state === "R"
+                  ? "running"
+                  : row.state === "S"
+                    ? "sleeping"
+                    : "exited"
+              }
+            >
+              {row.state}
+            </span>
+            <span class="ps-col-kind">{row.kind.label}</span>
+            <span class="ps-name">
+              <span class="ps-logo" aria-hidden="true">
+                <CVEntryVisual src={row.entry.visual} alt="" size={14} />
+              </span>
+              <span class="ps-title">{row.entry.name.toLowerCase()}</span>
+              <span class="ps-sub">{row.entry.context.toLowerCase()}</span>
+            </span>
+            <span class="ps-track" aria-hidden="true">
+              <span
+                class="ps-bar"
+                style={`left:${row.left}%;width:${row.width}%`}
+              />
+            </span>
+            <span class="ps-col-time">
+              <span class="sr-only">{row.range}, </span>
+              {row.time}
+            </span>
+          </a>
+        </li>
+      ))}
+    </ol>
+  </div>
+  <p class="ps-legend">
+    <span>
+      <b data-state="R">R</b> running
+    </span>
+    <span>
+      <b data-state="S">S</b> sleeping (paused)
+    </span>
+    <span>
+      <b>-</b> done
+    </span>
+  </p>
+</section>
+
+<script>
+  // Filter rows by type. The filter lives in the hash (#projects), so a
+  // filtered view can be shared; old list-view section hashes map here too.
+  const FILTERS = new Map([
+    ["work", "work"],
+    ["experience", "work"],
+    ["projects", "build"],
+    ["university-projects", "uni"],
+    ["uni", "uni"],
+    ["study", "study"],
+    ["education", "study"],
+    ["awards", "award"],
+    ["honors", "award"],
+    ["courses", "course"],
+    ["certifications", "course"],
+  ]);
+
+  function applyFilter(root: HTMLElement, filter: string): void {
+    for (const button of root.querySelectorAll<HTMLButtonElement>(
+      "[data-cv-filter]",
+    )) {
+      button.setAttribute(
+        "aria-pressed",
+        String(button.dataset.cvFilter === filter),
+      );
+    }
+    for (const row of root.querySelectorAll<HTMLElement>(".ps-row")) {
+      row.hidden = filter !== "all" && row.dataset.kind !== filter;
+    }
+  }
+
+  document.addEventListener("click", (event) => {
+    const button =
+      event.target instanceof Element
+        ? event.target.closest<HTMLButtonElement>("[data-cv-filter]")
+        : null;
+    const root = button?.closest<HTMLElement>("[data-cv-ps]");
+    if (!button || !root) return;
+    const filter = button.dataset.cvFilter ?? "all";
+    applyFilter(root, filter);
+    const hash = button.dataset.cvHash;
+    history.replaceState(
+      history.state,
+      "",
+      `${location.pathname}${location.search}${hash ? `#${hash}` : ""}`,
+    );
+  });
+
+  document.addEventListener("astro:page-load", () => {
+    const root = document.querySelector<HTMLElement>("[data-cv-ps]");
+    const filter = FILTERS.get(decodeURIComponent(location.hash.slice(1)));
+    if (root && filter) applyFilter(root, filter);
+  });
+</script>
+
+<style>
+  .ps {
+    --ps-work: var(--tc-host);
+    --ps-build: var(--tc-path);
+    --ps-uni: var(--flexoki-cyan);
+    --ps-study: var(--tc-tag);
+    --ps-award: var(--tc-date);
+    --ps-course: var(--flexoki-magenta);
+
+    border: 1px solid var(--border-color);
+    background: var(--term-panel);
+    font-size: 0.8rem;
+  }
+
+  [data-kind="work"] {
+    --kind: var(--ps-work);
+  }
+
+  [data-kind="build"] {
+    --kind: var(--ps-build);
+  }
+
+  [data-kind="uni"] {
+    --kind: var(--ps-uni);
+  }
+
+  [data-kind="study"] {
+    --kind: var(--ps-study);
+  }
+
+  [data-kind="award"] {
+    --kind: var(--ps-award);
+  }
+
+  [data-kind="course"] {
+    --kind: var(--ps-course);
+  }
+
+  /* htop's header: one row of meters, then one line of totals. */
+  .ps-meters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 2.2rem;
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .ps-meter {
+    display: flex;
+    gap: 0.8ch;
+    margin: 0;
+    white-space: nowrap;
+  }
+
+  .ps-meter-label {
+    color: var(--kind);
+    font-weight: 700;
+  }
+
+  /* The bar text comes in as one string; brackets are drawn around it. */
+  .ps-meter-bar {
+    color: var(--kind);
+    white-space: pre;
+  }
+
+  .ps-meter-bar::before,
+  .ps-meter-bar::after {
+    color: var(--gray-color);
+  }
+
+  .ps-meter-bar::before {
+    content: "[";
+  }
+
+  .ps-meter-bar::after {
+    content: "]";
+  }
+
+  .ps-meter-value {
+    color: var(--gray-color);
+  }
+
+  .ps-stats {
+    display: flex;
+    flex-basis: 100%;
+    flex-wrap: wrap;
+    gap: 0 2.2rem;
+    margin: 0;
+    color: var(--text-color);
+  }
+
+  .ps-stats b {
+    color: var(--flexoki-cyan);
+    font-weight: 400;
+  }
+
+  .ps-stats em {
+    color: var(--tc-live);
+    font-style: normal;
+  }
+
+  .ps-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    padding: 0.55rem 0.9rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .ps-filters button {
+    padding: 0.05rem 0.45rem;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    color: var(--kind, var(--text-color));
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .ps-filters button span {
+    color: var(--gray-color);
+  }
+
+  .ps-filters button:hover {
+    border-color: var(--kind, var(--heading-color));
+  }
+
+  .ps-filters button[aria-pressed="true"] {
+    border-color: var(--kind, var(--heading-color));
+    background: var(--kind, var(--heading-color));
+    color: var(--background-color);
+  }
+
+  .ps-filters button[aria-pressed="true"] span {
+    color: inherit;
+  }
+
+  .ps-head,
+  .ps-row a {
+    display: grid;
+    grid-template-columns: 2ch 9ch minmax(0, 25rem) minmax(8rem, 1fr) 7ch;
+    gap: 0 1ch;
+    align-items: center;
+    padding: 0 0.9rem;
+  }
+
+  .ps-head {
+    padding-block: 0.25rem;
+    background: var(--tc-host);
+    color: var(--background-color);
+    font-weight: 700;
+  }
+
+  .ps-axis {
+    position: relative;
+    height: 1.2em;
+  }
+
+  .ps-axis span {
+    position: absolute;
+    top: 0;
+    padding-left: 0.3ch;
+    border-left: 1px solid currentColor;
+    line-height: 1.2;
+  }
+
+  .ps-col-time {
+    text-align: right;
+  }
+
+  .ps-rows {
+    margin: 0;
+    padding: 0.3rem 0;
+    list-style: none;
+  }
+
+  .ps-row {
+    margin: 0;
+  }
+
+  .ps-row a {
+    min-height: 1.75rem;
+    color: var(--text-color);
+    text-decoration: none;
+    text-shadow: none;
+  }
+
+  .ps-row a:hover,
+  .ps-row a:focus-visible {
+    background: var(--surface-hover);
+    color: var(--heading-color);
+    outline: none;
+  }
+
+  .ps-state {
+    color: var(--gray-color);
+    font-weight: 700;
+  }
+
+  .ps-row[data-state="R"] .ps-state,
+  .ps-legend b[data-state="R"] {
+    color: var(--tc-live);
+  }
+
+  .ps-row[data-state="S"] .ps-state,
+  .ps-legend b[data-state="S"] {
+    color: var(--tc-paused);
+  }
+
+  .ps-col-kind {
+    color: var(--kind);
+  }
+
+  .ps-head .ps-col-kind {
+    color: inherit;
+  }
+
+  .ps-name {
+    display: flex;
+    gap: 0.8ch;
+    align-items: center;
+    min-width: 0;
+    white-space: nowrap;
+  }
+
+  .ps-logo {
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    width: 14px;
+    height: 14px;
+    overflow: hidden;
+  }
+
+  .ps-logo :global(img) {
+    max-width: 14px;
+    max-height: 14px;
+    margin: 0;
+    object-fit: contain;
+  }
+
+  /* The name keeps its room; the subtitle gives way first. */
+  .ps-title {
+    flex: 0 1 auto;
+    min-width: 4ch;
+    overflow: hidden;
+    color: var(--heading-color);
+    text-overflow: ellipsis;
+  }
+
+  .ps-sub {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--gray-color);
+    text-overflow: ellipsis;
+  }
+
+  .ps-row[data-state="-"] .ps-title {
+    color: var(--text-color);
+  }
+
+  /* The track: a faint line per year, today in orange, the bar on top. */
+  .ps-track {
+    position: relative;
+    align-self: stretch;
+    background-image:
+      linear-gradient(to right, var(--accent), var(--accent)),
+      linear-gradient(to right, var(--border-color) 1px, transparent 1px);
+    background-repeat: no-repeat, repeat-x;
+    background-position:
+      var(--now) 0,
+      0 0;
+    background-size:
+      1px 100%,
+      var(--year) 100%;
+  }
+
+  .ps-bar {
+    position: absolute;
+    top: 50%;
+    height: 0.62rem;
+    background: var(--kind);
+    transform: translateY(-50%);
+  }
+
+  .ps-row[data-state="-"] .ps-bar {
+    opacity: 0.55;
+  }
+
+  .ps-row[data-state="S"] .ps-bar {
+    background: repeating-linear-gradient(
+      90deg,
+      var(--kind) 0 0.35rem,
+      transparent 0.35rem 0.5rem
+    );
+  }
+
+  /* Awards and courses happen on a day: a diamond, not a bar. */
+  .ps-row[data-point] .ps-bar {
+    width: 0.62rem !important;
+    background: var(--kind);
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(45deg) scale(0.75);
+  }
+
+  .ps-row a:hover .ps-bar {
+    opacity: 1;
+  }
+
+  .ps-col-time {
+    color: var(--tc-date);
+  }
+
+  .ps-head .ps-col-time {
+    color: inherit;
+  }
+
+  .ps-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 1.2rem;
+    margin: 0;
+    padding: 0.5rem 0.9rem;
+    border-top: 1px solid var(--border-color);
+    color: var(--gray-color);
+    font-size: 0.74rem;
+  }
+
+  .ps-legend b {
+    color: var(--gray-color);
+  }
+
+  @media (max-width: 900px) {
+    .ps-head,
+    .ps-row a {
+      grid-template-columns: 2ch minmax(0, 15rem) minmax(6rem, 1fr) 7ch;
+    }
+
+    .ps-col-kind {
+      display: none;
+    }
+
+    .ps-sub {
+      display: none;
+    }
+  }
+
+  /* Phones: name on one line, the bar under it across the full width. */
+  @media (max-width: 600px) {
+    .ps-meters {
+      gap: 0.15rem 1.4rem;
+      padding: 0.55rem 0.7rem;
+    }
+
+    /* No room for bars on a phone: label and count are enough. */
+    .ps-meter-bar {
+      display: none;
+    }
+
+    .ps-stats {
+      gap: 0 1.4rem;
+    }
+
+    .ps-head,
+    .ps-row a {
+      grid-template-columns: 2ch minmax(0, 1fr) 7ch;
+      padding: 0 0.7rem;
+    }
+
+    .ps-head > :nth-child(3) {
+      display: none;
+    }
+
+    .ps-head .ps-axis {
+      grid-column: 2;
+    }
+
+    .ps-row a {
+      grid-template-rows: auto 0.9rem;
+      padding-block: 0.25rem;
+    }
+
+    .ps-track {
+      grid-column: 2 / -1;
+      grid-row: 2;
+    }
+
+    .ps-filters {
+      padding: 0.55rem 0.7rem;
+    }
+  }
+</style>

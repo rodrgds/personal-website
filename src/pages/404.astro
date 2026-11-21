@@ -2,7 +2,17 @@
 import BaseHead from "../components/common/BaseHead.astro";
 import Header from "../components/common/Header.astro";
 import Footer from "../components/common/Footer.astro";
+import TermWindow from "../components/common/TermWindow.astro";
 import { SITE_TITLE, SITE_DESCRIPTION } from "../config";
+
+const path = Astro.url.pathname.replace(/\/$/, "") || "/";
+const suggestions = [
+  ["~", "/"],
+  ["~/cv", "/cv"],
+  ["~/uses", "/uses"],
+  ["~/faves", "/faves"],
+  ["~/edu", "/edu"],
+];
 ---
 
 <!doctype html>
@@ -14,13 +24,77 @@ import { SITE_TITLE, SITE_DESCRIPTION } from "../config";
     <Header title={SITE_TITLE} />
     <main>
       <h1 class="handwritten-heading handwritten-heading--page">404</h1>
-      <p>I can't find this page.</p>
-      <p>
-        If you think there should be something here, <a href="mailto:hey@rgo.pt"
-          >let me know</a
-        >.
-      </p>
+      <TermWindow title="bash">
+        <pre class="not-found"><span class="dim">rodrigo@rgo.pt:~$</span> cd {path}
+<span class="err">bash: cd: {path}: No such file or directory</span>
+<span class="dim">rodrigo@rgo.pt:~$</span> ls</pre>
+        <ul class="suggestions">
+          {suggestions.map(([label, href]) => (
+            <li>
+              <a href={href}>{label}</a>
+            </li>
+          ))}
+        </ul>
+        <p class="hint">
+          Lost? Press <kbd>:</kbd> and type <code>ls</code>, or
+          <button type="button" data-tty-open="help">
+            open the shell
+          </button>
+          . If something should be here, <a href="mailto:hey@rgo.pt">tell me</a>
+          .
+        </p>
+      </TermWindow>
     </main>
     <Footer />
   </body>
 </html>
+
+<style>
+  .not-found {
+    margin: 0 0 0.8rem;
+    padding: 0;
+    background: none;
+    font-family: var(--font-family);
+    font-size: 0.86rem;
+    white-space: pre-wrap;
+  }
+
+  .dim {
+    color: var(--gray-color);
+  }
+
+  .err {
+    color: var(--error);
+  }
+
+  .suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 1.4rem;
+    margin: 0 0 1rem;
+    list-style: none;
+  }
+
+  .suggestions li {
+    margin: 0;
+  }
+
+  .hint {
+    margin: 0;
+    color: var(--gray-color);
+    font-size: 0.82rem;
+  }
+
+  .hint button {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--link-color);
+    font: inherit;
+  }
+
+  .hint button:hover {
+    background: var(--accent);
+    color: var(--background-color);
+  }
+</style>

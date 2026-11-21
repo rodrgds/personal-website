@@ -11,14 +11,12 @@ const { src, alt, size = 28 } = Astro.props;
 const isImageSource = src !== undefined && src.includes("/");
 ---
 
-{
-  src &&
-    (isImageSource ? (
-      <img class="entry-logo-img" src={src} alt={alt} />
-    ) : (
-      <Logo src={src} alt={alt} size={size} />
-    ))
-}
+{src &&
+  (isImageSource ? (
+    <img class="entry-logo-img" src={src} alt={alt} />
+  ) : (
+    <Logo src={src} alt={alt} size={size} />
+  ))}
 
 <style>
   .entry-logo-img {

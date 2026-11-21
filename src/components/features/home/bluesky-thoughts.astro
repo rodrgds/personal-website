@@ -1,38 +1,188 @@
 ---
+// My latest short posts. I write them once and OpenPost posts them to X,
+// LinkedIn, Bluesky and the rest; Bluesky is simply the easiest feed to read
+// back. Posts with pictures show a tiny thumbnail and peek them on hover.
 import { getCollection } from "astro:content";
-import BlueskyThoughtInner from "./bluesky-thought-inner.svelte";
+import { SOCIALS } from "../../../data/socials";
+import { blueskyPictures } from "../../../loaders/bluesky";
+
+const COUNT = 5;
+const MORE = ["x", "linkedin", "bluesky"];
 
 const thoughts = await getCollection("thoughts");
-const postsOnly = thoughts.filter((t) => !t.data.isReply);
 
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
+const formatDate = (value: string): string =>
+  new Date(value)
+    .toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    })
+    .toLowerCase();
 
-function formatText(text: string): string {
-  return text
+const formatText = (text: string): string =>
+  text
     .replace(/https?:\/\/[^\s]+/g, "")
     .replace(/\n+/g, " ")
     .trim();
-}
 
-const postsData = postsOnly.map((t) => ({
-  text: formatText(t.data.text),
-  date: formatDate(t.data.createdAt),
-  url: `https://bsky.app/profile/rgo.pt/post/${t.data.uri.split("/").at(-1)}`,
-}));
+const posts = thoughts
+  .filter((thought) => !thought.data.isReply)
+  .toSorted(
+    (a, b) =>
+      new Date(b.data.createdAt).getTime() -
+      new Date(a.data.createdAt).getTime(),
+  )
+  .slice(0, COUNT)
+  .map((thought) => {
+    // Feed thumbnails are big enough for the hover card.
+    const images = (
+      blueskyPictures.safeParse(thought.data.embed?.images ?? []).data ?? []
+    ).map((image) => ({ src: image.thumb, video: image.video ?? false }));
+    const label = images[0]?.video
+      ? "video"
+      : images.length === 1
+        ? "1 image"
+        : `${images.length} images`;
+    return {
+      text: formatText(thought.data.text),
+      date: formatDate(thought.data.createdAt),
+      url: `https://bsky.app/profile/rgo.pt/post/${thought.data.uri.split("/").at(-1)}`,
+      images,
+      label,
+    };
+  });
 
-const initialIndex =
-  postsData.length > 0 ? Math.floor(Math.random() * postsData.length) : 0;
+const more = SOCIALS.filter((social) => MORE.includes(social.icon_name)).sort(
+  (a, b) => MORE.indexOf(a.icon_name) - MORE.indexOf(b.icon_name),
+);
 ---
 
-<BlueskyThoughtInner
-  posts={postsData}
-  initialIndex={initialIndex}
-  client:load
-/>
+{posts.length > 0 && (
+  <div class="thoughts">
+    <ol>
+      {posts.map((post) => (
+        <li>
+          <a
+            href={post.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-no-link-fx
+            data-peek-images={
+              post.images.length
+                ? post.images.map((image) => image.src).join(" ")
+                : undefined
+            }
+            data-peek-label={post.images.length ? post.label : undefined}
+          >
+            <time>[{post.date}]</time>
+            {post.images.length > 0 && (
+              <span class="pictures" aria-label={post.label}>
+                <img
+                  src={post.images[0]?.src}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
+                {post.images[0]?.video && <b>▶</b>}
+                {post.images.length > 1 && <b>×{post.images.length}</b>}
+              </span>
+            )}
+            <span>{post.text}</span>
+          </a>
+        </li>
+      ))}
+    </ol>
+    <p class="more">
+      <span>
+        posted everywhere at once with <a href="/cv/openpost">openpost</a>.
+      </span>
+      <span class="more-links">
+        more on
+        {more.map((social) => (
+          <a href={social.url} target="_blank" rel="me noopener noreferrer">
+            [{social.icon_name}]
+          </a>
+        ))}
+      </span>
+    </p>
+  </div>
+)}
+
+<style>
+  .thoughts {
+    font-size: 0.8rem;
+  }
+
+  ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    margin: 0;
+  }
+
+  li a {
+    display: block;
+    padding: 0.3rem 0.35rem;
+    color: var(--text-color);
+    line-height: 1.55;
+    text-decoration: none;
+    text-shadow: none;
+  }
+
+  li + li a {
+    border-top: 1px dashed var(--border-color);
+  }
+
+  li a:hover,
+  li a:focus-visible {
+    background: var(--surface-hover);
+    color: var(--heading-color);
+    outline: none;
+  }
+
+  time {
+    margin-right: 0.6ch;
+    color: var(--tc-date);
+  }
+
+  /* A post's pictures as a tiny thumbnail and a count; hover shows them. */
+  .pictures {
+    display: inline-flex;
+    gap: 0.3ch;
+    align-items: center;
+    margin-right: 0.6ch;
+    color: var(--gray-color);
+    font-size: 0.72rem;
+    vertical-align: -0.2em;
+  }
+
+  .pictures img {
+    width: 1.15em;
+    height: 1.15em;
+    margin: 0;
+    border: 1px solid var(--border-color);
+    object-fit: cover;
+  }
+
+  .pictures b {
+    font-weight: 400;
+  }
+
+  .more {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 1.6ch;
+    justify-content: space-between;
+    margin: 0.6rem 0 0;
+    color: var(--gray-color);
+  }
+
+  .more-links {
+    display: flex;
+    gap: 0 1ch;
+  }
+</style>

@@ -265,7 +265,7 @@ export const FAVORITES = {
       ],
     },
     {
-      title: "Not Related! A Big-Braned Podcast by Luke Smith",
+      title: "Not Related! A Big-Brained Podcast by Luke Smith",
       image: "/images/favorites/not-related.webp",
       icon: "🧠",
       rating: 5,

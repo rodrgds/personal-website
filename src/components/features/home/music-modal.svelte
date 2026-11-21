@@ -14,15 +14,15 @@
   }
 </script>
 
-<InteractiveLink text="Music" onclick={openModal} />
+<InteractiveLink text="music" onclick={openModal} />
 
 <Modal
   bind:isOpen={isModalOpen}
   onClose={closeModal}
-  title="My Music"
+  title="lastfm --recent rodrigo"
   size="lg"
   headerLink="https://url.rgo.pt/music"
-  headerLinkText="View full profile"
+  headerLinkText="last.fm"
 >
   <LastfmHistory />
 </Modal>

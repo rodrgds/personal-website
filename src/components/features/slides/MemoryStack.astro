@@ -94,75 +94,71 @@ function values(
   {title && <figcaption class="mem-title">{title}</figcaption>}
   <div class="mem-axis">
     <span>{high}</span>
-    {
-      growth !== "none" && (
-        <span class="mem-growth">
-          {growth === "down" ? "grows ↓" : "grows ↑"}
-        </span>
-      )
-    }
+    {growth !== "none" && (
+      <span class="mem-growth">
+        {growth === "down" ? "grows ↓" : "grows ↑"}
+      </span>
+    )}
   </div>
   <div class="mem-rows">
-    {
-      rows.map((row, index) => (
-        <div
-          class:list={["mem-row", row.gap && "mem-row--gap"]}
-          data-show={row.show}
-          data-focus={row.focus}
-          style={row.size ? `--mem-size:${row.size}` : undefined}
-        >
-          <span class="mem-addr">{row.addr}</span>
-          <span class="mem-cell">
-            {row.gap ? (
-              <span class="mem-value tone-muted">⋮</span>
-            ) : (
-              values(row.value).map((value) => (
-                <span
-                  class:list={[
-                    "mem-value",
-                    `tone-${value.tone ?? row.tone ?? "plain"}`,
-                  ]}
-                  data-show={value.always ? undefined : value.at}
-                  data-fx="fade"
-                >
-                  {value.text}
-                </span>
-              ))
-            )}
-          </span>
-          <span class="mem-pointers">
-            {pointers
-              .filter((pointer) => pointer.row === index)
-              .map((pointer) => (
-                <span class="mem-pointer" data-show={pointer.at} data-fx="fade">
-                  ← {pointer.name}
-                </span>
-              ))}
-          </span>
-          <span class="mem-label">
-            {values(row.label).map((label) => (
+    {rows.map((row, index) => (
+      <div
+        class:list={["mem-row", row.gap && "mem-row--gap"]}
+        data-show={row.show}
+        data-focus={row.focus}
+        style={row.size ? `--mem-size:${row.size}` : undefined}
+      >
+        <span class="mem-addr">{row.addr}</span>
+        <span class="mem-cell">
+          {row.gap ? (
+            <span class="mem-value tone-muted">⋮</span>
+          ) : (
+            values(row.value).map((value) => (
               <span
-                data-show={label.always ? undefined : label.at}
+                class:list={[
+                  "mem-value",
+                  `tone-${value.tone ?? row.tone ?? "plain"}`,
+                ]}
+                data-show={value.always ? undefined : value.at}
                 data-fx="fade"
               >
-                {label.text}
+                {value.text}
+              </span>
+            ))
+          )}
+        </span>
+        <span class="mem-pointers">
+          {pointers
+            .filter((pointer) => pointer.row === index)
+            .map((pointer) => (
+              <span class="mem-pointer" data-show={pointer.at} data-fx="fade">
+                ← {pointer.name}
               </span>
             ))}
-          </span>
-        </div>
-      ))
-    }
-  </div>
-  <div class="mem-axis"><span>{low}</span></div>
-  {
-    captions.length > 0 && (
-      <div class="mem-captions">
-        {captions.map((caption) => (
-          <p class="mem-caption" data-show={caption.at} data-fx="fade">
-            {caption.text}
-          </p>
-        ))}
+        </span>
+        <span class="mem-label">
+          {values(row.label).map((label) => (
+            <span
+              data-show={label.always ? undefined : label.at}
+              data-fx="fade"
+            >
+              {label.text}
+            </span>
+          ))}
+        </span>
       </div>
-    )
-  }
+    ))}
+  </div>
+  <div class="mem-axis">
+    <span>{low}</span>
+  </div>
+  {captions.length > 0 && (
+    <div class="mem-captions">
+      {captions.map((caption) => (
+        <p class="mem-caption" data-show={caption.at} data-fx="fade">
+          {caption.text}
+        </p>
+      ))}
+    </div>
+  )}
 </figure>

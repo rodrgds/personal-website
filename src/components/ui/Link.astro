@@ -23,31 +23,29 @@ const target = external ? "_blank" : undefined;
 const rel = external ? "noopener noreferrer" : undefined;
 ---
 
-{
-  isButtonVariant ? (
-    <Button
-      href={href}
-      variant={variant}
-      size={size}
-      class={className}
-      target={target}
-      rel={rel}
-      {...props}
-    >
-      <slot />
-    </Button>
-  ) : (
-    <a
-      href={href}
-      class:list={["link-base", className]}
-      target={target}
-      rel={rel}
-      {...props}
-    >
-      <slot />
-    </a>
-  )
-}
+{isButtonVariant ? (
+  <Button
+    href={href}
+    variant={variant}
+    size={size}
+    class={className}
+    target={target}
+    rel={rel}
+    {...props}
+  >
+    <slot />
+  </Button>
+) : (
+  <a
+    href={href}
+    class:list={["link-base", className]}
+    target={target}
+    rel={rel}
+    {...props}
+  >
+    <slot />
+  </a>
+)}
 
 <style>
   .link-base {

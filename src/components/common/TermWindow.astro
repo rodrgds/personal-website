@@ -1,0 +1,79 @@
+---
+// A terminal window: a title bar that reads like a command, and a body.
+interface Props {
+  title: string;
+  href?: string;
+  linkLabel?: string;
+  id?: string;
+  class?: string;
+  /** Colour of the square in the title bar, e.g. "var(--tc-path)". */
+  mark?: string;
+}
+
+const {
+  title,
+  href,
+  linkLabel = "open",
+  id,
+  class: className,
+  mark,
+} = Astro.props;
+---
+
+<section
+  class:list={["term-window", className]}
+  aria-labelledby={id}
+  style={mark ? `--win-mark:${mark}` : undefined}
+>
+  <h2 class="term-window-title" id={id}>
+    <span data-scramble>{title}</span>
+    {href && <a href={href}>{linkLabel}</a>}
+  </h2>
+  <div class="term-window-body">
+    <slot />
+  </div>
+</section>
+
+<style>
+  .term-window {
+    min-width: 0;
+    margin: 0 0 1.2rem;
+    border: 1px solid var(--border-color);
+    background: var(--surface-color);
+  }
+
+  .term-window-title {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    margin: 0;
+    padding: 0.35rem 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--gray-color);
+    font-size: 0.76rem;
+    font-weight: 400;
+    letter-spacing: 0;
+  }
+
+  .term-window-title::before {
+    color: var(--win-mark, var(--tc-host));
+    content: "■";
+    font-size: 0.6rem;
+  }
+
+  .term-window-title a {
+    margin-left: auto;
+  }
+
+  .term-window-body {
+    padding: 0.9rem 1rem;
+  }
+
+  .term-window-body > :global(:first-child) {
+    margin-top: 0;
+  }
+
+  .term-window-body > :global(:last-child) {
+    margin-bottom: 0;
+  }
+</style>
