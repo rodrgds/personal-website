@@ -7,9 +7,18 @@ export const ACTIVITY_SOURCES = [
   "steps",
   "sleep",
   "music",
+  "tv",
+  "posts",
 ] as const;
 
-export const SYNC_SOURCES = ["github", "hevy", "leetcode", "lastfm"] as const;
+export const SYNC_SOURCES = [
+  "github",
+  "hevy",
+  "leetcode",
+  "lastfm",
+  "wetrakr",
+  "openpost",
+] as const;
 
 export type ActivitySource = (typeof ACTIVITY_SOURCES)[number];
 export type SyncSource = (typeof SYNC_SOURCES)[number];
@@ -61,6 +70,8 @@ export const ACTIVITY_THRESHOLDS = {
   steps: [3_000, 7_000, 10_000],
   sleep: [360, 420, 480],
   music: [5, 15, 30],
+  tv: [1, 3, 6],
+  posts: [1, 2, 4],
 } as const satisfies Record<ActivitySource, [number, number, number]>;
 
 export const SOURCE_LABELS = {
@@ -68,4 +79,6 @@ export const SOURCE_LABELS = {
   hevy: "Hevy",
   leetcode: "LeetCode",
   lastfm: "Last.fm",
+  wetrakr: "WeTrakr",
+  openpost: "OpenPost",
 } as const satisfies Record<SyncSource, string>;

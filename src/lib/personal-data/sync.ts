@@ -15,6 +15,8 @@ const GITHUB_GRAPHQL_ENDPOINT = "https://api.github.com/graphql";
 const LEETCODE_GRAPHQL_ENDPOINT = "https://leetcode.com/graphql";
 const HEVY_API_ENDPOINT = "https://api.hevyapp.com/v1";
 const LASTFM_API_ENDPOINT = "https://ws.audioscrobbler.com/2.0/";
+const WETRAKR_API_ENDPOINT = "https://api.wetrakr.com";
+const OPENPOST_DEFAULT_URL = "https://app.openpo.st";
 const USERNAME = "rodrgds";
 
 interface ImportResult extends SyncResult {
@@ -604,6 +606,159 @@ async function importLastfm(
   };
 }
 
+/** A calendar day in Porto, so a late-night post or episode lands on its day. */
+function lisbonDay(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Lisbon",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
+// ---------------------------------------------------------------------------
+// WeTrakr: films and episodes, from the public profile (only the app key).
+
+/** More plays than this on one day is a backfill (old titles logged at once). */
+const WETRAKR_BACKFILL_DAY = 24;
+
+function wetrakrHeaders(apiKey: string): HeadersInit {
+  return {
+    Accept: "application/json",
+    "User-Agent": "rgo.pt/1.0 (+https://rgo.pt)",
+    "wetrakr-api-key": apiKey,
+    "wetrakr-api-version": "1",
+  };
+}
+
+async function readWetrakrWatched(
+  apiKey: string,
+  userId: number,
+  target: "movies" | "episodes",
+): Promise<JsonObject[]> {
+  const items: JsonObject[] = [];
+  // The API serves at most 100 a page; stop at a short page.
+  for (let page = 1; page <= 200; page++) {
+    const url = new URL(
+      `/users/${userId}/tracking/watched/${target}`,
+      WETRAKR_API_ENDPOINT,
+    );
+    url.searchParams.set("limit", "100");
+    url.searchParams.set("page", String(page));
+    const rows = asRecords(
+      await requestJson<JsonValue>(url, { headers: wetrakrHeaders(apiKey) }),
+    );
+    items.push(...rows);
+    if (rows.length < 100) break;
+  }
+  return items;
+}
+
+async function importWetrakr(
+  directus: PersonalDataDirectus,
+  mode: SyncMode,
+): Promise<ImportResult> {
+  const apiKey = requireEnv("WETRAKR_CLIENT_ID");
+  const profile = await requestJson<JsonObject>(
+    new URL(`/users/${USERNAME}`, WETRAKR_API_ENDPOINT),
+    { headers: wetrakrHeaders(apiKey) },
+  );
+  const userId = asNumber(profile.id);
+  if (!userId) throw new Error("Configured WeTrakr user was not found");
+  const allTime = asRecord(asRecord(asRecord(profile.activity).watch_time).all);
+
+  const daily = new Map<string, number>();
+  let seen = 0;
+  for (const target of ["movies", "episodes"] as const) {
+    for (const item of await readWetrakrWatched(apiKey, userId, target)) {
+      seen += 1;
+      const tracking = asRecord(item.user_tracking);
+      if (tracking.watched_at_unknown === true) continue;
+      const day = lisbonDay(asString(item.watched_at));
+      if (day) daily.set(day, (daily.get(day) ?? 0) + 1);
+    }
+  }
+  for (const [day, plays] of daily) {
+    if (plays > WETRAKR_BACKFILL_DAY) daily.delete(day);
+  }
+  // Every play, rewatches included, as the profile counts them. The days
+  // only know each title's latest play.
+  const total =
+    asNumber(allTime.movies_watched) + asNumber(allTime.episodes_watched) ||
+    [...daily.values()].reduce((sum, value) => sum + value, 0);
+
+  const written = await refreshActivityProjection(directus, "tv", daily, total);
+  return {
+    source: "wetrakr",
+    mode,
+    seen,
+    written,
+    cursor: new Date().toISOString(),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// OpenPost: one post a day per publication, whatever it went out to.
+
+async function importOpenpost(
+  directus: PersonalDataDirectus,
+  mode: SyncMode,
+): Promise<ImportResult> {
+  const token = requireEnv("OPENPOST_API_TOKEN");
+  const base = readEnv("OPENPOST_URL") || OPENPOST_DEFAULT_URL;
+  const headers: HeadersInit = {
+    Accept: "application/json",
+    Authorization: `Bearer ${token}`,
+    "User-Agent": "rgo.pt personal data importer",
+  };
+  const workspaces = asRecords(
+    await requestJson<JsonValue>(new URL("/api/v1/workspaces", base), {
+      headers,
+    }),
+  );
+  const daily = new Map<string, number>();
+  let total = 0;
+  for (const workspace of workspaces) {
+    const workspaceId = asString(workspace.id);
+    if (!workspaceId) continue;
+    for (let offset = 0; offset < 100_000; offset += 100) {
+      const url = new URL("/api/v1/publications", base);
+      url.searchParams.set("workspace_id", workspaceId);
+      url.searchParams.set("status", "published");
+      url.searchParams.set("limit", "100");
+      url.searchParams.set("offset", String(offset));
+      const page = asRecords(await requestJson<JsonValue>(url, { headers }));
+      for (const publication of page) {
+        const at =
+          asString(publication.actual_run_at) ||
+          asString(publication.scheduled_at) ||
+          asString(publication.created_at);
+        const day = lisbonDay(at);
+        if (!day) continue;
+        total += 1;
+        daily.set(day, (daily.get(day) ?? 0) + 1);
+      }
+      if (page.length < 100) break;
+    }
+  }
+
+  const written = await refreshActivityProjection(
+    directus,
+    "posts",
+    daily,
+    total,
+  );
+  return {
+    source: "openpost",
+    mode,
+    seen: total,
+    written,
+    cursor: new Date().toISOString(),
+  };
+}
+
 async function importSource(
   sourceName: SyncSource,
   mode: SyncMode,
@@ -619,6 +774,10 @@ async function importSource(
       return importLeetcode(directus, mode);
     case "lastfm":
       return importLastfm(directus, mode, source);
+    case "wetrakr":
+      return importWetrakr(directus, mode);
+    case "openpost":
+      return importOpenpost(directus, mode);
   }
 }
 

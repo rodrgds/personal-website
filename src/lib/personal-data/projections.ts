@@ -46,6 +46,18 @@ const PROJECTION_DEFINITIONS = {
     totalUnit: "scrobbles",
     source: "lastfm",
   },
+  tv: {
+    label: "TV",
+    unit: "plays",
+    totalUnit: "plays",
+    source: "wetrakr",
+  },
+  posts: {
+    label: "Posts",
+    unit: "posts",
+    totalUnit: "posts",
+    source: "openpost",
+  },
 } satisfies Record<ActivitySource, ProjectionDefinition>;
 
 function firstDate(dailyValues: Map<string, number>): string {
