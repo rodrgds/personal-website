@@ -177,8 +177,12 @@ The home is also the now page: `/now` redirects to `/#now`.
   1:1.
 - The boot and inception share Rodrigo’s seated model in
   `src/lib/home/boot-person.ts`. Keep body-reference photos private.
-  Arms use two-bone IK; the nearer hand reaches for the power
-  button and the hands tap the keys as the login is typed. Motion is
+  Each arm is one skinned mesh (`person-arm.ts`: sleeve, forearm, twist
+  bone, a palm and three-bone fingers) driven by two-bone IK, with finger IK
+  landing each fingertip on its key. The resting pose and the key-to-finger
+  map read the keyboard's world positions from constants at the top of
+  `boot-person.ts`; update them if the keyboard moves. The nearer hand
+  reaches for the power button and the hands touch-type the login. Motion is
   time-based (`ease(rate, dt)`), not per-frame, so slow GPUs look the same.
   His materials are transparent from the start: switching `transparent`
   mid-flight rebuilds shaders and stalls the fly-in. No camera move onto the
@@ -321,7 +325,11 @@ Pushes to `main` are deployed by `.github/workflows/ci.yml`. The workflow path-f
 
 When adding build inputs, update the workflow `app` path filter and cache keys so changes cannot skip verification or reuse stale dependencies. Preserve the shared Nix-store, Devenv/Cachix, `.devenv` evaluation, Bun download/`node_modules`, and Typst package caches; never put production secrets in GitHub caches or the Nix store. Validate workflow edits with `actionlint`, and treat the deploy as complete only after the workflow hook succeeds and `https://rgo.pt/` serves the new revision.
 
-Dependency notes: TypeScript stays on 6.x until `@astrojs/check` supports 7.
+Dependency notes: CI and the VPS build run the devenv Node 22, which lags
+nixpkgs (22.22 in Nov 2026), and Astro refuses to start on a Node below its
+engines range. Check `engines.node` of astro and its integrations before an
+update (Astro 7.4.1, MDX 8.1.0 and the Svelte integration 9.1.0 are the last
+on >=22.22.0). TypeScript stays on 6.x until `@astrojs/check` supports 7.
 Markdown plugins go through `processor: unified({...})` from
 `@astrojs/markdown-remark` (a direct dependency; MDX 8 needs it at ^7.3),
 not the deprecated `markdown.rehypePlugins`. Read new server secrets at
