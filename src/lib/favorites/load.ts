@@ -5,6 +5,7 @@ import {
   isTmdbConfigured,
   type TmdbMediaType,
 } from "../tmdb";
+import { extractPreview, fetchHtml } from "../link-preview";
 import type {
   FavoriteItem,
   FavoriteSection,
@@ -98,17 +99,31 @@ async function videoPreview(url: string): Promise<string | undefined> {
   return `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
 }
 
+/** A page's own picture (Open Graph or Twitter card), as link previews use. */
+async function pagePicture(url: string): Promise<string | undefined> {
+  let target: URL;
+  try {
+    target = new URL(url);
+  } catch {
+    return undefined;
+  }
+  const html = await fetchHtml(target);
+  return html === null ? undefined : extractPreview(html, target).image;
+}
+
 async function mapStandardFavorite(
   sectionId: FavoriteSectionId,
   favorite: StandardFavoriteInput,
+  previews: boolean,
 ): Promise<FavoriteItem> {
   const item: FavoriteItem = {
     id: `${sectionId}:${slugify(favorite.title)}`,
     ...favorite,
   };
   if (favorite.image) item.image = await coverUrl(favorite.image);
-  else if (favorite.url) {
-    const preview = await videoPreview(favorite.url);
+  else if (previews && favorite.url) {
+    const preview =
+      (await videoPreview(favorite.url)) ?? (await pagePicture(favorite.url));
     if (preview) item.preview = preview;
   }
   return item;
@@ -147,7 +162,15 @@ async function mapTmdbFavorite(
   }
 }
 
-export async function loadFavorites(): Promise<FavoriteSection[]> {
+/**
+ * Every section with its items. With `previews`, links without a picture of
+ * their own get one for the peek (a video's thumbnail, else the page's
+ * Open Graph image), read over the network: only /faves asks, and it is
+ * built once, so pages rendered per request never wait on other sites.
+ */
+export async function loadFavorites({
+  previews = false,
+}: { previews?: boolean } = {}): Promise<FavoriteSection[]> {
   const movies = await Promise.all(
     FAVORITES.movies.map((favorite) => mapTmdbFavorite("movie", favorite)),
   );
@@ -160,7 +183,9 @@ export async function loadFavorites(): Promise<FavoriteSection[]> {
     favorites: StandardFavoriteInput[],
   ): Promise<FavoriteItem[]> =>
     Promise.all(
-      favorites.map((favorite) => mapStandardFavorite(sectionId, favorite)),
+      favorites.map((favorite) =>
+        mapStandardFavorite(sectionId, favorite, previews),
+      ),
     );
 
   const itemsBySection = {

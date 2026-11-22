@@ -201,9 +201,16 @@ The home is also the now page: `/now` redirects to `/#now`.
   `-meta`, `-body`, `-rating`) show a hover window. Use it for screenshots and
   favourites instead of inline galleries. Abbreviations (`fde`, `eng.`) use
   `data-peek-tip="what it stands for"` on an `<abbr>`: a one-line tooltip,
-  nothing more. On /faves, YouTube videos peek their thumbnail (`preview`,
-  chosen at build in `src/lib/favorites/load.ts`: the 1280px one when it
-  exists, else the 320px one). External links in text preview through the same window
+  nothing more. A peek lays its picture out by format (`data-format`, set
+  when it loads): posters show whole (beside the text in a card, or alone in
+  a narrow window), covers square, wider pictures as a strip. On /faves,
+  links without a picture get one for the peek (`preview`, read at build by
+  `loadFavorites({ previews: true })`): a YouTube video's thumbnail (the
+  1280px one when it exists, else the 320px one), else the page's Open
+  Graph image through `src/lib/link-preview.ts`, which the
+  `/api/link-preview` endpoint shares. Pages rendered per request (the home)
+  never ask for previews, so they never wait on other sites. External links
+  in text preview through the same window
   (`link-peek.ts` fetches `/api/link-preview` and calls `peekAt()`); there is
   no separate preview card.
 - Interface sounds go through `src/lib/sound.ts` (cuelume, `mech` theme,

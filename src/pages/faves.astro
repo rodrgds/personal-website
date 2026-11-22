@@ -8,7 +8,7 @@ import { loadFavorites } from "../lib/favorites/load";
 
 export const prerender = true;
 
-const sections = await loadFavorites();
+const sections = await loadFavorites({ previews: true });
 
 const title = "Favorites";
 const description =
