@@ -9,7 +9,6 @@ import hudsonYards from "../../assets/home/life/hudson-yards.webp";
 import arkPitch from "../../assets/cv/codespring-2026/pitching-2.jpg";
 import washington from "../../assets/home/life/washington.jpg";
 import newYork from "../../assets/home/life/new-york.jpg";
-import mic from "../../assets/home/life/mic.jpg";
 import suited from "../../assets/home/life/suited.jpg";
 import mountainRoad from "../../assets/home/life/mountain-road.webp";
 import tecla from "../../assets/cv/tecla-2024/3.jpg";
@@ -205,13 +204,6 @@ const LIFE: LifeSource[] = [
     alt: "Rodrigo in sunglasses with the US Capitol behind him",
     file: washington,
     position: "50% 61%",
-  },
-  {
-    label: "2025",
-    caption: "dinner, then the microphone",
-    alt: "Rodrigo singing into a microphone",
-    file: mic,
-    position: "50% 30%",
   },
   {
     label: "2025",
