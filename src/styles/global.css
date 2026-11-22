@@ -1434,7 +1434,13 @@ canvas.matrix-rain {
 }
 
 /* `inception` in the tty (src/lib/home/inception.ts): the boot stage, run
-   backwards and forever. The room's opacity is driven per frame. */
+   backwards and forever. The room's opacity is driven per frame. The stage
+   itself is see-through: while the room fades in, the real page behind it
+   is what shows, and the room's copy of the page lands exactly on it. */
+.inception-stage {
+  background: transparent;
+}
+
 .inception-stage .boot-stage-gl {
   transition: none;
 }

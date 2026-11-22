@@ -3,20 +3,19 @@
 // monitor of another desk, and so on, until the visitor kicks out (button or
 // Esc). The page stays at the centre the whole way out.
 //
-// How the loop stays seamless: levels alternate, desk and laptop. Level 1 is
-// the desk whose monitor shows the page (live in an iframe during the pull
-// back, then a snapshot of it); level n's screen shows level n - 1. Every
-// frame the three levels under the one on screen are rendered into textures,
-// deepest first, each from its own over-the-shoulder shot. The camera flies
+// How it stays seamless: the page is drawn once, as the visitor sees it, into
+// a texture (modern-screenshot) before anything shows, and that one picture is
+// on the monitor from the first frame, at 1:1 over the real page, to the
+// deepest level, so no screen ever swaps what it shows. Levels alternate,
+// desk and laptop. Level 1 is the desk whose monitor shows the page; level
+// n's screen shows level n - 1. Every frame the three levels under the one
+// on screen are rendered into textures, deepest first, each from its own
+// over-the-shoulder shot. The camera flies
 // from "the screen fills the photo" out to that shot; at the end the view is
 // identical to the texture the next level shows, so it moves out a level and
 // keeps going. The photo is held at 4:3 inside a polaroid border, the shape
 // of the glass.
 import * as THREE from "three";
-import {
-  CSS3DObject,
-  CSS3DRenderer,
-} from "three/examples/jsm/renderers/CSS3DRenderer.js";
 import {
   SCREEN_H,
   SCREEN_W,
@@ -30,8 +29,6 @@ import { buildLaptop } from "./inception-laptop";
 
 const FOV = 34;
 const PULL_MS = 3600;
-/** How long to hold the shot for the page's snapshot before going on. */
-const SNAPSHOT_WAIT_MS = 4000;
 /** Levels rendered under the one on screen; deeper ones are a few pixels. */
 const DEPTH = 3;
 /** How long the desk loop takes; the laptop's follows from the same speed. */
@@ -125,8 +122,9 @@ function addBackdrop(scene: THREE.Scene, color: number): THREE.Mesh {
 }
 
 /**
- * The page as the visitor sees it, as a canvas, for the monitor once the live
- * iframe is gone. Only what is on screen (and above it) is drawn.
+ * The page as the visitor sees it, as a canvas, for the monitor: at the
+ * screen's own pixel density, since the first frame shows it at 1:1. Only
+ * what is on screen (and above it) is drawn.
  */
 async function snapshotPage(): Promise<HTMLCanvasElement | null> {
   try {
@@ -137,7 +135,7 @@ async function snapshotPage(): Promise<HTMLCanvasElement | null> {
     return await domToCanvas(document.body, {
       width,
       height,
-      scale: Math.min(1.5, window.devicePixelRatio || 1),
+      scale: Math.min(2, window.devicePixelRatio || 1),
       backgroundColor: getComputedStyle(document.body).backgroundColor,
       style: { margin: "0", transform: `translateY(${-scrolled}px)` },
       timeout: 3000,
@@ -178,9 +176,6 @@ export async function startInception(): Promise<void> {
   container.setAttribute("aria-label", "Inception: press Escape to wake up");
   document.body.append(container);
 
-  const css = new CSS3DRenderer();
-  css.domElement.className = "boot-stage-css";
-  container.append(css.domElement);
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   // Two renders a frame, so a little less resolution than the boot.
   renderer.setPixelRatio(Math.min(1.5, window.devicePixelRatio || 1));
@@ -254,20 +249,6 @@ export async function startInception(): Promise<void> {
   top.position.set(-1.0, 0, 0.95);
   scene.add(top);
 
-  // The monitor: a hole for the page during the pull-back, then the
-  // texture of the room itself.
-  const hole = new THREE.Mesh(
-    new THREE.PlaneGeometry(SCREEN_W + 0.03, SCREEN_H + 0.03),
-    new THREE.MeshBasicMaterial({
-      color: 0x000000,
-      opacity: 0,
-      transparent: true,
-      blending: THREE.NoBlending,
-    }),
-  );
-  hole.position.copy(GLASS);
-  hole.renderOrder = 1;
-  scene.add(hole);
   // One texture per level under the screen, desk-shaped (16:10, for the
   // laptop's screen) and laptop-shaped (4:3, for the desk's monitor); only the
   // nearest is antialiased, since the deeper ones are small.
@@ -292,7 +273,6 @@ export async function startInception(): Promise<void> {
   const blank = new THREE.DataTexture(new Uint8Array([8, 8, 8, 255]), 1, 1);
   blank.needsUpdate = true;
   let pageTexture: THREE.Texture | null = null;
-  let snapshotSettled = false;
   const screenMaterial = new THREE.MeshBasicMaterial({
     map: blank,
     transparent: true,
@@ -305,60 +285,16 @@ export async function startInception(): Promise<void> {
   screen.position.copy(GLASS).add(new THREE.Vector3(0, 0, 0.002));
   screen.renderOrder = 2;
   scene.add(screen);
-  // The page's snapshot, for level 1 once it is a texture. It covers the hole
-  // and shows the part of the page the iframe showed through it (layout()
-  // sets the crop), so the hand-off from the live page cannot shift it.
+  // The page itself, on level 1's monitor: the snapshot on a plane the size
+  // and place the page has at 1:1 (layout() sizes it), just in front of the
+  // screen. The case hides what lies beyond the glass once it fades in.
   const pageMaterial = new THREE.MeshBasicMaterial({ map: blank });
-  const pagePlane = new THREE.Mesh(
-    new THREE.PlaneGeometry(SCREEN_W + 0.03, SCREEN_H + 0.03),
-    pageMaterial,
-  );
-  pagePlane.position.copy(GLASS).add(new THREE.Vector3(0, 0, 0.003));
+  const pagePlane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), pageMaterial);
   pagePlane.renderOrder = 3;
   pagePlane.visible = false;
   scene.add(pagePlane);
-  /** Crop the snapshot to the hole, exactly as the iframe sits behind it. */
-  const cropPage = (pageWidth: number, pageHeight: number): void => {
-    const texture = pageMaterial.map;
-    if (!texture) return;
-    const halfWidth = (SCREEN_W + 0.03) / 2;
-    const halfHeight = (SCREEN_H + 0.03) / 2;
-    // The page is centred across the screen and hangs from its top edge.
-    texture.repeat.set(
-      (2 * halfWidth) / pageWidth,
-      (2 * halfHeight) / pageHeight,
-    );
-    texture.offset.set(
-      0.5 - halfWidth / pageWidth,
-      (pageHeight - halfHeight - SCREEN_H / 2) / pageHeight,
-    );
-  };
-  let pageSize = { width: SCREEN_W, height: SCREEN_H };
-
-  // This page, live, on the monitor for the pull-back.
-  try {
-    sessionStorage.setItem("rgo:terminal-booted", "1");
-  } catch {
-    // Without storage the inner page may boot; it is hidden soon anyway.
-  }
-  const page = document.createElement("iframe");
-  page.className = "boot-page";
-  page.src = window.location.href;
-  page.tabIndex = -1;
-  page.setAttribute("aria-hidden", "true");
-  const cssScene = new THREE.Scene();
-  const pageObject = new CSS3DObject(page);
-  cssScene.add(pageObject);
-  const scrollY = window.scrollY;
 
   const camera = new THREE.PerspectiveCamera(FOV, 4 / 3, 0.05, 80);
-  const cssCamera = new THREE.PerspectiveCamera(FOV, 16 / 10, 0.05, 80);
-  /** The page layer, from where the scene's camera is. */
-  const renderPage = (): void => {
-    cssCamera.position.copy(camera.position);
-    cssCamera.quaternion.copy(camera.quaternion);
-    css.render(cssScene, cssCamera);
-  };
   // Same pose and vertical field as the photo, but 16:10: its centre 4:3
   // crop is exactly what the window shows at the end of a desk loop.
   const heroCamera = new THREE.PerspectiveCamera(FOV, 16 / 10, 0.05, 80);
@@ -428,7 +364,6 @@ export async function startInception(): Promise<void> {
       target.setSize(Math.round((height * 4) / 3), height);
     });
     renderer.setSize(width, height);
-    css.setSize(width, height);
     camera.setViewOffset(
       rect.width,
       rect.height,
@@ -437,37 +372,16 @@ export async function startInception(): Promise<void> {
       width,
       height,
     );
-    // CSS3DRenderer scales wrongly when the view is larger than the full
-    // frame, which drew the page about a sixth too small. Its own camera sees
-    // the whole window as its frame instead (a wider field of view), shifted
-    // so its centre lands on the photo's: the same projection, plainly.
-    cssCamera.fov = THREE.MathUtils.radToDeg(
-      2 *
-        Math.atan(
-          Math.tan(THREE.MathUtils.degToRad(FOV / 2)) * (height / rect.height),
-        ),
-    );
-    cssCamera.aspect = width / height;
-    cssCamera.setViewOffset(
-      width,
-      height,
-      width / 2 - (rect.x + rect.width / 2),
-      height / 2 - (rect.y + rect.height / 2),
-      width,
-      height,
-    );
+    // The page covers the screen and hangs from its top edge, as it would
+    // fill a window of the screen's width.
     const scale = Math.max(SCREEN_W / width, SCREEN_H / height);
-    page.style.width = `${width}px`;
-    page.style.height = `${height}px`;
-    pageObject.scale.setScalar(scale);
-    pageSize = { width: width * scale, height: height * scale };
-    cropPage(pageSize.width, pageSize.height);
+    pagePlane.scale.set(width * scale, height * scale, 1);
     const centre = new THREE.Vector3(
       0,
       SCREEN_Y + SCREEN_H / 2 - (height * scale) / 2,
-      SCREEN_Z - 0.0005,
+      SCREEN_Z + 0.003,
     );
-    pageObject.position.copy(centre);
+    pagePlane.position.copy(centre);
     // Where the camera sits for the page to fill the window at 1:1.
     const distance =
       (rect.height * scale) / (2 * Math.tan(THREE.MathUtils.degToRad(FOV / 2)));
@@ -493,9 +407,6 @@ export async function startInception(): Promise<void> {
     polaroid.style.borderWidth = `${rect.y}px ${window.innerWidth - rect.x - rect.width}px ${bottom}px ${rect.x}px`;
   };
   layout();
-  // CSS3DRenderer only inserts the page on its first render; do one now (the
-  // stage is still hidden) so the page starts loading straight away.
-  renderPage();
 
   const pressed = new Map<THREE.Object3D, number>();
   let typed = 0;
@@ -518,12 +429,9 @@ export async function startInception(): Promise<void> {
     frame = requestAnimationFrame(render);
     if (!start) start = now;
     const t = now - start;
-    // 1. Pull back from the page to the over-the-shoulder shot, and hold
-    //    there until the page's snapshot is ready.
+    // 1. Pull back from the page to the over-the-shoulder shot.
     // 2. Fly out of screen after screen.
-    const holding =
-      !loopsFrom &&
-      (t < PULL_MS || (!snapshotSettled && t < PULL_MS + SNAPSHOT_WAIT_MS));
+    const holding = !loopsFrom && t < PULL_MS;
     let level = 1;
     if (holding) {
       const u = clamp01(t / PULL_MS);
@@ -559,12 +467,6 @@ export async function startInception(): Promise<void> {
         level % 2 === 0
           ? `the laptop, level ${level}`
           : `rodrigo at his desk, level ${level}`;
-    }
-    if (level > 1 && pageObject.visible) {
-      // The page is a texture from here on; stop the live copy.
-      pageObject.visible = false;
-      renderPage();
-      page.src = "about:blank";
     }
 
     // Rodrigo keeps working, and the top keeps spinning.
@@ -611,7 +513,6 @@ export async function startInception(): Promise<void> {
       if (inner % 2 === 1) {
         screenMaterial.map = below;
         screenMaterial.opacity = 1;
-        hole.visible = false;
         pagePlane.visible = inner === 1 && pageTexture !== null;
         renderer.shadowMap.needsUpdate = deskShadows;
         deskShadows = false;
@@ -626,14 +527,14 @@ export async function startInception(): Promise<void> {
     renderer.setRenderTarget(null);
     pagePlane.visible = false;
 
-    // Then the window. Level 1 shows the live page through the hole.
+    // Then the window, with the same page plane on level 1.
     if (level % 2 === 1) {
       screenMaterial.map = level === 1 ? blank : textureOf(level - 1, 1);
-      screenMaterial.opacity = level === 1 ? 0 : 1;
-      hole.visible = level === 1;
+      screenMaterial.opacity = 1;
+      pagePlane.visible = level === 1 && pageTexture !== null;
       renderer.shadowMap.needsUpdate = deskShadows;
       renderer.render(scene, camera);
-      if (level === 1) renderPage();
+      pagePlane.visible = false;
     } else {
       laptop.pictureMaterial.map = textureOf(level - 1, 1);
       renderer.shadowMap.needsUpdate = laptopShadows;
@@ -669,7 +570,6 @@ export async function startInception(): Promise<void> {
         laptopBackdrop.material.dispose();
       blank.dispose();
       pageTexture?.dispose();
-      hole.geometry.dispose();
       screen.geometry.dispose();
       screenMaterial.dispose();
       pagePlane.geometry.dispose();
@@ -693,50 +593,24 @@ export async function startInception(): Promise<void> {
   window.addEventListener("resize", layout);
   document.addEventListener("astro:before-swap", stop);
 
-  void snapshot.then((canvas) => {
-    snapshotSettled = true;
+  const pictured = snapshot.then((canvas) => {
     if (!canvas || stopped) return;
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
-    texture.anisotropy = 4;
+    texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
     pageTexture = texture;
     pageMaterial.map = texture;
-    cropPage(pageSize.width, pageSize.height);
   });
 
-  // Compile every shader now, while the page on the monitor loads, so the
-  // first frames do not stall.
+  // Compile every shader now, while the page is drawn, so the first frames
+  // do not stall.
   const compiled = renderer
     .compileAsync(scene, camera)
     .then(() => renderer.compileAsync(scene, heroCamera))
     .then(() => renderer.compileAsync(laptop.scene, laptopCamera))
     .catch(() => undefined);
-  // The page is ready to show once its HTML and fonts are in; images and
-  // islands can finish on screen.
-  const pageReady = new Promise<void>((resolve) => {
-    const deadline = performance.now() + 1500;
-    const check = (): void => {
-      const inner = page.contentDocument;
-      if (
-        inner &&
-        inner.readyState !== "loading" &&
-        inner.body?.childElementCount
-      ) {
-        void inner.fonts.ready.then(() => resolve());
-        return;
-      }
-      if (performance.now() > deadline) resolve();
-      else window.setTimeout(check, 40);
-    };
-    check();
-  });
-  await Promise.all([compiled, pageReady]);
+  await Promise.all([compiled, pictured]);
   if (stopped) return;
-  try {
-    page.contentWindow?.scrollTo(0, scrollY);
-  } catch {
-    // Same origin, so this should not fail; the top of the page is fine too.
-  }
   // Fade in over the real page, which hides any small difference between it
   // and the copy on the monitor; the pull-back starts slowly.
   container.style.opacity = "0";

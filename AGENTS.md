@@ -278,8 +278,12 @@ The home is also the now page: `/now` redirects to `/#now`.
   onto the desk's monitor, then zooms out forever with the page staying at
   the centre. Levels alternate desk and laptop (`inception-laptop.ts`, a
   16:10 display filling its lid); level 1 is the desk whose monitor shows the
-  page, live in the iframe during the pull-back, then a snapshot of the page
-  (`modern-screenshot`, taken as inception starts). Each frame renders the
+  page: one snapshot of it (`modern-screenshot`, taken before anything shows,
+  at the screen's pixel density) on a plane the size and place the page has
+  at 1:1, from the first frame to the deepest level. No iframe: a live copy
+  differed from the snapshot (a fresh life.exe, ticking clocks) and showed
+  as a jump at the first seam. The stage is see-through, so the real page
+  shows while the room fades in over it. Each frame renders the
   three levels under the one on screen into textures, deepest first, each
   from its own shot (desk shots at 16:10, whose centre 4:3 crop is the
   photo). The camera loops from "picture fills the photo" to the shot, one
