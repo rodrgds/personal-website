@@ -46,7 +46,7 @@ function createView(): PeekView {
   const root = document.createElement("div");
   root.className = "peek";
   root.setAttribute("aria-hidden", "true");
-  root.innerHTML = `<div class="peek-bar"></div><div class="peek-media"><img alt="" decoding="async"><canvas></canvas><div class="peek-grid"></div></div><div class="peek-text"><p class="peek-title"></p><p class="peek-meta"></p><p class="peek-rating"></p><p class="peek-body"></p><ul class="peek-episodes" aria-label="Favorite episodes"></ul></div>`;
+  root.innerHTML = `<div class="peek-bar"><span class="peek-label"></span></div><div class="peek-media"><img alt="" decoding="async"><canvas></canvas><div class="peek-grid"></div></div><div class="peek-text"><p class="peek-title"></p><p class="peek-meta"></p><p class="peek-rating"></p><p class="peek-body"></p><ul class="peek-episodes" aria-label="Favorite episodes"></ul></div>`;
   document.body.append(root);
   const pick = <T extends Element>(selector: string): T => {
     const element = root.querySelector<T>(selector);
@@ -55,7 +55,7 @@ function createView(): PeekView {
   };
   return {
     root,
-    bar: pick<HTMLElement>(".peek-bar"),
+    bar: pick<HTMLElement>(".peek-label"),
     image: pick<HTMLImageElement>("img"),
     canvas: pick<HTMLCanvasElement>("canvas"),
     grid: pick<HTMLElement>(".peek-grid"),
@@ -139,6 +139,12 @@ function fromDataset(trigger: HTMLElement): PeekContent {
   };
 }
 
+/** A poster (taller than wide), a cover (about square) or anything wider. */
+function formatOf(image: HTMLImageElement): "poster" | "cover" | "wide" {
+  const ratio = image.naturalHeight / Math.max(1, image.naturalWidth);
+  return ratio > 1.15 ? "poster" : ratio >= 0.87 ? "cover" : "wide";
+}
+
 function show(trigger: HTMLElement, content: PeekContent): void {
   const target = ensureView();
   // A modal <dialog> renders in the top layer, above everything else, so the
@@ -181,9 +187,14 @@ function show(trigger: HTMLElement, content: PeekContent): void {
       ? "porto.map"
       : (title ?? trigger.textContent ?? "").trim().toLowerCase());
   target.image.removeAttribute("src");
+  delete target.root.dataset.format;
   if (image && !content.tip) {
-    // The size changes once the picture loads, so place the card again.
-    target.image.onload = () => place();
+    // The layout follows the picture's format, known once it loads; the size
+    // changes then, so place the card again.
+    target.image.onload = () => {
+      target.root.dataset.format = formatOf(target.image);
+      place();
+    };
     target.image.onerror = () => {
       target.root.dataset.hasMedia = "false";
       place();

@@ -715,6 +715,13 @@ a[data-peek-loading] {
   font-size: 0.55rem;
 }
 
+.peek-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .peek-media {
   display: none;
   position: relative;
@@ -743,6 +750,41 @@ a[data-peek-loading] {
   display: block;
   max-height: 15rem;
   object-fit: contain;
+}
+
+/* Posters and covers show whole, at their own shape (peek.ts sets
+   data-format once the picture loads). Alone, a poster or a cover gets a
+   narrow window of its own; in a card it sits beside the text. Screenshots
+   and other wide pictures keep the strip above. */
+.peek[data-format="poster"] .peek-media img,
+.peek[data-format="cover"] .peek-media img {
+  height: auto;
+  max-height: none;
+  object-fit: contain;
+}
+
+.peek[data-kind="image"][data-format="poster"] {
+  width: 11rem;
+}
+
+.peek[data-kind="image"][data-format="cover"] {
+  width: 12rem;
+}
+
+/* A card with favourite episodes keeps its own small cover, on the right. */
+.peek[data-kind="card"][data-format="poster"]:not(:has(.peek-episodes li))
+  .peek-media,
+.peek[data-kind="card"][data-format="cover"]:not(:has(.peek-episodes li))
+  .peek-media {
+  float: left;
+  width: 6.5rem;
+  margin: 0.6rem 0 0.6rem 0.75rem;
+  background: none;
+}
+
+.peek[data-kind="card"][data-format="cover"]:not(:has(.peek-episodes li))
+  .peek-media {
+  width: 5.5rem;
 }
 
 .peek-grid {
