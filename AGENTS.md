@@ -282,12 +282,22 @@ The home is also the now page: `/now` redirects to `/#now`.
   at the screen's pixel density) on a plane the size and place the page has
   at 1:1, from the first frame to the deepest level. No iframe: a live copy
   differed from the snapshot (a fresh life.exe, ticking clocks) and showed
-  as a jump at the first seam. The stage is see-through, so the real page
-  shows while the room fades in over it. Each frame renders the
+  as a jump at the first seam. Its first frame is the page at 1:1 (at the
+  page's pixel density), so the stage shows at once with no fade: fading the
+  room in over the real page showed two pages, one shrinking. The window is
+  rarely the glass's 4:3, so a copy of the page drawn over everything covers
+  the case at first, and only the edges beyond the glass dissolve as the
+  camera pulls back. The snapshot leaves out `body::after` (the scanlines
+  stay on top of the stage, live). Before that
+  frame every level is drawn once out of sight: three.js builds separate
+  shaders for textures and for the window, and makes render targets, shadow
+  maps and uploads on first use, which stalled the flight at the first
+  laptop. Each frame renders the
   three levels under the one on screen into textures, deepest first, each
   from its own shot (desk shots at 16:10, whose centre 4:3 crop is the
-  photo). The camera loops from "picture fills the photo" to the shot, one
-  level out per loop at one zoom speed. Never swap what a screen shows while
+  photo). The pull-back starts from a standstill and ends at the loops'
+  speed; the camera then loops from "picture fills the photo" to the shot,
+  one level out per loop at one zoom speed, never pausing. Never swap what a screen shows while
   it is visible: that read as the site vanishing. Keep `NoToneMapping` there:
   three.js tone-maps and fogs differently for the window and for textures,
   which showed as a darker seam every loop.

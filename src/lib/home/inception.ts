@@ -29,12 +29,12 @@ import { buildLaptop } from "./inception-laptop";
 
 const FOV = 34;
 const PULL_MS = 3600;
+/** How long the page's edges beyond the glass take to dissolve. */
+const OVERHANG_MS = 700;
 /** Levels rendered under the one on screen; deeper ones are a few pixels. */
 const DEPTH = 3;
 /** How long the desk loop takes; the laptop's follows from the same speed. */
 const DESK_LOOP_MS = 7500;
-/** The first zoom speeds up from the pause instead of starting at full speed. */
-const RAMP_MS = 1800;
 const GLASS = new THREE.Vector3(0, SCREEN_Y, SCREEN_Z);
 /** The shot the monitor shows, and where every loop ends. */
 // Over the shoulder; the loop out of the desk's monitor zooms out ~4x.
@@ -139,6 +139,17 @@ async function snapshotPage(): Promise<HTMLCanvasElement | null> {
       backgroundColor: getComputedStyle(document.body).backgroundColor,
       style: { margin: "0", transform: `translateY(${-scrolled}px)` },
       timeout: 3000,
+      // The scanlines (body::after) stay on top of the stage, live; in the
+      // picture too, the first frame would show them twice.
+      onCloneNode: (cloned) => {
+        if (cloned instanceof Element) cloned.classList.add("snapshot-root");
+      },
+      onCreateForeignObjectSvg: (svg) => {
+        const style =
+          svg.querySelector("style") ??
+          svg.insertBefore(document.createElement("style"), svg.firstChild);
+        style.append(".snapshot-root::after { display: none !important; }");
+      },
       // Leave out the stage itself, closed dialogs, anything below the fold,
       // and pictures from other sites (they refuse to be read back).
       filter: (node) =>
@@ -162,6 +173,14 @@ export function stopInception(): void {
 
 export async function startInception(): Promise<void> {
   if (stopCurrent) return;
+  // Until the first frame shows (or it is kicked, or fails), the cursor says
+  // something is on its way.
+  const root = document.documentElement.classList;
+  root.add("inception-loading");
+  await dream().finally(() => root.remove("inception-loading"));
+}
+
+async function dream(): Promise<void> {
   // Start drawing the page now, while the scene builds.
   const snapshot = snapshotPage();
   const accent =
@@ -177,8 +196,8 @@ export async function startInception(): Promise<void> {
   document.body.append(container);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  // Two renders a frame, so a little less resolution than the boot.
-  renderer.setPixelRatio(Math.min(1.5, window.devicePixelRatio || 1));
+  // The first frame stands in for the page itself, so at its sharpness.
+  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   // No tone mapping here. three.js tone-maps only what is drawn to the
   // window, and applies fog after it there but before it in a texture, so
@@ -191,7 +210,6 @@ export async function startInception(): Promise<void> {
   renderer.shadowMap.autoUpdate = false;
   renderer.setClearColor(0x0e0d0c, 1);
   renderer.domElement.className = "boot-stage-gl";
-  renderer.domElement.style.opacity = "0";
   container.append(renderer.domElement);
 
   const film = document.createElement("div");
@@ -287,12 +305,25 @@ export async function startInception(): Promise<void> {
   scene.add(screen);
   // The page itself, on level 1's monitor: the snapshot on a plane the size
   // and place the page has at 1:1 (layout() sizes it), just in front of the
-  // screen. The case hides what lies beyond the glass once it fades in.
+  // screen. The case hides what lies beyond the glass.
   const pageMaterial = new THREE.MeshBasicMaterial({ map: blank });
   const pagePlane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), pageMaterial);
   pagePlane.renderOrder = 3;
   pagePlane.visible = false;
   scene.add(pagePlane);
+  // The window is rarely the glass's 4:3, so at 1:1 the case covers the
+  // page's edges. The same picture drawn over everything makes the first
+  // frame the whole page; its edges then dissolve into the case as the
+  // camera pulls back. Inside the glass both copies are the same pixels.
+  const overhangMaterial = new THREE.MeshBasicMaterial({
+    map: blank,
+    transparent: true,
+    depthTest: false,
+    depthWrite: false,
+  });
+  const overhang = new THREE.Mesh(pagePlane.geometry, overhangMaterial);
+  overhang.renderOrder = 4;
+  pagePlane.add(overhang);
 
   const camera = new THREE.PerspectiveCamera(FOV, 4 / 3, 0.05, 80);
   // Same pose and vertical field as the photo, but 16:10: its centre 4:3
@@ -418,7 +449,6 @@ export async function startInception(): Promise<void> {
   let shown = 1;
   // The clock starts on the first frame on screen, however long loading took.
   let start = 0;
-  let loopsFrom = 0;
 
   /** The texture of a level, at its depth under the one on screen. */
   const textureOf = (level: number, depth: number): THREE.Texture =>
@@ -429,27 +459,29 @@ export async function startInception(): Promise<void> {
     frame = requestAnimationFrame(render);
     if (!start) start = now;
     const t = now - start;
-    // 1. Pull back from the page to the over-the-shoulder shot.
-    // 2. Fly out of screen after screen.
-    const holding = !loopsFrom && t < PULL_MS;
     let level = 1;
-    if (holding) {
-      const u = clamp01(t / PULL_MS);
-      const eased = smooth(u);
-      between(pagePose, heroPose, eased, eased, camera);
-      renderer.domElement.style.opacity = String(clamp01(u / 0.45));
+    if (t < PULL_MS) {
+      // 1. Pull back from the page to the over-the-shoulder shot. The zoom
+      // starts from a standstill and ends at the loops' own speed (a cubic
+      // with those two slopes), so the flight never pauses at the seam.
+      const u = t / PULL_MS;
+      const pull = Math.log(span(heroPose) / span(pagePose));
+      const endSlope = clamp01((PULL_MS * zoomRate) / pull);
+      between(
+        pagePose,
+        heroPose,
+        smooth(u) + endSlope * (u ** 3 - u ** 2),
+        smooth(u),
+        camera,
+      );
+      overhangMaterial.opacity = 1 - smooth(clamp01(t / OVERHANG_MS));
+      overhang.visible = overhangMaterial.opacity > 0;
     } else {
-      loopsFrom ||= t;
-      // Set every frame: a long frame (a GPU hitch, a background tab) can
-      // skip the fade, and the scene must not stay faded.
-      renderer.domElement.style.opacity = "1";
-      // Loops alternate: out of the laptop's screen (showing the desk), then
-      // out of the desk's monitor (showing the laptop), and so on.
-      const loopTime = t - loopsFrom;
-      const run =
-        loopTime < RAMP_MS
-          ? (loopTime * loopTime) / (2 * RAMP_MS)
-          : loopTime - RAMP_MS / 2;
+      overhang.visible = false;
+      // 2. Fly out of screen after screen. Loops alternate: out of the
+      // laptop's screen (showing the desk), then out of the desk's monitor
+      // (showing the laptop), and so on.
+      const run = t - PULL_MS;
       const cycle = Math.floor(run / cycleMs);
       const inCycle = run - cycle * cycleMs;
       const onLaptop = inCycle < laptopLoopMs;
@@ -494,10 +526,16 @@ export async function startInception(): Promise<void> {
     top.rotation.y = now / 40;
     top.rotation.z = Math.sin(now / 300) * 0.05;
     room.person.update(now);
+    draw(level, fresh);
+  };
 
-    // The levels under the screen, deepest first, each showing the one
-    // below it on its screen. The deepest changes every other frame, which
-    // nobody can tell at its size. Each scene's shadows update once a frame.
+  /**
+   * One frame of `level`: the levels under it into textures, deepest first,
+   * each showing the one below it on its screen, then the window. The deepest
+   * changes every other frame, which nobody can tell at its size. Each
+   * scene's shadows update once a frame.
+   */
+  const draw = (level: number, fresh: boolean): void => {
     frameCount += 1;
     let deskShadows = true;
     let laptopShadows = true;
@@ -542,6 +580,22 @@ export async function startInception(): Promise<void> {
     }
   };
 
+  /**
+   * Draw every level once before the first frame, out of sight. three.js
+   * builds separate shaders for a texture and for the window, and makes
+   * render targets, shadow maps and uploads on first use; left to the
+   * flight, all of that landed on the frame a level first showed, and the
+   * flight stalled there.
+   */
+  const warmUp = (): void => {
+    for (const level of [5, 4, 3, 2, 1]) {
+      const pose = level % 2 === 0 ? laptopHero : heroPose;
+      camera.position.copy(pose.pos);
+      camera.lookAt(pose.look);
+      draw(level, true);
+    }
+  };
+
   const onKey = (event: KeyboardEvent): void => {
     if (event.key === "Escape") {
       event.preventDefault();
@@ -574,6 +628,7 @@ export async function startInception(): Promise<void> {
       screenMaterial.dispose();
       pagePlane.geometry.dispose();
       pageMaterial.dispose();
+      overhangMaterial.dispose();
       renderer.dispose();
       // dispose() keeps the context; browsers cap live contexts, so release
       // it or repeated boots and inception runs lose the oldest one.
@@ -600,31 +655,43 @@ export async function startInception(): Promise<void> {
     texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
     pageTexture = texture;
     pageMaterial.map = texture;
+    overhangMaterial.map = texture;
   });
 
-  // Compile every shader now, while the page is drawn, so the first frames
-  // do not stall.
-  const compiled = renderer
-    .compileAsync(scene, camera)
-    .then(() => renderer.compileAsync(scene, heroCamera))
-    .then(() => renderer.compileAsync(laptop.scene, laptopCamera))
-    .catch(() => undefined);
+  // Compile every shader while the page is drawn, in parallel where the
+  // browser can: each scene for the window and for a texture.
+  const compileFor = (
+    target: THREE.WebGLRenderTarget | null,
+    world: THREE.Scene,
+    eye: THREE.Camera,
+  ): Promise<THREE.Object3D> => {
+    renderer.setRenderTarget(target);
+    const done = renderer.compileAsync(world, eye);
+    renderer.setRenderTarget(null);
+    return done;
+  };
+  pagePlane.visible = true;
+  const compiled = Promise.all([
+    compileFor(null, scene, camera),
+    compileFor(deskTargets[0] ?? null, scene, heroCamera),
+    compileFor(null, laptop.scene, camera),
+    compileFor(laptopTargets[0] ?? null, laptop.scene, laptopCamera),
+  ]).catch(() => undefined);
+  pagePlane.visible = false;
   await Promise.all([compiled, pictured]);
   if (stopped) return;
-  // Fade in over the real page, which hides any small difference between it
-  // and the copy on the monitor; the pull-back starts slowly.
-  container.style.opacity = "0";
-  container.style.visibility = "visible";
-  cue("open");
-  container.style.transition = "opacity 0.3s ease";
-  frame = requestAnimationFrame(render);
-  requestAnimationFrame(() => {
-    container.style.opacity = "1";
+  warmUp();
+  // The first frame is the page itself at 1:1, so the stage shows with it,
+  // at once: no fade, nothing changes on screen until the camera moves.
+  frame = requestAnimationFrame((now) => {
+    render(now);
+    container.style.visibility = "visible";
+    cue("open");
+    // The border and the film come in as the camera pulls back.
+    window.setTimeout(() => {
+      if (stopped) return;
+      container.classList.add("is-dreaming");
+      frameThePhoto();
+    }, 500);
   });
-  // The border and the film come in as the camera pulls back.
-  window.setTimeout(() => {
-    if (stopped) return;
-    container.classList.add("is-dreaming");
-    frameThePhoto();
-  }, 500);
 }

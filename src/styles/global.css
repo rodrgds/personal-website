@@ -1434,14 +1434,21 @@ canvas.matrix-rain {
 }
 
 /* `inception` in the tty (src/lib/home/inception.ts): the boot stage, run
-   backwards and forever. The room's opacity is driven per frame. The stage
-   itself is see-through: while the room fades in, the real page behind it
-   is what shows, and the room's copy of the page lands exactly on it. */
+   backwards and forever. Its first frame is the page at 1:1, so it shows at
+   once, with no fade; the print's border, film and controls come in as the
+   camera pulls back. */
 .inception-stage {
   background: transparent;
 }
 
+/* While the scene and the picture of the page get ready. */
+.inception-loading,
+.inception-loading * {
+  cursor: progress !important;
+}
+
 .inception-stage .boot-stage-gl {
+  opacity: 1;
   transition: none;
 }
 
@@ -1451,14 +1458,16 @@ canvas.matrix-rain {
 
 .inception-stage .boot-caption,
 .inception-stage .boot-stamp,
-.inception-stage .boot-film {
+.inception-stage .boot-film,
+.inception-stage .inception-kick {
   opacity: 0;
   transition: opacity 0.8s ease;
 }
 
 .inception-stage.is-dreaming .boot-caption,
 .inception-stage.is-dreaming .boot-stamp,
-.inception-stage.is-dreaming .boot-film {
+.inception-stage.is-dreaming .boot-film,
+.inception-stage.is-dreaming .inception-kick {
   opacity: 1;
 }
 
