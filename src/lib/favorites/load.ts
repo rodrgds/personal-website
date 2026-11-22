@@ -60,6 +60,44 @@ async function coverUrl(path: string): Promise<string> {
   return result.src;
 }
 
+/** A YouTube video's id from its link; channels and other sites have none. */
+function youtubeId(url: string): string | undefined {
+  try {
+    const link = new URL(url);
+    const host = link.hostname.replace(/^(www|m)\./, "");
+    const id =
+      host === "youtu.be"
+        ? link.pathname.slice(1)
+        : host === "youtube.com"
+          ? (link.searchParams.get("v") ??
+            /^\/(?:shorts|live|embed)\/([\w-]+)/.exec(link.pathname)?.[1])
+          : undefined;
+    return id && /^[\w-]{11}$/.test(id) ? id : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * A video's thumbnail for its peek, checked at build time: the 1280px one
+ * when YouTube has it (some videos do not), else the 320px one all have.
+ */
+async function videoPreview(url: string): Promise<string | undefined> {
+  const id = youtubeId(url);
+  if (!id) return undefined;
+  const large = `https://i.ytimg.com/vi/${id}/hq720.jpg`;
+  try {
+    const response = await fetch(large, {
+      method: "HEAD",
+      signal: AbortSignal.timeout(5000),
+    });
+    if (response.ok) return large;
+  } catch {
+    // Offline or slow: the small one always exists.
+  }
+  return `https://i.ytimg.com/vi/${id}/mqdefault.jpg`;
+}
+
 async function mapStandardFavorite(
   sectionId: FavoriteSectionId,
   favorite: StandardFavoriteInput,
@@ -69,6 +107,10 @@ async function mapStandardFavorite(
     ...favorite,
   };
   if (favorite.image) item.image = await coverUrl(favorite.image);
+  else if (favorite.url) {
+    const preview = await videoPreview(favorite.url);
+    if (preview) item.preview = preview;
+  }
   return item;
 }
 

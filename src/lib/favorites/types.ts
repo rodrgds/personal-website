@@ -57,6 +57,8 @@ export interface FavoriteItem {
   author?: string;
   url?: string;
   image?: string;
+  /** A picture for the hover peek only (a video's thumbnail). */
+  preview?: string;
   icon?: string;
   comment?: string;
   favoriteEpisodes?: FavoriteEpisode[];

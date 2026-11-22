@@ -416,7 +416,7 @@
                 data-peek-body={item.comment}
                 data-peek-episodes={episodeLines(item.favoriteEpisodes)}
                 data-peek-rating={item.rating}
-                data-peek-image={item.image}
+                data-peek-image={item.image ?? item.preview}
                 data-peek-label={`${section.id}/`}
               >
                 {#if touch && detail}

@@ -201,7 +201,9 @@ The home is also the now page: `/now` redirects to `/#now`.
   `-meta`, `-body`, `-rating`) show a hover window. Use it for screenshots and
   favourites instead of inline galleries. Abbreviations (`fde`, `eng.`) use
   `data-peek-tip="what it stands for"` on an `<abbr>`: a one-line tooltip,
-  nothing more. External links in text preview through the same window
+  nothing more. On /faves, YouTube videos peek their thumbnail (`preview`,
+  chosen at build in `src/lib/favorites/load.ts`: the 1280px one when it
+  exists, else the 320px one). External links in text preview through the same window
   (`link-peek.ts` fetches `/api/link-preview` and calls `peekAt()`); there is
   no separate preview card.
 - Interface sounds go through `src/lib/sound.ts` (cuelume, `mech` theme,
@@ -223,8 +225,9 @@ The home is also the now page: `/now` redirects to `/#now`.
   `src/lib/recent.ts`. Never hand-write "new".
 - Project `status: "paused"` keeps a project on the CV but out of "now".
 - `src/data/socials.ts` is the one list of accounts (label, handle,
-  `primary`). Primary accounts show in the header and whoami; the rest are
-  only in the tty (`socials`). There is no "+N more" menu.
+  `primary`). Primary accounts show in the header and whoami; the header's
+  `+N` button opens a popover (`#socials-menu`) with every account, and the
+  tty has `socials`.
 - The home's `whereami` window (`src/components/features/now/NowWhere.astro`)
   is an ASCII globe drawn on a canvas (`src/lib/now/ascii-globe.ts`, ideas
   after asciicn's ascii-globe, our own code): real land from a 1-degree mask
