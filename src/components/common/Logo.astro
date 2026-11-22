@@ -40,9 +40,8 @@ const isExactMonochrome = normalizedSrc === "diassolutions";
       display: "inline-block",
       lineHeight: "1",
     }}
+    >{src}</span
   >
-    {src}
-  </span>
 ) : (
   <Image
     src={import(`../../logos/${normalizedSrc}.png`)}

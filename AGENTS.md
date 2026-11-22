@@ -372,7 +372,11 @@ restarting it or treating silence as a failure.
   suppressing rules.
 - **oxfmt** formats JS/TS/JSON (config in `.oxfmtrc.json`).
 - **Prettier** remains only for `.astro` files, which oxfmt cannot parse
-  (plugin: `prettier-plugin-astro`, config in `.prettierrc`). `.svelte` and
+  (plugin: `prettier-plugin-astro`, config in `.prettierrc`). The site sets
+  `compressHTML: false`, so every whitespace run renders; `.prettierrc` sets
+  `astroCompressHTML: "none"` to match. Without it, plugin 1.x assumes
+  Astro's default and moves inline content onto its own lines, which showed
+  as stray spaces inside links and before punctuation. `.svelte` and
   `.mdx` files are not formatted by any tool; keep their style consistent by
   hand.
 

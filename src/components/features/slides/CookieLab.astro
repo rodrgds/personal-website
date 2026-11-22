@@ -20,22 +20,18 @@ const { presets = [] } = Astro.props;
   data-steps={presets.reduce((max, preset) => Math.max(max, preset.at), 0)}
 >
   <div class="cookie-inputs">
-    <label class="lab-field">
-      <span>
-        cookie <code>Domain=</code>
-      </span>
-      <input type="text" spellcheck="false" data-cookie-domain />
-    </label>
-    <label class="lab-field">
-      <span>
-        cookie <code>Path=</code>
-      </span>
-      <input type="text" spellcheck="false" data-cookie-path />
-    </label>
-    <label class="lab-field cookie-url">
-      <span>request to</span>
-      <input type="text" spellcheck="false" data-cookie-url />
-    </label>
+    <label class="lab-field"
+      ><span>cookie <code>Domain=</code></span
+      ><input type="text" spellcheck="false" data-cookie-domain
+    /></label>
+    <label class="lab-field"
+      ><span>cookie <code>Path=</code></span
+      ><input type="text" spellcheck="false" data-cookie-path
+    /></label>
+    <label class="lab-field cookie-url"
+      ><span>request to</span
+      ><input type="text" spellcheck="false" data-cookie-url
+    /></label>
   </div>
   <div class="cookie-checks">
     <p data-cookie-check="domain"></p>

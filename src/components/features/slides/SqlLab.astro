@@ -20,18 +20,19 @@ const { presets = [] } = Astro.props;
   data-steps={presets.reduce((max, preset) => Math.max(max, preset.at), 0)}
 >
   <div class="sql-form">
-    <label class="lab-field">
-      <span>username</span>
-      <input type="text" spellcheck="false" autocomplete="off" data-sql-user />
-    </label>
-    <label class="lab-field">
-      <span>password</span>
-      <input type="text" spellcheck="false" autocomplete="off" data-sql-pass />
-    </label>
-    <label class="lab-toggle">
-      <input type="checkbox" data-sql-prepared />
-      <span>prepared statement</span>
-    </label>
+    <label class="lab-field"
+      ><span>username</span
+      ><input type="text" spellcheck="false" autocomplete="off" data-sql-user
+    /></label>
+    <label class="lab-field"
+      ><span>password</span
+      ><input type="text" spellcheck="false" autocomplete="off" data-sql-pass
+    /></label>
+    <label class="lab-toggle"
+      ><input type="checkbox" data-sql-prepared /><span
+        >prepared statement</span
+      ></label
+    >
   </div>
   <pre class="sql-query" data-sql-query aria-live="polite"></pre>
   <div class="sql-result">

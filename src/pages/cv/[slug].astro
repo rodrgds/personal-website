@@ -245,23 +245,17 @@ const description = entry.summary ?? summary;
     >
       <header class="man-line man-head" aria-label="Manual page header">
         <span>{title}</span>
-        <a href="/cv" class="man-mid" data-no-link-fx>
-          rgo.pt cv manual
-        </a>
+        <a href="/cv" class="man-mid" data-no-link-fx>rgo.pt cv manual</a>
         <span class="man-end">{title}</span>
       </header>
 
       <section class="man-section" aria-labelledby="man-name">
         <h2 id="man-name">NAME</h2>
         <div class="man-indent man-name">
-          {entry.visual && (
-            <span class="man-logo" aria-hidden="true">
-              <CVEntryVisual src={entry.visual} alt="" size={22} />
-            </span>
-          )}
-          <h1>
-            <b>{entry.slug}</b> - {summary}
-          </h1>
+          {entry.visual && <span class="man-logo" aria-hidden="true"
+            ><CVEntryVisual src={entry.visual} alt="" size={22}
+          /></span>}
+          <h1><b>{entry.slug}</b> - {summary}</h1>
         </div>
       </section>
 
@@ -269,63 +263,54 @@ const description = entry.summary ?? summary;
         <h2 id="man-synopsis">SYNOPSIS</h2>
         <p class="man-indent man-synopsis">
           <b class="man-cmd">{entry.slug}</b>
-          {flags.map((flag) => (
-            <span
-              class="man-flag"
-              data-optional={flag.optional ? "" : undefined}
-            >
-              <b>--{flag.name}</b>{" "}
-              {flag.href ? (
-                <a href={flag.href} target="_blank" rel="noreferrer">
-                  {flag.value}
-                </a>
-              ) : (
-                <u data-tone={flag.tone}>{flag.value}</u>
-              )}
-            </span>
-          ))}
+          {flags.map((flag) => <span
+            class="man-flag"
+            data-optional={flag.optional ? "" : undefined}
+            ><b>--{flag.name}</b>{" "}
+            {flag.href ? (
+              <a href={flag.href} target="_blank" rel="noreferrer"
+                >{flag.value}</a
+              >
+            ) : (
+              <u data-tone={flag.tone}>{flag.value}</u>
+            )}</span
+          >)}
         </p>
-        {age && (
-          <p class="man-indent man-note">
-            {entry.isCurrent ? "running for" : "ran for"} {age},{" "}
-            {entry.type.label}
-          </p>
-        )}
+        {age && <p class="man-indent man-note">
+          {entry.isCurrent ? "running for" : "ran for"} {age},{" "}
+          {entry.type.label}
+        </p>}
       </section>
 
-      {bullets.length > 0 && (
-        <section class="man-section" aria-labelledby="man-highlights">
-          <h2 id="man-highlights">HIGHLIGHTS</h2>
-          <ul class="man-indent man-list">
-            {bullets.map((bullet) => (
-              <li>{bullet}</li>
-            ))}
-          </ul>
-        </section>
-      )}
+      {bullets.length > 0 && <section
+        class="man-section"
+        aria-labelledby="man-highlights"
+      >
+        <h2 id="man-highlights">HIGHLIGHTS</h2>
+        <ul class="man-indent man-list">
+          {bullets.map((bullet) => <li>{bullet}</li>)}
+        </ul>
+      </section>}
 
-      {activities.length > 0 && (
-        <section class="man-section" aria-labelledby="man-activities">
-          <h2 id="man-activities">ACTIVITIES</h2>
-          <ul class="man-indent man-list">
-            {activities.map((activity) => (
-              <li>{activity}</li>
-            ))}
-          </ul>
-        </section>
-      )}
+      {activities.length > 0 && <section
+        class="man-section"
+        aria-labelledby="man-activities"
+      >
+        <h2 id="man-activities">ACTIVITIES</h2>
+        <ul class="man-indent man-list">
+          {activities.map((activity) => <li>{activity}</li>)}
+        </ul>
+      </section>}
 
-      {demoVideo && (
-        <section class="man-section" aria-labelledby="man-video">
-          <h2 id="man-video">WALKTHROUGH</h2>
-          <div class="man-indent">
-            <CVYouTubeEmbed
-              url={demoVideo}
-              title={`${entry.title} walkthrough`}
-            />
-          </div>
-        </section>
-      )}
+      {demoVideo && <section class="man-section" aria-labelledby="man-video">
+        <h2 id="man-video">WALKTHROUGH</h2>
+        <div class="man-indent">
+          <CVYouTubeEmbed
+            url={demoVideo}
+            title={`${entry.title} walkthrough`}
+          />
+        </div>
+      </section>}
 
       <section class="man-section" aria-labelledby="man-description">
         <h2 id="man-description">DESCRIPTION</h2>
@@ -334,29 +319,32 @@ const description = entry.summary ?? summary;
         </article>
       </section>
 
-      {tags.length > 0 && (
-        <section class="man-section" aria-labelledby="man-keywords">
-          <h2 id="man-keywords">KEYWORDS</h2>
-          <p class="man-indent man-tags">
-            {tags.map((tag) => (
-              <span>{tag.toLowerCase().replaceAll(" ", "-")}</span>
-            ))}
-          </p>
-        </section>
-      )}
+      {tags.length > 0 && <section
+        class="man-section"
+        aria-labelledby="man-keywords"
+      >
+        <h2 id="man-keywords">KEYWORDS</h2>
+        <p class="man-indent man-tags">
+          {tags.map((tag) => <span
+            >{tag.toLowerCase().replaceAll(" ", "-")}</span
+          >)}
+        </p>
+      </section>}
 
-      {related.length > 0 && (
-        <section class="man-section" aria-labelledby="man-see-also">
-          <h2 id="man-see-also">SEE ALSO</h2>
-          <p class="man-indent man-refs">
-            {related.map((other) => (
-              <a href={other.href} data-no-link-fx {...peek(other)}>
-                <b>{other.slug}</b>({SECTION[other.type.key]})
-              </a>
-            ))}
-          </p>
-        </section>
-      )}
+      {related.length > 0 && <section
+        class="man-section"
+        aria-labelledby="man-see-also"
+      >
+        <h2 id="man-see-also">SEE ALSO</h2>
+        <p class="man-indent man-refs">
+          {related.map((other) => <a
+            href={other.href}
+            data-no-link-fx
+            {...peek(other)}
+            ><b>{other.slug}</b>({SECTION[other.type.key]})</a
+          >)}
+        </p>
+      </section>}
 
       <footer class="man-line man-foot" aria-label="Manual page footer">
         <span>rgo.pt</span>
@@ -369,24 +357,26 @@ const description = entry.summary ?? summary;
         aria-label="Around this on the timeline"
         data-no-vim
       >
-        <span class="man-less-prompt">
-          Manual page {page(entry)} <span data-man-line>line 1</span>
-        </span>
-        <span class="man-less-keys">
-          {newer && (
-            <a href={newer.href} rel="prev" data-no-link-fx {...peek(newer)}>
-              <kbd>p</kbd> newer
-            </a>
-          )}
-          {older && (
-            <a href={older.href} rel="next" data-no-link-fx {...peek(older)}>
-              <kbd>n</kbd> older
-            </a>
-          )}
-          <a href="/cv" data-no-link-fx>
-            <kbd>q</kbd> cv
-          </a>
-        </span>
+        <span class="man-less-prompt"
+          >Manual page {page(entry)} <span data-man-line>line 1</span></span
+        >
+        <span class="man-less-keys"
+          >{newer && <a
+            href={newer.href}
+            rel="prev"
+            data-no-link-fx
+            {...peek(newer)}
+            ><kbd>p</kbd> newer</a
+          >}
+          {older && <a
+            href={older.href}
+            rel="next"
+            data-no-link-fx
+            {...peek(older)}
+            ><kbd>n</kbd> older</a
+          >}
+          <a href="/cv" data-no-link-fx><kbd>q</kbd> cv</a></span
+        >
       </nav>
     </main>
     <Footer />

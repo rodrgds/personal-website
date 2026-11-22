@@ -131,23 +131,19 @@ const pad2 = (value: number): string => String(value).padStart(2, "0");
           <span class="boot-key">langs</span> pt, en · ts, go, rust, php
         </div>
         <div class="boot-gap" data-boot-line></div>
-        {BOOT_UNITS.map((line) => (
-          <div class="boot-line" data-boot-line>
-            <b class="boot-status" data-status={line.status}>
-              {statusLabel(line.status)}
-            </b>
-            Started <span class="boot-unit">{line.unit}</span>
-            <span class="boot-dim">: {line.detail}</span>
-          </div>
-        ))}
+        {BOOT_UNITS.map((line) => <div class="boot-line" data-boot-line>
+          <b class="boot-status" data-status={line.status}
+            >{statusLabel(line.status)}</b
+          >
+          Started <span class="boot-unit">{line.unit}</span>
+          <span class="boot-dim">: {line.detail}</span>
+        </div>)}
         <div class="boot-line" data-boot-line>
-          <b class="boot-status" data-status="OK">
-            {statusLabel("OK")}
-          </b>
+          <b class="boot-status" data-status="OK">{statusLabel("OK")}</b>
           Mounted{" "}
-          <span class="boot-unit">
-            /home/rodrigo/{"{"}lifting,biking,table-tennis,photos{"}"}
-          </span>
+          <span class="boot-unit"
+            >/home/rodrigo/{"{"}lifting,biking,table-tennis,photos{"}"}</span
+          >
         </div>
         <div class="boot-gap" data-boot-line></div>
         <div
@@ -166,14 +162,12 @@ const pad2 = (value: number): string => String(value).padStart(2, "0");
           data-type="startx"
         ></div>
       </div>
-      {data.portrait && (
-        <figure class="boot-portrait">
-          <pre data-boot-ascii data-src={data.portrait} />
-          <figcaption class="boot-dim">
-            ~/portrait.webp <span data-boot-scan>scanning</span>
-          </figcaption>
-        </figure>
-      )}
+      {data.portrait && <figure class="boot-portrait">
+        <pre data-boot-ascii data-src={data.portrait} />
+        <figcaption class="boot-dim">
+          ~/portrait.webp <span data-boot-scan>scanning</span>
+        </figcaption>
+      </figure>}
     </div>
     <div class="term-boot-bar" data-boot-bar aria-hidden="true">
       <span data-boot-bar-text>[ ]</span>
@@ -186,24 +180,16 @@ const pad2 = (value: number): string => String(value).padStart(2, "0");
     <main class="term-desk">
       <section class="term-win term-whoami" aria-labelledby="t-whoami">
         <h2 id="t-whoami" class="term-title">
-          <span class="term-title-text" data-scramble>
-            whoami
-          </span>
-          <span class="term-title-actions">
-            <button type="button" data-boot-replay>
-              reboot
-            </button>
-            <span>
-              porto <span data-term-clock>--:--:--</span>
-            </span>
-          </span>
+          <span class="term-title-text" data-scramble>whoami</span>
+          <span class="term-title-actions"
+            ><button type="button" data-boot-replay>reboot</button
+            ><span>porto <span data-term-clock>--:--:--</span></span></span
+          >
         </h2>
         <div class="term-body term-whoami-body">
-          {data.portrait && (
-            <div class="term-portrait">
-              <img src={data.portrait} alt="Rodrigo Dias" />
-            </div>
-          )}
+          {data.portrait && <div class="term-portrait">
+            <img src={data.portrait} alt="Rodrigo Dias" />
+          </div>}
           <h1 class="term-big">
             <span data-scramble>Rodrigo Dias</span>
             <span class="term-cursor" aria-hidden="true"></span>
@@ -216,10 +202,8 @@ const pad2 = (value: number): string => String(value).padStart(2, "0");
                   class="term-peek"
                   data-peek-scene="porto"
                   data-peek-label="porto.map"
-                >
-                  porto, portugal
-                </span>
-                , 2006
+                  >porto, portugal</span
+                >, 2006
               </dd>
             </div>
             <div>
@@ -234,11 +218,9 @@ const pad2 = (value: number): string => String(value).padStart(2, "0");
                 <abbr
                   class="term-abbr"
                   data-peek-tip="forward deployed engineer"
-                >
-                  <span aria-hidden="true">fde</span>
-                  <span class="sr-only">forward deployed engineer</span>
-                </abbr>{" "}
-                @ <a href="https://augustalabs.ai">augusta labs</a>
+                  ><span aria-hidden="true">fde</span
+                  ><span class="sr-only">forward deployed engineer</span></abbr
+                >{" "} @ <a href="https://augustalabs.ai">augusta labs</a>
                 <NewBadge date={augusta?.startDate} />
               </dd>
             </div>
@@ -246,11 +228,10 @@ const pad2 = (value: number): string => String(value).padStart(2, "0");
               <dt>study</dt>
               <dd>
                 informatics and computing{" "}
-                <abbr class="term-abbr" data-peek-tip="engineering">
-                  <span aria-hidden="true">eng.</span>
-                  <span class="sr-only">engineering</span>
-                </abbr>{" "}
-                @ <a href="https://fe.up.pt">feup</a>
+                <abbr class="term-abbr" data-peek-tip="engineering"
+                  ><span aria-hidden="true">eng.</span
+                  ><span class="sr-only">engineering</span></abbr
+                >{" "} @ <a href="https://fe.up.pt">feup</a>
               </dd>
             </div>
             <div>
@@ -291,11 +272,12 @@ const pad2 = (value: number): string => String(value).padStart(2, "0");
           </dl>
           <p class="term-links">
             <a href="mailto:hey@rgo.pt">[mail]</a>
-            {primarySocials.map((item) => (
-              <a href={item.href} rel="me" title={item.handle}>
-                [{item.name}]
-              </a>
-            ))}
+            {primarySocials.map((item) => <a
+              href={item.href}
+              rel="me"
+              title={item.handle}
+              >[{item.name}]</a
+            >)}
           </p>
           <p class="term-hint">
             try <kbd>:</kbd> for a shell, <kbd>f</kbd> for link hints,
@@ -310,123 +292,101 @@ const pad2 = (value: number): string => String(value).padStart(2, "0");
         data-life-player
       >
         <h2 id="t-life" class="term-title">
-          <span class="term-title-text" data-scramble>
-            life.exe
-          </span>
+          <span class="term-title-text" data-scramble>life.exe</span>
           <span data-life-counter>01/{pad2(data.life.length)}</span>
         </h2>
         <div class="term-body">
           <div class="term-reel">
-            {data.life.map((frame, index) => (
-              <figure
-                class="term-frame"
-                data-life-frame={index}
-                data-label={frame.label}
-                data-caption={frame.caption}
-                data-active={index === 0 ? "" : undefined}
-              >
-                <img
-                  src={index < 2 ? frame.image.src : undefined}
-                  data-src={index < 2 ? undefined : frame.image.src}
-                  alt={frame.image.alt}
-                  decoding="async"
-                  style={`object-position:${frame.image.position}`}
-                />
-              </figure>
-            ))}
+            {data.life.map((frame, index) => <figure
+              class="term-frame"
+              data-life-frame={index}
+              data-label={frame.label}
+              data-caption={frame.caption}
+              data-active={index === 0 ? "" : undefined}
+            >
+              <img
+                src={index < 2 ? frame.image.src : undefined}
+                data-src={index < 2 ? undefined : frame.image.src}
+                alt={frame.image.alt}
+                decoding="async"
+                style={`object-position:${frame.image.position}`}
+              />
+            </figure>)}
           </div>
           <p class="term-caption" data-life-caption aria-live="polite">
             {firstFrame && `[${firstFrame.label}] ${firstFrame.caption}`}
           </p>
           <p class="term-controls">
-            <button type="button" data-life-step="-1">
-              prev
-            </button>
-            <button type="button" data-life-toggle>
-              pause
-            </button>
-            <button type="button" data-life-step="1">
-              next
-            </button>
+            <button type="button" data-life-step="-1">prev</button>
+            <button type="button" data-life-toggle>pause</button>
+            <button type="button" data-life-step="1">next</button>
           </p>
         </div>
       </section>
 
       <section class="term-win term-now" id="now" aria-labelledby="t-now">
         <h2 id="t-now" class="term-title">
-          <span class="term-title-text" data-scramble>
-            tail -f now.log
-          </span>
+          <span class="term-title-text" data-scramble>tail -f now.log</span>
           <a href="/cv">all of it</a>
         </h2>
         <ul class="term-body term-list term-log">
-          {data.now.map((item) => (
-            <li data-kind={item.type.key}>
-              <a
-                href={item.href}
-                data-no-link-fx
-                data-peek-title={item.peek.title}
-                data-peek-meta={item.peek.meta}
-                data-peek-body={item.peek.body}
-                data-peek-image={item.peek.image}
-                data-peek-label={item.peek.label}
-              >
-                <time datetime={item.startDate}>{item.startDate}</time>
-                <span class="term-kind">{item.type.label}</span>
-                <span class="term-logo">
-                  <HomeLogo logo={item.logo} size={14} />
-                </span>
-                <span class="term-grow">
-                  <span class="term-name">{item.name.toLowerCase()}</span>
-                  <span class="term-dim term-context">
-                    {" "}
-                    · {item.context.toLowerCase()}
-                  </span>
-                </span>
-                <NewBadge date={item.startDate} />
-                <span class="term-age" title="running for">
-                  {item.age}
-                </span>
-              </a>
-            </li>
-          ))}
+          {data.now.map((item) => <li data-kind={item.type.key}>
+            <a
+              href={item.href}
+              data-no-link-fx
+              data-peek-title={item.peek.title}
+              data-peek-meta={item.peek.meta}
+              data-peek-body={item.peek.body}
+              data-peek-image={item.peek.image}
+              data-peek-label={item.peek.label}
+              ><time datetime={item.startDate}>{item.startDate}</time
+              ><span class="term-kind">{item.type.label}</span
+              ><span class="term-logo"
+                ><HomeLogo logo={item.logo} size={14}
+              /></span
+              ><span class="term-grow"
+                ><span class="term-name">{item.name.toLowerCase()}</span
+                ><span class="term-dim term-context"
+                  >{" "} · {item.context.toLowerCase()}</span
+                ></span
+              ><NewBadge date={item.startDate} /><span
+                class="term-age"
+                title="running for"
+                >{item.age}</span
+              ></a
+            >
+          </li>)}
         </ul>
       </section>
 
       <section class="term-win term-writing" aria-labelledby="t-writing">
         <h2 id="t-writing" class="term-title">
-          <span class="term-title-text" data-scramble>
-            ls ~/writing
-          </span>
+          <span class="term-title-text" data-scramble>ls ~/writing</span>
           <a href="/rss.xml">rss</a>
         </h2>
         <ul class="term-body term-list">
-          {data.posts.map((post) => (
-            <li>
-              <a
-                href={post.href}
-                data-no-link-fx
-                data-peek-title={post.title}
-                data-peek-meta={post.meta}
-                data-peek-body={post.description}
-                data-peek-label={`~/writing/${post.id}.md`}
-              >
-                <time datetime={post.date.toISOString()}>
-                  {formatDay(post.date)}
-                </time>
-                <span class="term-grow">{post.title}</span>
-                <NewBadge date={post.date} />
-              </a>
-            </li>
-          ))}
+          {data.posts.map((post) => <li>
+            <a
+              href={post.href}
+              data-no-link-fx
+              data-peek-title={post.title}
+              data-peek-meta={post.meta}
+              data-peek-body={post.description}
+              data-peek-label={`~/writing/${post.id}.md`}
+              ><time datetime={post.date.toISOString()}
+                >{formatDay(post.date)}</time
+              ><span class="term-grow">{post.title}</span
+              ><NewBadge date={post.date}
+            /></a>
+          </li>)}
         </ul>
       </section>
 
       <section class="term-win term-thoughts" aria-labelledby="t-thoughts">
         <h2 id="t-thoughts" class="term-title">
-          <span class="term-title-text" data-scramble>
-            tail -n 5 thoughts.log
-          </span>
+          <span class="term-title-text" data-scramble
+            >tail -n 5 thoughts.log</span
+          >
         </h2>
         <div class="term-body">
           <BlueskyThoughts />
@@ -435,9 +395,7 @@ const pad2 = (value: number): string => String(value).padStart(2, "0");
 
       <section class="term-win term-where" aria-labelledby="t-where">
         <h2 id="t-where" class="term-title">
-          <span class="term-title-text" data-scramble>
-            whereami --and-you
-          </span>
+          <span class="term-title-text" data-scramble>whereami --and-you</span>
         </h2>
         <div class="term-body">
           <NowWhere />
@@ -446,90 +404,77 @@ const pad2 = (value: number): string => String(value).padStart(2, "0");
 
       <section class="term-win term-uses" aria-labelledby="t-uses">
         <h2 id="t-uses" class="term-title">
-          <span class="term-title-text" data-scramble>
-            tree ~/uses
-          </span>
+          <span class="term-title-text" data-scramble>tree ~/uses</span>
           <a href="/uses">all</a>
         </h2>
         <ul class="term-body term-tree">
-          {usesTree.map((line) => (
-            <li>
-              <span class="term-dim">{line.prefix}</span>
-              {line.tool ? (
-                <>
-                  <a href={line.tool.href} data-no-link-fx data-link-peek>
-                    <HomeLogo logo={line.tool.logo} size={13} />
-                    {line.tool.name.toLowerCase()}
-                  </a>
-                  <span class="term-dim"> # {line.tool.role}</span>
-                </>
-              ) : (
-                <span>{line.label}</span>
-              )}
-            </li>
-          ))}
+          {usesTree.map((line) => <li>
+            <span class="term-dim">{line.prefix}</span>
+            {line.tool ? (
+              <>
+                <a href={line.tool.href} data-no-link-fx data-link-peek
+                  ><HomeLogo logo={line.tool.logo} size={13} />
+                  {line.tool.name.toLowerCase()}</a
+                >
+                <span class="term-dim"> # {line.tool.role}</span>
+              </>
+            ) : (
+              <span>{line.label}</span>
+            )}
+          </li>)}
         </ul>
       </section>
 
       <section class="term-win term-faves" aria-labelledby="t-faves">
         <h2 id="t-faves" class="term-title">
-          <span class="term-title-text" data-scramble>
-            favorites.txt
-          </span>
+          <span class="term-title-text" data-scramble>favorites.txt</span>
           <a href="/faves">all</a>
         </h2>
         <div class="term-body term-faves-body">
-          {data.faves.map((group) => (
-            <div class="term-fave-group">
-              <span class="term-h">{group.title.toLowerCase()}/</span>
-              <ul class="term-fave-list">
-                {group.items.map((item) => (
-                  <li>
-                    <a
-                      class="term-fave-item"
-                      href={item.href ?? `/faves#${group.id}`}
-                      data-no-link-fx
-                      data-peek-title={item.title}
-                      data-peek-meta={item.meta}
-                      data-peek-body={item.comment}
-                      data-peek-episodes={item.episodes}
-                      data-peek-rating={item.rating}
-                      data-peek-image={item.image}
-                      data-peek-label={`${group.id}/`}
-                    >
-                      {item.icon ? (
-                        <img
-                          class="term-fave-icon"
-                          src={item.icon}
-                          alt=""
-                          width="16"
-                          height="16"
-                          loading="lazy"
-                          decoding="async"
-                          referrerpolicy="no-referrer"
-                          onerror="this.style.visibility='hidden'"
-                        />
-                      ) : (
-                        <span
-                          class="term-fave-icon term-fave-blank"
-                          aria-hidden="true"
-                        />
-                      )}
-                      <span>{item.title}</span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {data.faves.map((group) => <div class="term-fave-group">
+            <span class="term-h">{group.title.toLowerCase()}/</span>
+            <ul class="term-fave-list">
+              {group.items.map((item) => <li>
+                <a
+                  class="term-fave-item"
+                  href={item.href ?? `/faves#${group.id}`}
+                  data-no-link-fx
+                  data-peek-title={item.title}
+                  data-peek-meta={item.meta}
+                  data-peek-body={item.comment}
+                  data-peek-episodes={item.episodes}
+                  data-peek-rating={item.rating}
+                  data-peek-image={item.image}
+                  data-peek-label={`${group.id}/`}
+                  >{item.icon ? (
+                    <img
+                      class="term-fave-icon"
+                      src={item.icon}
+                      alt=""
+                      width="16"
+                      height="16"
+                      loading="lazy"
+                      decoding="async"
+                      referrerpolicy="no-referrer"
+                      onerror="this.style.visibility='hidden'"
+                    />
+                  ) : (
+                    <span
+                      class="term-fave-icon term-fave-blank"
+                      aria-hidden="true"
+                    />
+                  )}
+                  <span>{item.title}</span></a
+                >
+              </li>)}
+            </ul>
+          </div>)}
         </div>
       </section>
 
       <section class="term-win term-activity" aria-labelledby="t-activity">
         <h2 id="t-activity" class="term-title">
-          <span class="term-title-text" data-scramble>
-            git log --graph
-          </span>
+          <span class="term-title-text" data-scramble>git log --graph</span>
         </h2>
         <div class="term-body">
           <GitHubContributions client:visible />

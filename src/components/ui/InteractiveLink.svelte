@@ -19,6 +19,9 @@
   /* Reads like an executable in `ls -F`: green, with a trailing star. */
   .interactive-link {
     display: inline;
+    /* Room for the hover highlight that takes no room in the line, so a
+       comma after the star sits where it would after plain text. */
+    margin: 0 -0.15rem;
     padding: 0 0.15rem;
     border: 0;
     background: none;

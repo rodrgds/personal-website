@@ -47,17 +47,14 @@ const profileDownloads = Object.entries(cvProfiles).map(([slug, profile]) => ({
           <span class="cv-flag">--user</span> rodrigo
         </h1>
         <div class="downloads">
-          {profileDownloads.map((profile) => (
-            <a
-              href={`/cv/${profile.slug}.pdf`}
-              class="download"
-              title={profile.label}
-              aria-label={profile.label}
-              data-no-link-fx
-            >
-              ↓ {profile.file}
-            </a>
-          ))}
+          {profileDownloads.map((profile) => <a
+            href={`/cv/${profile.slug}.pdf`}
+            class="download"
+            title={profile.label}
+            aria-label={profile.label}
+            data-no-link-fx
+            >↓ {profile.file}</a
+          >)}
         </div>
       </div>
       <p class="cv-lead">

@@ -32,9 +32,8 @@ const rel = external ? "noopener noreferrer" : undefined;
     target={target}
     rel={rel}
     {...props}
-  >
-    <slot />
-  </Button>
+    ><slot
+  /></Button>
 ) : (
   <a
     href={href}
@@ -42,9 +41,8 @@ const rel = external ? "noopener noreferrer" : undefined;
     target={target}
     rel={rel}
     {...props}
-  >
-    <slot />
-  </a>
+    ><slot
+  /></a>
 )}
 
 <style>

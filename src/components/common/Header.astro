@@ -10,14 +10,12 @@ const primary = SOCIALS.filter((social) => social.primary);
 
 <header class="site-bar" transition:name="site-bar" transition:animate="none">
   <nav aria-label="Main">
-    <a class="prompt" href="/" aria-label="rgo.pt home" data-no-link-fx>
-      <span class="prompt-host">rgo.pt</span>
-      <span class="prompt-path" data-prompt-path>
-        :{path}
-      </span>
-      <span class="prompt-sign">$</span>
-      <span class="prompt-cursor" aria-hidden="true"></span>
-    </a>
+    <a class="prompt" href="/" aria-label="rgo.pt home" data-no-link-fx
+      ><span class="prompt-host">rgo.pt</span
+      ><span class="prompt-path" data-prompt-path>:{path}</span
+      ><span class="prompt-sign">$</span
+      ><span class="prompt-cursor" aria-hidden="true"></span></a
+    >
     <div class="primary-links">
       <HeaderLink href="/">me</HeaderLink>
       <HeaderLink href="/cv">cv</HeaderLink>
@@ -34,19 +32,16 @@ const primary = SOCIALS.filter((social) => social.primary);
       >
         :tty
       </button>
-      {primary.map((social) => (
-        <a
-          class="icon-link"
-          href={social.url}
-          target="_blank"
-          rel="me noopener noreferrer"
-          title={`${social.label} ${social.handle}`}
-          aria-label={social.label}
-          data-no-link-fx
-        >
-          <SocialIcon name={social.icon_name} />
-        </a>
-      ))}
+      {primary.map((social) => <a
+        class="icon-link"
+        href={social.url}
+        target="_blank"
+        rel="me noopener noreferrer"
+        title={`${social.label} ${social.handle}`}
+        aria-label={social.label}
+        data-no-link-fx
+        ><SocialIcon name={social.icon_name}
+      /></a>)}
       <a
         class="icon-link"
         href="/rss.xml"
@@ -54,9 +49,8 @@ const primary = SOCIALS.filter((social) => social.primary);
         title="RSS feed for the blog"
         aria-label="RSS feed"
         data-no-link-fx
-      >
-        <SocialIcon name="rss" />
-      </a>
+        ><SocialIcon name="rss"
+      /></a>
     </div>
   </nav>
 </header>

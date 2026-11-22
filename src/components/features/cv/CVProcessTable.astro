@@ -133,24 +133,17 @@ const counts = new Map(
 
 <section class="ps" data-cv-ps aria-label="CV timeline">
   <div class="ps-meters">
-    {meters.map((meter) => (
-      <p class="ps-meter" data-kind={meter.key}>
-        <span class="ps-meter-label">{meter.label}</span>
-        <span class="ps-meter-bar" aria-hidden="true" set:text={meter.bar} />
-        <span class="ps-meter-value">
-          {meter.live}/{meter.total}
-        </span>
-      </p>
-    ))}
+    {meters.map((meter) => <p class="ps-meter" data-kind={meter.key}>
+      <span class="ps-meter-label">{meter.label}</span>
+      <span class="ps-meter-bar" aria-hidden="true" set:text={meter.bar} />
+      <span class="ps-meter-value">{meter.live}/{meter.total}</span>
+    </p>)}
     <p class="ps-stats">
-      <span>
-        <b>tasks:</b>
-        {rows.length} total,
-        <em>{running.length} running</em>
-      </span>
-      <span>
-        <b>uptime:</b> {duration(ageMonths)}, since dec 2006
-      </span>
+      <span
+        ><b>tasks:</b> {rows.length} total,
+        <em>{running.length} running</em></span
+      >
+      <span><b>uptime:</b> {duration(ageMonths)}, since dec 2006</span>
     </p>
   </div>
 
@@ -164,18 +157,16 @@ const counts = new Map(
     >
       all <span>{rows.length}</span>
     </button>
-    {TIMELINE_TYPES.map((kind) => (
-      <button
-        type="button"
-        data-cuelume-select
-        data-cv-filter={kind.key}
-        data-cv-hash={kind.plural}
-        data-kind={kind.key}
-        aria-pressed="false"
-      >
-        {kind.plural} <span>{counts.get(kind.key)}</span>
-      </button>
-    ))}
+    {TIMELINE_TYPES.map((kind) => <button
+      type="button"
+      data-cuelume-select
+      data-cv-filter={kind.key}
+      data-cv-hash={kind.plural}
+      data-kind={kind.key}
+      aria-pressed="false"
+    >
+      {kind.plural} <span>{counts.get(kind.key)}</span>
+    </button>)}
   </div>
 
   <div class="ps-table" data-timeline-scroller>
@@ -183,78 +174,64 @@ const counts = new Map(
       <span>S</span>
       <span class="ps-col-kind">TYPE</span>
       <span>NAME</span>
-      <span class="ps-axis">
-        {years.map((year) => (
-          <span style={`left:${percent(year * 12)}%`}>{year}</span>
-        ))}
-      </span>
+      <span class="ps-axis"
+        >{years.map((year) => <span style={`left:${percent(year * 12)}%`}
+          >{year}</span
+        >)}</span
+      >
       <span class="ps-col-time">TIME</span>
     </div>
     <ol
       class="ps-rows"
       style={`--now:${percent(nowMonth + 1)}%;--year:${(12 / span) * 100}%`}
     >
-      {rows.map((row) => (
-        <li
-          class="ps-row"
-          data-kind={row.kind.key}
-          data-state={row.state}
-          data-point={row.entry.kind === "point" ? "" : undefined}
+      {rows.map((row) => <li
+        class="ps-row"
+        data-kind={row.kind.key}
+        data-state={row.state}
+        data-point={row.entry.kind === "point" ? "" : undefined}
+      >
+        <a
+          href={row.entry.href}
+          data-no-link-fx
+          data-peek-title={row.entry.title}
+          data-peek-meta={`${row.entry.subtitle} · ${row.range}`}
+          data-peek-body={row.entry.summary}
+          data-peek-image={row.cover?.src}
+          data-peek-label={row.cover?.label ?? `${row.kind.label}/${row.pid}`}
+          ><span
+            class="ps-state"
+            title={
+              row.state === "R"
+                ? "running"
+                : row.state === "S"
+                  ? "sleeping"
+                  : "exited"
+            }
+            >{row.state}</span
+          ><span class="ps-col-kind">{row.kind.label}</span
+          ><span class="ps-name"
+            ><span class="ps-logo" aria-hidden="true"
+              ><CVEntryVisual src={row.entry.visual} alt="" size={14}
+            /></span
+            ><span class="ps-title">{row.entry.name.toLowerCase()}</span
+            ><span class="ps-sub">{row.entry.context.toLowerCase()}</span></span
+          ><span class="ps-track" aria-hidden="true"
+            ><span
+              class="ps-bar"
+              style={`left:${row.left}%;width:${row.width}%`}
+          /></span
+          ><span class="ps-col-time"
+            ><span class="sr-only">{row.range}, </span> {row.time}</span
+          ></a
         >
-          <a
-            href={row.entry.href}
-            data-no-link-fx
-            data-peek-title={row.entry.title}
-            data-peek-meta={`${row.entry.subtitle} · ${row.range}`}
-            data-peek-body={row.entry.summary}
-            data-peek-image={row.cover?.src}
-            data-peek-label={row.cover?.label ?? `${row.kind.label}/${row.pid}`}
-          >
-            <span
-              class="ps-state"
-              title={
-                row.state === "R"
-                  ? "running"
-                  : row.state === "S"
-                    ? "sleeping"
-                    : "exited"
-              }
-            >
-              {row.state}
-            </span>
-            <span class="ps-col-kind">{row.kind.label}</span>
-            <span class="ps-name">
-              <span class="ps-logo" aria-hidden="true">
-                <CVEntryVisual src={row.entry.visual} alt="" size={14} />
-              </span>
-              <span class="ps-title">{row.entry.name.toLowerCase()}</span>
-              <span class="ps-sub">{row.entry.context.toLowerCase()}</span>
-            </span>
-            <span class="ps-track" aria-hidden="true">
-              <span
-                class="ps-bar"
-                style={`left:${row.left}%;width:${row.width}%`}
-              />
-            </span>
-            <span class="ps-col-time">
-              <span class="sr-only">{row.range}, </span>
-              {row.time}
-            </span>
-          </a>
-        </li>
-      ))}
+      </li>)}
     </ol>
   </div>
   <p class="ps-legend">
-    <span>
-      <b data-state="R">R</b> running
-    </span>
-    <span>
-      <b data-state="S">S</b> sleeping (paused)
-    </span>
-    <span>
-      <b>-</b> done
-    </span>
+    <span><b data-state="R">R</b> running</span>
+    <span><b data-state="S">S</b> sleeping (paused)</span>
+    <span><b>-</b> done</span>
   </p>
 </section>
 

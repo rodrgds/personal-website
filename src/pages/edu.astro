@@ -41,15 +41,13 @@
     ></script>
   </head>
   <body>
-    <a class="skip-link" href="#reader-list">
-      Skip to the reading view
-    </a>
+    <a class="skip-link" href="#reader-list">Skip to the reading view</a>
 
     <main class="app" aria-busy="true">
       <header class="topbar">
-        <a class="brand" href="/edu" aria-label="rgo.pt/edu, home">
-          <span aria-hidden="true">rgo.pt/edu</span>
-        </a>
+        <a class="brand" href="/edu" aria-label="rgo.pt/edu, home"
+          ><span aria-hidden="true">rgo.pt/edu</span></a
+        >
 
         <p class="topbar-context">Higher education and what could come next</p>
 
@@ -81,10 +79,18 @@
               viewBox="0 0 24 24"
             >
               <circle cx="12" cy="12" r="4"></circle>
-              <path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path>
-            </svg>
-            <svg class="theme-icon-dark" aria-hidden="true" viewBox="0 0 24 24">
-              <path d="M20.2 15.2A8.4 8.4 0 0 1 8.8 3.8 8.4 8.4 0 1 0 20.2 15.2Z"></path>
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"
+              ></path>
+            </svg
+            ><svg
+              class="theme-icon-dark"
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M20.2 15.2A8.4 8.4 0 0 1 8.8 3.8 8.4 8.4 0 1 0 20.2 15.2Z"
+              ></path>
             </svg>
           </button>
           <button
@@ -96,7 +102,9 @@
           >
             <svg aria-hidden="true" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="9"></circle>
-              <path d="M9.8 9a2.35 2.35 0 1 1 3.63 1.97c-.85.54-1.43 1.04-1.43 2.03M12 17h.01"></path>
+              <path
+                d="M9.8 9a2.35 2.35 0 1 1 3.63 1.97c-.85.54-1.43 1.04-1.43 2.03M12 17h.01"
+              ></path>
             </svg>
           </button>
         </div>
@@ -127,9 +135,7 @@
           <div class="canvas-hint" aria-hidden="true">
             <span>Drag to move</span>
             <span>Scroll to pan</span>
-            <span>
-              <kbd>⌘</kbd> / <kbd>Ctrl</kbd> + scroll to zoom
-            </span>
+            <span><kbd>⌘</kbd> / <kbd>Ctrl</kbd> + scroll to zoom</span>
           </div>
 
           <nav class="canvas-controls" aria-label="Canvas controls">
@@ -143,9 +149,7 @@
                 <path d="M5 12h14"></path>
               </svg>
             </button>
-            <output id="zoom-level" aria-label="Current zoom">
-              100%
-            </output>
+            <output id="zoom-level" aria-label="Current zoom"> 100% </output>
             <button
               type="button"
               data-action="zoom-in"
@@ -212,19 +216,18 @@
             </svg>
           </button>
         </header>
-        <label class="reader-search">
-          <svg aria-hidden="true" viewBox="0 0 24 24">
+        <label class="reader-search"
+          ><svg aria-hidden="true" viewBox="0 0 24 24">
             <circle cx="11" cy="11" r="7"></circle>
             <path d="m20 20-4-4"></path>
-          </svg>
-          <span class="sr-only">Search the canvas</span>
-          <input
+          </svg
+          ><span class="sr-only">Search the canvas</span
+          ><input
             id="reader-search"
             type="search"
             placeholder="Search ideas and sources…"
             autocomplete="off"
-          />
-        </label>
+        /></label>
         <p id="reader-count" class="reader-count" aria-live="polite"></p>
         <ol id="reader-list" class="reader-list" tabindex="-1"></ol>
       </div>
@@ -251,9 +254,7 @@
           </div>
           <div>
             <dt>Zoom</dt>
-            <dd>
-              Pinch or <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + scroll
-            </dd>
+            <dd>Pinch or <kbd>⌘</kbd>/<kbd>Ctrl</kbd> + scroll</dd>
           </div>
           <div>
             <dt>Open an idea</dt>
@@ -261,15 +262,11 @@
           </div>
           <div>
             <dt>Overview</dt>
-            <dd>
-              Press <kbd>0</kbd>
-            </dd>
+            <dd>Press <kbd>0</kbd></dd>
           </div>
           <div>
             <dt>Return to start</dt>
-            <dd>
-              Press <kbd>Home</kbd>
-            </dd>
+            <dd>Press <kbd>Home</kbd></dd>
           </div>
         </dl>
         <p class="help-note">

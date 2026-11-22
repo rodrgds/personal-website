@@ -22,22 +22,19 @@ const decks = (await getCollection("slides", ({ data }) => !data.draft)).sort(
     around, zoom and draw on. Your drawings stay in your browser.
   </p>
   <ul class="slides-list">
-    {decks.map((deck) => (
-      <li>
-        <a href={`/slides/${deck.id}`} data-astro-reload>
-          {deck.data.title}
-        </a>
-        <span class="slides-meta">
-          {[deck.data.course, deck.data.date].filter(Boolean).join(" · ")}
-        </span>
-        <p>{deck.data.description}</p>
-        {deck.data.video && (
-          <a href={deck.data.video} target="_blank" rel="noreferrer">
-            Watch the video
-          </a>
-        )}
-      </li>
-    ))}
+    {decks.map((deck) => <li>
+      <a href={`/slides/${deck.id}`} data-astro-reload>{deck.data.title}</a>
+      <span class="slides-meta"
+        >{[deck.data.course, deck.data.date].filter(Boolean).join(" · ")}</span
+      >
+      <p>{deck.data.description}</p>
+      {deck.data.video && <a
+        href={deck.data.video}
+        target="_blank"
+        rel="noreferrer"
+        >Watch the video</a
+      >}
+    </li>)}
   </ul>
 </Default>
 

@@ -58,56 +58,52 @@ const more = SOCIALS.filter((social) => MORE.includes(social.icon_name)).sort(
 );
 ---
 
-{posts.length > 0 && (
-  <div class="thoughts">
-    <ol>
-      {posts.map((post) => (
-        <li>
-          <a
-            href={post.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            data-no-link-fx
-            data-peek-images={
-              post.images.length
-                ? post.images.map((image) => image.src).join(" ")
-                : undefined
-            }
-            data-peek-label={post.images.length ? post.label : undefined}
-          >
-            <time>[{post.date}]</time>
-            {post.images.length > 0 && (
-              <span class="pictures" aria-label={post.label}>
-                <img
-                  src={post.images[0]?.src}
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                />
-                {post.images[0]?.video && <b>▶</b>}
-                {post.images.length > 1 && <b>×{post.images.length}</b>}
-              </span>
-            )}
-            <span>{post.text}</span>
-          </a>
-        </li>
-      ))}
-    </ol>
-    <p class="more">
-      <span>
-        posted everywhere at once with <a href="/cv/openpost">openpost</a>.
-      </span>
-      <span class="more-links">
-        more on
-        {more.map((social) => (
-          <a href={social.url} target="_blank" rel="me noopener noreferrer">
-            [{social.icon_name}]
-          </a>
-        ))}
-      </span>
-    </p>
-  </div>
-)}
+{posts.length > 0 && <div class="thoughts">
+  <ol>
+    {posts.map((post) => <li>
+      <a
+        href={post.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        data-no-link-fx
+        data-peek-images={
+          post.images.length
+            ? post.images.map((image) => image.src).join(" ")
+            : undefined
+        }
+        data-peek-label={post.images.length ? post.label : undefined}
+        ><time>[{post.date}]</time>
+        {post.images.length > 0 && <span
+          class="pictures"
+          aria-label={post.label}
+          ><img
+            src={post.images[0]?.src}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
+          {post.images[0]?.video && <b>▶</b>}
+          {post.images.length > 1 && <b>×{post.images.length}</b>}</span
+        >}
+        <span>{post.text}</span></a
+      >
+    </li>)}
+  </ol>
+  <p class="more">
+    <span
+      >posted everywhere at once with <a href="/cv/openpost">openpost</a>.</span
+    >
+    <span class="more-links"
+      >more on
+      {more.map((social) => <a
+        href={social.url}
+        target="_blank"
+        rel="me noopener noreferrer"
+        >[{social.icon_name}]</a
+      >)}</span
+    >
+  </p>
+</div>}
 
 <style>
   .thoughts {

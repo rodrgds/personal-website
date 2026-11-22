@@ -35,18 +35,15 @@ const words = [
 >
   <div class="lab-side">
     <pre class="lab-code"><code set:html={CODE} /></pre>
-    <label class="lab-field">
-      <span>
-        input (<code>s</code>) · <code>\x41</code> = byte
-      </span>
-      <input
+    <label class="lab-field"
+      ><span>input (<code>s</code>) · <code>\x41</code> = byte</span
+      ><input
         type="text"
         spellcheck="false"
         autocomplete="off"
         data-overflow-input
         aria-label="Input copied into buf"
-      />
-    </label>
+    /></label>
     <p class="lab-meta" data-overflow-count></p>
     <p class="lab-status" data-overflow-status aria-live="polite"></p>
   </div>
@@ -54,20 +51,21 @@ const words = [
     <div class="mem-axis">
       <span>high addresses</span>
     </div>
-    {words.map((word, index) => (
-      <div class={`overflow-word kind-${word.kind}`} data-word={6 - index}>
-        <span class="overflow-addr" data-word-addr />
-        <span class="overflow-bytes">
-          {[0, 1, 2, 3].map(() => (
-            <span class="overflow-byte" />
-          ))}
-        </span>
-        <span class="overflow-name">
-          <strong>{word.name}</strong>
-          {word.note && <small>{word.note}</small>}
-        </span>
-      </div>
-    ))}
+    {words.map((word, index) => <div
+      class={`overflow-word kind-${word.kind}`}
+      data-word={6 - index}
+    >
+      <span class="overflow-addr" data-word-addr />
+      <span class="overflow-bytes"
+        >{[0, 1, 2, 3].map(() => (
+          <span class="overflow-byte" />
+        ))}</span
+      >
+      <span class="overflow-name"
+        ><strong>{word.name}</strong>
+        {word.note && <small>{word.note}</small>}</span
+      >
+    </div>)}
     <div class="mem-axis">
       <span>low addresses · the copy writes ↑</span>
     </div>

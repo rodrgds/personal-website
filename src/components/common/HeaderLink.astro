@@ -25,12 +25,9 @@ const target = external ? "_blank" : undefined;
   class:list={[className, { active: isActive }]}
   aria-current={isActive ? "page" : undefined}
   {...props}
+  ><span class="label" data-scramble-hover><slot /></span>
+  {external && <ArrowTopRightOnSquareIcon class="ui-icon external-mark" />}</a
 >
-  <span class="label" data-scramble-hover>
-    <slot />
-  </span>
-  {external && <ArrowTopRightOnSquareIcon class="ui-icon external-mark" />}
-</a>
 
 <style>
   a {

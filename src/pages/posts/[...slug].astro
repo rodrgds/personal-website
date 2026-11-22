@@ -60,8 +60,7 @@ const { Content } = await render(entry);
           integrity="sha384-+VBxd3r6XgURycqtZ117nYw44OOcIax56Z4dCRWbxyPt0Koah1uHoK0o4+/RRE05"
           crossorigin="anonymous"
           onload='renderMathInElement(document.body,{delimiters: [{left: "$$", right: "$$", display: true},{left: "$", right: "$", display: false}]});'
-        />
-      </>
+        /></>
     )}
     <script is:inline>
       document.addEventListener("astro:after-swap", () => {
@@ -84,11 +83,10 @@ const { Content } = await render(entry);
         <h1 class="title" transition:name={`blogpost-name-${entry.id}`}>
           {entry.data.title}
         </h1>
-        {entry.data.pubDate && (
-          <time transition:name={`blogpost-pubdate-${entry.id}`}>
-            {entry.data.pubDate}
-          </time>
-        )}
+        {entry.data.pubDate && <time
+          transition:name={`blogpost-pubdate-${entry.id}`}
+          >{entry.data.pubDate}</time
+        >}
         <hr />
         <Content />
       </article>

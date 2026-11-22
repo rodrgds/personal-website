@@ -25,23 +25,20 @@ const suggestions = [
     <main>
       <h1 class="handwritten-heading handwritten-heading--page">404</h1>
       <TermWindow title="bash">
-        <pre class="not-found"><span class="dim">rodrigo@rgo.pt:~$</span> cd {path}
+        <pre
+          class="not-found"
+        ><span class="dim">rodrigo@rgo.pt:~$</span> cd {path}
 <span class="err">bash: cd: {path}: No such file or directory</span>
 <span class="dim">rodrigo@rgo.pt:~$</span> ls</pre>
         <ul class="suggestions">
-          {suggestions.map(([label, href]) => (
-            <li>
-              <a href={href}>{label}</a>
-            </li>
-          ))}
+          {suggestions.map(([label, href]) => <li>
+            <a href={href}>{label}</a>
+          </li>)}
         </ul>
         <p class="hint">
           Lost? Press <kbd>:</kbd> and type <code>ls</code>, or
-          <button type="button" data-tty-open="help">
-            open the shell
-          </button>
-          . If something should be here, <a href="mailto:hey@rgo.pt">tell me</a>
-          .
+          <button type="button" data-tty-open="help">open the shell</button>. If
+          something should be here, <a href="mailto:hey@rgo.pt">tell me</a>.
         </p>
       </TermWindow>
     </main>

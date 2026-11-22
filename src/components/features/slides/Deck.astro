@@ -160,16 +160,14 @@ const tools = [
           </button>
         </div>
         <div class="tb-group tb-draw">
-          {tools.map(([tool, label, key, Icon]) => (
-            <button
-              type="button"
-              data-tool={tool}
-              title={`${label} (${key})`}
-              aria-label={label}
-            >
-              <Icon size={18} />
-            </button>
-          ))}
+          {tools.map(([tool, label, key, Icon]) => <button
+            type="button"
+            data-tool={tool}
+            title={`${label} (${key})`}
+            aria-label={label}
+          >
+            <Icon size={18} />
+          </button>)}
         </div>
         <div class="tb-group tb-colors">
           {colors.map(([color, label], index) => (
@@ -220,9 +218,7 @@ const tools = [
         >
           <header>
             <h2 id="deck-help-title">Shortcuts</h2>
-            <button type="button" data-help-close aria-label="Close">
-              ×
-            </button>
+            <button type="button" data-help-close aria-label="Close">×</button>
           </header>
           <dl>
             {shortcuts.map(([keys, action]) => (
@@ -237,10 +233,9 @@ const tools = [
             {video && (
               <>
                 {" "}
-                <a href={video} target="_blank" rel="noreferrer">
-                  Watch the video
-                </a>
-                .
+                <a href={video} target="_blank" rel="noreferrer"
+                  >Watch the video</a
+                >.
               </>
             )}{" "}
             <a href="?script">Full script</a> ·{" "}
@@ -293,29 +288,29 @@ const tools = [
           ></div>
           <div class="speaker-notes-bar">
             <span class="speaker-label">Notes</span>
-            <span>
-              <button
+            <span
+              ><button
                 type="button"
                 data-speaker-action="smaller"
                 aria-label="Smaller text"
               >
                 A−
-              </button>
-              <button
+              </button
+              ><button
                 type="button"
                 data-speaker-action="larger"
                 aria-label="Larger text"
               >
                 A+
-              </button>
-              <button
+              </button
+              ><button
                 type="button"
                 data-speaker-action="theme"
                 aria-label="Change theme"
               >
                 theme
-              </button>
-            </span>
+              </button></span
+            >
           </div>
           <div class="speaker-notes" data-speaker-notes data-scrollable></div>
         </section>

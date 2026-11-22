@@ -24,7 +24,7 @@ const emptyQrImageSrc =
     <Logo src={crypto.toLowerCase()} alt={crypto + " logo"} size={30} />{" "}
     {crypto}
   </h3>
-  <div style="width: 100%; margin-bottom: 0.5rem; overflow-wrap: break-word;">
+  <div style="width: 100%; margin-bottom: 0.5rem; overflow-wrap: break-word">
     <code class="good-text">{address}</code>
   </div>
   <div class="flex-container">
@@ -40,7 +40,7 @@ const emptyQrImageSrc =
         id={canvasId}
         data-address={address}
         class="qr-code-canvas"
-        style="image-rendering: pixelated;"
+        style="image-rendering: pixelated"
         title={`Click to enlarge QR code for ${address}`}
         aria-label={`QR Code for ${crypto}. Click to enlarge.`}
         role="button"
@@ -50,39 +50,43 @@ const emptyQrImageSrc =
   </div>
   <hr />
 
-  {qr && (
-    <div
-      id={modalId}
-      class="qr-modal"
-      aria-hidden="true"
-      role="dialog"
-      aria-labelledby={modalTitleId}
-      aria-modal="true"
-    >
-      <div class="modal-content">
-        <button class="modal-close-button" aria-label="Close QR Code Modal">
-          &times;
-        </button>
-        <h4
-          id={modalTitleId}
-          style="margin-top: 0; text-align: center; color: var(--link-color);"
-        >
-          My {crypto} Address
-        </h4>
-        <img
-          class="modal-qr-image"
-          alt="Enlarged QR Code"
-          src={emptyQrImageSrc}
-          data-empty-src={emptyQrImageSrc}
-          style="display: block; margin: 0 auto; image-rendering: pixelated;"
-        />
-        <p
-          class="modal-qr-address"
-          style="text-align: center; font-size: 0.9em; word-break: break-all; margin-top: 10px; color: var(--visited-color)"
-        />
-      </div>
+  {qr && <div
+    id={modalId}
+    class="qr-modal"
+    aria-hidden="true"
+    role="dialog"
+    aria-labelledby={modalTitleId}
+    aria-modal="true"
+  >
+    <div class="modal-content">
+      <button class="modal-close-button" aria-label="Close QR Code Modal">
+        &times;
+      </button>
+      <h4
+        id={modalTitleId}
+        style="margin-top: 0; text-align: center; color: var(--link-color)"
+      >
+        My {crypto} Address
+      </h4>
+      <img
+        class="modal-qr-image"
+        alt="Enlarged QR Code"
+        src={emptyQrImageSrc}
+        data-empty-src={emptyQrImageSrc}
+        style="display: block; margin: 0 auto; image-rendering: pixelated"
+      />
+      <p
+        class="modal-qr-address"
+        style="
+          text-align: center;
+          font-size: 0.9em;
+          word-break: break-all;
+          margin-top: 10px;
+          color: var(--visited-color);
+        "
+      />
     </div>
-  )}
+  </div>}
 </div>
 
 <script>

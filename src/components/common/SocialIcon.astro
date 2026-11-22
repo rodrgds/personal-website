@@ -48,13 +48,11 @@ const { name, class: className } = Astro.props;
 const path = PATHS.get(name);
 ---
 
-{path && (
-  <svg
-    class:list={["social-icon", className]}
-    viewBox="0 0 24 24"
-    aria-hidden="true"
-    focusable="false"
-  >
-    <path d={path} />
-  </svg>
-)}
+{path && <svg
+  class:list={["social-icon", className]}
+  viewBox="0 0 24 24"
+  aria-hidden="true"
+  focusable="false"
+>
+  <path d={path} />
+</svg>}
