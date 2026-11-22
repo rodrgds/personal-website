@@ -238,10 +238,11 @@ export const getWatchHistory = defineAction({
     try {
       return await cache.getOrSet("history", loadHistory);
     } catch (error) {
+      // The reason goes to the server log; visitors get a plain message.
+      console.error("wetrakr:", error);
       throw new ActionError({
         code: "INTERNAL_SERVER_ERROR",
-        message:
-          error instanceof Error ? error.message : "Could not load WeTrakr",
+        message: "the history did not load",
       });
     }
   },

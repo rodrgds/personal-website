@@ -10,6 +10,7 @@ import {
   CSS3DObject,
   CSS3DRenderer,
 } from "three/examples/jsm/renderers/CSS3DRenderer.js";
+import { cue } from "../sound";
 import { SCREEN_H, SCREEN_W, SCREEN_Y, SCREEN_Z, buildRoom } from "./boot-room";
 
 export interface BootStage {
@@ -69,35 +70,14 @@ function glassTexture(): THREE.CanvasTexture {
 }
 
 /** A short mechanical click, synthesised; only when site sound is on. */
+/**
+ * The keys' sound as the login is typed: the site's own keystroke cue (it is
+ * silent until the visitor has interacted, as browsers require, so the
+ * first boot is quiet and a reboot is not).
+ */
 function keyClicker(): (enter: boolean) => void {
-  let audio: AudioContext | null = null;
-  return (enter) => {
-    if (document.documentElement.dataset.soundEnabled === "false") return;
-    try {
-      audio ??= new AudioContext();
-      // Browsers keep audio off until the visitor has interacted.
-      if (audio.state !== "running") {
-        void audio.resume();
-        return;
-      }
-      const length = Math.floor(audio.sampleRate * 0.03);
-      const buffer = audio.createBuffer(1, length, audio.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < length; i++)
-        data[i] = (Math.random() * 2 - 1) * (1 - i / length) ** 3;
-      const source = audio.createBufferSource();
-      source.buffer = buffer;
-      const filter = audio.createBiquadFilter();
-      filter.type = "bandpass";
-      filter.frequency.value = enter ? 1400 : 2600 + Math.random() * 900;
-      const gain = audio.createGain();
-      gain.gain.value = enter ? 0.35 : 0.22;
-      source.connect(filter).connect(gain).connect(audio.destination);
-      source.start();
-    } catch {
-      // No audio is fine.
-    }
-  };
+  return (enter) =>
+    cue("type", { key: enter ? "enter" : "printable", input: "keyboard" });
 }
 
 export async function createBootStage(
@@ -346,7 +326,8 @@ export async function createBootStage(
       room.powerButton.position.z -= 0.015;
       button.z -= 0.015;
       room.person.reach(button);
-      click(true);
+      // The power switch: one firm press.
+      cue("tap", { emphasis: "strong" });
       await wait(140);
       room.powerButton.position.z += 0.015;
       room.person.reach(null);

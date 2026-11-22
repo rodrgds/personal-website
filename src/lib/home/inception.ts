@@ -25,6 +25,7 @@ import {
   VOID,
   buildRoom,
 } from "./boot-room";
+import { cue } from "../sound";
 import { buildLaptop } from "./inception-laptop";
 
 const FOV = 34;
@@ -651,6 +652,7 @@ export async function startInception(): Promise<void> {
   const stop = (): void => {
     if (stopped) return;
     stopped = true;
+    cue("close");
     stopCurrent = null;
     window.removeEventListener("keydown", onKey, true);
     window.removeEventListener("resize", layout);
@@ -739,6 +741,7 @@ export async function startInception(): Promise<void> {
   // and the copy on the monitor; the pull-back starts slowly.
   container.style.opacity = "0";
   container.style.visibility = "visible";
+  cue("open");
   container.style.transition = "opacity 0.3s ease";
   frame = requestAnimationFrame(render);
   requestAnimationFrame(() => {

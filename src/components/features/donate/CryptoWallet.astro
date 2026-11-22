@@ -86,13 +86,15 @@ const emptyQrImageSrc =
 </div>
 
 <script>
-  import { play } from "cuelume";
   import QRCode from "qrcode";
+
+  import { cue } from "../../../lib/sound";
 
   function showQrModal(
     canvasElement: HTMLCanvasElement,
     modalElement: HTMLElement,
   ) {
+    cue("open");
     const modalQrImage =
       modalElement.querySelector<HTMLImageElement>(".modal-qr-image");
     const modalQrAddress =
@@ -125,6 +127,7 @@ const emptyQrImageSrc =
   }
 
   function hideQrModal(modalElement: HTMLElement) {
+    cue("close");
     modalElement.style.display = "none";
     modalElement.setAttribute("aria-hidden", "true");
 
@@ -237,7 +240,7 @@ const emptyQrImageSrc =
           navigator.clipboard
             .writeText(addressText)
             .then(() => {
-              play("success");
+              cue("success", { emphasis: "subtle" });
               copyButton.textContent = "Copied!";
               copyButton.classList.add("green");
               setTimeout(() => {
@@ -246,7 +249,7 @@ const emptyQrImageSrc =
               }, 900);
             })
             .catch((err) => {
-              play("error");
+              cue("error", { emphasis: "subtle" });
               console.error("Failed to copy: ", err);
               copyButton.textContent = "Copy Failed";
               setTimeout(() => {

@@ -2,6 +2,8 @@
   import { actions } from "astro:actions";
   import { onMount, untrack } from "svelte";
 
+  import { cue } from "../../../lib/sound";
+
   import ActivityCalendar from "./ActivityCalendar.svelte";
   import ActivityColumns from "./ActivityColumns.svelte";
   import ActivityRows from "./ActivityRows.svelte";
@@ -52,6 +54,18 @@
   let store = $state.raw(new Map<ActivitySource, ActivityData>());
   let loading = $state(true);
   let error = $state<string | null>(null);
+  // The body's height the last time it showed data, kept while the next
+  // metric loads so the page does not jump.
+  let bodyHeight = $state(0);
+  let reserved = $state(0);
+  let statusHeight = $state(0);
+  let statusReserved = $state(0);
+  $effect(() => {
+    if (!loading && !error && bodyHeight > 0) reserved = bodyHeight;
+    if (!loading && !error && statusHeight > 0) statusReserved = statusHeight;
+  });
+  // Enough rows to fill the reserved height; the skeleton clips the rest.
+  const skeletonRows = $derived(reserved ? 30 : 12);
 
   function isTimeRange(value: string | null): value is TimeRange {
     return RANGE_OPTIONS.some((option) => option.value === value);
@@ -103,11 +117,16 @@
 
   function move(direction: -1 | 1): void {
     if (range === "all") return;
+    cue("navigate", {
+      emphasis: "subtle",
+      direction: direction < 0 ? "back" : "forward",
+    });
     anchor = shiftAnchor(range, anchor, direction);
     writeUrl();
   }
 
   function latest(): void {
+    cue("navigate", { emphasis: "subtle" });
     anchor = today;
     writeUrl();
   }
@@ -115,6 +134,7 @@
   /** A row or column opens as its own period, one step finer. */
   function open(bucket: ActivityBucket): void {
     if (grain === "day") return;
+    cue("navigate", { emphasis: "subtle" });
     range = grain;
     grain = DEFAULT_GRAIN[grain];
     anchor = bucket.start > today ? today : bucket.start;
@@ -245,6 +265,7 @@
         <button
           type="button"
           style={`--kind: ${METRICS[key].colour}`}
+          data-cuelume-select
           aria-pressed={source === key}
           onclick={() => pickSource(key)}>{METRICS[key].label}</button
         >
@@ -257,6 +278,7 @@
       {#each RANGE_OPTIONS as option (option.value)}
         <button
           type="button"
+          data-cuelume-select
           aria-pressed={range === option.value}
           onclick={() => pickRange(option.value)}>{option.label}</button
         >
@@ -269,6 +291,7 @@
       {#each GRAIN_OPTIONS[range] as option (option.value)}
         <button
           type="button"
+          data-cuelume-select
           aria-pressed={grain === option.value}
           onclick={() => pickGrain(option.value)}>{option.label}</button
         >
@@ -302,17 +325,38 @@
     {/if}
   </div>
 
-  <div class="body">
+  <div
+    class="body"
+    bind:clientHeight={bodyHeight}
+    style:min-height={loading && reserved ? `${reserved}px` : undefined}
+  >
     {#if loading}
-      <p class="note" role="status">
-        <span class="ascii-spinner" aria-hidden="true">⠋</span>
-        reading {metric.service}
-      </p>
+      <div
+        class="skeleton"
+        role="status"
+        style:height={reserved ? `${reserved}px` : undefined}
+      >
+        <p class="note">
+          <span class="ascii-spinner" aria-hidden="true">⠋</span>
+          reading {metric.service}
+        </p>
+        {#each { length: skeletonRows } as _, index (index)}
+          <p class="skeleton-row" aria-hidden="true">
+            <span>░░░</span><span
+              style:width={`${18 + ((index * 37) % 55)}%`}
+            ></span>
+          </p>
+        {/each}
+      </div>
     {:else if error}
       <div class="note" role="alert">
         <span class="err">error:</span>
         {error}
-        <button type="button" class="latest" onclick={() => load(source, true)}
+        <button
+          type="button"
+          class="latest"
+          data-cuelume-tap
+          onclick={() => load(source, true)}
           >retry</button
         >
       </div>
@@ -338,8 +382,17 @@
     {/if}
   </div>
 
-  {#if data && !loading && !error}
-    <div class="status">
+  {#if loading}
+    <div
+      class="status pending"
+      aria-hidden="true"
+      style:min-height={statusReserved ? `${statusReserved}px` : undefined}
+    >
+      <p><span><b>logged:</b> ...</span><span><b>active:</b> ...</span></p>
+      <p><span><b>lifetime:</b> ...</span><span><b>source:</b> {metric.service}</span></p>
+    </div>
+  {:else if data && !error}
+    <div class="status" bind:offsetHeight={statusHeight}>
       <p>
         <span><b>logged:</b> {formatValue(source, total)}</span>
         <span
@@ -386,6 +439,56 @@
 </section>
 
 <style>
+  /* Placeholder rows while a metric loads, in the table's rhythm. */
+  .skeleton {
+    overflow: hidden;
+    cursor: progress;
+    padding: 0.2rem 0;
+  }
+
+  .skeleton .note {
+    padding: 0.3rem 0.9rem 0.4rem;
+  }
+
+  .skeleton-row {
+    display: grid;
+    grid-template-columns: 6ch minmax(0, 1fr);
+    gap: 1.2ch;
+    margin: 0;
+    padding: 0.06rem 0.9rem;
+    color: var(--border-color);
+    line-height: 1.6;
+  }
+
+  .skeleton-row span:last-child {
+    display: block;
+    height: 0.7em;
+    align-self: center;
+    background: var(--border-color);
+    animation: skeleton-breathe 1.6s steps(6) infinite alternate;
+  }
+
+  @keyframes skeleton-breathe {
+    from {
+      opacity: 0.35;
+    }
+
+    to {
+      opacity: 0.8;
+    }
+  }
+
+  .status.pending {
+    color: var(--gray-color);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton-row span:last-child {
+      animation: none;
+      opacity: 0.5;
+    }
+  }
+
   .win {
     min-width: 0;
     margin: 0 0 1.2rem;

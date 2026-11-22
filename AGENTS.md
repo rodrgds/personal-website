@@ -204,6 +204,18 @@ The home is also the now page: `/now` redirects to `/#now`.
   nothing more. External links in text preview through the same window
   (`link-peek.ts` fetches `/api/link-preview` and calls `peekAt()`); there is
   no separate preview card.
+- Interface sounds go through `src/lib/sound.ts` (cuelume, `mech` theme,
+  volume 0.6, on by default, the footer toggle mutes). A sound answers
+  something the visitor did and names its kind: `select` for a choice in a
+  group (mark the button `data-cuelume-select`), `toggle` for a state,
+  `open`/`close` for dialogs, the tty, hints and disclosures, `navigate` for
+  page changes and stepping (with `direction`), `type` for keys, `success`
+  for copies, `error` for failures and `ready` for a finished `ask`. Never
+  on hover, scrolling, vim motions, timers or anything that streams.
+- While data loads, keep its window's shape: the activity graph shows a
+  blank year and /activity keeps its last height, both with a progress
+  cursor. Rows that should still preview their external link carry
+  `data-link-peek` (the home's uses tree).
 - Links in text hover like a terminal selection: the link colour becomes the
   background (`global.css`). No animated underlines or blur fades. Rows,
   cards and controls opt out with `data-no-link-fx` and style their own.

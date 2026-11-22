@@ -1,6 +1,7 @@
 // Interactions for the terminal home: the boot log, the life.exe reel and the
 // Porto clock.
 import { prefersReducedMotion, readThemeColors } from "./ink";
+import { cue } from "../sound";
 import { blockBar, pixelSlide } from "../terminal/ascii";
 import type { BootStage } from "./boot-stage";
 
@@ -419,13 +420,17 @@ function mountLife(root: HTMLElement): () => void {
   const onClick = (event: Event): void => {
     const target = event.target instanceof Element ? event.target : null;
     const step = target?.closest<HTMLElement>("[data-life-step]");
-    if (step)
-      show(
-        index + Number(step.dataset.lifeStep),
-        step.dataset.lifeStep === "-1" ? -1 : 1,
-      );
+    if (step) {
+      const back = step.dataset.lifeStep === "-1";
+      cue("navigate", {
+        emphasis: "subtle",
+        direction: back ? "back" : "forward",
+      });
+      show(index + Number(step.dataset.lifeStep), back ? -1 : 1);
+    }
     if (target?.closest("[data-life-toggle]")) {
       paused = !paused;
+      cue("toggle", { direction: paused ? "back" : "forward" });
       if (toggle) toggle.textContent = paused ? "play" : "pause";
       schedule();
     }

@@ -58,13 +58,23 @@
     <span class="ascii-spinner" aria-hidden="true">⠋</span> fetching history
   </p>
 {:else if error}
-  <p class="status error">wetrakr: {error}</p>
+  <p class="status">
+    <span class="error">wetrakr:</span>
+    {error}. it is all on
+    <a href="https://url.rgo.pt/movies" target="_blank" rel="noopener noreferrer"
+      >wetrakr</a
+    >.
+    <button type="button" class="retry" data-cuelume-tap onclick={loadData}
+      >[retry]</button
+    >
+  </p>
 {:else if data}
   <div class="history" data-no-vim>
     <div class="filters" role="group" aria-label="Show">
       {#each [["all", "all"], ["film", "films"], ["episodes", "episodes"]] as const as [value, text] (value)}
         <button
           type="button"
+          data-cuelume-select
           aria-pressed={show === value}
           onclick={() => (show = value)}>{text}</button
         >
@@ -132,6 +142,21 @@
 
   .error {
     color: var(--flexoki-red);
+  }
+
+  .retry {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--link-color);
+    font: inherit;
+    cursor: pointer;
+  }
+
+  .retry:hover,
+  .retry:focus-visible {
+    background: var(--link-color);
+    color: var(--background-color);
   }
 
   .history {

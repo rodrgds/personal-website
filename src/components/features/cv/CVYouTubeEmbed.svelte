@@ -52,6 +52,7 @@
     <button
       type="button"
       class="video-poster"
+      data-cuelume-tap
       aria-label={`${buttonLabel}: ${title}`}
       data-embed-url={embedUrl}
       data-video-title={title}

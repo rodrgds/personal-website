@@ -248,7 +248,9 @@
   {:else if error}
     <div class="error">
       <p>{error}</p>
-      <button onclick={loadRoutines} class="retry-button">Retry</button>
+      <button onclick={loadRoutines} class="retry-button" data-cuelume-tap
+        >Retry</button
+      >
     </div>
   {:else}
     {#if stats}

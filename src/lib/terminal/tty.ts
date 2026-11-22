@@ -2,6 +2,7 @@
 // `help`. This file is the view: the shell lives in ./shell, the data comes
 // from /api/tty.json and the styles are in global.css (.tty).
 import { donutFrame, matrixRain, reducedMotion } from "./ascii";
+import { cue } from "../sound";
 import { renderMarkdown } from "./markdown";
 import { commonPrefix, complete } from "./complete";
 import type { CommandInfo, Completion } from "./complete";
@@ -401,7 +402,12 @@ async function execute(raw: string): Promise<void> {
     } else {
       const command = isCommand(input) ? input : `ask ${shellQuote(input)}`;
       await runLine(active, command, SCREEN, abort.signal);
+      // A finished answer is worth a note; a failure says so. ^C is silent.
+      if (active.status === 0 && /^ask\b/.test(command))
+        cue("ready", { emphasis: "subtle" });
     }
+    if (active.status !== 0 && active.status !== 130)
+      cue("error", { emphasis: "subtle" });
   } finally {
     if (run === abort) run = null;
     host.status(null);
@@ -502,6 +508,7 @@ function suggest(): void {
 
 function accept(value: string): void {
   if (!view) return;
+  cue("select", { emphasis: "subtle" });
   view.input.value = value;
   hideMenu();
   renderGhost();
@@ -513,6 +520,10 @@ function tab(backwards: boolean): void {
   if (menu) {
     const count = Math.min(menu.items.length, 8);
     menu.index = (menu.index + (backwards ? -1 : 1) + count) % count;
+    cue("select", {
+      emphasis: "subtle",
+      direction: backwards ? "back" : "forward",
+    });
     view.input.value = menu.items[menu.index].value;
     renderMenu(menu.items, menu.index);
     renderGhost();
@@ -531,10 +542,12 @@ function tab(backwards: boolean): void {
     prefix.toLowerCase().startsWith(value.toLowerCase())
   ) {
     view.input.value = prefix;
+    cue("select", { emphasis: "subtle" });
     suggest();
     return;
   }
   menu = { items, index: backwards ? Math.min(items.length, 8) - 1 : 0 };
+  cue("open", { emphasis: "subtle" });
   view.input.value = items[menu.index].value;
   renderMenu(items, menu.index);
   renderGhost();
@@ -550,7 +563,7 @@ function createView(): TtyView {
   root.setAttribute("aria-modal", "true");
   root.setAttribute("aria-label", "Terminal");
   root.dataset.noVim = "";
-  root.innerHTML = `<div class="tty-window"><div class="tty-bar"><span>tty1 · ${PROMPT}</span><button type="button" class="tty-close" aria-label="Close terminal">x</button></div><div class="tty-log" aria-live="polite"></div><div class="tty-suggest" hidden></div><form class="tty-line"><label for="tty-input"><span class="tty-host">${PROMPT}</span>:<span class="tty-path"></span>$</label><div class="tty-field"><span class="tty-ghost" aria-hidden="true"><span class="tty-ghost-typed"></span><span class="tty-ghost-rest"></span></span><input id="tty-input" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go"></div></form></div>`;
+  root.innerHTML = `<div class="tty-window"><div class="tty-bar"><span>tty1 · ${PROMPT}</span><button type="button" class="tty-close" aria-label="Close terminal">x</button></div><div class="tty-log" aria-live="polite"></div><div class="tty-suggest" hidden></div><form class="tty-line"><label for="tty-input"><span class="tty-host">${PROMPT}</span>:<span class="tty-path"></span>$</label><div class="tty-field"><span class="tty-ghost" aria-hidden="true"><span class="tty-ghost-typed"></span><span class="tty-ghost-rest"></span></span><input id="tty-input" data-cuelume-type autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go"></div></form></div>`;
   document.body.append(root);
   const log = root.querySelector<HTMLElement>(".tty-log");
   const input = root.querySelector<HTMLInputElement>("input");
@@ -576,6 +589,7 @@ function createView(): TtyView {
     event.preventDefault();
     if (run) return;
     const value = input.value;
+    cue("type", { key: "enter", input: "keyboard" });
     input.value = "";
     hideMenu();
     renderGhost();
@@ -646,6 +660,7 @@ export function openTty(command?: string): void {
       "tty-dim",
     );
   }
+  if (view.root.dataset.open !== "true") cue("open", { emphasis: "subtle" });
   lastFocus = document.activeElement;
   view.path.textContent = currentPath();
   view.root.dataset.open = "true";
@@ -659,6 +674,7 @@ export function openTty(command?: string): void {
 
 export function closeTty(): void {
   if (!view) return;
+  if (view.root.dataset.open === "true") cue("close", { emphasis: "subtle" });
   view.input.blur();
   view.root.dataset.open = "false";
   delete document.documentElement.dataset.ttyShown;

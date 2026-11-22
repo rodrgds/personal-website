@@ -674,6 +674,11 @@ figure[data-rehype-pretty-code-figure] button.rehype-pretty-copy .success {
   opacity: 1;
 }
 
+/* A link whose preview is on its way. */
+a[data-peek-loading] {
+  cursor: progress;
+}
+
 /* A tooltip: just what an abbreviation stands for, on one line. */
 .peek[data-kind="tip"] {
   width: max-content;

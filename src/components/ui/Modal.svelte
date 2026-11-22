@@ -2,6 +2,8 @@
   import { onMount } from "svelte";
   import type { Snippet } from "svelte";
 
+  import { cue } from "../../lib/sound";
+
   interface Props {
     isOpen?: boolean;
     onClose?: () => void;
@@ -23,15 +25,21 @@
   }: Props = $props();
 
   let dialogElement: HTMLDialogElement;
+  // Sound only on a real change, not on the first render.
+  let shown = false;
 
   // Handle dialog open/close
   $effect(() => {
     if (isOpen && dialogElement) {
       dialogElement.showModal();
       document.body.style.overflow = "hidden";
+      if (!shown) cue("open");
+      shown = true;
     } else if (!isOpen && dialogElement) {
       dialogElement.close();
       document.body.style.overflow = "";
+      if (shown) cue("close");
+      shown = false;
     }
   });
 

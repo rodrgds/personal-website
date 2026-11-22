@@ -1,7 +1,9 @@
 // Previews for external links in prose: a short dwell fetches the page's
 // Open Graph data from /api/link-preview and shows it in the same peek window
 // as everything else (peek.ts). Rows and cards opt out with
-// `data-no-link-fx`; links that already peek something keep their own.
+// `data-no-link-fx`; links that already peek something keep their own. A row
+// that should still preview (the uses tree, with its logos) opts back in with
+// `data-link-peek`. While a preview loads, the link shows a progress cursor.
 import { z } from "astro/zod";
 import { peekAt } from "./peek";
 
@@ -25,8 +27,11 @@ let hovered: HTMLAnchorElement | null = null;
 
 /** An external http(s) link with text in it, outside rows and controls. */
 export function isProseLink(anchor: HTMLAnchorElement): boolean {
-  if (!anchor.href || anchor.closest(SKIP)) return false;
-  if (anchor.querySelector("img, svg, picture, video, div, p")) return false;
+  if (!anchor.href) return false;
+  const optedIn = anchor.hasAttribute("data-link-peek");
+  if (!optedIn && anchor.closest(SKIP)) return false;
+  if (!optedIn && anchor.querySelector("img, svg, picture, video, div, p"))
+    return false;
   try {
     const url = new URL(anchor.href);
     return (
@@ -56,7 +61,10 @@ function load(href: string): Promise<Preview | null> {
 }
 
 async function preview(anchor: HTMLAnchorElement): Promise<void> {
-  const data = await load(anchor.href);
+  anchor.dataset.peekLoading = "";
+  const data = await load(anchor.href).finally(() => {
+    delete anchor.dataset.peekLoading;
+  });
   if (hovered !== anchor || !data) return;
   if (!data.title && !data.description && !data.image) return;
   peekAt(anchor, {

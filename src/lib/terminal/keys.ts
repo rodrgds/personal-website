@@ -9,6 +9,7 @@
 //
 // Keys are ignored while typing, with modifier keys held, or inside an
 // element marked `data-no-vim` (games, tools with their own keys).
+import { cue } from "../sound";
 import { openTty } from "./tty";
 
 const HINT_CHARS = "asdfghjklqwertyuiopzxcvbnm";
@@ -123,6 +124,7 @@ function openHints(newTab: boolean): void {
   });
   document.body.append(layer);
   hints = { layer, items, typed: "", newTab };
+  cue("open", { emphasis: "subtle" });
 }
 
 function typeHint(key: string): void {
@@ -167,8 +169,10 @@ function onKeydown(event: KeyboardEvent): void {
   if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey)
     return;
   if (hints) {
-    if (event.key === "Escape") closeHints();
-    else if (/^[a-z]$/.test(event.key)) typeHint(event.key);
+    if (event.key === "Escape") {
+      cue("close", { emphasis: "subtle" });
+      closeHints();
+    } else if (/^[a-z]$/.test(event.key)) typeHint(event.key);
     else if (event.key === "Backspace") {
       hints.typed = hints.typed.slice(0, -1);
       typeHint("");

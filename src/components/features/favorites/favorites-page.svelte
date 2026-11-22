@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { episodeLines } from "../../../lib/favorites/episodes";
+  import { cue } from "../../../lib/sound";
 
   import type {
     FavoriteItem,
@@ -161,12 +162,14 @@
   }
 
   function toggleTag(tag: string): void {
+    cue("toggle", { direction: activeTags.has(tag) ? "back" : "forward" });
     activeTags = toggled(activeTags, tag);
     openItem = null;
     syncUrl();
   }
 
   function clearAll(): void {
+    cue("close", { emphasis: "subtle" });
     activeTags = new Set();
     query = "";
     openItem = null;
@@ -174,10 +177,12 @@
   }
 
   function toggleSection(id: string): void {
+    cue(collapsed.has(id) ? "open" : "close", { emphasis: "subtle" });
     collapsed = toggled(collapsed, id);
   }
 
   function toggleOpen(id: string): void {
+    cue(openItem === id ? "close" : "open", { emphasis: "subtle" });
     openItem = openItem === id ? null : id;
   }
 
@@ -186,7 +191,9 @@
       .flatMap((section) => section.items)
       .filter((item) => item.url);
     const pick = linked[Math.floor(Math.random() * linked.length)];
-    if (pick?.url) window.open(pick.url, "_blank", "noopener,noreferrer");
+    if (!pick?.url) return;
+    cue("tap");
+    window.open(pick.url, "_blank", "noopener,noreferrer");
   }
 
   function hasDetail(item: FavoriteItem): boolean {
@@ -296,7 +303,10 @@
           type="button"
           class="chip chip-act tags-more"
           aria-expanded={tagsOpen}
-          onclick={() => (tagsOpen = !tagsOpen)}
+          onclick={() => {
+            cue(tagsOpen ? "close" : "open", { emphasis: "subtle" });
+            tagsOpen = !tagsOpen;
+          }}
           >{tagsOpen ? "less" : `all ${allTags.length}`}</button
         >
         <div class="chips chips-tags" class:chips-open={tagsOpen}>
@@ -320,6 +330,7 @@
               type="button"
               class="chip"
               class:on={match === mode}
+              data-cuelume-select
               aria-pressed={match === mode}
               onclick={() => (match = mode)}>{mode}</button
             >
@@ -332,6 +343,7 @@
               type="button"
               class="chip"
               class:on={sortKey === option.key}
+              data-cuelume-select
               aria-pressed={sortKey === option.key}
               onclick={() => (sortKey = option.key)}>{option.label}</button
             >
@@ -343,6 +355,7 @@
         <label class="key" for="faves-query">grep -i</label>
         <input
           id="faves-query"
+          data-cuelume-type
           class="query"
           type="text"
           bind:value={query}

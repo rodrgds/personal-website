@@ -181,6 +181,30 @@
     return labels;
   }
 
+  /**
+   * An empty year of days up to this week, oldest first like the data: the
+   * shape the graph keeps while a source loads, so nothing below it moves.
+   */
+  function emptyYear(): ActivityWeek[] {
+    const today = new Date();
+    const pad = (value: number): string => String(value).padStart(2, "0");
+    const weeks: ActivityWeek[] = [];
+    for (let week = 52; week >= 0; week--) {
+      const days: ActivityDay[] = [];
+      for (let weekday = 0; weekday < 7; weekday++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - today.getDay() - week * 7 + weekday);
+        days.push({
+          date: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
+          count: 0,
+          level: 0,
+        });
+      }
+      weeks.push({ days });
+    }
+    return weeks;
+  }
+
   function filterFutureDays(weeks: ActivityWeek[]): ActivityWeek[] {
     const now = Date.now();
     return weeks
@@ -319,7 +343,7 @@
   function onPointer(event: PointerEvent): void {
     const canvas = canvasEl;
     const graph = graphEl;
-    if (!canvas || !graph) return;
+    if (!canvas || !graph || pending) return;
     const rect = canvas.getBoundingClientRect();
     const col = Math.floor((event.clientX - rect.left) / pitch);
     const row = Math.floor((event.clientY - rect.top) / pitch);
@@ -380,12 +404,12 @@
 
   $effect(() => {
     void themeTick;
-    if (canvasEl) drawHeatmap(canvasEl, visibleWeeks, pitch);
+    if (canvasEl) drawHeatmap(canvasEl, shownWeeks, pitch);
   });
 
   // New data or source: show the most recent week (the first column).
   $effect(() => {
-    void visibleWeeks;
+    void shownWeeks;
     if (scrollEl) scrollEl.scrollLeft = 0;
     hover = null;
   });
@@ -398,8 +422,12 @@
     filterFutureDays(activity[activeSource]?.contributions ?? []).reverse(),
   );
   let visibleActivity = $derived(activity[activeSource]);
-  let monthLabels = $derived(getMonthLabels(visibleWeeks));
-  let yearLabels = $derived(getYearLabels(visibleWeeks));
+  // Loading, failed or empty: the graph keeps its size with blank days.
+  let pending = $derived(loading || error !== null || !visibleActivity);
+  const blankYear = filterFutureDays(emptyYear()).reverse();
+  let shownWeeks = $derived(pending ? blankYear : visibleWeeks);
+  let monthLabels = $derived(getMonthLabels(shownWeeks));
+  let yearLabels = $derived(getYearLabels(shownWeeks));
 </script>
 
 <div class="activity-graph" bind:this={graphEl}>
@@ -409,13 +437,30 @@
         {#each activitySources as source (source)}
           <button
             type="button"
+            data-cuelume-select
             aria-pressed={activeSource === source}
             onclick={() => (activeSource = source)}
             >{selectLabels[source].toLowerCase()}</button
           >
         {/each}
       </div>
-      {#if visibleActivity}
+      {#if error}
+        <span class="activity-count" role="alert"
+          ><span class="error-mark">error:</span>
+          {sourceLabels[activeSource].toLowerCase()} activity did not load.
+          <button
+            onclick={() => loadSource(activeSource, true)}
+            class="retry-btn"
+            data-cuelume-tap>[retry]</button
+          ></span
+        >
+      {:else if pending}
+        <span class="activity-count pending" aria-live="polite"
+          ><span class="ascii-spinner" aria-hidden="true">⠋</span> reading {sourceLabels[
+            activeSource
+          ].toLowerCase()}</span
+        >
+      {:else if visibleActivity}
         <span class="activity-count"
           >{formatTotal(activeSource, visibleActivity.total)} since {visibleActivity.startYear}</span
         >
@@ -446,22 +491,6 @@
     </div>
   </div>
 
-  {#if loading}
-    <div class="loading" aria-live="polite">
-      <span class="ascii-spinner" aria-hidden="true">⠋</span>
-      Loading {sourceLabels[activeSource]} activity...
-    </div>
-  {:else if error}
-    <div class="error" role="alert">
-      <p>
-        <span class="error-mark">error:</span>
-        {sourceLabels[activeSource].toLowerCase()} activity did not load.
-        <button onclick={() => loadSource(activeSource, true)} class="retry-btn"
-          >[retry]</button
-        >
-      </p>
-    </div>
-  {:else}
     <div class="activity-scroll-container" bind:this={scrollEl}>
       <div class="activity-wrapper" style="--pitch: {pitch}px">
         <div class="day-labels" aria-hidden="true">
@@ -471,6 +500,7 @@
         <canvas
           bind:this={canvasEl}
           class="activity-canvas"
+          class:pending
           role="img"
           aria-label={`${sourceLabels[activeSource]} activity calendar: ${visibleActivity ? formatTotal(activeSource, visibleActivity.total) : "no data"}`}
           onpointermove={onPointer}
@@ -506,7 +536,6 @@
         </div>
       </div>
     </div>
-  {/if}
   {#if hover}
     <div
       class="tip"
@@ -694,6 +723,34 @@
     touch-action: pan-x pan-y;
   }
 
+  /* Blank days while a source loads: the same size, gently breathing. */
+  .activity-canvas.pending {
+    cursor: progress;
+    animation: graph-pending 1.6s steps(6) infinite alternate;
+  }
+
+  @keyframes graph-pending {
+    from {
+      opacity: 0.35;
+    }
+
+    to {
+      opacity: 0.8;
+    }
+  }
+
+  .activity-count.pending {
+    color: var(--gray-color);
+    cursor: progress;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .activity-canvas.pending {
+      animation: none;
+      opacity: 0.5;
+    }
+  }
+
   .cell-outline {
     position: absolute;
     z-index: 1;
@@ -743,21 +800,6 @@
 
   .year-label {
     font-weight: 500;
-  }
-
-  .loading,
-  .error {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    padding: 1rem;
-    color: var(--gray-color);
-    font-size: 0.8rem;
-  }
-
-  .error p {
-    margin: 0;
   }
 
   .error-mark {

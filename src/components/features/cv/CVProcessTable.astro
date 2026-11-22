@@ -157,6 +157,7 @@ const counts = new Map(
   <div class="ps-filters" role="group" aria-label="Show" data-no-vim>
     <button
       type="button"
+      data-cuelume-select
       data-cv-filter="all"
       data-cv-hash=""
       aria-pressed="true"
@@ -166,6 +167,7 @@ const counts = new Map(
     {TIMELINE_TYPES.map((kind) => (
       <button
         type="button"
+        data-cuelume-select
         data-cv-filter={kind.key}
         data-cv-hash={kind.plural}
         data-kind={kind.key}

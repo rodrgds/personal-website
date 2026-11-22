@@ -457,7 +457,7 @@ const pad2 = (value: number): string => String(value).padStart(2, "0");
               <span class="term-dim">{line.prefix}</span>
               {line.tool ? (
                 <>
-                  <a href={line.tool.href} data-no-link-fx>
+                  <a href={line.tool.href} data-no-link-fx data-link-peek>
                     <HomeLogo logo={line.tool.logo} size={13} />
                     {line.tool.name.toLowerCase()}
                   </a>
