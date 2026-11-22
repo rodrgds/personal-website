@@ -6,6 +6,7 @@ import SocialIcon from "./SocialIcon.astro";
 const segment = Astro.url.pathname.replace(/\/$/, "").split("/")[1] ?? "";
 const path = segment ? `~/${segment}` : "~";
 const primary = SOCIALS.filter((social) => social.primary);
+const others = SOCIALS.filter((social) => !social.primary);
 ---
 
 <header class="site-bar" transition:name="site-bar" transition:animate="none">
@@ -42,6 +43,15 @@ const primary = SOCIALS.filter((social) => social.primary);
         data-no-link-fx
         ><SocialIcon name={social.icon_name}
       /></a>)}
+      <button
+        type="button"
+        class="more-socials"
+        popovertarget="socials-menu"
+        title={others.map((social) => social.label).join(", ")}
+        aria-label={`${others.length} more socials`}
+      >
+        +{others.length}
+      </button>
       <a
         class="icon-link"
         href="/rss.xml"
@@ -53,7 +63,42 @@ const primary = SOCIALS.filter((social) => social.primary);
       /></a>
     </div>
   </nav>
+  <div id="socials-menu" class="socials-menu" popover data-no-vim>
+    <p class="menu-command"><span class="menu-prompt">$</span> ls ~/socials</p>
+    <ul>
+      {SOCIALS.map((social) => <li>
+        <a
+          href={social.url}
+          target="_blank"
+          rel="me noopener noreferrer"
+          data-no-link-fx
+          ><SocialIcon name={social.icon_name} /><span class="menu-name"
+            >{social.label.toLowerCase()}</span
+          ><span class="menu-handle">{social.handle}</span></a
+        >
+      </li>)}
+    </ul>
+    <p class="menu-hint">or type <kbd>socials</kbd> in the tty</p>
+  </div>
 </header>
+<script>
+  import { cue } from "../../lib/sound";
+
+  // The popover is swapped with each page, so listen on the document; toggle
+  // does not bubble, so in the capture phase.
+  document.addEventListener(
+    "toggle",
+    (event) => {
+      if (!(event instanceof ToggleEvent)) return;
+      if (!(event.target instanceof HTMLElement)) return;
+      if (event.target.id !== "socials-menu") return;
+      cue(event.newState === "open" ? "open" : "close", {
+        emphasis: "subtle",
+      });
+    },
+    true,
+  );
+</script>
 <style>
   .site-bar {
     position: sticky;
@@ -149,7 +194,8 @@ const primary = SOCIALS.filter((social) => social.primary);
     color: var(--heading-color);
   }
 
-  .tty-button {
+  .tty-button,
+  .more-socials {
     padding: 0 0.35rem;
     border: 1px solid var(--border-color);
     background: transparent;
@@ -172,6 +218,116 @@ const primary = SOCIALS.filter((social) => social.primary);
     color: var(--background-color);
   }
 
+  .more-socials {
+    margin: 0 0.2rem;
+  }
+
+  .more-socials:hover,
+  .more-socials:focus-visible,
+  .site-bar:has(.socials-menu:popover-open) .more-socials {
+    border-color: var(--heading-color);
+    background: var(--heading-color);
+    color: var(--background-color);
+  }
+
+  /* The popover sits under the bar, flush with its right edge. */
+  .socials-menu {
+    position: fixed;
+    inset: 3.3rem
+      max(var(--page-padding), calc((100vw - var(--wide-width)) / 2)) auto auto;
+    width: min(19rem, calc(100vw - 2 * var(--page-padding)));
+    margin: 0;
+    padding: 0.6rem 0;
+    border: 1px solid var(--border-color);
+    background: var(--term-panel);
+    color: var(--text-color);
+    font-size: 0.8rem;
+    box-shadow: 0.35rem 0.35rem 0 rgb(0 0 0 / 0.18);
+  }
+
+  .socials-menu:popover-open {
+    animation: menu-in 0.16s steps(4, end);
+  }
+
+  @keyframes menu-in {
+    from {
+      clip-path: inset(0 0 100% 0);
+    }
+
+    to {
+      clip-path: inset(0);
+    }
+  }
+
+  .menu-command,
+  .menu-hint {
+    margin: 0;
+    padding: 0 0.85rem;
+    color: var(--gray-color);
+  }
+
+  .menu-command {
+    margin-bottom: 0.35rem;
+  }
+
+  .menu-prompt {
+    color: var(--tc-host);
+  }
+
+  .menu-hint {
+    margin-top: 0.4rem;
+    font-size: 0.72rem;
+  }
+
+  .menu-hint kbd {
+    color: var(--tc-host);
+    font-family: inherit;
+  }
+
+  .socials-menu ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .socials-menu li {
+    margin: 0;
+  }
+
+  .socials-menu a {
+    display: grid;
+    grid-template-columns: 1rem 6.5rem 1fr;
+    gap: 0.6rem;
+    align-items: center;
+    padding: 0.2rem 0.85rem;
+    color: var(--text-color);
+    text-decoration: none;
+    text-shadow: none;
+  }
+
+  .socials-menu a:hover,
+  .socials-menu a:focus-visible {
+    background: var(--surface-hover);
+    color: var(--heading-color);
+  }
+
+  .socials-menu :global(.social-icon) {
+    width: 0.85rem;
+    height: 0.85rem;
+    fill: currentColor;
+  }
+
+  .menu-name {
+    color: var(--tc-path);
+  }
+
+  .menu-handle {
+    overflow: hidden;
+    color: var(--gray-color);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   /* Fixed prompt width so the nav never shifts when the path changes. */
   @media (min-width: 521px) {
     .prompt {
@@ -191,6 +347,10 @@ const primary = SOCIALS.filter((social) => social.primary);
     .bar-tools {
       margin-left: 0;
     }
+
+    .socials-menu {
+      inset-block-start: 5.6rem;
+    }
   }
 
   @media (max-width: 380px) {
@@ -200,7 +360,8 @@ const primary = SOCIALS.filter((social) => social.primary);
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .prompt-cursor {
+    .prompt-cursor,
+    .socials-menu:popover-open {
       animation: none;
     }
   }
