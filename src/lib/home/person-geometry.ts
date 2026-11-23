@@ -72,11 +72,13 @@ export function sweptHair(): THREE.BufferGeometry {
       const wave = Math.cos(31 * sweep + 2 * Math.sin(4 * a + b * 5));
       const strand = 0.5 + 0.5 * wave;
       const fuzz = Math.sin(col * 7.31 + row * 3.73);
-      const bulk = longer * (0.026 + strand * 0.007) + fuzz * 0.0015;
+      const bulk = longer * (0.03 + strand * 0.007) + fuzz * 0.0015;
       const s = Math.sin(b);
+      // Keep the scalp shell outside the head everywhere (including the back-left)
+      // while leaving the lower hairline snug and the crown locks proud on top.
       points.push(
-        (0.399 + bulk) * side * s + 0.048 * longer,
-        0.075 + (0.488 + bulk) * Math.cos(b) + longer * 0.035 * (1 - back * s),
+        (0.399 + bulk) * side * s + 0.018 * longer,
+        0.078 + (0.502 + bulk) * Math.cos(b) + longer * 0.035 * (1 - back * s),
         0.022 + (0.447 + bulk) * back * s,
       );
       color.copy(dark).lerp(light, 0.19 + 0.22 * strand * longer + 0.08 * fuzz);
@@ -144,9 +146,9 @@ export function crownLocks(material: THREE.Material): THREE.InstancedMesh {
     const jitter = Math.sin(i * 17.13);
     const length = 0.57 + 0.72 * y + 0.22 * jitter;
     pose.position.set(
-      normal.x * 0.415 + y * 0.04,
+      normal.x * 0.422 + y * 0.018,
       normal.y * 0.537 + 0.086 + y * 0.041 * (1 - normal.z) + 0.013 * jitter,
-      normal.z * 0.461 + 0.022,
+      normal.z * 0.465 + 0.022,
     );
     // Front hair sweeps up and back. At the crown it turns with the part.
     along.set(0.34 + 0.52 * Math.sin(a * 2 + y * 5) + jitter * 0.18, 0.68, 0.9);
@@ -155,7 +157,7 @@ export function crownLocks(material: THREE.Material): THREE.InstancedMesh {
     pose.quaternion.setFromRotationMatrix(
       basis.makeBasis(across, along, normal),
     );
-    pose.scale.set(length, length * (0.78 + y * 0.55), length);
+    pose.scale.set(length * 1.3, length * (0.78 + y * 0.55) * 1.15, length);
     pose.updateMatrix();
     locks.setMatrixAt(i, pose.matrix);
     locks.setColorAt(
