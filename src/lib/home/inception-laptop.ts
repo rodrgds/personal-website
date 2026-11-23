@@ -15,22 +15,18 @@ export interface LaptopScene {
   pictureMaterial: THREE.MeshBasicMaterial;
   /** Height of the picture, for framing the close-up. */
   pictureHeight: number;
+  /** Build the studio reflection map (called on its own warmup step). */
+  attachEnvironment(renderer: THREE.WebGLRenderer): void;
   dispose(): void;
 }
 
 const LID_TILT = -0.32;
 
-export function buildLaptop(renderer: THREE.WebGLRenderer): LaptopScene {
+export function buildLaptop(): LaptopScene {
   const scene = new THREE.Scene();
   // Fog far enough out that the floor shows before it fades.
   scene.fog = new THREE.Fog(0x0e0d0c, 10, 34);
-
-  // Soft reflections for the aluminium.
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  const environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  scene.environment = environment;
-  scene.environmentIntensity = 0.55;
-  pmrem.dispose();
+  let environment: THREE.Texture | null = null;
 
   const aluminium = new THREE.MeshStandardMaterial({
     color: 0xc4c7cc,
@@ -195,8 +191,19 @@ export function buildLaptop(renderer: THREE.WebGLRenderer): LaptopScene {
     picture,
     pictureMaterial,
     pictureHeight,
+    attachEnvironment(renderer) {
+      if (environment) return;
+      // Soft reflections for the aluminium.
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      const room = new RoomEnvironment();
+      environment = pmrem.fromScene(room, 0.04).texture;
+      scene.environment = environment;
+      scene.environmentIntensity = 0.55;
+      room.dispose();
+      pmrem.dispose();
+    },
     dispose() {
-      environment.dispose();
+      environment?.dispose();
       disposeScene(scene);
     },
   };

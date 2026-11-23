@@ -256,9 +256,15 @@ function donut(): void {
 
 let inceptionModule: Promise<typeof import("../home/inception")> | null = null;
 
-/** three.js and the room, fetched once; started early while "inc..." is typed. */
+/** three.js, the room and the snapshot helper, fetched while "inc..." is typed. */
 function loadInception(): Promise<typeof import("../home/inception")> {
-  inceptionModule ??= import("../home/inception");
+  if (!inceptionModule) {
+    inceptionModule = import("../home/inception").then((module) => {
+      module.preloadInception();
+      return module;
+    });
+    void import("modern-screenshot").catch(() => {});
+  }
   return inceptionModule;
 }
 

@@ -24,9 +24,10 @@ import {
   SCREEN_Z,
   VOID,
   buildRoom,
+  preloadRoomAssets,
 } from "./boot-room";
 import { cue } from "../sound";
-import { buildLaptop } from "./inception-laptop";
+import { buildLaptop, type LaptopScene } from "./inception-laptop";
 
 const FOV = 34;
 const PULL_MS = 3600;
@@ -136,10 +137,13 @@ async function snapshotPage(): Promise<HTMLCanvasElement | null> {
     return await domToCanvas(document.body, {
       width,
       height,
-      scale: Math.min(2, window.devicePixelRatio || 1),
+      scale: Math.min(1.5, window.devicePixelRatio || 1),
       backgroundColor: getComputedStyle(document.body).backgroundColor,
       style: { margin: "0", transform: `translateY(${-scrolled}px)` },
       timeout: 3000,
+      // modern-screenshot's fixSvgXmlDecode sleeps 100ms+ per image/gradient on
+      // Firefox and Safari (often 3-7s). loadMedia already awaits img.decode().
+      features: { fixSvgXmlDecode: false, copyScrollbar: false },
       // The scanlines (body::after) stay on top of the stage, live; in the
       // picture too, the first frame would show them twice.
       onCloneNode: (cloned) => {
@@ -151,11 +155,14 @@ async function snapshotPage(): Promise<HTMLCanvasElement | null> {
           svg.insertBefore(document.createElement("style"), svg.firstChild);
         style.append(".snapshot-root::after { display: none !important; }");
       },
-      // Leave out the stage itself, closed dialogs, anything below the fold,
-      // and pictures from other sites (they refuse to be read back).
+      // Leave out the stage itself, hidden reel frames, closed dialogs,
+      // anything below the fold, and pictures from other sites (they refuse to
+      // be read back).
       filter: (node) =>
         !(node instanceof Element) ||
-        (!node.matches(".boot-stage, .peek, script, dialog:not([open])") &&
+        (!node.matches(
+          ".boot-stage, .peek, script, dialog:not([open]), .term-frame:not([data-active])",
+        ) &&
           !(
             node instanceof HTMLImageElement &&
             new URL(node.currentSrc || node.src, location.href).origin !==
@@ -166,6 +173,10 @@ async function snapshotPage(): Promise<HTMLCanvasElement | null> {
   } catch {
     return null;
   }
+}
+
+export function preloadInception(): void {
+  preloadRoomAssets();
 }
 
 export function stopInception(): void {
@@ -270,7 +281,8 @@ async function dream(): Promise<void> {
 
   // One texture per level under the screen, desk-shaped (16:10, for the
   // laptop's screen) and laptop-shaped (4:3, for the desk's monitor); only the
-  // nearest is antialiased, since the deeper ones are small.
+  // nearest is antialiased, since the deeper ones are small. Built lazily
+  // during the 3.6s level-1 pull-back so frame 1 shows without waiting on them.
   const makeTargets = (): THREE.WebGLRenderTarget[] =>
     Array.from(
       { length: DEPTH },
@@ -284,10 +296,10 @@ async function dream(): Promise<void> {
           minFilter: THREE.LinearMipmapLinearFilter,
         }),
     );
-  const deskTargets = makeTargets();
-  const laptopTargets = makeTargets();
-  const laptop = buildLaptop(renderer);
-  const laptopBackdrop = addBackdrop(laptop.scene, VOID);
+  let deskTargets: THREE.WebGLRenderTarget[] = [];
+  let laptopTargets: THREE.WebGLRenderTarget[] = [];
+  let laptop: LaptopScene | null = null;
+  let laptopBackdrop: THREE.Mesh | null = null;
   // A screen with nothing on it, for a level deeper than the ones drawn.
   const blank = new THREE.DataTexture(new Uint8Array([8, 8, 8, 255]), 1, 1);
   blank.needsUpdate = true;
@@ -350,40 +362,18 @@ async function dream(): Promise<void> {
     pos: LAPTOP_POS.clone(),
     look: LAPTOP_LOOK.clone(),
   };
-  // Straight at the laptop's 4:3 picture, close enough that it fills the photo.
-  const pictureCentre = new THREE.Vector3();
-  laptop.picture.getWorldPosition(pictureCentre);
-  const pictureNormal = new THREE.Vector3(0, 0, 1).applyQuaternion(
-    laptop.picture.getWorldQuaternion(new THREE.Quaternion()),
-  );
-  const laptopGlass: Pose = {
-    pos: pictureCentre
-      .clone()
-      .addScaledVector(
-        pictureNormal,
-        laptop.pictureHeight /
-          (2 * Math.tan(THREE.MathUtils.degToRad(FOV / 2))),
-      ),
-    look: pictureCentre.clone(),
-  };
   // One zoom speed for both levels (in log-distance per ms), so the speed
   // does not change at the seams; each loop lasts as long as its zoom needs.
   const span = (pose: Pose): number => pose.pos.distanceTo(pose.look);
   const zoomRate = Math.log(span(heroPose) / span(glassPose)) / DESK_LOOP_MS;
-  const laptopLoopMs =
-    Math.log(span(laptopHero) / span(laptopGlass)) / zoomRate;
-  const cycleMs = laptopLoopMs + DESK_LOOP_MS;
+  let laptopGlass: Pose = glassPose;
+  let laptopLoopMs = DESK_LOOP_MS;
+  let cycleMs = DESK_LOOP_MS * 2;
   let pagePose: Pose = glassPose;
   let rect = photoRect(window.innerWidth, window.innerHeight);
 
-  /** Size everything to the window; the camera's own view is the photo. */
-  const layout = (): void => {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    rect = photoRect(width, height);
-    renderer.setPixelRatio(
-      resolution.pixelRatio(width, height, window.devicePixelRatio),
-    );
+  const sizeTargets = (): void => {
+    if (deskTargets.length === 0) return;
     // Textures at the photo's real pixel size: no softer picture at the seam.
     const textureHeight = Math.min(
       1200,
@@ -398,6 +388,17 @@ async function dream(): Promise<void> {
       const height = Math.max(96, Math.round(textureHeight / 3 ** depth));
       target.setSize(Math.round((height * 4) / 3), height);
     });
+  };
+
+  /** Size everything to the window; the camera's own view is the photo. */
+  const layout = (): void => {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    rect = photoRect(width, height);
+    renderer.setPixelRatio(
+      resolution.pixelRatio(width, height, window.devicePixelRatio),
+    );
+    sizeTargets();
     renderer.setSize(width, height);
     camera.setViewOffset(
       rect.width,
@@ -453,11 +454,133 @@ async function dream(): Promise<void> {
   let shown = 1;
   // The clock starts on the first frame on screen, however long loading took.
   let start = 0;
+  // Level 2+ (the laptop, render targets and their shaders) are prepared one
+  // small step per frame during the 3.6s level-1 pull-back so startup never
+  // stalls on slow GPUs or Firefox shader compilation.
+  let prepStage = 0;
+  let prepBusy = false;
+  let prepNextAt = OVERHANG_MS + 50;
 
   /** The texture of a level, at its depth under the one on screen. */
   const textureOf = (level: number, depth: number): THREE.Texture =>
     (level % 2 === 1 ? deskTargets : laptopTargets)[depth - 1]?.texture ??
     blank;
+
+  const compileFor = (
+    target: THREE.WebGLRenderTarget | null,
+    world: THREE.Scene,
+    eye: THREE.Camera,
+  ): Promise<THREE.Object3D | undefined> => {
+    renderer.setRenderTarget(target);
+    const done = renderer.compileAsync(world, eye).catch(() => undefined);
+    renderer.setRenderTarget(null);
+    return done;
+  };
+
+  /** Advance the deferred level-2+ setup by at most one lightweight step. */
+  const advancePrep = (t: number): void => {
+    if (prepStage >= 8 || prepBusy || stopped) return;
+    // Space steps gently during the pull-back; if PULL_MS is reached early
+    // (e.g. backgrounded tab), run remaining steps on consecutive frames.
+    if (t < PULL_MS - 1 && t < prepNextAt) return;
+    prepNextAt = t + 260;
+
+    if (prepStage === 0) {
+      deskTargets = makeTargets();
+      laptopTargets = makeTargets();
+      sizeTargets();
+      laptop = buildLaptop();
+      laptopBackdrop = addBackdrop(laptop.scene, VOID);
+      // Straight at the laptop's 4:3 picture, close enough that it fills the photo.
+      const pictureCentre = new THREE.Vector3();
+      laptop.picture.getWorldPosition(pictureCentre);
+      const pictureNormal = new THREE.Vector3(0, 0, 1).applyQuaternion(
+        laptop.picture.getWorldQuaternion(new THREE.Quaternion()),
+      );
+      laptopGlass = {
+        pos: pictureCentre
+          .clone()
+          .addScaledVector(
+            pictureNormal,
+            laptop.pictureHeight /
+              (2 * Math.tan(THREE.MathUtils.degToRad(FOV / 2))),
+          ),
+        look: pictureCentre.clone(),
+      };
+      laptopLoopMs = Math.log(span(laptopHero) / span(laptopGlass)) / zoomRate;
+      cycleMs = laptopLoopMs + DESK_LOOP_MS;
+      prepStage = 1;
+    } else if (prepStage === 1) {
+      laptop?.attachEnvironment(renderer);
+      prepStage = 2;
+    } else if (prepStage === 2) {
+      prepBusy = true;
+      pagePlane.visible = true;
+      void compileFor(deskTargets[0] ?? null, scene, heroCamera).finally(() => {
+        if (stopped) return;
+        prepBusy = false;
+        prepStage = 3;
+      });
+      pagePlane.visible = false;
+    } else if (prepStage === 3) {
+      if (!laptop) return;
+      prepBusy = true;
+      void compileFor(null, laptop.scene, camera).finally(() => {
+        if (stopped) return;
+        prepBusy = false;
+        prepStage = 4;
+      });
+    } else if (prepStage === 4) {
+      if (!laptop) return;
+      prepBusy = true;
+      void compileFor(
+        laptopTargets[0] ?? null,
+        laptop.scene,
+        laptopCamera,
+      ).finally(() => {
+        if (stopped) return;
+        prepBusy = false;
+        prepStage = 5;
+      });
+    } else if (prepStage === 5) {
+      // Allocate the desk render targets and warm the offscreen desk pipeline.
+      screenMaterial.map = blank;
+      screenMaterial.opacity = 1;
+      pagePlane.visible = pageTexture !== null;
+      renderer.shadowMap.needsUpdate = false;
+      for (const target of deskTargets) {
+        renderer.setRenderTarget(target);
+        renderer.render(scene, heroCamera);
+      }
+      renderer.setRenderTarget(null);
+      pagePlane.visible = false;
+      prepStage = 6;
+    } else if (prepStage === 6) {
+      // Allocate the laptop render targets and bake the laptop's static shadow map.
+      if (!laptop) return;
+      laptop.pictureMaterial.map = deskTargets[0]?.texture ?? blank;
+      let bakeShadow = true;
+      for (const target of laptopTargets) {
+        renderer.setRenderTarget(target);
+        renderer.shadowMap.needsUpdate = bakeShadow;
+        bakeShadow = false;
+        renderer.render(laptop.scene, laptopCamera);
+      }
+      renderer.setRenderTarget(null);
+      prepStage = 7;
+    } else if (prepStage === 7) {
+      // Warm the laptop-to-window path once right before the live level-1
+      // render overwrites the backbuffer in this same animation frame.
+      if (!laptop) return;
+      camera.position.copy(laptopHero.pos);
+      camera.lookAt(laptopHero.look);
+      laptop.pictureMaterial.map = deskTargets[0]?.texture ?? blank;
+      renderer.setRenderTarget(null);
+      renderer.shadowMap.needsUpdate = false;
+      renderer.render(laptop.scene, camera);
+      prepStage = 8;
+    }
+  };
 
   const render = (now: number): void => {
     frame = requestAnimationFrame(render);
@@ -467,7 +590,14 @@ async function dream(): Promise<void> {
     }
     if (resolution.update(now, false)) layout();
     if (!start) start = now;
-    const t = now - start;
+    let t = now - start;
+    if (t >= PULL_MS && prepStage < 8) {
+      // Hold at the end of the pull-back if a slow GPU is still finishing
+      // level-2 warmup, keeping the handoff seamless.
+      start = now - (PULL_MS - 1);
+      t = PULL_MS - 1;
+    }
+    advancePrep(t);
     let level = 1;
     if (t < PULL_MS) {
       // 1. Pull back from the page to the over-the-shoulder shot. The zoom
@@ -564,7 +694,7 @@ async function dream(): Promise<void> {
         renderer.shadowMap.needsUpdate = deskShadows;
         deskShadows = false;
         renderer.render(scene, heroCamera);
-      } else {
+      } else if (laptop) {
         laptop.pictureMaterial.map = below;
         renderer.shadowMap.needsUpdate = laptopShadows;
         laptopShadows = false;
@@ -582,26 +712,10 @@ async function dream(): Promise<void> {
       renderer.shadowMap.needsUpdate = deskShadows;
       renderer.render(scene, camera);
       pagePlane.visible = false;
-    } else {
+    } else if (laptop) {
       laptop.pictureMaterial.map = textureOf(level - 1, 1);
       renderer.shadowMap.needsUpdate = laptopShadows;
       renderer.render(laptop.scene, camera);
-    }
-  };
-
-  /**
-   * Draw every level once before the first frame, out of sight. three.js
-   * builds separate shaders for a texture and for the window, and makes
-   * render targets, shadow maps and uploads on first use; left to the
-   * flight, all of that landed on the frame a level first showed, and the
-   * flight stalled there.
-   */
-  const warmUp = (): void => {
-    for (const level of [5, 4, 3, 2, 1]) {
-      const pose = level % 2 === 0 ? laptopHero : heroPose;
-      camera.position.copy(pose.pos);
-      camera.lookAt(pose.look);
-      draw(level, true);
     }
   };
 
@@ -627,9 +741,9 @@ async function dream(): Promise<void> {
       cancelAnimationFrame(frame);
       room.dispose();
       for (const target of [...deskTargets, ...laptopTargets]) target.dispose();
-      laptop.dispose();
-      laptopBackdrop.geometry.dispose();
-      if (laptopBackdrop.material instanceof THREE.Material)
+      laptop?.dispose();
+      laptopBackdrop?.geometry.dispose();
+      if (laptopBackdrop?.material instanceof THREE.Material)
         laptopBackdrop.material.dispose();
       blank.dispose();
       pageTexture?.dispose();
@@ -667,29 +781,13 @@ async function dream(): Promise<void> {
     overhangMaterial.map = texture;
   });
 
-  // Compile every shader while the page is drawn, in parallel where the
-  // browser can: each scene for the window and for a texture.
-  const compileFor = (
-    target: THREE.WebGLRenderTarget | null,
-    world: THREE.Scene,
-    eye: THREE.Camera,
-  ): Promise<THREE.Object3D> => {
-    renderer.setRenderTarget(target);
-    const done = renderer.compileAsync(world, eye);
-    renderer.setRenderTarget(null);
-    return done;
-  };
+  // Only compile the desk-to-window shaders before frame 1; laptop and
+  // offscreen render targets warm up incrementally during the 3.6s pull-back.
   pagePlane.visible = true;
-  const compiled = Promise.all([
-    compileFor(null, scene, camera),
-    compileFor(deskTargets[0] ?? null, scene, heroCamera),
-    compileFor(null, laptop.scene, camera),
-    compileFor(laptopTargets[0] ?? null, laptop.scene, laptopCamera),
-  ]).catch(() => undefined);
+  const compiled = compileFor(null, scene, camera);
   pagePlane.visible = false;
   await Promise.all([compiled, pictured]);
   if (stopped) return;
-  warmUp();
   // The first frame is the page itself at 1:1, so the stage shows with it,
   // at once: no fade, nothing changes on screen until the camera moves.
   frame = requestAnimationFrame((now) => {

@@ -146,70 +146,102 @@ function textPlane(
 // ---------------------------------------------------------------------------
 // Textures
 
-/** Wood grain that tiles both ways. */
-export function woodTexture(): THREE.CanvasTexture {
-  const texture = canvasTexture(1024, 512, (ctx) => {
-    ctx.fillStyle = "#4a3322";
-    ctx.fillRect(0, 0, 1024, 512);
-    for (let i = 0; i < 140; i++) {
-      const y = Math.random() * 512;
-      const waves = 1 + (i % 3);
-      const phase = Math.random() * Math.PI * 2;
-      const amplitude = 3 + Math.random() * 5;
-      ctx.strokeStyle = `rgba(${30 + Math.random() * 30}, ${18 + Math.random() * 14}, 8, ${0.15 + Math.random() * 0.25})`;
-      ctx.lineWidth = 1 + Math.random() * 3;
-      // Whole waves across the width, drawn again a height up and down, so
-      // the edges meet.
-      for (const shift of [-512, 0, 512]) {
-        ctx.beginPath();
-        for (let x = 0; x <= 1024; x += 32) {
-          const at =
-            y +
-            shift +
-            Math.sin((x / 1024) * Math.PI * 2 * waves + phase) * amplitude;
-          if (x === 0) ctx.moveTo(x, at);
-          else ctx.lineTo(x, at);
-        }
-        ctx.stroke();
-      }
-    }
-  });
+let cachedWoodCanvas: HTMLCanvasElement | null = null;
+let cachedFloorCanvas: HTMLCanvasElement | null = null;
+let preloadedAssets = false;
+
+/** Warm the browser cache for the room model while the command is typed. */
+export function preloadRoomAssets(): void {
+  if (preloadedAssets) return;
+  preloadedAssets = true;
+  void fetch(pcModel).catch(() => {});
+}
+
+function repeatingCanvasTexture(
+  canvas: HTMLCanvasElement,
+): THREE.CanvasTexture {
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 4;
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
   return texture;
 }
 
+/** Wood grain that tiles both ways. */
+export function woodTexture(): THREE.CanvasTexture {
+  if (!cachedWoodCanvas) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1024;
+    canvas.height = 512;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.fillStyle = "#4a3322";
+      ctx.fillRect(0, 0, 1024, 512);
+      for (let i = 0; i < 140; i++) {
+        const y = Math.random() * 512;
+        const waves = 1 + (i % 3);
+        const phase = Math.random() * Math.PI * 2;
+        const amplitude = 3 + Math.random() * 5;
+        ctx.strokeStyle = `rgba(${30 + Math.random() * 30}, ${18 + Math.random() * 14}, 8, ${0.15 + Math.random() * 0.25})`;
+        ctx.lineWidth = 1 + Math.random() * 3;
+        // Whole waves across the width, drawn again a height up and down, so
+        // the edges meet.
+        for (const shift of [-512, 0, 512]) {
+          ctx.beginPath();
+          for (let x = 0; x <= 1024; x += 32) {
+            const at =
+              y +
+              shift +
+              Math.sin((x / 1024) * Math.PI * 2 * waves + phase) * amplitude;
+            if (x === 0) ctx.moveTo(x, at);
+            else ctx.lineTo(x, at);
+          }
+          ctx.stroke();
+        }
+      }
+    }
+    cachedWoodCanvas = canvas;
+  }
+  return repeatingCanvasTexture(cachedWoodCanvas);
+}
+
 /** Wide floorboards that tile, dark under the wood of the desk. */
 function floorTexture(): THREE.CanvasTexture {
-  const texture = canvasTexture(1024, 1024, (ctx) => {
-    ctx.fillStyle = "#3b2c21";
-    ctx.fillRect(0, 0, 1024, 1024);
-    // Eight boards across, each a little different, with butt joints
-    // staggered along them and fine grain.
-    for (let board = 0; board < 8; board++) {
-      const x = board * 128;
-      const tone = 44 + ((board * 37) % 7) * 3;
-      ctx.fillStyle = `rgb(${tone + 12}, ${tone}, ${tone - 8})`;
-      ctx.fillRect(x, 0, 128, 1024);
-      for (let i = 0; i < 22; i++) {
-        const gx = x + 6 + Math.random() * 116;
-        ctx.strokeStyle = `rgba(16, 10, 6, ${0.12 + Math.random() * 0.2})`;
-        ctx.lineWidth = 1 + Math.random() * 2;
-        ctx.beginPath();
-        ctx.moveTo(gx, 0);
-        for (let y = 0; y <= 1024; y += 64)
-          ctx.lineTo(gx + Math.sin((y / 1024) * Math.PI * 2 + i) * 3, y);
-        ctx.stroke();
+  if (!cachedFloorCanvas) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1024;
+    canvas.height = 1024;
+    const ctx = canvas.getContext("2d");
+    if (ctx) {
+      ctx.fillStyle = "#3b2c21";
+      ctx.fillRect(0, 0, 1024, 1024);
+      // Eight boards across, each a little different, with butt joints
+      // staggered along them and fine grain.
+      for (let board = 0; board < 8; board++) {
+        const x = board * 128;
+        const tone = 44 + ((board * 37) % 7) * 3;
+        ctx.fillStyle = `rgb(${tone + 12}, ${tone}, ${tone - 8})`;
+        ctx.fillRect(x, 0, 128, 1024);
+        for (let i = 0; i < 22; i++) {
+          const gx = x + 6 + Math.random() * 116;
+          ctx.strokeStyle = `rgba(16, 10, 6, ${0.12 + Math.random() * 0.2})`;
+          ctx.lineWidth = 1 + Math.random() * 2;
+          ctx.beginPath();
+          ctx.moveTo(gx, 0);
+          for (let y = 0; y <= 1024; y += 64)
+            ctx.lineTo(gx + Math.sin((y / 1024) * Math.PI * 2 + i) * 3, y);
+          ctx.stroke();
+        }
+        ctx.fillStyle = "rgba(8, 5, 3, 0.9)";
+        ctx.fillRect(x, 0, 3, 1024);
+        const joint = ((board * 389) % 1024) | 0;
+        ctx.fillRect(x, joint, 128, 3);
       }
-      ctx.fillStyle = "rgba(8, 5, 3, 0.9)";
-      ctx.fillRect(x, 0, 3, 1024);
-      const joint = ((board * 389) % 1024) | 0;
-      ctx.fillRect(x, joint, 128, 3);
     }
-  });
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  return texture;
+    cachedFloorCanvas = canvas;
+  }
+  return repeatingCanvasTexture(cachedFloorCanvas);
 }
 
 /** An endless floor at this height, fading into the fog. */
