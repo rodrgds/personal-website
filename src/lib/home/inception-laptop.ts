@@ -67,7 +67,10 @@ export function buildLaptop(renderer: THREE.WebGLRenderer): LaptopScene {
   const key = new THREE.DirectionalLight(0xfff1e0, 2.2);
   key.position.set(-4, 7, 4);
   key.castShadow = true;
-  key.shadow.mapSize.set(2048, 2048);
+  key.shadow.mapSize.set(1024, 1024);
+  // The laptop and light never move. Reuse its shadow in every nested render.
+  key.shadow.autoUpdate = false;
+  key.shadow.needsUpdate = true;
   key.shadow.camera.left = -10;
   key.shadow.camera.right = 10;
   key.shadow.camera.top = 10;

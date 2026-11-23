@@ -16,6 +16,7 @@
 // keeps going. The photo is held at 4:3 inside a polaroid border, the shape
 // of the glass.
 import * as THREE from "three";
+import { SceneResolution } from "./scene-resolution";
 import {
   SCREEN_H,
   SCREEN_W,
@@ -197,7 +198,7 @@ async function dream(): Promise<void> {
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   // The first frame stands in for the page itself, so at its sharpness.
-  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  const resolution = new SceneResolution();
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   // No tone mapping here. three.js tone-maps only what is drawn to the
   // window, and applies fog after it there but before it in a texture, so
@@ -380,6 +381,9 @@ async function dream(): Promise<void> {
     const width = window.innerWidth;
     const height = window.innerHeight;
     rect = photoRect(width, height);
+    renderer.setPixelRatio(
+      resolution.pixelRatio(width, height, window.devicePixelRatio),
+    );
     // Textures at the photo's real pixel size: no softer picture at the seam.
     const textureHeight = Math.min(
       1200,
@@ -457,6 +461,11 @@ async function dream(): Promise<void> {
 
   const render = (now: number): void => {
     frame = requestAnimationFrame(render);
+    if (document.hidden) {
+      resolution.update(now, true);
+      return;
+    }
+    if (resolution.update(now, false)) layout();
     if (!start) start = now;
     const t = now - start;
     let level = 1;

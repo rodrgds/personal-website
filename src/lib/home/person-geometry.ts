@@ -49,8 +49,8 @@ export function profile(
 // The cropped sides, nape and longer swept crown form one surface. Small
 // ridges follow the sweep and flatten towards the natural hairline.
 export function sweptHair(): THREE.BufferGeometry {
-  const sides = 144;
-  const rows = 52;
+  const sides = 72;
+  const rows = 26;
   const points: number[] = [];
   const faces: number[] = [];
   const colors: number[] = [];
@@ -104,7 +104,7 @@ export function sweptHair(): THREE.BufferGeometry {
 // Overlapping curved locks catch the light separately above the short sides.
 // Each has a lifted middle and a fine tip that curls back towards the scalp.
 export function crownLocks(material: THREE.Material): THREE.InstancedMesh {
-  const count = 480;
+  const count = 240;
   const lock = profile(
     [
       [-0.095, 0.003, 0.002, -0.019],

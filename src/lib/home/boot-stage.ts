@@ -6,6 +6,7 @@
 // The monitor's screen is the real boot DOM (CSS3DRenderer), shown through a
 // hole the WebGL canvas leaves in front of it, so the text stays sharp.
 import * as THREE from "three";
+import { SceneResolution } from "./scene-resolution";
 import {
   CSS3DObject,
   CSS3DRenderer,
@@ -99,7 +100,7 @@ export async function createBootStage(
   container.append(css.domElement);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  const resolution = new SceneResolution();
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.shadowMap.enabled = true;
@@ -216,6 +217,9 @@ export async function createBootStage(
     const height = window.innerHeight;
     camera.aspect = width / Math.max(1, height);
     camera.updateProjectionMatrix();
+    renderer.setPixelRatio(
+      resolution.pixelRatio(width, height, window.devicePixelRatio),
+    );
     renderer.setSize(width, height);
     css.setSize(width, height);
     placePage();
@@ -242,6 +246,11 @@ export async function createBootStage(
 
   const render = (now: number): void => {
     frame = requestAnimationFrame(render);
+    if (document.hidden) {
+      resolution.update(now, true);
+      return;
+    }
+    if (resolution.update(now, false)) resize();
     if (move) {
       const t = Math.min(1, (now - move.start) / move.ms);
       const k = easeInOut(t);
